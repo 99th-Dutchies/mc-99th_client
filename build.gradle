@@ -19,8 +19,8 @@ configurations {
     compile.extendsFrom shade
 }
 
-group = 'me.yourname'
-version = '1.0.0'
+group = 'nl._99th_dutchies'
+version = '0.0.1'
 
 ext {
     minecraft_version = '1.16.5'
