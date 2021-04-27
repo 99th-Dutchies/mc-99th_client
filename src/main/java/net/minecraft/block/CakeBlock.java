@@ -19,72 +19,108 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-public class CakeBlock extends Block {
-   public static final IntegerProperty BITES = BlockStateProperties.BITES;
-   protected static final VoxelShape[] SHAPE_BY_BITE = new VoxelShape[]{Block.box(1.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.box(3.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.box(5.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.box(7.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.box(9.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.box(11.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.box(13.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D)};
+public class CakeBlock extends Block
+{
+    public static final IntegerProperty BITES = BlockStateProperties.BITES_0_6;
+    protected static final VoxelShape[] SHAPES = new VoxelShape[] {Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.makeCuboidShape(3.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.makeCuboidShape(5.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.makeCuboidShape(7.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.makeCuboidShape(9.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.makeCuboidShape(11.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D), Block.makeCuboidShape(13.0D, 0.0D, 1.0D, 15.0D, 8.0D, 15.0D)};
 
-   protected CakeBlock(AbstractBlock.Properties p_i48434_1_) {
-      super(p_i48434_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(BITES, Integer.valueOf(0)));
-   }
+    protected CakeBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(BITES, Integer.valueOf(0)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE_BY_BITE[p_220053_1_.getValue(BITES)];
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPES[state.get(BITES)];
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         ItemStack itemstack = p_225533_4_.getItemInHand(p_225533_5_);
-         if (this.eat(p_225533_2_, p_225533_3_, p_225533_1_, p_225533_4_).consumesAction()) {
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            ItemStack itemstack = player.getHeldItem(handIn);
+
+            if (this.eatSlice(worldIn, pos, state, player).isSuccessOrConsume())
+            {
+                return ActionResultType.SUCCESS;
+            }
+
+            if (itemstack.isEmpty())
+            {
+                return ActionResultType.CONSUME;
+            }
+        }
+
+        return this.eatSlice(worldIn, pos, state, player);
+    }
+
+    private ActionResultType eatSlice(IWorld world, BlockPos pos, BlockState state, PlayerEntity player)
+    {
+        if (!player.canEat(false))
+        {
+            return ActionResultType.PASS;
+        }
+        else
+        {
+            player.addStat(Stats.EAT_CAKE_SLICE);
+            player.getFoodStats().addStats(2, 0.1F);
+            int i = state.get(BITES);
+
+            if (i < 6)
+            {
+                world.setBlockState(pos, state.with(BITES, Integer.valueOf(i + 1)), 3);
+            }
+            else
+            {
+                world.removeBlock(pos, false);
+            }
+
             return ActionResultType.SUCCESS;
-         }
+        }
+    }
 
-         if (itemstack.isEmpty()) {
-            return ActionResultType.CONSUME;
-         }
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        return facing == Direction.DOWN && !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-      return this.eat(p_225533_2_, p_225533_3_, p_225533_1_, p_225533_4_);
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        return worldIn.getBlockState(pos.down()).getMaterial().isSolid();
+    }
 
-   private ActionResultType eat(IWorld p_226911_1_, BlockPos p_226911_2_, BlockState p_226911_3_, PlayerEntity p_226911_4_) {
-      if (!p_226911_4_.canEat(false)) {
-         return ActionResultType.PASS;
-      } else {
-         p_226911_4_.awardStat(Stats.EAT_CAKE_SLICE);
-         p_226911_4_.getFoodData().eat(2, 0.1F);
-         int i = p_226911_3_.getValue(BITES);
-         if (i < 6) {
-            p_226911_1_.setBlock(p_226911_2_, p_226911_3_.setValue(BITES, Integer.valueOf(i + 1)), 3);
-         } else {
-            p_226911_1_.removeBlock(p_226911_2_, false);
-         }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(BITES);
+    }
 
-         return ActionResultType.SUCCESS;
-      }
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getComparatorInputOverride(World,BlockPos)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getComparatorInputOverride(BlockState blockState, World worldIn, BlockPos pos)
+    {
+        return (7 - blockState.get(BITES)) * 2;
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      return p_196271_2_ == Direction.DOWN && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_) ? Blocks.AIR.defaultBlockState() : super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    /**
+     * @deprecated call via {@link IBlockState#hasComparatorInputOverride()} whenever possible. Implementing/overriding
+     * is fine.
+     */
+    public boolean hasComparatorInputOverride(BlockState state)
+    {
+        return true;
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      return p_196260_2_.getBlockState(p_196260_3_.below()).getMaterial().isSolid();
-   }
-
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(BITES);
-   }
-
-   public int getAnalogOutputSignal(BlockState p_180641_1_, World p_180641_2_, BlockPos p_180641_3_) {
-      return (7 - p_180641_1_.getValue(BITES)) * 2;
-   }
-
-   public boolean hasAnalogOutputSignal(BlockState p_149740_1_) {
-      return true;
-   }
-
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

@@ -23,92 +23,130 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class EnchantingTableBlock extends ContainerBlock {
-   protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
+public class EnchantingTableBlock extends ContainerBlock
+{
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
 
-   protected EnchantingTableBlock(AbstractBlock.Properties p_i48408_1_) {
-      super(p_i48408_1_);
-   }
+    protected EnchantingTableBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+    }
 
-   public boolean useShapeForLightOcclusion(BlockState p_220074_1_) {
-      return true;
-   }
+    public boolean isTransparent(BlockState state)
+    {
+        return true;
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void animateTick(BlockState p_180655_1_, World p_180655_2_, BlockPos p_180655_3_, Random p_180655_4_) {
-      super.animateTick(p_180655_1_, p_180655_2_, p_180655_3_, p_180655_4_);
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles). Note that
+     * this method is unrelated to {@link randomTick} and {@link #needsRandomTick}, and will always be called regardless
+     * of whether the block can receive random update ticks
+     */
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand)
+    {
+        super.animateTick(stateIn, worldIn, pos, rand);
 
-      for(int i = -2; i <= 2; ++i) {
-         for(int j = -2; j <= 2; ++j) {
-            if (i > -2 && i < 2 && j == -1) {
-               j = 2;
+        for (int i = -2; i <= 2; ++i)
+        {
+            for (int j = -2; j <= 2; ++j)
+            {
+                if (i > -2 && i < 2 && j == -1)
+                {
+                    j = 2;
+                }
+
+                if (rand.nextInt(16) == 0)
+                {
+                    for (int k = 0; k <= 1; ++k)
+                    {
+                        BlockPos blockpos = pos.add(i, k, j);
+
+                        if (worldIn.getBlockState(blockpos).isIn(Blocks.BOOKSHELF))
+                        {
+                            if (!worldIn.isAirBlock(pos.add(i / 2, 0, j / 2)))
+                            {
+                                break;
+                            }
+
+                            worldIn.addParticle(ParticleTypes.ENCHANT, (double)pos.getX() + 0.5D, (double)pos.getY() + 2.0D, (double)pos.getZ() + 0.5D, (double)((float)i + rand.nextFloat()) - 0.5D, (double)((float)k - rand.nextFloat() - 1.0F), (double)((float)j + rand.nextFloat()) - 0.5D);
+                        }
+                    }
+                }
             }
+        }
+    }
 
-            if (p_180655_4_.nextInt(16) == 0) {
-               for(int k = 0; k <= 1; ++k) {
-                  BlockPos blockpos = p_180655_3_.offset(i, k, j);
-                  if (p_180655_2_.getBlockState(blockpos).is(Blocks.BOOKSHELF)) {
-                     if (!p_180655_2_.isEmptyBlock(p_180655_3_.offset(i / 2, 0, j / 2))) {
-                        break;
-                     }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.MODEL;
+    }
 
-                     p_180655_2_.addParticle(ParticleTypes.ENCHANT, (double)p_180655_3_.getX() + 0.5D, (double)p_180655_3_.getY() + 2.0D, (double)p_180655_3_.getZ() + 0.5D, (double)((float)i + p_180655_4_.nextFloat()) - 0.5D, (double)((float)k - p_180655_4_.nextFloat() - 1.0F), (double)((float)j + p_180655_4_.nextFloat()) - 0.5D);
-                  }
-               }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new EnchantingTableTileEntity();
+    }
+
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            player.openContainer(state.getContainer(worldIn, pos));
+            return ActionResultType.CONSUME;
+        }
+    }
+
+    @Nullable
+    public INamedContainerProvider getContainer(BlockState state, World worldIn, BlockPos pos)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+
+        if (tileentity instanceof EnchantingTableTileEntity)
+        {
+            ITextComponent itextcomponent = ((INameable)tileentity).getDisplayName();
+            return new SimpleNamedContainerProvider((id, inventory, player) ->
+            {
+                return new EnchantmentContainer(id, inventory, IWorldPosCallable.of(worldIn, pos));
+            }, itextcomponent);
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
+    {
+        if (stack.hasDisplayName())
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
+
+            if (tileentity instanceof EnchantingTableTileEntity)
+            {
+                ((EnchantingTableTileEntity)tileentity).setCustomName(stack.getDisplayName());
             }
-         }
-      }
+        }
+    }
 
-   }
-
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.MODEL;
-   }
-
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new EnchantingTableTileEntity();
-   }
-
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         return ActionResultType.SUCCESS;
-      } else {
-         p_225533_4_.openMenu(p_225533_1_.getMenuProvider(p_225533_2_, p_225533_3_));
-         return ActionResultType.CONSUME;
-      }
-   }
-
-   @Nullable
-   public INamedContainerProvider getMenuProvider(BlockState p_220052_1_, World p_220052_2_, BlockPos p_220052_3_) {
-      TileEntity tileentity = p_220052_2_.getBlockEntity(p_220052_3_);
-      if (tileentity instanceof EnchantingTableTileEntity) {
-         ITextComponent itextcomponent = ((INameable)tileentity).getDisplayName();
-         return new SimpleNamedContainerProvider((p_220147_2_, p_220147_3_, p_220147_4_) -> {
-            return new EnchantmentContainer(p_220147_2_, p_220147_3_, IWorldPosCallable.create(p_220052_2_, p_220052_3_));
-         }, itextcomponent);
-      } else {
-         return null;
-      }
-   }
-
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      if (p_180633_5_.hasCustomHoverName()) {
-         TileEntity tileentity = p_180633_1_.getBlockEntity(p_180633_2_);
-         if (tileentity instanceof EnchantingTableTileEntity) {
-            ((EnchantingTableTileEntity)tileentity).setCustomName(p_180633_5_.getHoverName());
-         }
-      }
-
-   }
-
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

@@ -31,256 +31,347 @@ import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class HorseEntity extends AbstractHorseEntity {
-   private static final UUID ARMOR_MODIFIER_UUID = UUID.fromString("556E1665-8B10-40C8-8F9D-CF9B1667F295");
-   private static final DataParameter<Integer> DATA_ID_TYPE_VARIANT = EntityDataManager.defineId(HorseEntity.class, DataSerializers.INT);
+public class HorseEntity extends AbstractHorseEntity
+{
+    private static final UUID ARMOR_MODIFIER_UUID = UUID.fromString("556E1665-8B10-40C8-8F9D-CF9B1667F295");
+    private static final DataParameter<Integer> HORSE_VARIANT = EntityDataManager.createKey(HorseEntity.class, DataSerializers.VARINT);
 
-   public HorseEntity(EntityType<? extends HorseEntity> p_i50238_1_, World p_i50238_2_) {
-      super(p_i50238_1_, p_i50238_2_);
-   }
+    public HorseEntity(EntityType <? extends HorseEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   protected void randomizeAttributes() {
-      this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)this.generateRandomMaxHealth());
-      this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(this.generateRandomSpeed());
-      this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(this.generateRandomJumpStrength());
-   }
+    protected void func_230273_eI_()
+    {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)this.getModifiedMaxHealth());
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(this.getModifiedMovementSpeed());
+        this.getAttribute(Attributes.HORSE_JUMP_STRENGTH).setBaseValue(this.getModifiedJumpStrength());
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_ID_TYPE_VARIANT, 0);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(HORSE_VARIANT, 0);
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putInt("Variant", this.getTypeVariant());
-      if (!this.inventory.getItem(1).isEmpty()) {
-         p_213281_1_.put("ArmorItem", this.inventory.getItem(1).save(new CompoundNBT()));
-      }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putInt("Variant", this.func_234241_eS_());
 
-   }
+        if (!this.horseChest.getStackInSlot(1).isEmpty())
+        {
+            compound.put("ArmorItem", this.horseChest.getStackInSlot(1).write(new CompoundNBT()));
+        }
+    }
 
-   public ItemStack getArmor() {
-      return this.getItemBySlot(EquipmentSlotType.CHEST);
-   }
+    public ItemStack func_213803_dV()
+    {
+        return this.getItemStackFromSlot(EquipmentSlotType.CHEST);
+    }
 
-   private void setArmor(ItemStack p_213805_1_) {
-      this.setItemSlot(EquipmentSlotType.CHEST, p_213805_1_);
-      this.setDropChance(EquipmentSlotType.CHEST, 0.0F);
-   }
+    private void func_213805_k(ItemStack p_213805_1_)
+    {
+        this.setItemStackToSlot(EquipmentSlotType.CHEST, p_213805_1_);
+        this.setDropChance(EquipmentSlotType.CHEST, 0.0F);
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.setTypeVariant(p_70037_1_.getInt("Variant"));
-      if (p_70037_1_.contains("ArmorItem", 10)) {
-         ItemStack itemstack = ItemStack.of(p_70037_1_.getCompound("ArmorItem"));
-         if (!itemstack.isEmpty() && this.isArmor(itemstack)) {
-            this.inventory.setItem(1, itemstack);
-         }
-      }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.func_234242_w_(compound.getInt("Variant"));
 
-      this.updateContainerEquipment();
-   }
+        if (compound.contains("ArmorItem", 10))
+        {
+            ItemStack itemstack = ItemStack.read(compound.getCompound("ArmorItem"));
 
-   private void setTypeVariant(int p_234242_1_) {
-      this.entityData.set(DATA_ID_TYPE_VARIANT, p_234242_1_);
-   }
-
-   private int getTypeVariant() {
-      return this.entityData.get(DATA_ID_TYPE_VARIANT);
-   }
-
-   private void setVariantAndMarkings(CoatColors p_234238_1_, CoatTypes p_234238_2_) {
-      this.setTypeVariant(p_234238_1_.getId() & 255 | p_234238_2_.getId() << 8 & '\uff00');
-   }
-
-   public CoatColors getVariant() {
-      return CoatColors.byId(this.getTypeVariant() & 255);
-   }
-
-   public CoatTypes getMarkings() {
-      return CoatTypes.byId((this.getTypeVariant() & '\uff00') >> 8);
-   }
-
-   protected void updateContainerEquipment() {
-      if (!this.level.isClientSide) {
-         super.updateContainerEquipment();
-         this.setArmorEquipment(this.inventory.getItem(1));
-         this.setDropChance(EquipmentSlotType.CHEST, 0.0F);
-      }
-   }
-
-   private void setArmorEquipment(ItemStack p_213804_1_) {
-      this.setArmor(p_213804_1_);
-      if (!this.level.isClientSide) {
-         this.getAttribute(Attributes.ARMOR).removeModifier(ARMOR_MODIFIER_UUID);
-         if (this.isArmor(p_213804_1_)) {
-            int i = ((HorseArmorItem)p_213804_1_.getItem()).getProtection();
-            if (i != 0) {
-               this.getAttribute(Attributes.ARMOR).addTransientModifier(new AttributeModifier(ARMOR_MODIFIER_UUID, "Horse armor bonus", (double)i, AttributeModifier.Operation.ADDITION));
+            if (!itemstack.isEmpty() && this.isArmor(itemstack))
+            {
+                this.horseChest.setInventorySlotContents(1, itemstack);
             }
-         }
-      }
+        }
 
-   }
+        this.func_230275_fc_();
+    }
 
-   public void containerChanged(IInventory p_76316_1_) {
-      ItemStack itemstack = this.getArmor();
-      super.containerChanged(p_76316_1_);
-      ItemStack itemstack1 = this.getArmor();
-      if (this.tickCount > 20 && this.isArmor(itemstack1) && itemstack != itemstack1) {
-         this.playSound(SoundEvents.HORSE_ARMOR, 0.5F, 1.0F);
-      }
+    private void func_234242_w_(int p_234242_1_)
+    {
+        this.dataManager.set(HORSE_VARIANT, p_234242_1_);
+    }
 
-   }
+    private int func_234241_eS_()
+    {
+        return this.dataManager.get(HORSE_VARIANT);
+    }
 
-   protected void playGallopSound(SoundType p_190680_1_) {
-      super.playGallopSound(p_190680_1_);
-      if (this.random.nextInt(10) == 0) {
-         this.playSound(SoundEvents.HORSE_BREATHE, p_190680_1_.getVolume() * 0.6F, p_190680_1_.getPitch());
-      }
+    private void func_234238_a_(CoatColors p_234238_1_, CoatTypes p_234238_2_)
+    {
+        this.func_234242_w_(p_234238_1_.getId() & 255 | p_234238_2_.getId() << 8 & 65280);
+    }
 
-   }
+    public CoatColors func_234239_eK_()
+    {
+        return CoatColors.func_234254_a_(this.func_234241_eS_() & 255);
+    }
 
-   protected SoundEvent getAmbientSound() {
-      super.getAmbientSound();
-      return SoundEvents.HORSE_AMBIENT;
-   }
+    public CoatTypes func_234240_eM_()
+    {
+        return CoatTypes.func_234248_a_((this.func_234241_eS_() & 65280) >> 8);
+    }
 
-   protected SoundEvent getDeathSound() {
-      super.getDeathSound();
-      return SoundEvents.HORSE_DEATH;
-   }
+    protected void func_230275_fc_()
+    {
+        if (!this.world.isRemote)
+        {
+            super.func_230275_fc_();
+            this.func_213804_l(this.horseChest.getStackInSlot(1));
+            this.setDropChance(EquipmentSlotType.CHEST, 0.0F);
+        }
+    }
 
-   @Nullable
-   protected SoundEvent getEatingSound() {
-      return SoundEvents.HORSE_EAT;
-   }
+    private void func_213804_l(ItemStack p_213804_1_)
+    {
+        this.func_213805_k(p_213804_1_);
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      super.getHurtSound(p_184601_1_);
-      return SoundEvents.HORSE_HURT;
-   }
+        if (!this.world.isRemote)
+        {
+            this.getAttribute(Attributes.ARMOR).removeModifier(ARMOR_MODIFIER_UUID);
 
-   protected SoundEvent getAngrySound() {
-      super.getAngrySound();
-      return SoundEvents.HORSE_ANGRY;
-   }
+            if (this.isArmor(p_213804_1_))
+            {
+                int i = ((HorseArmorItem)p_213804_1_.getItem()).getArmorValue();
 
-   public ActionResultType mobInteract(PlayerEntity p_230254_1_, Hand p_230254_2_) {
-      ItemStack itemstack = p_230254_1_.getItemInHand(p_230254_2_);
-      if (!this.isBaby()) {
-         if (this.isTamed() && p_230254_1_.isSecondaryUseActive()) {
-            this.openInventory(p_230254_1_);
-            return ActionResultType.sidedSuccess(this.level.isClientSide);
-         }
+                if (i != 0)
+                {
+                    this.getAttribute(Attributes.ARMOR).applyNonPersistentModifier(new AttributeModifier(ARMOR_MODIFIER_UUID, "Horse armor bonus", (double)i, AttributeModifier.Operation.ADDITION));
+                }
+            }
+        }
+    }
 
-         if (this.isVehicle()) {
-            return super.mobInteract(p_230254_1_, p_230254_2_);
-         }
-      }
+    /**
+     * Called by InventoryBasic.onInventoryChanged() on a array that is never filled.
+     */
+    public void onInventoryChanged(IInventory invBasic)
+    {
+        ItemStack itemstack = this.func_213803_dV();
+        super.onInventoryChanged(invBasic);
+        ItemStack itemstack1 = this.func_213803_dV();
 
-      if (!itemstack.isEmpty()) {
-         if (this.isFood(itemstack)) {
-            return this.fedFood(p_230254_1_, itemstack);
-         }
+        if (this.ticksExisted > 20 && this.isArmor(itemstack1) && itemstack != itemstack1)
+        {
+            this.playSound(SoundEvents.ENTITY_HORSE_ARMOR, 0.5F, 1.0F);
+        }
+    }
 
-         ActionResultType actionresulttype = itemstack.interactLivingEntity(p_230254_1_, this, p_230254_2_);
-         if (actionresulttype.consumesAction()) {
-            return actionresulttype;
-         }
+    protected void playGallopSound(SoundType p_190680_1_)
+    {
+        super.playGallopSound(p_190680_1_);
 
-         if (!this.isTamed()) {
-            this.makeMad();
-            return ActionResultType.sidedSuccess(this.level.isClientSide);
-         }
+        if (this.rand.nextInt(10) == 0)
+        {
+            this.playSound(SoundEvents.ENTITY_HORSE_BREATHE, p_190680_1_.getVolume() * 0.6F, p_190680_1_.getPitch());
+        }
+    }
 
-         boolean flag = !this.isBaby() && !this.isSaddled() && itemstack.getItem() == Items.SADDLE;
-         if (this.isArmor(itemstack) || flag) {
-            this.openInventory(p_230254_1_);
-            return ActionResultType.sidedSuccess(this.level.isClientSide);
-         }
-      }
+    protected SoundEvent getAmbientSound()
+    {
+        super.getAmbientSound();
+        return SoundEvents.ENTITY_HORSE_AMBIENT;
+    }
 
-      if (this.isBaby()) {
-         return super.mobInteract(p_230254_1_, p_230254_2_);
-      } else {
-         this.doPlayerRide(p_230254_1_);
-         return ActionResultType.sidedSuccess(this.level.isClientSide);
-      }
-   }
+    protected SoundEvent getDeathSound()
+    {
+        super.getDeathSound();
+        return SoundEvents.ENTITY_HORSE_DEATH;
+    }
 
-   public boolean canMate(AnimalEntity p_70878_1_) {
-      if (p_70878_1_ == this) {
-         return false;
-      } else if (!(p_70878_1_ instanceof DonkeyEntity) && !(p_70878_1_ instanceof HorseEntity)) {
-         return false;
-      } else {
-         return this.canParent() && ((AbstractHorseEntity)p_70878_1_).canParent();
-      }
-   }
+    @Nullable
+    protected SoundEvent func_230274_fe_()
+    {
+        return SoundEvents.ENTITY_HORSE_EAT;
+    }
 
-   public AgeableEntity getBreedOffspring(ServerWorld p_241840_1_, AgeableEntity p_241840_2_) {
-      AbstractHorseEntity abstracthorseentity;
-      if (p_241840_2_ instanceof DonkeyEntity) {
-         abstracthorseentity = EntityType.MULE.create(p_241840_1_);
-      } else {
-         HorseEntity horseentity = (HorseEntity)p_241840_2_;
-         abstracthorseentity = EntityType.HORSE.create(p_241840_1_);
-         int i = this.random.nextInt(9);
-         CoatColors coatcolors;
-         if (i < 4) {
-            coatcolors = this.getVariant();
-         } else if (i < 8) {
-            coatcolors = horseentity.getVariant();
-         } else {
-            coatcolors = Util.getRandom(CoatColors.values(), this.random);
-         }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        super.getHurtSound(damageSourceIn);
+        return SoundEvents.ENTITY_HORSE_HURT;
+    }
 
-         int j = this.random.nextInt(5);
-         CoatTypes coattypes;
-         if (j < 2) {
-            coattypes = this.getMarkings();
-         } else if (j < 4) {
-            coattypes = horseentity.getMarkings();
-         } else {
-            coattypes = Util.getRandom(CoatTypes.values(), this.random);
-         }
+    protected SoundEvent getAngrySound()
+    {
+        super.getAngrySound();
+        return SoundEvents.ENTITY_HORSE_ANGRY;
+    }
 
-         ((HorseEntity)abstracthorseentity).setVariantAndMarkings(coatcolors, coattypes);
-      }
+    public ActionResultType func_230254_b_(PlayerEntity p_230254_1_, Hand p_230254_2_)
+    {
+        ItemStack itemstack = p_230254_1_.getHeldItem(p_230254_2_);
 
-      this.setOffspringAttributes(p_241840_2_, abstracthorseentity);
-      return abstracthorseentity;
-   }
+        if (!this.isChild())
+        {
+            if (this.isTame() && p_230254_1_.isSecondaryUseActive())
+            {
+                this.openGUI(p_230254_1_);
+                return ActionResultType.func_233537_a_(this.world.isRemote);
+            }
 
-   public boolean canWearArmor() {
-      return true;
-   }
+            if (this.isBeingRidden())
+            {
+                return super.func_230254_b_(p_230254_1_, p_230254_2_);
+            }
+        }
 
-   public boolean isArmor(ItemStack p_190682_1_) {
-      return p_190682_1_.getItem() instanceof HorseArmorItem;
-   }
+        if (!itemstack.isEmpty())
+        {
+            if (this.isBreedingItem(itemstack))
+            {
+                return this.func_241395_b_(p_230254_1_, itemstack);
+            }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      CoatColors coatcolors;
-      if (p_213386_4_ instanceof HorseEntity.HorseData) {
-         coatcolors = ((HorseEntity.HorseData)p_213386_4_).variant;
-      } else {
-         coatcolors = Util.getRandom(CoatColors.values(), this.random);
-         p_213386_4_ = new HorseEntity.HorseData(coatcolors);
-      }
+            ActionResultType actionresulttype = itemstack.interactWithEntity(p_230254_1_, this, p_230254_2_);
 
-      this.setVariantAndMarkings(coatcolors, Util.getRandom(CoatTypes.values(), this.random));
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
+            if (actionresulttype.isSuccessOrConsume())
+            {
+                return actionresulttype;
+            }
 
-   public static class HorseData extends AgeableEntity.AgeableData {
-      public final CoatColors variant;
+            if (!this.isTame())
+            {
+                this.makeMad();
+                return ActionResultType.func_233537_a_(this.world.isRemote);
+            }
 
-      public HorseData(CoatColors p_i231557_1_) {
-         super(true);
-         this.variant = p_i231557_1_;
-      }
-   }
+            boolean flag = !this.isChild() && !this.isHorseSaddled() && itemstack.getItem() == Items.SADDLE;
+
+            if (this.isArmor(itemstack) || flag)
+            {
+                this.openGUI(p_230254_1_);
+                return ActionResultType.func_233537_a_(this.world.isRemote);
+            }
+        }
+
+        if (this.isChild())
+        {
+            return super.func_230254_b_(p_230254_1_, p_230254_2_);
+        }
+        else
+        {
+            this.mountTo(p_230254_1_);
+            return ActionResultType.func_233537_a_(this.world.isRemote);
+        }
+    }
+
+    /**
+     * Returns true if the mob is currently able to mate with the specified mob.
+     */
+    public boolean canMateWith(AnimalEntity otherAnimal)
+    {
+        if (otherAnimal == this)
+        {
+            return false;
+        }
+        else if (!(otherAnimal instanceof DonkeyEntity) && !(otherAnimal instanceof HorseEntity))
+        {
+            return false;
+        }
+        else
+        {
+            return this.canMate() && ((AbstractHorseEntity)otherAnimal).canMate();
+        }
+    }
+
+    public AgeableEntity func_241840_a(ServerWorld p_241840_1_, AgeableEntity p_241840_2_)
+    {
+        AbstractHorseEntity abstracthorseentity;
+
+        if (p_241840_2_ instanceof DonkeyEntity)
+        {
+            abstracthorseentity = EntityType.MULE.create(p_241840_1_);
+        }
+        else
+        {
+            HorseEntity horseentity = (HorseEntity)p_241840_2_;
+            abstracthorseentity = EntityType.HORSE.create(p_241840_1_);
+            int i = this.rand.nextInt(9);
+            CoatColors coatcolors;
+
+            if (i < 4)
+            {
+                coatcolors = this.func_234239_eK_();
+            }
+            else if (i < 8)
+            {
+                coatcolors = horseentity.func_234239_eK_();
+            }
+            else
+            {
+                coatcolors = Util.getRandomObject(CoatColors.values(), this.rand);
+            }
+
+            int j = this.rand.nextInt(5);
+            CoatTypes coattypes;
+
+            if (j < 2)
+            {
+                coattypes = this.func_234240_eM_();
+            }
+            else if (j < 4)
+            {
+                coattypes = horseentity.func_234240_eM_();
+            }
+            else
+            {
+                coattypes = Util.getRandomObject(CoatTypes.values(), this.rand);
+            }
+
+            ((HorseEntity)abstracthorseentity).func_234238_a_(coatcolors, coattypes);
+        }
+
+        this.setOffspringAttributes(p_241840_2_, abstracthorseentity);
+        return abstracthorseentity;
+    }
+
+    public boolean func_230276_fq_()
+    {
+        return true;
+    }
+
+    public boolean isArmor(ItemStack stack)
+    {
+        return stack.getItem() instanceof HorseArmorItem;
+    }
+
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        CoatColors coatcolors;
+
+        if (spawnDataIn instanceof HorseEntity.HorseData)
+        {
+            coatcolors = ((HorseEntity.HorseData)spawnDataIn).variant;
+        }
+        else
+        {
+            coatcolors = Util.getRandomObject(CoatColors.values(), this.rand);
+            spawnDataIn = new HorseEntity.HorseData(coatcolors);
+        }
+
+        this.func_234238_a_(coatcolors, Util.getRandomObject(CoatTypes.values(), this.rand));
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
+
+    public static class HorseData extends AgeableEntity.AgeableData
+    {
+        public final CoatColors variant;
+
+        public HorseData(CoatColors p_i231557_1_)
+        {
+            super(true);
+            this.variant = p_i231557_1_;
+        }
+    }
 }

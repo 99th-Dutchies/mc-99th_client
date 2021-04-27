@@ -13,80 +13,118 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public abstract class AbstractTopPlantBlock extends AbstractPlantBlock implements IGrowable {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_25;
-   private final double growPerTickProbability;
+public abstract class AbstractTopPlantBlock extends AbstractPlantBlock implements IGrowable
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_25;
+    private final double growthChance;
 
-   protected AbstractTopPlantBlock(AbstractBlock.Properties p_i241180_1_, Direction p_i241180_2_, VoxelShape p_i241180_3_, boolean p_i241180_4_, double p_i241180_5_) {
-      super(p_i241180_1_, p_i241180_2_, p_i241180_3_, p_i241180_4_);
-      this.growPerTickProbability = p_i241180_5_;
-      this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
-   }
+    protected AbstractTopPlantBlock(AbstractBlock.Properties properties, Direction direction, VoxelShape shape, boolean waterloggable, double growthChance)
+    {
+        super(properties, direction, shape, waterloggable);
+        this.growthChance = growthChance;
+        this.setDefaultState(this.stateContainer.getBaseState().with(AGE, Integer.valueOf(0)));
+    }
 
-   public BlockState getStateForPlacement(IWorld p_235504_1_) {
-      return this.defaultBlockState().setValue(AGE, Integer.valueOf(p_235504_1_.getRandom().nextInt(25)));
-   }
+    public BlockState grow(IWorld world)
+    {
+        return this.getDefaultState().with(AGE, Integer.valueOf(world.getRandom().nextInt(25)));
+    }
 
-   public boolean isRandomlyTicking(BlockState p_149653_1_) {
-      return p_149653_1_.getValue(AGE) < 25;
-   }
+    /**
+     * Returns whether or not this block is of a type that needs random ticking. Called for ref-counting purposes by
+     * ExtendedBlockStorage in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
+    public boolean ticksRandomly(BlockState state)
+    {
+        return state.get(AGE) < 25;
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_1_.getValue(AGE) < 25 && p_225542_4_.nextDouble() < this.growPerTickProbability) {
-         BlockPos blockpos = p_225542_3_.relative(this.growthDirection);
-         if (this.canGrowInto(p_225542_2_.getBlockState(blockpos))) {
-            p_225542_2_.setBlockAndUpdate(blockpos, p_225542_1_.cycle(AGE));
-         }
-      }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (state.get(AGE) < 25 && random.nextDouble() < this.growthChance)
+        {
+            BlockPos blockpos = pos.offset(this.growthDirection);
 
-   }
+            if (this.canGrowIn(worldIn.getBlockState(blockpos)))
+            {
+                worldIn.setBlockState(blockpos, state.func_235896_a_(AGE));
+            }
+        }
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_2_ == this.growthDirection.getOpposite() && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 1);
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (facing == this.growthDirection.getOpposite() && !stateIn.isValidPosition(worldIn, currentPos))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+        }
 
-      if (p_196271_2_ != this.growthDirection || !p_196271_3_.is(this) && !p_196271_3_.is(this.getBodyBlock())) {
-         if (this.scheduleFluidTicks) {
-            p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
-         }
+        if (facing != this.growthDirection || !facingState.isIn(this) && !facingState.isIn(this.getBodyPlantBlock()))
+        {
+            if (this.breaksInWater)
+            {
+                worldIn.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+            }
 
-         return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-      } else {
-         return this.getBodyBlock().defaultBlockState();
-      }
-   }
+            return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+        }
+        else
+        {
+            return this.getBodyPlantBlock().getDefaultState();
+        }
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return this.canGrowInto(p_176473_1_.getBlockState(p_176473_2_.relative(this.growthDirection)));
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return this.canGrowIn(worldIn.getBlockState(pos.offset(this.growthDirection)));
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      BlockPos blockpos = p_225535_3_.relative(this.growthDirection);
-      int i = Math.min(p_225535_4_.getValue(AGE) + 1, 25);
-      int j = this.getBlocksToGrowWhenBonemealed(p_225535_2_);
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        BlockPos blockpos = pos.offset(this.growthDirection);
+        int i = Math.min(state.get(AGE) + 1, 25);
+        int j = this.getGrowthAmount(rand);
 
-      for(int k = 0; k < j && this.canGrowInto(p_225535_1_.getBlockState(blockpos)); ++k) {
-         p_225535_1_.setBlockAndUpdate(blockpos, p_225535_4_.setValue(AGE, Integer.valueOf(i)));
-         blockpos = blockpos.relative(this.growthDirection);
-         i = Math.min(i + 1, 25);
-      }
+        for (int k = 0; k < j && this.canGrowIn(worldIn.getBlockState(blockpos)); ++k)
+        {
+            worldIn.setBlockState(blockpos, state.with(AGE, Integer.valueOf(i)));
+            blockpos = blockpos.offset(this.growthDirection);
+            i = Math.min(i + 1, 25);
+        }
+    }
 
-   }
+    /**
+     * Used to determine how much to grow the plant when using bonemeal. Kelp always returns 1, where as the nether
+     * vines return a random value at least 1.
+     */
+    protected abstract int getGrowthAmount(Random rand);
 
-   protected abstract int getBlocksToGrowWhenBonemealed(Random p_230332_1_);
+    protected abstract boolean canGrowIn(BlockState state);
 
-   protected abstract boolean canGrowInto(BlockState p_230334_1_);
-
-   protected AbstractTopPlantBlock getHeadBlock() {
-      return this;
-   }
+    protected AbstractTopPlantBlock getTopPlantBlock()
+    {
+        return this;
+    }
 }

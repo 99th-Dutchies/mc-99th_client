@@ -11,55 +11,77 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class HangingEntityItem extends Item {
-   private final EntityType<? extends HangingEntity> type;
+public class HangingEntityItem extends Item
+{
+    private final EntityType <? extends HangingEntity > hangingEntity;
 
-   public HangingEntityItem(EntityType<? extends HangingEntity> p_i50043_1_, Item.Properties p_i50043_2_) {
-      super(p_i50043_2_);
-      this.type = p_i50043_1_;
-   }
+    public HangingEntityItem(EntityType <? extends HangingEntity > entityTypeIn, Item.Properties properties)
+    {
+        super(properties);
+        this.hangingEntity = entityTypeIn;
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      BlockPos blockpos = p_195939_1_.getClickedPos();
-      Direction direction = p_195939_1_.getClickedFace();
-      BlockPos blockpos1 = blockpos.relative(direction);
-      PlayerEntity playerentity = p_195939_1_.getPlayer();
-      ItemStack itemstack = p_195939_1_.getItemInHand();
-      if (playerentity != null && !this.mayPlace(playerentity, direction, itemstack, blockpos1)) {
-         return ActionResultType.FAIL;
-      } else {
-         World world = p_195939_1_.getLevel();
-         HangingEntity hangingentity;
-         if (this.type == EntityType.PAINTING) {
-            hangingentity = new PaintingEntity(world, blockpos1, direction);
-         } else {
-            if (this.type != EntityType.ITEM_FRAME) {
-               return ActionResultType.sidedSuccess(world.isClientSide);
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        BlockPos blockpos = context.getPos();
+        Direction direction = context.getFace();
+        BlockPos blockpos1 = blockpos.offset(direction);
+        PlayerEntity playerentity = context.getPlayer();
+        ItemStack itemstack = context.getItem();
+
+        if (playerentity != null && !this.canPlace(playerentity, direction, itemstack, blockpos1))
+        {
+            return ActionResultType.FAIL;
+        }
+        else
+        {
+            World world = context.getWorld();
+            HangingEntity hangingentity;
+
+            if (this.hangingEntity == EntityType.PAINTING)
+            {
+                hangingentity = new PaintingEntity(world, blockpos1, direction);
+            }
+            else
+            {
+                if (this.hangingEntity != EntityType.ITEM_FRAME)
+                {
+                    return ActionResultType.func_233537_a_(world.isRemote);
+                }
+
+                hangingentity = new ItemFrameEntity(world, blockpos1, direction);
             }
 
-            hangingentity = new ItemFrameEntity(world, blockpos1, direction);
-         }
+            CompoundNBT compoundnbt = itemstack.getTag();
 
-         CompoundNBT compoundnbt = itemstack.getTag();
-         if (compoundnbt != null) {
-            EntityType.updateCustomEntityTag(world, playerentity, hangingentity, compoundnbt);
-         }
-
-         if (hangingentity.survives()) {
-            if (!world.isClientSide) {
-               hangingentity.playPlacementSound();
-               world.addFreshEntity(hangingentity);
+            if (compoundnbt != null)
+            {
+                EntityType.applyItemNBT(world, playerentity, hangingentity, compoundnbt);
             }
 
-            itemstack.shrink(1);
-            return ActionResultType.sidedSuccess(world.isClientSide);
-         } else {
-            return ActionResultType.CONSUME;
-         }
-      }
-   }
+            if (hangingentity.onValidSurface())
+            {
+                if (!world.isRemote)
+                {
+                    hangingentity.playPlaceSound();
+                    world.addEntity(hangingentity);
+                }
 
-   protected boolean mayPlace(PlayerEntity p_200127_1_, Direction p_200127_2_, ItemStack p_200127_3_, BlockPos p_200127_4_) {
-      return !p_200127_2_.getAxis().isVertical() && p_200127_1_.mayUseItemAt(p_200127_4_, p_200127_2_, p_200127_3_);
-   }
+                itemstack.shrink(1);
+                return ActionResultType.func_233537_a_(world.isRemote);
+            }
+            else
+            {
+                return ActionResultType.CONSUME;
+            }
+        }
+    }
+
+    protected boolean canPlace(PlayerEntity playerIn, Direction directionIn, ItemStack itemStackIn, BlockPos posIn)
+    {
+        return !directionIn.getAxis().isVertical() && playerIn.canPlayerEdit(posIn, directionIn, itemStackIn);
+    }
 }

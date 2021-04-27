@@ -1,35 +1,37 @@
 package net.minecraft.util;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public class ColorHelper
+{
+    public static class PackedColor
+    {
+        public static int getAlpha(int packedColor)
+        {
+            return packedColor >>> 24;
+        }
 
-public class ColorHelper {
-   public static class PackedColor {
-      @OnlyIn(Dist.CLIENT)
-      public static int alpha(int p_233004_0_) {
-         return p_233004_0_ >>> 24;
-      }
+        public static int getRed(int packedColor)
+        {
+            return packedColor >> 16 & 255;
+        }
 
-      public static int red(int p_233007_0_) {
-         return p_233007_0_ >> 16 & 255;
-      }
+        public static int getGreen(int packedColor)
+        {
+            return packedColor >> 8 & 255;
+        }
 
-      public static int green(int p_233008_0_) {
-         return p_233008_0_ >> 8 & 255;
-      }
+        public static int getBlue(int packedColor)
+        {
+            return packedColor & 255;
+        }
 
-      public static int blue(int p_233009_0_) {
-         return p_233009_0_ & 255;
-      }
+        public static int packColor(int alpha, int red, int green, int blue)
+        {
+            return alpha << 24 | red << 16 | green << 8 | blue;
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public static int color(int p_233006_0_, int p_233006_1_, int p_233006_2_, int p_233006_3_) {
-         return p_233006_0_ << 24 | p_233006_1_ << 16 | p_233006_2_ << 8 | p_233006_3_;
-      }
-
-      @OnlyIn(Dist.CLIENT)
-      public static int multiply(int p_233005_0_, int p_233005_1_) {
-         return color(alpha(p_233005_0_) * alpha(p_233005_1_) / 255, red(p_233005_0_) * red(p_233005_1_) / 255, green(p_233005_0_) * green(p_233005_1_) / 255, blue(p_233005_0_) * blue(p_233005_1_) / 255);
-      }
-   }
+        public static int blendColors(int packedColourOne, int packedColorTwo)
+        {
+            return packColor(getAlpha(packedColourOne) * getAlpha(packedColorTwo) / 255, getRed(packedColourOne) * getRed(packedColorTwo) / 255, getGreen(packedColourOne) * getGreen(packedColorTwo) / 255, getBlue(packedColourOne) * getBlue(packedColorTwo) / 255);
+        }
+    }
 }

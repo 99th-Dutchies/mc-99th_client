@@ -6,58 +6,67 @@ import net.minecraft.util.FastRandom;
 import net.minecraft.world.gen.area.LazyArea;
 import net.minecraft.world.gen.layer.traits.IPixelTransformer;
 
-public class LazyAreaLayerContext implements IExtendedNoiseRandom<LazyArea> {
-   private final Long2IntLinkedOpenHashMap cache;
-   private final int maxCache;
-   private final ImprovedNoiseGenerator biomeNoise;
-   private final long seed;
-   private long rval;
+public class LazyAreaLayerContext implements IExtendedNoiseRandom<LazyArea>
+{
+    private final Long2IntLinkedOpenHashMap cache;
+    private final int maxCacheSize;
+    private final ImprovedNoiseGenerator noise;
+    private final long seed;
+    private long positionSeed;
 
-   public LazyAreaLayerContext(int p_i51285_1_, long p_i51285_2_, long p_i51285_4_) {
-      this.seed = mixSeed(p_i51285_2_, p_i51285_4_);
-      this.biomeNoise = new ImprovedNoiseGenerator(new Random(p_i51285_2_));
-      this.cache = new Long2IntLinkedOpenHashMap(16, 0.25F);
-      this.cache.defaultReturnValue(Integer.MIN_VALUE);
-      this.maxCache = p_i51285_1_;
-   }
+    public LazyAreaLayerContext(int maxCacheSizeIn, long seedIn, long seedModifierIn)
+    {
+        this.seed = hash(seedIn, seedModifierIn);
+        this.noise = new ImprovedNoiseGenerator(new Random(seedIn));
+        this.cache = new Long2IntLinkedOpenHashMap(16, 0.25F);
+        this.cache.defaultReturnValue(Integer.MIN_VALUE);
+        this.maxCacheSize = maxCacheSizeIn;
+    }
 
-   public LazyArea createResult(IPixelTransformer p_212861_1_) {
-      return new LazyArea(this.cache, this.maxCache, p_212861_1_);
-   }
+    public LazyArea makeArea(IPixelTransformer pixelTransformer)
+    {
+        return new LazyArea(this.cache, this.maxCacheSize, pixelTransformer);
+    }
 
-   public LazyArea createResult(IPixelTransformer p_212859_1_, LazyArea p_212859_2_) {
-      return new LazyArea(this.cache, Math.min(1024, p_212859_2_.getMaxCache() * 4), p_212859_1_);
-   }
+    public LazyArea makeArea(IPixelTransformer pixelTransformer, LazyArea area)
+    {
+        return new LazyArea(this.cache, Math.min(1024, area.getmaxCacheSize() * 4), pixelTransformer);
+    }
 
-   public LazyArea createResult(IPixelTransformer p_212860_1_, LazyArea p_212860_2_, LazyArea p_212860_3_) {
-      return new LazyArea(this.cache, Math.min(1024, Math.max(p_212860_2_.getMaxCache(), p_212860_3_.getMaxCache()) * 4), p_212860_1_);
-   }
+    public LazyArea makeArea(IPixelTransformer p_212860_1_, LazyArea firstArea, LazyArea secondArea)
+    {
+        return new LazyArea(this.cache, Math.min(1024, Math.max(firstArea.getmaxCacheSize(), secondArea.getmaxCacheSize()) * 4), p_212860_1_);
+    }
 
-   public void initRandom(long p_202698_1_, long p_202698_3_) {
-      long i = this.seed;
-      i = FastRandom.next(i, p_202698_1_);
-      i = FastRandom.next(i, p_202698_3_);
-      i = FastRandom.next(i, p_202698_1_);
-      i = FastRandom.next(i, p_202698_3_);
-      this.rval = i;
-   }
+    public void setPosition(long x, long z)
+    {
+        long i = this.seed;
+        i = FastRandom.mix(i, x);
+        i = FastRandom.mix(i, z);
+        i = FastRandom.mix(i, x);
+        i = FastRandom.mix(i, z);
+        this.positionSeed = i;
+    }
 
-   public int nextRandom(int p_202696_1_) {
-      int i = (int)Math.floorMod(this.rval >> 24, (long)p_202696_1_);
-      this.rval = FastRandom.next(this.rval, this.seed);
-      return i;
-   }
+    public int random(int bound)
+    {
+        int i = (int)Math.floorMod(this.positionSeed >> 24, (long)bound);
+        this.positionSeed = FastRandom.mix(this.positionSeed, this.seed);
+        return i;
+    }
 
-   public ImprovedNoiseGenerator getBiomeNoise() {
-      return this.biomeNoise;
-   }
+    public ImprovedNoiseGenerator getNoiseGenerator()
+    {
+        return this.noise;
+    }
 
-   private static long mixSeed(long p_227471_0_, long p_227471_2_) {
-      long lvt_4_1_ = FastRandom.next(p_227471_2_, p_227471_2_);
-      lvt_4_1_ = FastRandom.next(lvt_4_1_, p_227471_2_);
-      lvt_4_1_ = FastRandom.next(lvt_4_1_, p_227471_2_);
-      long lvt_6_1_ = FastRandom.next(p_227471_0_, lvt_4_1_);
-      lvt_6_1_ = FastRandom.next(lvt_6_1_, lvt_4_1_);
-      return FastRandom.next(lvt_6_1_, lvt_4_1_);
-   }
+    private static long hash(long left, long right)
+    {
+        long lvt_4_1_ = FastRandom.mix(right, right);
+        lvt_4_1_ = FastRandom.mix(lvt_4_1_, right);
+        lvt_4_1_ = FastRandom.mix(lvt_4_1_, right);
+        long lvt_6_1_ = FastRandom.mix(left, lvt_4_1_);
+        lvt_6_1_ = FastRandom.mix(lvt_6_1_, lvt_4_1_);
+        return FastRandom.mix(lvt_6_1_, lvt_4_1_);
+    }
 }

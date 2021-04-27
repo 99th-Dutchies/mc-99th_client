@@ -5,18 +5,28 @@ import com.google.gson.JsonParseException;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.text.ITextComponent;
 
-public class PackMetadataSectionSerializer implements IMetadataSectionSerializer<PackMetadataSection> {
-   public PackMetadataSection fromJson(JsonObject p_195812_1_) {
-      ITextComponent itextcomponent = ITextComponent.Serializer.fromJson(p_195812_1_.get("description"));
-      if (itextcomponent == null) {
-         throw new JsonParseException("Invalid/missing description!");
-      } else {
-         int i = JSONUtils.getAsInt(p_195812_1_, "pack_format");
-         return new PackMetadataSection(itextcomponent, i);
-      }
-   }
+public class PackMetadataSectionSerializer implements IMetadataSectionSerializer<PackMetadataSection>
+{
+    public PackMetadataSection deserialize(JsonObject json)
+    {
+        ITextComponent itextcomponent = ITextComponent.Serializer.getComponentFromJson(json.get("description"));
 
-   public String getMetadataSectionName() {
-      return "pack";
-   }
+        if (itextcomponent == null)
+        {
+            throw new JsonParseException("Invalid/missing description!");
+        }
+        else
+        {
+            int i = JSONUtils.getInt(json, "pack_format");
+            return new PackMetadataSection(itextcomponent, i);
+        }
+    }
+
+    /**
+     * The name of this section type as it appears in JSON.
+     */
+    public String getSectionName()
+    {
+        return "pack";
+    }
 }

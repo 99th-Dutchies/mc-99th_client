@@ -6,35 +6,42 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 
-public class TimedFunctionTag implements ITimerCallback<MinecraftServer> {
-   private final ResourceLocation tagId;
+public class TimedFunctionTag implements ITimerCallback<MinecraftServer>
+{
+    private final ResourceLocation tagName;
 
-   public TimedFunctionTag(ResourceLocation p_i51189_1_) {
-      this.tagId = p_i51189_1_;
-   }
+    public TimedFunctionTag(ResourceLocation p_i51189_1_)
+    {
+        this.tagName = p_i51189_1_;
+    }
 
-   public void handle(MinecraftServer p_212869_1_, TimerCallbackManager<MinecraftServer> p_212869_2_, long p_212869_3_) {
-      FunctionManager functionmanager = p_212869_1_.getFunctions();
-      ITag<FunctionObject> itag = functionmanager.getTag(this.tagId);
+    public void run(MinecraftServer obj, TimerCallbackManager<MinecraftServer> manager, long gameTime)
+    {
+        FunctionManager functionmanager = obj.getFunctionManager();
+        ITag<FunctionObject> itag = functionmanager.getFunctionTag(this.tagName);
 
-      for(FunctionObject functionobject : itag.getValues()) {
-         functionmanager.execute(functionobject, functionmanager.getGameLoopSender());
-      }
+        for (FunctionObject functionobject : itag.getAllElements())
+        {
+            functionmanager.execute(functionobject, functionmanager.getCommandSource());
+        }
+    }
 
-   }
+    public static class Serializer extends ITimerCallback.Serializer<MinecraftServer, TimedFunctionTag>
+    {
+        public Serializer()
+        {
+            super(new ResourceLocation("function_tag"), TimedFunctionTag.class);
+        }
 
-   public static class Serializer extends ITimerCallback.Serializer<MinecraftServer, TimedFunctionTag> {
-      public Serializer() {
-         super(new ResourceLocation("function_tag"), TimedFunctionTag.class);
-      }
+        public void write(CompoundNBT p_212847_1_, TimedFunctionTag p_212847_2_)
+        {
+            p_212847_1_.putString("Name", p_212847_2_.tagName.toString());
+        }
 
-      public void serialize(CompoundNBT p_212847_1_, TimedFunctionTag p_212847_2_) {
-         p_212847_1_.putString("Name", p_212847_2_.tagId.toString());
-      }
-
-      public TimedFunctionTag deserialize(CompoundNBT p_212846_1_) {
-         ResourceLocation resourcelocation = new ResourceLocation(p_212846_1_.getString("Name"));
-         return new TimedFunctionTag(resourcelocation);
-      }
-   }
+        public TimedFunctionTag read(CompoundNBT p_212846_1_)
+        {
+            ResourceLocation resourcelocation = new ResourceLocation(p_212846_1_.getString("Name"));
+            return new TimedFunctionTag(resourcelocation);
+        }
+    }
 }

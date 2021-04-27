@@ -5,60 +5,77 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SPlaySoundEventPacket implements IPacket<IClientPlayNetHandler> {
-   private int type;
-   private BlockPos pos;
-   private int data;
-   private boolean globalEvent;
+public class SPlaySoundEventPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int soundType;
+    private BlockPos soundPos;
 
-   public SPlaySoundEventPacket() {
-   }
+    /** can be a block/item id or other depending on the soundtype */
+    private int soundData;
 
-   public SPlaySoundEventPacket(int p_i46940_1_, BlockPos p_i46940_2_, int p_i46940_3_, boolean p_i46940_4_) {
-      this.type = p_i46940_1_;
-      this.pos = p_i46940_2_.immutable();
-      this.data = p_i46940_3_;
-      this.globalEvent = p_i46940_4_;
-   }
+    /** If true the sound is played across the server */
+    private boolean serverWide;
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.type = p_148837_1_.readInt();
-      this.pos = p_148837_1_.readBlockPos();
-      this.data = p_148837_1_.readInt();
-      this.globalEvent = p_148837_1_.readBoolean();
-   }
+    public SPlaySoundEventPacket()
+    {
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeInt(this.type);
-      p_148840_1_.writeBlockPos(this.pos);
-      p_148840_1_.writeInt(this.data);
-      p_148840_1_.writeBoolean(this.globalEvent);
-   }
+    public SPlaySoundEventPacket(int soundTypeIn, BlockPos soundPosIn, int soundDataIn, boolean serverWideIn)
+    {
+        this.soundType = soundTypeIn;
+        this.soundPos = soundPosIn.toImmutable();
+        this.soundData = soundDataIn;
+        this.serverWide = serverWideIn;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleLevelEvent(this);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.soundType = buf.readInt();
+        this.soundPos = buf.readBlockPos();
+        this.soundData = buf.readInt();
+        this.serverWide = buf.readBoolean();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isGlobalEvent() {
-      return this.globalEvent;
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeInt(this.soundType);
+        buf.writeBlockPos(this.soundPos);
+        buf.writeInt(this.soundData);
+        buf.writeBoolean(this.serverWide);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getType() {
-      return this.type;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleEffect(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getData() {
-      return this.data;
-   }
+    public boolean isSoundServerwide()
+    {
+        return this.serverWide;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    public int getSoundType()
+    {
+        return this.soundType;
+    }
+
+    public int getSoundData()
+    {
+        return this.soundData;
+    }
+
+    public BlockPos getSoundPos()
+    {
+        return this.soundPos;
+    }
 }

@@ -3,20 +3,21 @@ package net.minecraft.item.crafting;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class BlastingRecipe extends AbstractCookingRecipe {
-   public BlastingRecipe(ResourceLocation p_i50031_1_, String p_i50031_2_, Ingredient p_i50031_3_, ItemStack p_i50031_4_, float p_i50031_5_, int p_i50031_6_) {
-      super(IRecipeType.BLASTING, p_i50031_1_, p_i50031_2_, p_i50031_3_, p_i50031_4_, p_i50031_5_, p_i50031_6_);
-   }
+public class BlastingRecipe extends AbstractCookingRecipe
+{
+    public BlastingRecipe(ResourceLocation id, String group, Ingredient ingredient, ItemStack result, float experience, int cookTime)
+    {
+        super(IRecipeType.BLASTING, id, group, ingredient, result, experience, cookTime);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getToastSymbol() {
-      return new ItemStack(Blocks.BLAST_FURNACE);
-   }
+    public ItemStack getIcon()
+    {
+        return new ItemStack(Blocks.BLAST_FURNACE);
+    }
 
-   public IRecipeSerializer<?> getSerializer() {
-      return IRecipeSerializer.BLASTING_RECIPE;
-   }
+    public IRecipeSerializer<?> getSerializer()
+    {
+        return IRecipeSerializer.BLASTING;
+    }
 }

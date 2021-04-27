@@ -6,33 +6,35 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.DispenserContainer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class DispenserScreen extends ContainerScreen<DispenserContainer> {
-   private static final ResourceLocation CONTAINER_LOCATION = new ResourceLocation("textures/gui/container/dispenser.png");
+public class DispenserScreen extends ContainerScreen<DispenserContainer>
+{
+    private static final ResourceLocation DISPENSER_GUI_TEXTURES = new ResourceLocation("textures/gui/container/dispenser.png");
 
-   public DispenserScreen(DispenserContainer p_i51093_1_, PlayerInventory p_i51093_2_, ITextComponent p_i51093_3_) {
-      super(p_i51093_1_, p_i51093_2_, p_i51093_3_);
-   }
+    public DispenserScreen(DispenserContainer container, PlayerInventory playerInventory, ITextComponent textComponent)
+    {
+        super(container, playerInventory, textComponent);
+    }
 
-   protected void init() {
-      super.init();
-      this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
-   }
+    protected void init()
+    {
+        super.init();
+        this.titleX = (this.xSize - this.font.getStringPropertyWidth(this.title)) / 2;
+    }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.renderBackground(p_230430_1_);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      this.renderTooltip(p_230430_1_, p_230430_2_, p_230430_3_);
-   }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.renderBackground(matrixStack);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+        this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
+    }
 
-   protected void renderBg(MatrixStack p_230450_1_, float p_230450_2_, int p_230450_3_, int p_230450_4_) {
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      this.minecraft.getTextureManager().bind(CONTAINER_LOCATION);
-      int i = (this.width - this.imageWidth) / 2;
-      int j = (this.height - this.imageHeight) / 2;
-      this.blit(p_230450_1_, i, j, 0, 0, this.imageWidth, this.imageHeight);
-   }
+    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y)
+    {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        this.minecraft.getTextureManager().bindTexture(DISPENSER_GUI_TEXTURES);
+        int i = (this.width - this.xSize) / 2;
+        int j = (this.height - this.ySize) / 2;
+        this.blit(matrixStack, i, j, 0, 0, this.xSize, this.ySize);
+    }
 }

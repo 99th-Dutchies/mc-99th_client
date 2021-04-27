@@ -5,18 +5,18 @@ import net.minecraft.client.renderer.entity.IEntityRenderer;
 import net.minecraft.client.renderer.entity.model.EndermanModel;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class EndermanEyesLayer<T extends LivingEntity> extends AbstractEyesLayer<T, EndermanModel<T>> {
-   private static final RenderType ENDERMAN_EYES = RenderType.eyes(new ResourceLocation("textures/entity/enderman/enderman_eyes.png"));
+public class EndermanEyesLayer<T extends LivingEntity> extends AbstractEyesLayer<T, EndermanModel<T>>
+{
+    private static final RenderType RENDER_TYPE = RenderType.getEyes(new ResourceLocation("textures/entity/enderman/enderman_eyes.png"));
 
-   public EndermanEyesLayer(IEntityRenderer<T, EndermanModel<T>> p_i50939_1_) {
-      super(p_i50939_1_);
-   }
+    public EndermanEyesLayer(IEntityRenderer<T, EndermanModel<T>> rendererIn)
+    {
+        super(rendererIn);
+    }
 
-   public RenderType renderType() {
-      return ENDERMAN_EYES;
-   }
+    public RenderType getRenderType()
+    {
+        return RENDER_TYPE;
+    }
 }

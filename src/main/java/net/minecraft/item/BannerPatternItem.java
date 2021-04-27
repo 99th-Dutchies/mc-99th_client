@@ -9,28 +9,32 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class BannerPatternItem extends Item {
-   private final BannerPattern bannerPattern;
+public class BannerPatternItem extends Item
+{
+    private final BannerPattern pattern;
 
-   public BannerPatternItem(BannerPattern p_i50057_1_, Item.Properties p_i50057_2_) {
-      super(p_i50057_2_);
-      this.bannerPattern = p_i50057_1_;
-   }
+    public BannerPatternItem(BannerPattern pattern, Item.Properties builder)
+    {
+        super(builder);
+        this.pattern = pattern;
+    }
 
-   public BannerPattern getBannerPattern() {
-      return this.bannerPattern;
-   }
+    public BannerPattern getBannerPattern()
+    {
+        return this.pattern;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(ItemStack p_77624_1_, @Nullable World p_77624_2_, List<ITextComponent> p_77624_3_, ITooltipFlag p_77624_4_) {
-      p_77624_3_.add(this.getDisplayName().withStyle(TextFormatting.GRAY));
-   }
+    /**
+     * allows items to add custom lines of information to the mouseover description
+     */
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+    {
+        tooltip.add(this.func_219981_d_().mergeStyle(TextFormatting.GRAY));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public IFormattableTextComponent getDisplayName() {
-      return new TranslationTextComponent(this.getDescriptionId() + ".desc");
-   }
+    public IFormattableTextComponent func_219981_d_()
+    {
+        return new TranslationTextComponent(this.getTranslationKey() + ".desc");
+    }
 }

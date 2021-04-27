@@ -1,20 +1,19 @@
 package net.minecraft.client.gui.advancements;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public enum AdvancementState
+{
+    OBTAINED(0),
+    UNOBTAINED(1);
 
-@OnlyIn(Dist.CLIENT)
-public enum AdvancementState {
-   OBTAINED(0),
-   UNOBTAINED(1);
+    private final int id;
 
-   private final int y;
+    private AdvancementState(int id)
+    {
+        this.id = id;
+    }
 
-   private AdvancementState(int p_i47384_3_) {
-      this.y = p_i47384_3_;
-   }
-
-   public int getIndex() {
-      return this.y;
-   }
+    public int getId()
+    {
+        return this.id;
+    }
 }

@@ -8,99 +8,128 @@ import net.minecraft.util.JSONUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class SingleItemRecipe implements IRecipe<IInventory> {
-   protected final Ingredient ingredient;
-   protected final ItemStack result;
-   private final IRecipeType<?> type;
-   private final IRecipeSerializer<?> serializer;
-   protected final ResourceLocation id;
-   protected final String group;
+public abstract class SingleItemRecipe implements IRecipe<IInventory>
+{
+    protected final Ingredient ingredient;
+    protected final ItemStack result;
+    private final IRecipeType<?> type;
+    private final IRecipeSerializer<?> serializer;
+    protected final ResourceLocation id;
+    protected final String group;
 
-   public SingleItemRecipe(IRecipeType<?> p_i50023_1_, IRecipeSerializer<?> p_i50023_2_, ResourceLocation p_i50023_3_, String p_i50023_4_, Ingredient p_i50023_5_, ItemStack p_i50023_6_) {
-      this.type = p_i50023_1_;
-      this.serializer = p_i50023_2_;
-      this.id = p_i50023_3_;
-      this.group = p_i50023_4_;
-      this.ingredient = p_i50023_5_;
-      this.result = p_i50023_6_;
-   }
+    public SingleItemRecipe(IRecipeType<?> type, IRecipeSerializer<?> serializer, ResourceLocation id, String group, Ingredient ingredient, ItemStack result)
+    {
+        this.type = type;
+        this.serializer = serializer;
+        this.id = id;
+        this.group = group;
+        this.ingredient = ingredient;
+        this.result = result;
+    }
 
-   public IRecipeType<?> getType() {
-      return this.type;
-   }
+    public IRecipeType<?> getType()
+    {
+        return this.type;
+    }
 
-   public IRecipeSerializer<?> getSerializer() {
-      return this.serializer;
-   }
+    public IRecipeSerializer<?> getSerializer()
+    {
+        return this.serializer;
+    }
 
-   public ResourceLocation getId() {
-      return this.id;
-   }
+    public ResourceLocation getId()
+    {
+        return this.id;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getGroup() {
-      return this.group;
-   }
+    /**
+     * Recipes with equal group are combined into one button in the recipe book
+     */
+    public String getGroup()
+    {
+        return this.group;
+    }
 
-   public ItemStack getResultItem() {
-      return this.result;
-   }
+    /**
+     * Get the result of this recipe, usually for display purposes (e.g. recipe book). If your recipe has more than one
+     * possible result (e.g. it's dynamic and depends on its inputs), then return an empty stack.
+     */
+    public ItemStack getRecipeOutput()
+    {
+        return this.result;
+    }
 
-   public NonNullList<Ingredient> getIngredients() {
-      NonNullList<Ingredient> nonnulllist = NonNullList.create();
-      nonnulllist.add(this.ingredient);
-      return nonnulllist;
-   }
+    public NonNullList<Ingredient> getIngredients()
+    {
+        NonNullList<Ingredient> nonnulllist = NonNullList.create();
+        nonnulllist.add(this.ingredient);
+        return nonnulllist;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean canCraftInDimensions(int p_194133_1_, int p_194133_2_) {
-      return true;
-   }
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
+    public boolean canFit(int width, int height)
+    {
+        return true;
+    }
 
-   public ItemStack assemble(IInventory p_77572_1_) {
-      return this.result.copy();
-   }
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    public ItemStack getCraftingResult(IInventory inv)
+    {
+        return this.result.copy();
+    }
 
-   public static class Serializer<T extends SingleItemRecipe> implements IRecipeSerializer<T> {
-      final SingleItemRecipe.Serializer.IRecipeFactory<T> factory;
+    public static class Serializer<T extends SingleItemRecipe> implements IRecipeSerializer<T>
+    {
+        final SingleItemRecipe.Serializer.IRecipeFactory<T> factory;
 
-      protected Serializer(SingleItemRecipe.Serializer.IRecipeFactory<T> p_i50146_1_) {
-         this.factory = p_i50146_1_;
-      }
+        protected Serializer(SingleItemRecipe.Serializer.IRecipeFactory<T> factory)
+        {
+            this.factory = factory;
+        }
 
-      public T fromJson(ResourceLocation p_199425_1_, JsonObject p_199425_2_) {
-         String s = JSONUtils.getAsString(p_199425_2_, "group", "");
-         Ingredient ingredient;
-         if (JSONUtils.isArrayNode(p_199425_2_, "ingredient")) {
-            ingredient = Ingredient.fromJson(JSONUtils.getAsJsonArray(p_199425_2_, "ingredient"));
-         } else {
-            ingredient = Ingredient.fromJson(JSONUtils.getAsJsonObject(p_199425_2_, "ingredient"));
-         }
+        public T read(ResourceLocation recipeId, JsonObject json)
+        {
+            String s = JSONUtils.getString(json, "group", "");
+            Ingredient ingredient;
 
-         String s1 = JSONUtils.getAsString(p_199425_2_, "result");
-         int i = JSONUtils.getAsInt(p_199425_2_, "count");
-         ItemStack itemstack = new ItemStack(Registry.ITEM.get(new ResourceLocation(s1)), i);
-         return this.factory.create(p_199425_1_, s, ingredient, itemstack);
-      }
+            if (JSONUtils.isJsonArray(json, "ingredient"))
+            {
+                ingredient = Ingredient.deserialize(JSONUtils.getJsonArray(json, "ingredient"));
+            }
+            else
+            {
+                ingredient = Ingredient.deserialize(JSONUtils.getJsonObject(json, "ingredient"));
+            }
 
-      public T fromNetwork(ResourceLocation p_199426_1_, PacketBuffer p_199426_2_) {
-         String s = p_199426_2_.readUtf(32767);
-         Ingredient ingredient = Ingredient.fromNetwork(p_199426_2_);
-         ItemStack itemstack = p_199426_2_.readItem();
-         return this.factory.create(p_199426_1_, s, ingredient, itemstack);
-      }
+            String s1 = JSONUtils.getString(json, "result");
+            int i = JSONUtils.getInt(json, "count");
+            ItemStack itemstack = new ItemStack(Registry.ITEM.getOrDefault(new ResourceLocation(s1)), i);
+            return this.factory.create(recipeId, s, ingredient, itemstack);
+        }
 
-      public void toNetwork(PacketBuffer p_199427_1_, T p_199427_2_) {
-         p_199427_1_.writeUtf(p_199427_2_.group);
-         p_199427_2_.ingredient.toNetwork(p_199427_1_);
-         p_199427_1_.writeItem(p_199427_2_.result);
-      }
+        public T read(ResourceLocation recipeId, PacketBuffer buffer)
+        {
+            String s = buffer.readString(32767);
+            Ingredient ingredient = Ingredient.read(buffer);
+            ItemStack itemstack = buffer.readItemStack();
+            return this.factory.create(recipeId, s, ingredient, itemstack);
+        }
 
-      interface IRecipeFactory<T extends SingleItemRecipe> {
-         T create(ResourceLocation p_create_1_, String p_create_2_, Ingredient p_create_3_, ItemStack p_create_4_);
-      }
-   }
+        public void write(PacketBuffer buffer, T recipe)
+        {
+            buffer.writeString(recipe.group);
+            recipe.ingredient.write(buffer);
+            buffer.writeItemStack(recipe.result);
+        }
+
+        interface IRecipeFactory<T extends SingleItemRecipe>
+        {
+            T create(ResourceLocation p_create_1_, String p_create_2_, Ingredient p_create_3_, ItemStack p_create_4_);
+        }
+    }
 }

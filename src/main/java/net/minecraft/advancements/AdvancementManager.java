@@ -19,47 +19,56 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AdvancementManager extends JsonReloadListener {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final Gson GSON = (new GsonBuilder()).create();
-   private AdvancementList advancements = new AdvancementList();
-   private final LootPredicateManager predicateManager;
+public class AdvancementManager extends JsonReloadListener
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = (new GsonBuilder()).create();
+    private AdvancementList advancementList = new AdvancementList();
+    private final LootPredicateManager lootPredicateManager;
 
-   public AdvancementManager(LootPredicateManager p_i232595_1_) {
-      super(GSON, "advancements");
-      this.predicateManager = p_i232595_1_;
-   }
+    public AdvancementManager(LootPredicateManager lootPredicateManager)
+    {
+        super(GSON, "advancements");
+        this.lootPredicateManager = lootPredicateManager;
+    }
 
-   protected void apply(Map<ResourceLocation, JsonElement> p_212853_1_, IResourceManager p_212853_2_, IProfiler p_212853_3_) {
-      Map<ResourceLocation, Advancement.Builder> map = Maps.newHashMap();
-      p_212853_1_.forEach((p_240923_2_, p_240923_3_) -> {
-         try {
-            JsonObject jsonobject = JSONUtils.convertToJsonObject(p_240923_3_, "advancement");
-            Advancement.Builder advancement$builder = Advancement.Builder.fromJson(jsonobject, new ConditionArrayParser(p_240923_2_, this.predicateManager));
-            map.put(p_240923_2_, advancement$builder);
-         } catch (IllegalArgumentException | JsonParseException jsonparseexception) {
-            LOGGER.error("Parsing error loading custom advancement {}: {}", p_240923_2_, jsonparseexception.getMessage());
-         }
+    protected void apply(Map<ResourceLocation, JsonElement> objectIn, IResourceManager resourceManagerIn, IProfiler profilerIn)
+    {
+        Map<ResourceLocation, Advancement.Builder> map = Maps.newHashMap();
+        objectIn.forEach((conditions, advancement) ->
+        {
+            try {
+                JsonObject jsonobject = JSONUtils.getJsonObject(advancement, "advancement");
+                Advancement.Builder advancement$builder = Advancement.Builder.deserialize(jsonobject, new ConditionArrayParser(conditions, this.lootPredicateManager));
+                map.put(conditions, advancement$builder);
+            }
+            catch (IllegalArgumentException | JsonParseException jsonparseexception)
+            {
+                LOGGER.error("Parsing error loading custom advancement {}: {}", conditions, jsonparseexception.getMessage());
+            }
+        });
+        AdvancementList advancementlist = new AdvancementList();
+        advancementlist.loadAdvancements(map);
 
-      });
-      AdvancementList advancementlist = new AdvancementList();
-      advancementlist.add(map);
+        for (Advancement advancement : advancementlist.getRoots())
+        {
+            if (advancement.getDisplay() != null)
+            {
+                AdvancementTreeNode.layout(advancement);
+            }
+        }
 
-      for(Advancement advancement : advancementlist.getRoots()) {
-         if (advancement.getDisplay() != null) {
-            AdvancementTreeNode.run(advancement);
-         }
-      }
+        this.advancementList = advancementlist;
+    }
 
-      this.advancements = advancementlist;
-   }
+    @Nullable
+    public Advancement getAdvancement(ResourceLocation id)
+    {
+        return this.advancementList.getAdvancement(id);
+    }
 
-   @Nullable
-   public Advancement getAdvancement(ResourceLocation p_192778_1_) {
-      return this.advancements.get(p_192778_1_);
-   }
-
-   public Collection<Advancement> getAllAdvancements() {
-      return this.advancements.getAllAdvancements();
-   }
+    public Collection<Advancement> getAllAdvancements()
+    {
+        return this.advancementList.getAll();
+    }
 }

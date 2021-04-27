@@ -7,21 +7,26 @@ import net.minecraft.block.DoublePlantBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 
-public class DoublePlantBlockPlacer extends BlockPlacer {
-   public static final Codec<DoublePlantBlockPlacer> CODEC;
-   public static final DoublePlantBlockPlacer INSTANCE = new DoublePlantBlockPlacer();
+public class DoublePlantBlockPlacer extends BlockPlacer
+{
+    public static final Codec<DoublePlantBlockPlacer> CODEC;
+    public static final DoublePlantBlockPlacer PLACER = new DoublePlantBlockPlacer();
 
-   protected BlockPlacerType<?> type() {
-      return BlockPlacerType.DOUBLE_PLANT_PLACER;
-   }
+    protected BlockPlacerType<?> getBlockPlacerType()
+    {
+        return BlockPlacerType.DOUBLE_PLANT;
+    }
 
-   public void place(IWorld p_225567_1_, BlockPos p_225567_2_, BlockState p_225567_3_, Random p_225567_4_) {
-      ((DoublePlantBlock)p_225567_3_.getBlock()).placeAt(p_225567_1_, p_225567_2_, 2);
-   }
+    public void place(IWorld world, BlockPos pos, BlockState state, Random random)
+    {
+        ((DoublePlantBlock)state.getBlock()).placeAt(world, pos, 2);
+    }
 
-   static {
-      CODEC = Codec.unit(() -> {
-         return INSTANCE;
-      });
-   }
+    static
+    {
+        CODEC = Codec.unit(() ->
+        {
+            return PLACER;
+        });
+    }
 }

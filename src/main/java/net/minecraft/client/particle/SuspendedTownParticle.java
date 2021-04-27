@@ -2,111 +2,125 @@ package net.minecraft.client.particle;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SuspendedTownParticle extends SpriteTexturedParticle {
-   private SuspendedTownParticle(ClientWorld p_i232444_1_, double p_i232444_2_, double p_i232444_4_, double p_i232444_6_, double p_i232444_8_, double p_i232444_10_, double p_i232444_12_) {
-      super(p_i232444_1_, p_i232444_2_, p_i232444_4_, p_i232444_6_, p_i232444_8_, p_i232444_10_, p_i232444_12_);
-      float f = this.random.nextFloat() * 0.1F + 0.2F;
-      this.rCol = f;
-      this.gCol = f;
-      this.bCol = f;
-      this.setSize(0.02F, 0.02F);
-      this.quadSize *= this.random.nextFloat() * 0.6F + 0.5F;
-      this.xd *= (double)0.02F;
-      this.yd *= (double)0.02F;
-      this.zd *= (double)0.02F;
-      this.lifetime = (int)(20.0D / (Math.random() * 0.8D + 0.2D));
-   }
+public class SuspendedTownParticle extends SpriteTexturedParticle
+{
+    private SuspendedTownParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ)
+    {
+        super(world, x, y, z, motionX, motionY, motionZ);
+        float f = this.rand.nextFloat() * 0.1F + 0.2F;
+        this.particleRed = f;
+        this.particleGreen = f;
+        this.particleBlue = f;
+        this.setSize(0.02F, 0.02F);
+        this.particleScale *= this.rand.nextFloat() * 0.6F + 0.5F;
+        this.motionX *= (double)0.02F;
+        this.motionY *= (double)0.02F;
+        this.motionZ *= (double)0.02F;
+        this.maxAge = (int)(20.0D / (Math.random() * 0.8D + 0.2D));
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-   public void move(double p_187110_1_, double p_187110_3_, double p_187110_5_) {
-      this.setBoundingBox(this.getBoundingBox().move(p_187110_1_, p_187110_3_, p_187110_5_));
-      this.setLocationFromBoundingbox();
-   }
+    public void move(double x, double y, double z)
+    {
+        this.setBoundingBox(this.getBoundingBox().offset(x, y, z));
+        this.resetPositionToBB();
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.lifetime-- <= 0) {
-         this.remove();
-      } else {
-         this.move(this.xd, this.yd, this.zd);
-         this.xd *= 0.99D;
-         this.yd *= 0.99D;
-         this.zd *= 0.99D;
-      }
-   }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-   @OnlyIn(Dist.CLIENT)
-   public static class ComposterFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+        if (this.maxAge-- <= 0)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionX *= 0.99D;
+            this.motionY *= 0.99D;
+            this.motionZ *= 0.99D;
+        }
+    }
 
-      public ComposterFactory(IAnimatedSprite p_i50524_1_) {
-         this.sprite = p_i50524_1_;
-      }
+    public static class ComposterFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         suspendedtownparticle.pickSprite(this.sprite);
-         suspendedtownparticle.setColor(1.0F, 1.0F, 1.0F);
-         suspendedtownparticle.setLifetime(3 + p_199234_2_.getRandom().nextInt(5));
-         return suspendedtownparticle;
-      }
-   }
+        public ComposterFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class DolphinSpeedFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            suspendedtownparticle.selectSpriteRandomly(this.spriteSet);
+            suspendedtownparticle.setColor(1.0F, 1.0F, 1.0F);
+            suspendedtownparticle.setMaxAge(3 + worldIn.getRandom().nextInt(5));
+            return suspendedtownparticle;
+        }
+    }
 
-      public DolphinSpeedFactory(IAnimatedSprite p_i50523_1_) {
-         this.sprite = p_i50523_1_;
-      }
+    public static class DolphinSpeedFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         suspendedtownparticle.setColor(0.3F, 0.5F, 1.0F);
-         suspendedtownparticle.pickSprite(this.sprite);
-         suspendedtownparticle.setAlpha(1.0F - p_199234_2_.random.nextFloat() * 0.7F);
-         suspendedtownparticle.setLifetime(suspendedtownparticle.getLifetime() / 2);
-         return suspendedtownparticle;
-      }
-   }
+        public DolphinSpeedFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            suspendedtownparticle.setColor(0.3F, 0.5F, 1.0F);
+            suspendedtownparticle.selectSpriteRandomly(this.spriteSet);
+            suspendedtownparticle.setAlphaF(1.0F - worldIn.rand.nextFloat() * 0.7F);
+            suspendedtownparticle.setMaxAge(suspendedtownparticle.getMaxAge() / 2);
+            return suspendedtownparticle;
+        }
+    }
 
-      public Factory(IAnimatedSprite p_i50521_1_) {
-         this.sprite = p_i50521_1_;
-      }
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         suspendedtownparticle.pickSprite(this.sprite);
-         return suspendedtownparticle;
-      }
-   }
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class HappyVillagerFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            suspendedtownparticle.selectSpriteRandomly(this.spriteSet);
+            return suspendedtownparticle;
+        }
+    }
 
-      public HappyVillagerFactory(IAnimatedSprite p_i50522_1_) {
-         this.sprite = p_i50522_1_;
-      }
+    public static class HappyVillagerFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         suspendedtownparticle.pickSprite(this.sprite);
-         suspendedtownparticle.setColor(1.0F, 1.0F, 1.0F);
-         return suspendedtownparticle;
-      }
-   }
+        public HappyVillagerFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            SuspendedTownParticle suspendedtownparticle = new SuspendedTownParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            suspendedtownparticle.selectSpriteRandomly(this.spriteSet);
+            suspendedtownparticle.setColor(1.0F, 1.0F, 1.0F);
+            return suspendedtownparticle;
+        }
+    }
 }

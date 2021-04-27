@@ -1,13 +1,14 @@
 package net.minecraft.client.util;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public interface IMutableSearchTree<T> extends ISearchTree<T>
+{
+    void func_217872_a(T element);
 
-@OnlyIn(Dist.CLIENT)
-public interface IMutableSearchTree<T> extends ISearchTree<T> {
-   void add(T p_217872_1_);
+    void clear();
 
-   void clear();
-
-   void refresh();
+    /**
+     * Recalculates the contents of this search tree, reapplying {@link #nameFunc} and {@link #idFunc}. Should be called
+     * whenever resources are reloaded (e.g. language changes).
+     */
+    void recalculate();
 }

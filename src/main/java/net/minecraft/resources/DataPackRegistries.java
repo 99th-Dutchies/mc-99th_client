@@ -12,78 +12,93 @@ import net.minecraft.tags.ITagCollectionSupplier;
 import net.minecraft.tags.NetworkTagManager;
 import net.minecraft.util.Unit;
 
-public class DataPackRegistries implements AutoCloseable {
-   private static final CompletableFuture<Unit> DATA_RELOAD_INITIAL_TASK = CompletableFuture.completedFuture(Unit.INSTANCE);
-   private final IReloadableResourceManager resources = new SimpleReloadableResourceManager(ResourcePackType.SERVER_DATA);
-   private final Commands commands;
-   private final RecipeManager recipes = new RecipeManager();
-   private final NetworkTagManager tagManager = new NetworkTagManager();
-   private final LootPredicateManager predicateManager = new LootPredicateManager();
-   private final LootTableManager lootTables = new LootTableManager(this.predicateManager);
-   private final AdvancementManager advancements = new AdvancementManager(this.predicateManager);
-   private final FunctionReloader functionLibrary;
+public class DataPackRegistries implements AutoCloseable
+{
+    private static final CompletableFuture<Unit> field_240951_a_ = CompletableFuture.completedFuture(Unit.INSTANCE);
+    private final IReloadableResourceManager resourceManager = new SimpleReloadableResourceManager(ResourcePackType.SERVER_DATA);
+    private final Commands commands;
+    private final RecipeManager recipeManager = new RecipeManager();
+    private final NetworkTagManager tagManager = new NetworkTagManager();
+    private final LootPredicateManager lootPredicateManager = new LootPredicateManager();
+    private final LootTableManager lootTableManager = new LootTableManager(this.lootPredicateManager);
+    private final AdvancementManager advancementManager = new AdvancementManager(this.lootPredicateManager);
+    private final FunctionReloader functionReloader;
 
-   public DataPackRegistries(Commands.EnvironmentType p_i232598_1_, int p_i232598_2_) {
-      this.commands = new Commands(p_i232598_1_);
-      this.functionLibrary = new FunctionReloader(p_i232598_2_, this.commands.getDispatcher());
-      this.resources.registerReloadListener(this.tagManager);
-      this.resources.registerReloadListener(this.predicateManager);
-      this.resources.registerReloadListener(this.recipes);
-      this.resources.registerReloadListener(this.lootTables);
-      this.resources.registerReloadListener(this.functionLibrary);
-      this.resources.registerReloadListener(this.advancements);
-   }
+    public DataPackRegistries(Commands.EnvironmentType envType, int permissionsLevel)
+    {
+        this.commands = new Commands(envType);
+        this.functionReloader = new FunctionReloader(permissionsLevel, this.commands.getDispatcher());
+        this.resourceManager.addReloadListener(this.tagManager);
+        this.resourceManager.addReloadListener(this.lootPredicateManager);
+        this.resourceManager.addReloadListener(this.recipeManager);
+        this.resourceManager.addReloadListener(this.lootTableManager);
+        this.resourceManager.addReloadListener(this.functionReloader);
+        this.resourceManager.addReloadListener(this.advancementManager);
+    }
 
-   public FunctionReloader getFunctionLibrary() {
-      return this.functionLibrary;
-   }
+    public FunctionReloader getFunctionReloader()
+    {
+        return this.functionReloader;
+    }
 
-   public LootPredicateManager getPredicateManager() {
-      return this.predicateManager;
-   }
+    public LootPredicateManager getLootPredicateManager()
+    {
+        return this.lootPredicateManager;
+    }
 
-   public LootTableManager getLootTables() {
-      return this.lootTables;
-   }
+    public LootTableManager getLootTableManager()
+    {
+        return this.lootTableManager;
+    }
 
-   public ITagCollectionSupplier getTags() {
-      return this.tagManager.getTags();
-   }
+    public ITagCollectionSupplier func_244358_d()
+    {
+        return this.tagManager.getTagCollectionSupplier();
+    }
 
-   public RecipeManager getRecipeManager() {
-      return this.recipes;
-   }
+    public RecipeManager getRecipeManager()
+    {
+        return this.recipeManager;
+    }
 
-   public Commands getCommands() {
-      return this.commands;
-   }
+    public Commands getCommandManager()
+    {
+        return this.commands;
+    }
 
-   public AdvancementManager getAdvancements() {
-      return this.advancements;
-   }
+    public AdvancementManager getAdvancementManager()
+    {
+        return this.advancementManager;
+    }
 
-   public IResourceManager getResourceManager() {
-      return this.resources;
-   }
+    public IResourceManager getResourceManager()
+    {
+        return this.resourceManager;
+    }
 
-   public static CompletableFuture<DataPackRegistries> loadResources(List<IResourcePack> p_240961_0_, Commands.EnvironmentType p_240961_1_, int p_240961_2_, Executor p_240961_3_, Executor p_240961_4_) {
-      DataPackRegistries datapackregistries = new DataPackRegistries(p_240961_1_, p_240961_2_);
-      CompletableFuture<Unit> completablefuture = datapackregistries.resources.reload(p_240961_3_, p_240961_4_, p_240961_0_, DATA_RELOAD_INITIAL_TASK);
-      return completablefuture.whenComplete((p_240963_1_, p_240963_2_) -> {
-         if (p_240963_2_ != null) {
-            datapackregistries.close();
-         }
+    public static CompletableFuture<DataPackRegistries> func_240961_a_(List<IResourcePack> p_240961_0_, Commands.EnvironmentType p_240961_1_, int p_240961_2_, Executor p_240961_3_, Executor p_240961_4_)
+    {
+        DataPackRegistries datapackregistries = new DataPackRegistries(p_240961_1_, p_240961_2_);
+        CompletableFuture<Unit> completablefuture = datapackregistries.resourceManager.reloadResourcesAndThen(p_240961_3_, p_240961_4_, p_240961_0_, field_240951_a_);
+        return completablefuture.whenComplete((p_240963_1_, p_240963_2_) ->
+        {
+            if (p_240963_2_ != null)
+            {
+                datapackregistries.close();
+            }
+        }).thenApply((p_240962_1_) ->
+        {
+            return datapackregistries;
+        });
+    }
 
-      }).thenApply((p_240962_1_) -> {
-         return datapackregistries;
-      });
-   }
+    public void updateTags()
+    {
+        this.tagManager.getTagCollectionSupplier().updateTags();
+    }
 
-   public void updateGlobals() {
-      this.tagManager.getTags().bindToGlobal();
-   }
-
-   public void close() {
-      this.resources.close();
-   }
+    public void close()
+    {
+        this.resourceManager.close();
+    }
 }

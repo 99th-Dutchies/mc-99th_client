@@ -13,86 +13,115 @@ import net.minecraft.util.CachedBlockInfo;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-public class BlockPatternBuilder {
-   private static final Joiner COMMA_JOINED = Joiner.on(",");
-   private final List<String[]> pattern = Lists.newArrayList();
-   private final Map<Character, Predicate<CachedBlockInfo>> lookup = Maps.newHashMap();
-   private int height;
-   private int width;
+public class BlockPatternBuilder
+{
+    private static final Joiner COMMA_JOIN = Joiner.on(",");
+    private final List<String[]> depth = Lists.newArrayList();
+    private final Map<Character, Predicate<CachedBlockInfo>> symbolMap = Maps.newHashMap();
+    private int aisleHeight;
+    private int rowWidth;
 
-   private BlockPatternBuilder() {
-      this.lookup.put(' ', Predicates.alwaysTrue());
-   }
+    private BlockPatternBuilder()
+    {
+        this.symbolMap.put(' ', Predicates.alwaysTrue());
+    }
 
-   public BlockPatternBuilder aisle(String... p_177659_1_) {
-      if (!ArrayUtils.isEmpty((Object[])p_177659_1_) && !StringUtils.isEmpty(p_177659_1_[0])) {
-         if (this.pattern.isEmpty()) {
-            this.height = p_177659_1_.length;
-            this.width = p_177659_1_[0].length();
-         }
-
-         if (p_177659_1_.length != this.height) {
-            throw new IllegalArgumentException("Expected aisle with height of " + this.height + ", but was given one with a height of " + p_177659_1_.length + ")");
-         } else {
-            for(String s : p_177659_1_) {
-               if (s.length() != this.width) {
-                  throw new IllegalArgumentException("Not all rows in the given aisle are the correct width (expected " + this.width + ", found one with " + s.length() + ")");
-               }
-
-               for(char c0 : s.toCharArray()) {
-                  if (!this.lookup.containsKey(c0)) {
-                     this.lookup.put(c0, (Predicate<CachedBlockInfo>)null);
-                  }
-               }
+    /**
+     * Adds a single aisle to this pattern, going in the z axis. (so multiple calls to this will increase the z-size by
+     * 1)
+     */
+    public BlockPatternBuilder aisle(String... aisle)
+    {
+        if (!ArrayUtils.isEmpty((Object[])aisle) && !StringUtils.isEmpty(aisle[0]))
+        {
+            if (this.depth.isEmpty())
+            {
+                this.aisleHeight = aisle.length;
+                this.rowWidth = aisle[0].length();
             }
 
-            this.pattern.add(p_177659_1_);
-            return this;
-         }
-      } else {
-         throw new IllegalArgumentException("Empty pattern for aisle");
-      }
-   }
-
-   public static BlockPatternBuilder start() {
-      return new BlockPatternBuilder();
-   }
-
-   public BlockPatternBuilder where(char p_177662_1_, Predicate<CachedBlockInfo> p_177662_2_) {
-      this.lookup.put(p_177662_1_, p_177662_2_);
-      return this;
-   }
-
-   public BlockPattern build() {
-      return new BlockPattern(this.createPattern());
-   }
-
-   private Predicate<CachedBlockInfo>[][][] createPattern() {
-      this.ensureAllCharactersMatched();
-      Predicate<CachedBlockInfo>[][][] predicate = (Predicate[][][])Array.newInstance(Predicate.class, this.pattern.size(), this.height, this.width);
-
-      for(int i = 0; i < this.pattern.size(); ++i) {
-         for(int j = 0; j < this.height; ++j) {
-            for(int k = 0; k < this.width; ++k) {
-               predicate[i][j][k] = this.lookup.get((this.pattern.get(i))[j].charAt(k));
+            if (aisle.length != this.aisleHeight)
+            {
+                throw new IllegalArgumentException("Expected aisle with height of " + this.aisleHeight + ", but was given one with a height of " + aisle.length + ")");
             }
-         }
-      }
+            else
+            {
+                for (String s : aisle)
+                {
+                    if (s.length() != this.rowWidth)
+                    {
+                        throw new IllegalArgumentException("Not all rows in the given aisle are the correct width (expected " + this.rowWidth + ", found one with " + s.length() + ")");
+                    }
 
-      return predicate;
-   }
+                    for (char c0 : s.toCharArray())
+                    {
+                        if (!this.symbolMap.containsKey(c0))
+                        {
+                            this.symbolMap.put(c0, (Predicate<CachedBlockInfo>)null);
+                        }
+                    }
+                }
 
-   private void ensureAllCharactersMatched() {
-      List<Character> list = Lists.newArrayList();
+                this.depth.add(aisle);
+                return this;
+            }
+        }
+        else
+        {
+            throw new IllegalArgumentException("Empty pattern for aisle");
+        }
+    }
 
-      for(Entry<Character, Predicate<CachedBlockInfo>> entry : this.lookup.entrySet()) {
-         if (entry.getValue() == null) {
-            list.add(entry.getKey());
-         }
-      }
+    public static BlockPatternBuilder start()
+    {
+        return new BlockPatternBuilder();
+    }
 
-      if (!list.isEmpty()) {
-         throw new IllegalStateException("Predicates for character(s) " + COMMA_JOINED.join(list) + " are missing");
-      }
-   }
+    public BlockPatternBuilder where(char symbol, Predicate<CachedBlockInfo> blockMatcher)
+    {
+        this.symbolMap.put(symbol, blockMatcher);
+        return this;
+    }
+
+    public BlockPattern build()
+    {
+        return new BlockPattern(this.makePredicateArray());
+    }
+
+    private Predicate<CachedBlockInfo>[][][] makePredicateArray()
+    {
+        this.checkMissingPredicates();
+        Predicate<CachedBlockInfo>[][][] predicate = (Predicate[][][])Array.newInstance(Predicate.class, this.depth.size(), this.aisleHeight, this.rowWidth);
+
+        for (int i = 0; i < this.depth.size(); ++i)
+        {
+            for (int j = 0; j < this.aisleHeight; ++j)
+            {
+                for (int k = 0; k < this.rowWidth; ++k)
+                {
+                    predicate[i][j][k] = this.symbolMap.get((this.depth.get(i))[j].charAt(k));
+                }
+            }
+        }
+
+        return predicate;
+    }
+
+    private void checkMissingPredicates()
+    {
+        List<Character> list = Lists.newArrayList();
+
+        for (Entry<Character, Predicate<CachedBlockInfo>> entry : this.symbolMap.entrySet())
+        {
+            if (entry.getValue() == null)
+            {
+                list.add(entry.getKey());
+            }
+        }
+
+        if (!list.isEmpty())
+        {
+            throw new IllegalStateException("Predicates for character(s) " + COMMA_JOIN.join(list) + " are missing");
+        }
+    }
 }

@@ -11,46 +11,57 @@ import net.minecraft.item.Items;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 
-public class EntitySelectionContext implements ISelectionContext {
-   protected static final ISelectionContext EMPTY = new EntitySelectionContext(false, -Double.MAX_VALUE, Items.AIR, (p_237495_0_) -> {
-      return false;
-   }) {
-      public boolean isAbove(VoxelShape p_216378_1_, BlockPos p_216378_2_, boolean p_216378_3_) {
-         return p_216378_3_;
-      }
-   };
-   private final boolean descending;
-   private final double entityBottom;
-   private final Item heldItem;
-   private final Predicate<Fluid> canStandOnFluid;
+public class EntitySelectionContext implements ISelectionContext
+{
+    protected static final ISelectionContext DUMMY = new EntitySelectionContext(false, -Double.MAX_VALUE, Items.AIR, (fluid) ->
+    {
+        return false;
+    })
+    {
+        public boolean func_216378_a(VoxelShape shape, BlockPos pos, boolean p_216378_3_)
+        {
+            return p_216378_3_;
+        }
+    };
+    private final boolean sneaking;
+    private final double posY;
+    private final Item item;
+    private final Predicate<Fluid> fluidPredicate;
 
-   protected EntitySelectionContext(boolean p_i232177_1_, double p_i232177_2_, Item p_i232177_4_, Predicate<Fluid> p_i232177_5_) {
-      this.descending = p_i232177_1_;
-      this.entityBottom = p_i232177_2_;
-      this.heldItem = p_i232177_4_;
-      this.canStandOnFluid = p_i232177_5_;
-   }
+    protected EntitySelectionContext(boolean sneaking, double posY, Item item, Predicate<Fluid> fluidPredicate)
+    {
+        this.sneaking = sneaking;
+        this.posY = posY;
+        this.item = item;
+        this.fluidPredicate = fluidPredicate;
+    }
 
-   @Deprecated
-   protected EntitySelectionContext(Entity p_i51182_1_) {
-      this(p_i51182_1_.isDescending(), p_i51182_1_.getY(), p_i51182_1_ instanceof LivingEntity ? ((LivingEntity)p_i51182_1_).getMainHandItem().getItem() : Items.AIR, p_i51182_1_ instanceof LivingEntity ? ((LivingEntity)p_i51182_1_)::canStandOnFluid : (p_237494_0_) -> {
-         return false;
-      });
-   }
+    @Deprecated
+    protected EntitySelectionContext(Entity entityIn)
+    {
+        this(entityIn.isDescending(), entityIn.getPosY(), entityIn instanceof LivingEntity ? ((LivingEntity)entityIn).getHeldItemMainhand().getItem() : Items.AIR, entityIn instanceof LivingEntity ? ((LivingEntity)entityIn)::func_230285_a_ : (fluid) ->
+        {
+            return false;
+        });
+    }
 
-   public boolean isHoldingItem(Item p_216375_1_) {
-      return this.heldItem == p_216375_1_;
-   }
+    public boolean hasItem(Item itemIn)
+    {
+        return this.item == itemIn;
+    }
 
-   public boolean canStandOnFluid(FluidState p_230426_1_, FlowingFluid p_230426_2_) {
-      return this.canStandOnFluid.test(p_230426_2_) && !p_230426_1_.getType().isSame(p_230426_2_);
-   }
+    public boolean func_230426_a_(FluidState p_230426_1_, FlowingFluid p_230426_2_)
+    {
+        return this.fluidPredicate.test(p_230426_2_) && !p_230426_1_.getFluid().isEquivalentTo(p_230426_2_);
+    }
 
-   public boolean isDescending() {
-      return this.descending;
-   }
+    public boolean getPosY()
+    {
+        return this.sneaking;
+    }
 
-   public boolean isAbove(VoxelShape p_216378_1_, BlockPos p_216378_2_, boolean p_216378_3_) {
-      return this.entityBottom > (double)p_216378_2_.getY() + p_216378_1_.max(Direction.Axis.Y) - (double)1.0E-5F;
-   }
+    public boolean func_216378_a(VoxelShape shape, BlockPos pos, boolean p_216378_3_)
+    {
+        return this.posY > (double)pos.getY() + shape.getEnd(Direction.Axis.Y) - (double)1.0E-5F;
+    }
 }

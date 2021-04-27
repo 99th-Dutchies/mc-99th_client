@@ -24,134 +24,182 @@ import net.minecraft.world.TickPriority;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class ComparatorBlock extends RedstoneDiodeBlock implements ITileEntityProvider {
-   public static final EnumProperty<ComparatorMode> MODE = BlockStateProperties.MODE_COMPARATOR;
+public class ComparatorBlock extends RedstoneDiodeBlock implements ITileEntityProvider
+{
+    public static final EnumProperty<ComparatorMode> MODE = BlockStateProperties.COMPARATOR_MODE;
 
-   public ComparatorBlock(AbstractBlock.Properties p_i48424_1_) {
-      super(p_i48424_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, Boolean.valueOf(false)).setValue(MODE, ComparatorMode.COMPARE));
-   }
+    public ComparatorBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(HORIZONTAL_FACING, Direction.NORTH).with(POWERED, Boolean.valueOf(false)).with(MODE, ComparatorMode.COMPARE));
+    }
 
-   protected int getDelay(BlockState p_196346_1_) {
-      return 2;
-   }
+    protected int getDelay(BlockState state)
+    {
+        return 2;
+    }
 
-   protected int getOutputSignal(IBlockReader p_176408_1_, BlockPos p_176408_2_, BlockState p_176408_3_) {
-      TileEntity tileentity = p_176408_1_.getBlockEntity(p_176408_2_);
-      return tileentity instanceof ComparatorTileEntity ? ((ComparatorTileEntity)tileentity).getOutputSignal() : 0;
-   }
+    protected int getActiveSignal(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+        return tileentity instanceof ComparatorTileEntity ? ((ComparatorTileEntity)tileentity).getOutputSignal() : 0;
+    }
 
-   private int calculateOutputSignal(World p_176460_1_, BlockPos p_176460_2_, BlockState p_176460_3_) {
-      return p_176460_3_.getValue(MODE) == ComparatorMode.SUBTRACT ? Math.max(this.getInputSignal(p_176460_1_, p_176460_2_, p_176460_3_) - this.getAlternateSignal(p_176460_1_, p_176460_2_, p_176460_3_), 0) : this.getInputSignal(p_176460_1_, p_176460_2_, p_176460_3_);
-   }
+    private int calculateOutput(World worldIn, BlockPos pos, BlockState state)
+    {
+        return state.get(MODE) == ComparatorMode.SUBTRACT ? Math.max(this.calculateInputStrength(worldIn, pos, state) - this.getPowerOnSides(worldIn, pos, state), 0) : this.calculateInputStrength(worldIn, pos, state);
+    }
 
-   protected boolean shouldTurnOn(World p_176404_1_, BlockPos p_176404_2_, BlockState p_176404_3_) {
-      int i = this.getInputSignal(p_176404_1_, p_176404_2_, p_176404_3_);
-      if (i == 0) {
-         return false;
-      } else {
-         int j = this.getAlternateSignal(p_176404_1_, p_176404_2_, p_176404_3_);
-         if (i > j) {
-            return true;
-         } else {
-            return i == j && p_176404_3_.getValue(MODE) == ComparatorMode.COMPARE;
-         }
-      }
-   }
+    protected boolean shouldBePowered(World worldIn, BlockPos pos, BlockState state)
+    {
+        int i = this.calculateInputStrength(worldIn, pos, state);
 
-   protected int getInputSignal(World p_176397_1_, BlockPos p_176397_2_, BlockState p_176397_3_) {
-      int i = super.getInputSignal(p_176397_1_, p_176397_2_, p_176397_3_);
-      Direction direction = p_176397_3_.getValue(FACING);
-      BlockPos blockpos = p_176397_2_.relative(direction);
-      BlockState blockstate = p_176397_1_.getBlockState(blockpos);
-      if (blockstate.hasAnalogOutputSignal()) {
-         i = blockstate.getAnalogOutputSignal(p_176397_1_, blockpos);
-      } else if (i < 15 && blockstate.isRedstoneConductor(p_176397_1_, blockpos)) {
-         blockpos = blockpos.relative(direction);
-         blockstate = p_176397_1_.getBlockState(blockpos);
-         ItemFrameEntity itemframeentity = this.getItemFrame(p_176397_1_, direction, blockpos);
-         int j = Math.max(itemframeentity == null ? Integer.MIN_VALUE : itemframeentity.getAnalogOutput(), blockstate.hasAnalogOutputSignal() ? blockstate.getAnalogOutputSignal(p_176397_1_, blockpos) : Integer.MIN_VALUE);
-         if (j != Integer.MIN_VALUE) {
-            i = j;
-         }
-      }
+        if (i == 0)
+        {
+            return false;
+        }
+        else
+        {
+            int j = this.getPowerOnSides(worldIn, pos, state);
 
-      return i;
-   }
+            if (i > j)
+            {
+                return true;
+            }
+            else
+            {
+                return i == j && state.get(MODE) == ComparatorMode.COMPARE;
+            }
+        }
+    }
 
-   @Nullable
-   private ItemFrameEntity getItemFrame(World p_176461_1_, Direction p_176461_2_, BlockPos p_176461_3_) {
-      List<ItemFrameEntity> list = p_176461_1_.getEntitiesOfClass(ItemFrameEntity.class, new AxisAlignedBB((double)p_176461_3_.getX(), (double)p_176461_3_.getY(), (double)p_176461_3_.getZ(), (double)(p_176461_3_.getX() + 1), (double)(p_176461_3_.getY() + 1), (double)(p_176461_3_.getZ() + 1)), (p_210304_1_) -> {
-         return p_210304_1_ != null && p_210304_1_.getDirection() == p_176461_2_;
-      });
-      return list.size() == 1 ? list.get(0) : null;
-   }
+    protected int calculateInputStrength(World worldIn, BlockPos pos, BlockState state)
+    {
+        int i = super.calculateInputStrength(worldIn, pos, state);
+        Direction direction = state.get(HORIZONTAL_FACING);
+        BlockPos blockpos = pos.offset(direction);
+        BlockState blockstate = worldIn.getBlockState(blockpos);
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (!p_225533_4_.abilities.mayBuild) {
-         return ActionResultType.PASS;
-      } else {
-         p_225533_1_ = p_225533_1_.cycle(MODE);
-         float f = p_225533_1_.getValue(MODE) == ComparatorMode.SUBTRACT ? 0.55F : 0.5F;
-         p_225533_2_.playSound(p_225533_4_, p_225533_3_, SoundEvents.COMPARATOR_CLICK, SoundCategory.BLOCKS, 0.3F, f);
-         p_225533_2_.setBlock(p_225533_3_, p_225533_1_, 2);
-         this.refreshOutputState(p_225533_2_, p_225533_3_, p_225533_1_);
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      }
-   }
+        if (blockstate.hasComparatorInputOverride())
+        {
+            i = blockstate.getComparatorInputOverride(worldIn, blockpos);
+        }
+        else if (i < 15 && blockstate.isNormalCube(worldIn, blockpos))
+        {
+            blockpos = blockpos.offset(direction);
+            blockstate = worldIn.getBlockState(blockpos);
+            ItemFrameEntity itemframeentity = this.findItemFrame(worldIn, direction, blockpos);
+            int j = Math.max(itemframeentity == null ? Integer.MIN_VALUE : itemframeentity.getAnalogOutput(), blockstate.hasComparatorInputOverride() ? blockstate.getComparatorInputOverride(worldIn, blockpos) : Integer.MIN_VALUE);
 
-   protected void checkTickOnNeighbor(World p_176398_1_, BlockPos p_176398_2_, BlockState p_176398_3_) {
-      if (!p_176398_1_.getBlockTicks().willTickThisTick(p_176398_2_, this)) {
-         int i = this.calculateOutputSignal(p_176398_1_, p_176398_2_, p_176398_3_);
-         TileEntity tileentity = p_176398_1_.getBlockEntity(p_176398_2_);
-         int j = tileentity instanceof ComparatorTileEntity ? ((ComparatorTileEntity)tileentity).getOutputSignal() : 0;
-         if (i != j || p_176398_3_.getValue(POWERED) != this.shouldTurnOn(p_176398_1_, p_176398_2_, p_176398_3_)) {
-            TickPriority tickpriority = this.shouldPrioritize(p_176398_1_, p_176398_2_, p_176398_3_) ? TickPriority.HIGH : TickPriority.NORMAL;
-            p_176398_1_.getBlockTicks().scheduleTick(p_176398_2_, this, 2, tickpriority);
-         }
+            if (j != Integer.MIN_VALUE)
+            {
+                i = j;
+            }
+        }
 
-      }
-   }
+        return i;
+    }
 
-   private void refreshOutputState(World p_176462_1_, BlockPos p_176462_2_, BlockState p_176462_3_) {
-      int i = this.calculateOutputSignal(p_176462_1_, p_176462_2_, p_176462_3_);
-      TileEntity tileentity = p_176462_1_.getBlockEntity(p_176462_2_);
-      int j = 0;
-      if (tileentity instanceof ComparatorTileEntity) {
-         ComparatorTileEntity comparatortileentity = (ComparatorTileEntity)tileentity;
-         j = comparatortileentity.getOutputSignal();
-         comparatortileentity.setOutputSignal(i);
-      }
+    @Nullable
+    private ItemFrameEntity findItemFrame(World worldIn, Direction facing, BlockPos pos)
+    {
+        List<ItemFrameEntity> list = worldIn.getEntitiesWithinAABB(ItemFrameEntity.class, new AxisAlignedBB((double)pos.getX(), (double)pos.getY(), (double)pos.getZ(), (double)(pos.getX() + 1), (double)(pos.getY() + 1), (double)(pos.getZ() + 1)), (itemFrame) ->
+        {
+            return itemFrame != null && itemFrame.getHorizontalFacing() == facing;
+        });
+        return list.size() == 1 ? list.get(0) : null;
+    }
 
-      if (j != i || p_176462_3_.getValue(MODE) == ComparatorMode.COMPARE) {
-         boolean flag1 = this.shouldTurnOn(p_176462_1_, p_176462_2_, p_176462_3_);
-         boolean flag = p_176462_3_.getValue(POWERED);
-         if (flag && !flag1) {
-            p_176462_1_.setBlock(p_176462_2_, p_176462_3_.setValue(POWERED, Boolean.valueOf(false)), 2);
-         } else if (!flag && flag1) {
-            p_176462_1_.setBlock(p_176462_2_, p_176462_3_.setValue(POWERED, Boolean.valueOf(true)), 2);
-         }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (!player.abilities.allowEdit)
+        {
+            return ActionResultType.PASS;
+        }
+        else
+        {
+            state = state.func_235896_a_(MODE);
+            float f = state.get(MODE) == ComparatorMode.SUBTRACT ? 0.55F : 0.5F;
+            worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPARATOR_CLICK, SoundCategory.BLOCKS, 0.3F, f);
+            worldIn.setBlockState(pos, state, 2);
+            this.onStateChange(worldIn, pos, state);
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+    }
 
-         this.updateNeighborsInFront(p_176462_1_, p_176462_2_, p_176462_3_);
-      }
+    protected void updateState(World worldIn, BlockPos pos, BlockState state)
+    {
+        if (!worldIn.getPendingBlockTicks().isTickPending(pos, this))
+        {
+            int i = this.calculateOutput(worldIn, pos, state);
+            TileEntity tileentity = worldIn.getTileEntity(pos);
+            int j = tileentity instanceof ComparatorTileEntity ? ((ComparatorTileEntity)tileentity).getOutputSignal() : 0;
 
-   }
+            if (i != j || state.get(POWERED) != this.shouldBePowered(worldIn, pos, state))
+            {
+                TickPriority tickpriority = this.isFacingTowardsRepeater(worldIn, pos, state) ? TickPriority.HIGH : TickPriority.NORMAL;
+                worldIn.getPendingBlockTicks().scheduleTick(pos, this, 2, tickpriority);
+            }
+        }
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      this.refreshOutputState(p_225534_2_, p_225534_3_, p_225534_1_);
-   }
+    private void onStateChange(World worldIn, BlockPos pos, BlockState state)
+    {
+        int i = this.calculateOutput(worldIn, pos, state);
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+        int j = 0;
 
-   public boolean triggerEvent(BlockState p_189539_1_, World p_189539_2_, BlockPos p_189539_3_, int p_189539_4_, int p_189539_5_) {
-      super.triggerEvent(p_189539_1_, p_189539_2_, p_189539_3_, p_189539_4_, p_189539_5_);
-      TileEntity tileentity = p_189539_2_.getBlockEntity(p_189539_3_);
-      return tileentity != null && tileentity.triggerEvent(p_189539_4_, p_189539_5_);
-   }
+        if (tileentity instanceof ComparatorTileEntity)
+        {
+            ComparatorTileEntity comparatortileentity = (ComparatorTileEntity)tileentity;
+            j = comparatortileentity.getOutputSignal();
+            comparatortileentity.setOutputSignal(i);
+        }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new ComparatorTileEntity();
-   }
+        if (j != i || state.get(MODE) == ComparatorMode.COMPARE)
+        {
+            boolean flag1 = this.shouldBePowered(worldIn, pos, state);
+            boolean flag = state.get(POWERED);
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, MODE, POWERED);
-   }
+            if (flag && !flag1)
+            {
+                worldIn.setBlockState(pos, state.with(POWERED, Boolean.valueOf(false)), 2);
+            }
+            else if (!flag && flag1)
+            {
+                worldIn.setBlockState(pos, state.with(POWERED, Boolean.valueOf(true)), 2);
+            }
+
+            this.notifyNeighbors(worldIn, pos, state);
+        }
+    }
+
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        this.onStateChange(worldIn, pos, state);
+    }
+
+    /**
+     * Called on server when World#addBlockEvent is called. If server returns true, then also called on the client. On
+     * the Server, this may perform additional changes to the world, like pistons replacing the block with an extended
+     * base. On the client, the update may involve replacing tile entities or effects such as sounds or particles
+     * @deprecated call via {@link IBlockState#onBlockEventReceived(World,BlockPos,int,int)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public boolean eventReceived(BlockState state, World worldIn, BlockPos pos, int id, int param)
+    {
+        super.eventReceived(state, worldIn, pos, id, param);
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+        return tileentity != null && tileentity.receiveClientEvent(id, param);
+    }
+
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new ComparatorTileEntity();
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(HORIZONTAL_FACING, MODE, POWERED);
+    }
 }

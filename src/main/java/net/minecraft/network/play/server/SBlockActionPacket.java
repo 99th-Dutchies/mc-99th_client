@@ -7,60 +7,79 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SBlockActionPacket implements IPacket<IClientPlayNetHandler> {
-   private BlockPos pos;
-   private int b0;
-   private int b1;
-   private Block block;
+public class SBlockActionPacket implements IPacket<IClientPlayNetHandler>
+{
+    private BlockPos blockPosition;
+    private int instrument;
+    private int pitch;
+    private Block block;
 
-   public SBlockActionPacket() {
-   }
+    public SBlockActionPacket()
+    {
+    }
 
-   public SBlockActionPacket(BlockPos p_i46966_1_, Block p_i46966_2_, int p_i46966_3_, int p_i46966_4_) {
-      this.pos = p_i46966_1_;
-      this.block = p_i46966_2_;
-      this.b0 = p_i46966_3_;
-      this.b1 = p_i46966_4_;
-   }
+    public SBlockActionPacket(BlockPos pos, Block blockIn, int instrumentIn, int pitchIn)
+    {
+        this.blockPosition = pos;
+        this.block = blockIn;
+        this.instrument = instrumentIn;
+        this.pitch = pitchIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.pos = p_148837_1_.readBlockPos();
-      this.b0 = p_148837_1_.readUnsignedByte();
-      this.b1 = p_148837_1_.readUnsignedByte();
-      this.block = Registry.BLOCK.byId(p_148837_1_.readVarInt());
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.blockPosition = buf.readBlockPos();
+        this.instrument = buf.readUnsignedByte();
+        this.pitch = buf.readUnsignedByte();
+        this.block = Registry.BLOCK.getByValue(buf.readVarInt());
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeBlockPos(this.pos);
-      p_148840_1_.writeByte(this.b0);
-      p_148840_1_.writeByte(this.b1);
-      p_148840_1_.writeVarInt(Registry.BLOCK.getId(this.block));
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeBlockPos(this.blockPosition);
+        buf.writeByte(this.instrument);
+        buf.writeByte(this.pitch);
+        buf.writeVarInt(Registry.BLOCK.getId(this.block));
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleBlockEvent(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleBlockAction(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    public BlockPos getBlockPosition()
+    {
+        return this.blockPosition;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getB0() {
-      return this.b0;
-   }
+    /**
+     * instrument data for noteblocks
+     */
+    public int getData1()
+    {
+        return this.instrument;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getB1() {
-      return this.b1;
-   }
+    /**
+     * pitch data for noteblocks
+     */
+    public int getData2()
+    {
+        return this.pitch;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Block getBlock() {
-      return this.block;
-   }
+    public Block getBlockType()
+    {
+        return this.block;
+    }
 }

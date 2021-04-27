@@ -7,52 +7,59 @@ import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class BuiltInModel implements IBakedModel {
-   private final ItemCameraTransforms itemTransforms;
-   private final ItemOverrideList overrides;
-   private final TextureAtlasSprite particleTexture;
-   private final boolean usesBlockLight;
+public class BuiltInModel implements IBakedModel
+{
+    private final ItemCameraTransforms cameraTransforms;
+    private final ItemOverrideList overrides;
+    private final TextureAtlasSprite sprite;
+    private final boolean isSideLit;
 
-   public BuiltInModel(ItemCameraTransforms p_i230058_1_, ItemOverrideList p_i230058_2_, TextureAtlasSprite p_i230058_3_, boolean p_i230058_4_) {
-      this.itemTransforms = p_i230058_1_;
-      this.overrides = p_i230058_2_;
-      this.particleTexture = p_i230058_3_;
-      this.usesBlockLight = p_i230058_4_;
-   }
+    public BuiltInModel(ItemCameraTransforms cameraTransforms, ItemOverrideList overrides, TextureAtlasSprite spite, boolean isSideLit)
+    {
+        this.cameraTransforms = cameraTransforms;
+        this.overrides = overrides;
+        this.sprite = spite;
+        this.isSideLit = isSideLit;
+    }
 
-   public List<BakedQuad> getQuads(@Nullable BlockState p_200117_1_, @Nullable Direction p_200117_2_, Random p_200117_3_) {
-      return Collections.emptyList();
-   }
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand)
+    {
+        return Collections.emptyList();
+    }
 
-   public boolean useAmbientOcclusion() {
-      return false;
-   }
+    public boolean isAmbientOcclusion()
+    {
+        return false;
+    }
 
-   public boolean isGui3d() {
-      return true;
-   }
+    public boolean isGui3d()
+    {
+        return true;
+    }
 
-   public boolean usesBlockLight() {
-      return this.usesBlockLight;
-   }
+    public boolean isSideLit()
+    {
+        return this.isSideLit;
+    }
 
-   public boolean isCustomRenderer() {
-      return true;
-   }
+    public boolean isBuiltInRenderer()
+    {
+        return true;
+    }
 
-   public TextureAtlasSprite getParticleIcon() {
-      return this.particleTexture;
-   }
+    public TextureAtlasSprite getParticleTexture()
+    {
+        return this.sprite;
+    }
 
-   public ItemCameraTransforms getTransforms() {
-      return this.itemTransforms;
-   }
+    public ItemCameraTransforms getItemCameraTransforms()
+    {
+        return this.cameraTransforms;
+    }
 
-   public ItemOverrideList getOverrides() {
-      return this.overrides;
-   }
+    public ItemOverrideList getOverrides()
+    {
+        return this.overrides;
+    }
 }

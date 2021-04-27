@@ -5,42 +5,55 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SAnimateHandPacket implements IPacket<IClientPlayNetHandler> {
-   private int id;
-   private int action;
+public class SAnimateHandPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private int type;
 
-   public SAnimateHandPacket() {
-   }
+    public SAnimateHandPacket()
+    {
+    }
 
-   public SAnimateHandPacket(Entity p_i46970_1_, int p_i46970_2_) {
-      this.id = p_i46970_1_.getId();
-      this.action = p_i46970_2_;
-   }
+    public SAnimateHandPacket(Entity entityIn, int typeIn)
+    {
+        this.entityId = entityIn.getEntityId();
+        this.type = typeIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readVarInt();
-      this.action = p_148837_1_.readUnsignedByte();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.type = buf.readUnsignedByte();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.id);
-      p_148840_1_.writeByte(this.action);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeByte(this.type);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleAnimate(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleAnimation(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int getEntityID()
+    {
+        return this.entityId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getAction() {
-      return this.action;
-   }
+    public int getAnimationType()
+    {
+        return this.type;
+    }
 }

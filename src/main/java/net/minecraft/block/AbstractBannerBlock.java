@@ -9,42 +9,54 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class AbstractBannerBlock extends ContainerBlock {
-   private final DyeColor color;
+public abstract class AbstractBannerBlock extends ContainerBlock
+{
+    private final DyeColor color;
 
-   protected AbstractBannerBlock(DyeColor p_i48453_1_, AbstractBlock.Properties p_i48453_2_) {
-      super(p_i48453_2_);
-      this.color = p_i48453_1_;
-   }
+    protected AbstractBannerBlock(DyeColor color, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.color = color;
+    }
 
-   public boolean isPossibleToRespawnInThis() {
-      return true;
-   }
+    /**
+     * Return true if an entity can be spawned inside the block (used to get the player's bed spawn location)
+     */
+    public boolean canSpawnInBlock()
+    {
+        return true;
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new BannerTileEntity(this.color);
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new BannerTileEntity(this.color);
+    }
 
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, @Nullable LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      if (p_180633_5_.hasCustomHoverName()) {
-         TileEntity tileentity = p_180633_1_.getBlockEntity(p_180633_2_);
-         if (tileentity instanceof BannerTileEntity) {
-            ((BannerTileEntity)tileentity).setCustomName(p_180633_5_.getHoverName());
-         }
-      }
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack)
+    {
+        if (stack.hasDisplayName())
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-   }
+            if (tileentity instanceof BannerTileEntity)
+            {
+                ((BannerTileEntity)tileentity).setName(stack.getDisplayName());
+            }
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      TileEntity tileentity = p_185473_1_.getBlockEntity(p_185473_2_);
-      return tileentity instanceof BannerTileEntity ? ((BannerTileEntity)tileentity).getItem(p_185473_3_) : super.getCloneItemStack(p_185473_1_, p_185473_2_, p_185473_3_);
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+        return tileentity instanceof BannerTileEntity ? ((BannerTileEntity)tileentity).getItem(state) : super.getItem(worldIn, pos, state);
+    }
 
-   public DyeColor getColor() {
-      return this.color;
-   }
+    public DyeColor getColor()
+    {
+        return this.color;
+    }
 }

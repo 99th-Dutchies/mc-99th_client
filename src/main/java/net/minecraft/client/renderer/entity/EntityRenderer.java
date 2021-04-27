@@ -7,6 +7,8 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.culling.ClippingHelper;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -14,92 +16,165 @@ import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.LightType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.reflect.Reflector;
+import net.optifine.reflect.ReflectorForge;
+import net.optifine.util.Either;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class EntityRenderer<T extends Entity> {
-   protected final EntityRendererManager entityRenderDispatcher;
-   protected float shadowRadius;
-   protected float shadowStrength = 1.0F;
+public abstract class EntityRenderer<T extends Entity> implements net.optifine.entity.model.IEntityRenderer
+{
+    protected final EntityRendererManager renderManager;
+    public float shadowSize;
+    protected float shadowOpaque = 1.0F;
+    private EntityType entityType = null;
+    private ResourceLocation locationTextureCustom = null;
 
-   protected EntityRenderer(EntityRendererManager p_i46179_1_) {
-      this.entityRenderDispatcher = p_i46179_1_;
-   }
+    protected EntityRenderer(EntityRendererManager renderManager)
+    {
+        this.renderManager = renderManager;
+    }
 
-   public final int getPackedLightCoords(T p_229100_1_, float p_229100_2_) {
-      BlockPos blockpos = new BlockPos(p_229100_1_.getLightProbePosition(p_229100_2_));
-      return LightTexture.pack(this.getBlockLightLevel(p_229100_1_, blockpos), this.getSkyLightLevel(p_229100_1_, blockpos));
-   }
+    public final int getPackedLight(T entityIn, float partialTicks)
+    {
+        BlockPos blockpos = new BlockPos(entityIn.func_241842_k(partialTicks));
+        return LightTexture.packLight(this.getBlockLight(entityIn, blockpos), this.func_239381_b_(entityIn, blockpos));
+    }
 
-   protected int getSkyLightLevel(T p_239381_1_, BlockPos p_239381_2_) {
-      return p_239381_1_.level.getBrightness(LightType.SKY, p_239381_2_);
-   }
+    protected int func_239381_b_(T p_239381_1_, BlockPos p_239381_2_)
+    {
+        return p_239381_1_.world.getLightFor(LightType.SKY, p_239381_2_);
+    }
 
-   protected int getBlockLightLevel(T p_225624_1_, BlockPos p_225624_2_) {
-      return p_225624_1_.isOnFire() ? 15 : p_225624_1_.level.getBrightness(LightType.BLOCK, p_225624_2_);
-   }
+    protected int getBlockLight(T entityIn, BlockPos partialTicks)
+    {
+        return entityIn.isBurning() ? 15 : entityIn.world.getLightFor(LightType.BLOCK, partialTicks);
+    }
 
-   public boolean shouldRender(T p_225626_1_, ClippingHelper p_225626_2_, double p_225626_3_, double p_225626_5_, double p_225626_7_) {
-      if (!p_225626_1_.shouldRender(p_225626_3_, p_225626_5_, p_225626_7_)) {
-         return false;
-      } else if (p_225626_1_.noCulling) {
-         return true;
-      } else {
-         AxisAlignedBB axisalignedbb = p_225626_1_.getBoundingBoxForCulling().inflate(0.5D);
-         if (axisalignedbb.hasNaN() || axisalignedbb.getSize() == 0.0D) {
-            axisalignedbb = new AxisAlignedBB(p_225626_1_.getX() - 2.0D, p_225626_1_.getY() - 2.0D, p_225626_1_.getZ() - 2.0D, p_225626_1_.getX() + 2.0D, p_225626_1_.getY() + 2.0D, p_225626_1_.getZ() + 2.0D);
-         }
+    public boolean shouldRender(T livingEntityIn, ClippingHelper camera, double camX, double camY, double camZ)
+    {
+        if (!livingEntityIn.isInRangeToRender3d(camX, camY, camZ))
+        {
+            return false;
+        }
+        else if (livingEntityIn.ignoreFrustumCheck)
+        {
+            return true;
+        }
+        else
+        {
+            AxisAlignedBB axisalignedbb = livingEntityIn.getRenderBoundingBox().grow(0.5D);
 
-         return p_225626_2_.isVisible(axisalignedbb);
-      }
-   }
+            if (axisalignedbb.hasNaN() || axisalignedbb.getAverageEdgeLength() == 0.0D)
+            {
+                axisalignedbb = new AxisAlignedBB(livingEntityIn.getPosX() - 2.0D, livingEntityIn.getPosY() - 2.0D, livingEntityIn.getPosZ() - 2.0D, livingEntityIn.getPosX() + 2.0D, livingEntityIn.getPosY() + 2.0D, livingEntityIn.getPosZ() + 2.0D);
+            }
 
-   public Vector3d getRenderOffset(T p_225627_1_, float p_225627_2_) {
-      return Vector3d.ZERO;
-   }
+            return camera.isBoundingBoxInFrustum(axisalignedbb);
+        }
+    }
 
-   public void render(T p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      if (this.shouldShowName(p_225623_1_)) {
-         this.renderNameTag(p_225623_1_, p_225623_1_.getDisplayName(), p_225623_4_, p_225623_5_, p_225623_6_);
-      }
-   }
+    public Vector3d getRenderOffset(T entityIn, float partialTicks)
+    {
+        return Vector3d.ZERO;
+    }
 
-   protected boolean shouldShowName(T p_177070_1_) {
-      return p_177070_1_.shouldShowName() && p_177070_1_.hasCustomName();
-   }
+    public void render(T entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        if (!Reflector.RenderNameplateEvent_Constructor.exists())
+        {
+            if (this.canRenderName(entityIn))
+            {
+                this.renderName(entityIn, entityIn.getDisplayName(), matrixStackIn, bufferIn, packedLightIn);
+            }
+        }
+        else
+        {
+            Object object = Reflector.newInstance(Reflector.RenderNameplateEvent_Constructor, entityIn, entityIn.getDisplayName(), this, matrixStackIn, bufferIn, packedLightIn, partialTicks);
+            Reflector.postForgeBusEvent(object);
+            Object object1 = Reflector.call(object, Reflector.Event_getResult);
 
-   public abstract ResourceLocation getTextureLocation(T p_110775_1_);
+            if (object1 != ReflectorForge.EVENT_RESULT_DENY && (object1 == ReflectorForge.EVENT_RESULT_ALLOW || this.canRenderName(entityIn)))
+            {
+                ITextComponent itextcomponent = (ITextComponent)Reflector.call(object, Reflector.RenderNameplateEvent_getContent);
+                this.renderName(entityIn, itextcomponent, matrixStackIn, bufferIn, packedLightIn);
+            }
+        }
+    }
 
-   public FontRenderer getFont() {
-      return this.entityRenderDispatcher.getFont();
-   }
+    protected boolean canRenderName(T entity)
+    {
+        return entity.getAlwaysRenderNameTagForRender() && entity.hasCustomName();
+    }
 
-   protected void renderNameTag(T p_225629_1_, ITextComponent p_225629_2_, MatrixStack p_225629_3_, IRenderTypeBuffer p_225629_4_, int p_225629_5_) {
-      double d0 = this.entityRenderDispatcher.distanceToSqr(p_225629_1_);
-      if (!(d0 > 4096.0D)) {
-         boolean flag = !p_225629_1_.isDiscrete();
-         float f = p_225629_1_.getBbHeight() + 0.5F;
-         int i = "deadmau5".equals(p_225629_2_.getString()) ? -10 : 0;
-         p_225629_3_.pushPose();
-         p_225629_3_.translate(0.0D, (double)f, 0.0D);
-         p_225629_3_.mulPose(this.entityRenderDispatcher.cameraOrientation());
-         p_225629_3_.scale(-0.025F, -0.025F, 0.025F);
-         Matrix4f matrix4f = p_225629_3_.last().pose();
-         float f1 = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
-         int j = (int)(f1 * 255.0F) << 24;
-         FontRenderer fontrenderer = this.getFont();
-         float f2 = (float)(-fontrenderer.width(p_225629_2_) / 2);
-         fontrenderer.drawInBatch(p_225629_2_, f2, (float)i, 553648127, false, matrix4f, p_225629_4_, flag, j, p_225629_5_);
-         if (flag) {
-            fontrenderer.drawInBatch(p_225629_2_, f2, (float)i, -1, false, matrix4f, p_225629_4_, false, 0, p_225629_5_);
-         }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public abstract ResourceLocation getEntityTexture(T entity);
 
-         p_225629_3_.popPose();
-      }
-   }
+    /**
+     * Returns the font renderer from the set render manager
+     */
+    public FontRenderer getFontRendererFromRenderManager()
+    {
+        return this.renderManager.getFontRenderer();
+    }
 
-   public EntityRendererManager getDispatcher() {
-      return this.entityRenderDispatcher;
-   }
+    protected void renderName(T entityIn, ITextComponent displayNameIn, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        double d0 = this.renderManager.squareDistanceTo(entityIn);
+        boolean flag = !(d0 > 4096.0D);
+
+        if (Reflector.ForgeHooksClient_isNameplateInRenderDistance.exists())
+        {
+            flag = Reflector.ForgeHooksClient_isNameplateInRenderDistance.callBoolean(entityIn, d0);
+        }
+
+        if (flag)
+        {
+            boolean flag1 = !entityIn.isDiscrete();
+            float f = entityIn.getHeight() + 0.5F;
+            int i = "deadmau5".equals(displayNameIn.getString()) ? -10 : 0;
+            matrixStackIn.push();
+            matrixStackIn.translate(0.0D, (double)f, 0.0D);
+            matrixStackIn.rotate(this.renderManager.getCameraOrientation());
+            matrixStackIn.scale(-0.025F, -0.025F, 0.025F);
+            Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+            float f1 = Minecraft.getInstance().gameSettings.getTextBackgroundOpacity(0.25F);
+            int j = (int)(f1 * 255.0F) << 24;
+            FontRenderer fontrenderer = this.getFontRendererFromRenderManager();
+            float f2 = (float)(-fontrenderer.getStringPropertyWidth(displayNameIn) / 2);
+            fontrenderer.func_243247_a(displayNameIn, f2, (float)i, 553648127, false, matrix4f, bufferIn, flag1, j, packedLightIn);
+
+            if (flag1)
+            {
+                fontrenderer.func_243247_a(displayNameIn, f2, (float)i, -1, false, matrix4f, bufferIn, false, 0, packedLightIn);
+            }
+
+            matrixStackIn.pop();
+        }
+    }
+
+    public EntityRendererManager getRenderManager()
+    {
+        return this.renderManager;
+    }
+
+    public Either<EntityType, TileEntityType> getType()
+    {
+        return this.entityType == null ? null : Either.makeLeft(this.entityType);
+    }
+
+    public void setType(Either<EntityType, TileEntityType> p_setType_1_)
+    {
+        this.entityType = p_setType_1_.getLeft().get();
+    }
+
+    public ResourceLocation getLocationTextureCustom()
+    {
+        return this.locationTextureCustom;
+    }
+
+    public void setLocationTextureCustom(ResourceLocation p_setLocationTextureCustom_1_)
+    {
+        this.locationTextureCustom = p_setLocationTextureCustom_1_;
+    }
 }

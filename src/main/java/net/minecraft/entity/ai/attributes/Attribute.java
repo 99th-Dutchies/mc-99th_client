@@ -1,33 +1,40 @@
 package net.minecraft.entity.ai.attributes;
 
-public class Attribute {
-   private final double defaultValue;
-   private boolean syncable;
-   private final String descriptionId;
+public class Attribute
+{
+    private final double defaultValue;
+    private boolean shouldWatch;
+    private final String attributeName;
 
-   protected Attribute(String p_i231500_1_, double p_i231500_2_) {
-      this.defaultValue = p_i231500_2_;
-      this.descriptionId = p_i231500_1_;
-   }
+    protected Attribute(String attributeName, double defaultValue)
+    {
+        this.defaultValue = defaultValue;
+        this.attributeName = attributeName;
+    }
 
-   public double getDefaultValue() {
-      return this.defaultValue;
-   }
+    public double getDefaultValue()
+    {
+        return this.defaultValue;
+    }
 
-   public boolean isClientSyncable() {
-      return this.syncable;
-   }
+    public boolean getShouldWatch()
+    {
+        return this.shouldWatch;
+    }
 
-   public Attribute setSyncable(boolean p_233753_1_) {
-      this.syncable = p_233753_1_;
-      return this;
-   }
+    public Attribute setShouldWatch(boolean watch)
+    {
+        this.shouldWatch = watch;
+        return this;
+    }
 
-   public double sanitizeValue(double p_111109_1_) {
-      return p_111109_1_;
-   }
+    public double clampValue(double value)
+    {
+        return value;
+    }
 
-   public String getDescriptionId() {
-      return this.descriptionId;
-   }
+    public String getAttributeName()
+    {
+        return this.attributeName;
+    }
 }

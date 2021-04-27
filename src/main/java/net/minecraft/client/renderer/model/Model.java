@@ -6,25 +6,34 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.EmissiveTextures;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class Model implements Consumer<ModelRenderer> {
-   protected final Function<ResourceLocation, RenderType> renderType;
-   public int texWidth = 64;
-   public int texHeight = 32;
+public abstract class Model implements Consumer<ModelRenderer>
+{
+    protected final Function<ResourceLocation, RenderType> renderType;
+    public int textureWidth = 64;
+    public int textureHeight = 32;
 
-   public Model(Function<ResourceLocation, RenderType> p_i225947_1_) {
-      this.renderType = p_i225947_1_;
-   }
+    public Model(Function<ResourceLocation, RenderType> renderTypeIn)
+    {
+        this.renderType = renderTypeIn;
+    }
 
-   public void accept(ModelRenderer p_accept_1_) {
-   }
+    public void accept(ModelRenderer p_accept_1_)
+    {
+    }
 
-   public final RenderType renderType(ResourceLocation p_228282_1_) {
-      return this.renderType.apply(p_228282_1_);
-   }
+    public final RenderType getRenderType(ResourceLocation locationIn)
+    {
+        RenderType rendertype = this.renderType.apply(locationIn);
 
-   public abstract void renderToBuffer(MatrixStack p_225598_1_, IVertexBuilder p_225598_2_, int p_225598_3_, int p_225598_4_, float p_225598_5_, float p_225598_6_, float p_225598_7_, float p_225598_8_);
+        if (EmissiveTextures.isRenderEmissive() && rendertype.isEntitySolid())
+        {
+            rendertype = RenderType.getEntityCutout(locationIn);
+        }
+
+        return rendertype;
+    }
+
+    public abstract void render(MatrixStack matrixStackIn, IVertexBuilder bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha);
 }

@@ -12,281 +12,381 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.chunk.IChunkLightProvider;
 import net.minecraft.world.chunk.NibbleArray;
 
-public class SkyLightStorage extends SectionLightStorage<SkyLightStorage.StorageMap> {
-   private static final Direction[] HORIZONTALS = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
-   private final LongSet sectionsWithSources = new LongOpenHashSet();
-   private final LongSet sectionsToAddSourcesTo = new LongOpenHashSet();
-   private final LongSet sectionsToRemoveSourcesFrom = new LongOpenHashSet();
-   private final LongSet columnsWithSkySources = new LongOpenHashSet();
-   private volatile boolean hasSourceInconsistencies;
+public class SkyLightStorage extends SectionLightStorage<SkyLightStorage.StorageMap>
+{
+    private static final Direction[] field_215554_k = new Direction[] {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
+    private final LongSet sectionsWithLight = new LongOpenHashSet();
+    private final LongSet pendingAdditions = new LongOpenHashSet();
+    private final LongSet pendingRemovals = new LongOpenHashSet();
+    private final LongSet enabledColumns = new LongOpenHashSet();
+    private volatile boolean hasPendingUpdates;
 
-   protected SkyLightStorage(IChunkLightProvider p_i51288_1_) {
-      super(LightType.SKY, p_i51288_1_, new SkyLightStorage.StorageMap(new Long2ObjectOpenHashMap<>(), new Long2IntOpenHashMap(), Integer.MAX_VALUE));
-   }
+    protected SkyLightStorage(IChunkLightProvider lightProvider)
+    {
+        super(LightType.SKY, lightProvider, new SkyLightStorage.StorageMap(new Long2ObjectOpenHashMap<>(), new Long2IntOpenHashMap(), Integer.MAX_VALUE));
+    }
 
-   protected int getLightValue(long p_215525_1_) {
-      long i = SectionPos.blockToSection(p_215525_1_);
-      int j = SectionPos.y(i);
-      SkyLightStorage.StorageMap skylightstorage$storagemap = this.visibleSectionData;
-      int k = skylightstorage$storagemap.topSections.get(SectionPos.getZeroNode(i));
-      if (k != skylightstorage$storagemap.currentLowestY && j < k) {
-         NibbleArray nibblearray = this.getDataLayer(skylightstorage$storagemap, i);
-         if (nibblearray == null) {
-            for(p_215525_1_ = BlockPos.getFlatIndex(p_215525_1_); nibblearray == null; nibblearray = this.getDataLayer(skylightstorage$storagemap, i)) {
-               i = SectionPos.offset(i, Direction.UP);
-               ++j;
-               if (j >= k) {
-                  return 15;
-               }
+    protected int getLightOrDefault(long worldPos)
+    {
+        long i = SectionPos.worldToSection(worldPos);
+        int j = SectionPos.extractY(i);
+        SkyLightStorage.StorageMap skylightstorage$storagemap = this.uncachedLightData;
+        int k = skylightstorage$storagemap.surfaceSections.get(SectionPos.toSectionColumnPos(i));
 
-               p_215525_1_ = BlockPos.offset(p_215525_1_, 0, 16, 0);
-            }
-         }
+        if (k != skylightstorage$storagemap.minY && j < k)
+        {
+            NibbleArray nibblearray = this.getArray(skylightstorage$storagemap, i);
 
-         return nibblearray.get(SectionPos.sectionRelative(BlockPos.getX(p_215525_1_)), SectionPos.sectionRelative(BlockPos.getY(p_215525_1_)), SectionPos.sectionRelative(BlockPos.getZ(p_215525_1_)));
-      } else {
-         return 15;
-      }
-   }
+            if (nibblearray == null)
+            {
+                for (worldPos = BlockPos.atSectionBottomY(worldPos); nibblearray == null; nibblearray = this.getArray(skylightstorage$storagemap, i))
+                {
+                    i = SectionPos.withOffset(i, Direction.UP);
+                    ++j;
 
-   protected void onNodeAdded(long p_215524_1_) {
-      int i = SectionPos.y(p_215524_1_);
-      if ((this.updatingSectionData).currentLowestY > i) {
-         (this.updatingSectionData).currentLowestY = i;
-         (this.updatingSectionData).topSections.defaultReturnValue((this.updatingSectionData).currentLowestY);
-      }
+                    if (j >= k)
+                    {
+                        return 15;
+                    }
 
-      long j = SectionPos.getZeroNode(p_215524_1_);
-      int k = (this.updatingSectionData).topSections.get(j);
-      if (k < i + 1) {
-         (this.updatingSectionData).topSections.put(j, i + 1);
-         if (this.columnsWithSkySources.contains(j)) {
-            this.queueAddSource(p_215524_1_);
-            if (k > (this.updatingSectionData).currentLowestY) {
-               long l = SectionPos.asLong(SectionPos.x(p_215524_1_), k - 1, SectionPos.z(p_215524_1_));
-               this.queueRemoveSource(l);
+                    worldPos = BlockPos.offset(worldPos, 0, 16, 0);
+                }
             }
 
-            this.recheckInconsistencyFlag();
-         }
-      }
+            return nibblearray.get(SectionPos.mask(BlockPos.unpackX(worldPos)), SectionPos.mask(BlockPos.unpackY(worldPos)), SectionPos.mask(BlockPos.unpackZ(worldPos)));
+        }
+        else
+        {
+            return 15;
+        }
+    }
 
-   }
+    protected void addSection(long sectionPos)
+    {
+        int i = SectionPos.extractY(sectionPos);
 
-   private void queueRemoveSource(long p_223403_1_) {
-      this.sectionsToRemoveSourcesFrom.add(p_223403_1_);
-      this.sectionsToAddSourcesTo.remove(p_223403_1_);
-   }
+        if ((this.cachedLightData).minY > i)
+        {
+            (this.cachedLightData).minY = i;
+            (this.cachedLightData).surfaceSections.defaultReturnValue((this.cachedLightData).minY);
+        }
 
-   private void queueAddSource(long p_223404_1_) {
-      this.sectionsToAddSourcesTo.add(p_223404_1_);
-      this.sectionsToRemoveSourcesFrom.remove(p_223404_1_);
-   }
+        long j = SectionPos.toSectionColumnPos(sectionPos);
+        int k = (this.cachedLightData).surfaceSections.get(j);
 
-   private void recheckInconsistencyFlag() {
-      this.hasSourceInconsistencies = !this.sectionsToAddSourcesTo.isEmpty() || !this.sectionsToRemoveSourcesFrom.isEmpty();
-   }
+        if (k < i + 1)
+        {
+            (this.cachedLightData).surfaceSections.put(j, i + 1);
 
-   protected void onNodeRemoved(long p_215523_1_) {
-      long i = SectionPos.getZeroNode(p_215523_1_);
-      boolean flag = this.columnsWithSkySources.contains(i);
-      if (flag) {
-         this.queueRemoveSource(p_215523_1_);
-      }
+            if (this.enabledColumns.contains(j))
+            {
+                this.scheduleFullUpdate(sectionPos);
 
-      int j = SectionPos.y(p_215523_1_);
-      if ((this.updatingSectionData).topSections.get(i) == j + 1) {
-         long k;
-         for(k = p_215523_1_; !this.storingLightForSection(k) && this.hasSectionsBelow(j); k = SectionPos.offset(k, Direction.DOWN)) {
-            --j;
-         }
+                if (k > (this.cachedLightData).minY)
+                {
+                    long l = SectionPos.asLong(SectionPos.extractX(sectionPos), k - 1, SectionPos.extractZ(sectionPos));
+                    this.scheduleSurfaceUpdate(l);
+                }
 
-         if (this.storingLightForSection(k)) {
-            (this.updatingSectionData).topSections.put(i, j + 1);
-            if (flag) {
-               this.queueAddSource(k);
+                this.updateHasPendingUpdates();
             }
-         } else {
-            (this.updatingSectionData).topSections.remove(i);
-         }
-      }
+        }
+    }
 
-      if (flag) {
-         this.recheckInconsistencyFlag();
-      }
+    private void scheduleSurfaceUpdate(long p_223403_1_)
+    {
+        this.pendingRemovals.add(p_223403_1_);
+        this.pendingAdditions.remove(p_223403_1_);
+    }
 
-   }
+    private void scheduleFullUpdate(long p_223404_1_)
+    {
+        this.pendingAdditions.add(p_223404_1_);
+        this.pendingRemovals.remove(p_223404_1_);
+    }
 
-   protected void enableLightSources(long p_215526_1_, boolean p_215526_3_) {
-      this.runAllUpdates();
-      if (p_215526_3_ && this.columnsWithSkySources.add(p_215526_1_)) {
-         int i = (this.updatingSectionData).topSections.get(p_215526_1_);
-         if (i != (this.updatingSectionData).currentLowestY) {
-            long j = SectionPos.asLong(SectionPos.x(p_215526_1_), i - 1, SectionPos.z(p_215526_1_));
-            this.queueAddSource(j);
-            this.recheckInconsistencyFlag();
-         }
-      } else if (!p_215526_3_) {
-         this.columnsWithSkySources.remove(p_215526_1_);
-      }
+    private void updateHasPendingUpdates()
+    {
+        this.hasPendingUpdates = !this.pendingAdditions.isEmpty() || !this.pendingRemovals.isEmpty();
+    }
 
-   }
+    protected void removeSection(long p_215523_1_)
+    {
+        long i = SectionPos.toSectionColumnPos(p_215523_1_);
+        boolean flag = this.enabledColumns.contains(i);
 
-   protected boolean hasInconsistencies() {
-      return super.hasInconsistencies() || this.hasSourceInconsistencies;
-   }
+        if (flag)
+        {
+            this.scheduleSurfaceUpdate(p_215523_1_);
+        }
 
-   protected NibbleArray createDataLayer(long p_215530_1_) {
-      NibbleArray nibblearray = this.queuedSections.get(p_215530_1_);
-      if (nibblearray != null) {
-         return nibblearray;
-      } else {
-         long i = SectionPos.offset(p_215530_1_, Direction.UP);
-         int j = (this.updatingSectionData).topSections.get(SectionPos.getZeroNode(p_215530_1_));
-         if (j != (this.updatingSectionData).currentLowestY && SectionPos.y(i) < j) {
-            NibbleArray nibblearray1;
-            while((nibblearray1 = this.getDataLayer(i, true)) == null) {
-               i = SectionPos.offset(i, Direction.UP);
+        int j = SectionPos.extractY(p_215523_1_);
+
+        if ((this.cachedLightData).surfaceSections.get(i) == j + 1)
+        {
+            long k;
+
+            for (k = p_215523_1_; !this.hasSection(k) && this.isAboveBottom(j); k = SectionPos.withOffset(k, Direction.DOWN))
+            {
+                --j;
             }
 
-            return new NibbleArray((new NibbleArrayRepeater(nibblearray1, 0)).getData());
-         } else {
-            return new NibbleArray();
-         }
-      }
-   }
+            if (this.hasSection(k))
+            {
+                (this.cachedLightData).surfaceSections.put(i, j + 1);
 
-   protected void markNewInconsistencies(LightEngine<SkyLightStorage.StorageMap, ?> p_215522_1_, boolean p_215522_2_, boolean p_215522_3_) {
-      super.markNewInconsistencies(p_215522_1_, p_215522_2_, p_215522_3_);
-      if (p_215522_2_) {
-         if (!this.sectionsToAddSourcesTo.isEmpty()) {
-            for(long i : this.sectionsToAddSourcesTo) {
-               int j = this.getLevel(i);
-               if (j != 2 && !this.sectionsToRemoveSourcesFrom.contains(i) && this.sectionsWithSources.add(i)) {
-                  if (j == 1) {
-                     this.clearQueuedSectionBlocks(p_215522_1_, i);
-                     if (this.changedSections.add(i)) {
-                        this.updatingSectionData.copyDataLayer(i);
-                     }
+                if (flag)
+                {
+                    this.scheduleFullUpdate(k);
+                }
+            }
+            else
+            {
+                (this.cachedLightData).surfaceSections.remove(i);
+            }
+        }
 
-                     Arrays.fill(this.getDataLayer(i, true).getData(), (byte)-1);
-                     int i3 = SectionPos.sectionToBlockCoord(SectionPos.x(i));
-                     int k3 = SectionPos.sectionToBlockCoord(SectionPos.y(i));
-                     int i4 = SectionPos.sectionToBlockCoord(SectionPos.z(i));
+        if (flag)
+        {
+            this.updateHasPendingUpdates();
+        }
+    }
 
-                     for(Direction direction : HORIZONTALS) {
-                        long j1 = SectionPos.offset(i, direction);
-                        if ((this.sectionsToRemoveSourcesFrom.contains(j1) || !this.sectionsWithSources.contains(j1) && !this.sectionsToAddSourcesTo.contains(j1)) && this.storingLightForSection(j1)) {
-                           for(int k1 = 0; k1 < 16; ++k1) {
-                              for(int l1 = 0; l1 < 16; ++l1) {
-                                 long i2;
-                                 long j2;
-                                 switch(direction) {
-                                 case NORTH:
-                                    i2 = BlockPos.asLong(i3 + k1, k3 + l1, i4);
-                                    j2 = BlockPos.asLong(i3 + k1, k3 + l1, i4 - 1);
-                                    break;
-                                 case SOUTH:
-                                    i2 = BlockPos.asLong(i3 + k1, k3 + l1, i4 + 16 - 1);
-                                    j2 = BlockPos.asLong(i3 + k1, k3 + l1, i4 + 16);
-                                    break;
-                                 case WEST:
-                                    i2 = BlockPos.asLong(i3, k3 + k1, i4 + l1);
-                                    j2 = BlockPos.asLong(i3 - 1, k3 + k1, i4 + l1);
-                                    break;
-                                 default:
-                                    i2 = BlockPos.asLong(i3 + 16 - 1, k3 + k1, i4 + l1);
-                                    j2 = BlockPos.asLong(i3 + 16, k3 + k1, i4 + l1);
-                                 }
+    protected void setColumnEnabled(long p_215526_1_, boolean p_215526_3_)
+    {
+        this.processAllLevelUpdates();
 
-                                 p_215522_1_.checkEdge(i2, j2, p_215522_1_.computeLevelFromNeighbor(i2, j2, 0), true);
-                              }
-                           }
+        if (p_215526_3_ && this.enabledColumns.add(p_215526_1_))
+        {
+            int i = (this.cachedLightData).surfaceSections.get(p_215526_1_);
+
+            if (i != (this.cachedLightData).minY)
+            {
+                long j = SectionPos.asLong(SectionPos.extractX(p_215526_1_), i - 1, SectionPos.extractZ(p_215526_1_));
+                this.scheduleFullUpdate(j);
+                this.updateHasPendingUpdates();
+            }
+        }
+        else if (!p_215526_3_)
+        {
+            this.enabledColumns.remove(p_215526_1_);
+        }
+    }
+
+    protected boolean hasSectionsToUpdate()
+    {
+        return super.hasSectionsToUpdate() || this.hasPendingUpdates;
+    }
+
+    protected NibbleArray getOrCreateArray(long sectionPosIn)
+    {
+        NibbleArray nibblearray = this.newArrays.get(sectionPosIn);
+
+        if (nibblearray != null)
+        {
+            return nibblearray;
+        }
+        else
+        {
+            long i = SectionPos.withOffset(sectionPosIn, Direction.UP);
+            int j = (this.cachedLightData).surfaceSections.get(SectionPos.toSectionColumnPos(sectionPosIn));
+
+            if (j != (this.cachedLightData).minY && SectionPos.extractY(i) < j)
+            {
+                NibbleArray nibblearray1;
+
+                while ((nibblearray1 = this.getArray(i, true)) == null)
+                {
+                    i = SectionPos.withOffset(i, Direction.UP);
+                }
+
+                return new NibbleArray((new NibbleArrayRepeater(nibblearray1, 0)).getData());
+            }
+            else
+            {
+                return new NibbleArray();
+            }
+        }
+    }
+
+    protected void updateSections(LightEngine < SkyLightStorage.StorageMap, ? > engine, boolean updateSkyLight, boolean updateBlockLight)
+    {
+        super.updateSections(engine, updateSkyLight, updateBlockLight);
+
+        if (updateSkyLight)
+        {
+            if (!this.pendingAdditions.isEmpty())
+            {
+                for (long i : this.pendingAdditions)
+                {
+                    int j = this.getLevel(i);
+
+                    if (j != 2 && !this.pendingRemovals.contains(i) && this.sectionsWithLight.add(i))
+                    {
+                        if (j == 1)
+                        {
+                            this.cancelSectionUpdates(engine, i);
+
+                            if (this.dirtyCachedSections.add(i))
+                            {
+                                this.cachedLightData.copyArray(i);
+                            }
+
+                            Arrays.fill(this.getArray(i, true).getData(), (byte) - 1);
+                            int i3 = SectionPos.toWorld(SectionPos.extractX(i));
+                            int k3 = SectionPos.toWorld(SectionPos.extractY(i));
+                            int i4 = SectionPos.toWorld(SectionPos.extractZ(i));
+
+                            for (Direction direction : field_215554_k)
+                            {
+                                long j1 = SectionPos.withOffset(i, direction);
+
+                                if ((this.pendingRemovals.contains(j1) || !this.sectionsWithLight.contains(j1) && !this.pendingAdditions.contains(j1)) && this.hasSection(j1))
+                                {
+                                    for (int k1 = 0; k1 < 16; ++k1)
+                                    {
+                                        for (int l1 = 0; l1 < 16; ++l1)
+                                        {
+                                            long i2;
+                                            long j2;
+
+                                            switch (direction)
+                                            {
+                                                case NORTH:
+                                                    i2 = BlockPos.pack(i3 + k1, k3 + l1, i4);
+                                                    j2 = BlockPos.pack(i3 + k1, k3 + l1, i4 - 1);
+                                                    break;
+
+                                                case SOUTH:
+                                                    i2 = BlockPos.pack(i3 + k1, k3 + l1, i4 + 16 - 1);
+                                                    j2 = BlockPos.pack(i3 + k1, k3 + l1, i4 + 16);
+                                                    break;
+
+                                                case WEST:
+                                                    i2 = BlockPos.pack(i3, k3 + k1, i4 + l1);
+                                                    j2 = BlockPos.pack(i3 - 1, k3 + k1, i4 + l1);
+                                                    break;
+
+                                                default:
+                                                    i2 = BlockPos.pack(i3 + 16 - 1, k3 + k1, i4 + l1);
+                                                    j2 = BlockPos.pack(i3 + 16, k3 + k1, i4 + l1);
+                                            }
+
+                                            engine.scheduleUpdate(i2, j2, engine.getEdgeLevel(i2, j2, 0), true);
+                                        }
+                                    }
+                                }
+                            }
+
+                            for (int j4 = 0; j4 < 16; ++j4)
+                            {
+                                for (int k4 = 0; k4 < 16; ++k4)
+                                {
+                                    long l4 = BlockPos.pack(SectionPos.toWorld(SectionPos.extractX(i)) + j4, SectionPos.toWorld(SectionPos.extractY(i)), SectionPos.toWorld(SectionPos.extractZ(i)) + k4);
+                                    long i5 = BlockPos.pack(SectionPos.toWorld(SectionPos.extractX(i)) + j4, SectionPos.toWorld(SectionPos.extractY(i)) - 1, SectionPos.toWorld(SectionPos.extractZ(i)) + k4);
+                                    engine.scheduleUpdate(l4, i5, engine.getEdgeLevel(l4, i5, 0), true);
+                                }
+                            }
                         }
-                     }
-
-                     for(int j4 = 0; j4 < 16; ++j4) {
-                        for(int k4 = 0; k4 < 16; ++k4) {
-                           long l4 = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(i)) + j4, SectionPos.sectionToBlockCoord(SectionPos.y(i)), SectionPos.sectionToBlockCoord(SectionPos.z(i)) + k4);
-                           long i5 = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(i)) + j4, SectionPos.sectionToBlockCoord(SectionPos.y(i)) - 1, SectionPos.sectionToBlockCoord(SectionPos.z(i)) + k4);
-                           p_215522_1_.checkEdge(l4, i5, p_215522_1_.computeLevelFromNeighbor(l4, i5, 0), true);
+                        else
+                        {
+                            for (int k = 0; k < 16; ++k)
+                            {
+                                for (int l = 0; l < 16; ++l)
+                                {
+                                    long i1 = BlockPos.pack(SectionPos.toWorld(SectionPos.extractX(i)) + k, SectionPos.toWorld(SectionPos.extractY(i)) + 16 - 1, SectionPos.toWorld(SectionPos.extractZ(i)) + l);
+                                    engine.scheduleUpdate(Long.MAX_VALUE, i1, 0, true);
+                                }
+                            }
                         }
-                     }
-                  } else {
-                     for(int k = 0; k < 16; ++k) {
-                        for(int l = 0; l < 16; ++l) {
-                           long i1 = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(i)) + k, SectionPos.sectionToBlockCoord(SectionPos.y(i)) + 16 - 1, SectionPos.sectionToBlockCoord(SectionPos.z(i)) + l);
-                           p_215522_1_.checkEdge(Long.MAX_VALUE, i1, 0, true);
+                    }
+                }
+            }
+
+            this.pendingAdditions.clear();
+
+            if (!this.pendingRemovals.isEmpty())
+            {
+                for (long k2 : this.pendingRemovals)
+                {
+                    if (this.sectionsWithLight.remove(k2) && this.hasSection(k2))
+                    {
+                        for (int l2 = 0; l2 < 16; ++l2)
+                        {
+                            for (int j3 = 0; j3 < 16; ++j3)
+                            {
+                                long l3 = BlockPos.pack(SectionPos.toWorld(SectionPos.extractX(k2)) + l2, SectionPos.toWorld(SectionPos.extractY(k2)) + 16 - 1, SectionPos.toWorld(SectionPos.extractZ(k2)) + j3);
+                                engine.scheduleUpdate(Long.MAX_VALUE, l3, 15, false);
+                            }
                         }
-                     }
-                  }
-               }
+                    }
+                }
             }
-         }
 
-         this.sectionsToAddSourcesTo.clear();
-         if (!this.sectionsToRemoveSourcesFrom.isEmpty()) {
-            for(long k2 : this.sectionsToRemoveSourcesFrom) {
-               if (this.sectionsWithSources.remove(k2) && this.storingLightForSection(k2)) {
-                  for(int l2 = 0; l2 < 16; ++l2) {
-                     for(int j3 = 0; j3 < 16; ++j3) {
-                        long l3 = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(k2)) + l2, SectionPos.sectionToBlockCoord(SectionPos.y(k2)) + 16 - 1, SectionPos.sectionToBlockCoord(SectionPos.z(k2)) + j3);
-                        p_215522_1_.checkEdge(Long.MAX_VALUE, l3, 15, false);
-                     }
-                  }
-               }
-            }
-         }
+            this.pendingRemovals.clear();
+            this.hasPendingUpdates = false;
+        }
+    }
 
-         this.sectionsToRemoveSourcesFrom.clear();
-         this.hasSourceInconsistencies = false;
-      }
-   }
+    protected boolean isAboveBottom(int p_215550_1_)
+    {
+        return p_215550_1_ >= (this.cachedLightData).minY;
+    }
 
-   protected boolean hasSectionsBelow(int p_215550_1_) {
-      return p_215550_1_ >= (this.updatingSectionData).currentLowestY;
-   }
+    protected boolean func_215551_l(long p_215551_1_)
+    {
+        int i = BlockPos.unpackY(p_215551_1_);
 
-   protected boolean hasLightSource(long p_215551_1_) {
-      int i = BlockPos.getY(p_215551_1_);
-      if ((i & 15) != 15) {
-         return false;
-      } else {
-         long j = SectionPos.blockToSection(p_215551_1_);
-         long k = SectionPos.getZeroNode(j);
-         if (!this.columnsWithSkySources.contains(k)) {
+        if ((i & 15) != 15)
+        {
             return false;
-         } else {
-            int l = (this.updatingSectionData).topSections.get(k);
-            return SectionPos.sectionToBlockCoord(l) == i + 16;
-         }
-      }
-   }
+        }
+        else
+        {
+            long j = SectionPos.worldToSection(p_215551_1_);
+            long k = SectionPos.toSectionColumnPos(j);
 
-   protected boolean isAboveData(long p_215549_1_) {
-      long i = SectionPos.getZeroNode(p_215549_1_);
-      int j = (this.updatingSectionData).topSections.get(i);
-      return j == (this.updatingSectionData).currentLowestY || SectionPos.y(p_215549_1_) >= j;
-   }
+            if (!this.enabledColumns.contains(k))
+            {
+                return false;
+            }
+            else
+            {
+                int l = (this.cachedLightData).surfaceSections.get(k);
+                return SectionPos.toWorld(l) == i + 16;
+            }
+        }
+    }
 
-   protected boolean lightOnInSection(long p_215548_1_) {
-      long i = SectionPos.getZeroNode(p_215548_1_);
-      return this.columnsWithSkySources.contains(i);
-   }
+    protected boolean isAboveWorld(long p_215549_1_)
+    {
+        long i = SectionPos.toSectionColumnPos(p_215549_1_);
+        int j = (this.cachedLightData).surfaceSections.get(i);
+        return j == (this.cachedLightData).minY || SectionPos.extractY(p_215549_1_) >= j;
+    }
 
-   public static final class StorageMap extends LightDataMap<SkyLightStorage.StorageMap> {
-      private int currentLowestY;
-      private final Long2IntOpenHashMap topSections;
+    protected boolean isSectionEnabled(long p_215548_1_)
+    {
+        long i = SectionPos.toSectionColumnPos(p_215548_1_);
+        return this.enabledColumns.contains(i);
+    }
 
-      public StorageMap(Long2ObjectOpenHashMap<NibbleArray> p_i50496_1_, Long2IntOpenHashMap p_i50496_2_, int p_i50496_3_) {
-         super(p_i50496_1_);
-         this.topSections = p_i50496_2_;
-         p_i50496_2_.defaultReturnValue(p_i50496_3_);
-         this.currentLowestY = p_i50496_3_;
-      }
+    public static final class StorageMap extends LightDataMap<SkyLightStorage.StorageMap>
+    {
+        private int minY;
+        private final Long2IntOpenHashMap surfaceSections;
 
-      public SkyLightStorage.StorageMap copy() {
-         return new SkyLightStorage.StorageMap(this.map.clone(), this.topSections.clone(), this.currentLowestY);
-      }
-   }
+        public StorageMap(Long2ObjectOpenHashMap<NibbleArray> p_i50496_1_, Long2IntOpenHashMap p_i50496_2_, int p_i50496_3_)
+        {
+            super(p_i50496_1_);
+            this.surfaceSections = p_i50496_2_;
+            p_i50496_2_.defaultReturnValue(p_i50496_3_);
+            this.minY = p_i50496_3_;
+        }
+
+        public SkyLightStorage.StorageMap copy()
+        {
+            return new SkyLightStorage.StorageMap(this.arrays.clone(), this.surfaceSections.clone(), this.minY);
+        }
+    }
 }

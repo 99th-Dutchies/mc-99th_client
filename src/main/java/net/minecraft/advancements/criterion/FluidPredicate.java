@@ -15,78 +15,109 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.server.ServerWorld;
 
-public class FluidPredicate {
-   public static final FluidPredicate ANY = new FluidPredicate((ITag<Fluid>)null, (Fluid)null, StatePropertiesPredicate.ANY);
-   @Nullable
-   private final ITag<Fluid> tag;
-   @Nullable
-   private final Fluid fluid;
-   private final StatePropertiesPredicate properties;
+public class FluidPredicate
+{
+    public static final FluidPredicate ANY = new FluidPredicate((ITag<Fluid>)null, (Fluid)null, StatePropertiesPredicate.EMPTY);
+    @Nullable
+    private final ITag<Fluid> fluidTag;
+    @Nullable
+    private final Fluid fluid;
+    private final StatePropertiesPredicate stateCondition;
 
-   public FluidPredicate(@Nullable ITag<Fluid> p_i225738_1_, @Nullable Fluid p_i225738_2_, StatePropertiesPredicate p_i225738_3_) {
-      this.tag = p_i225738_1_;
-      this.fluid = p_i225738_2_;
-      this.properties = p_i225738_3_;
-   }
+    public FluidPredicate(@Nullable ITag<Fluid> fluidTag, @Nullable Fluid fluid, StatePropertiesPredicate stateCondition)
+    {
+        this.fluidTag = fluidTag;
+        this.fluid = fluid;
+        this.stateCondition = stateCondition;
+    }
 
-   public boolean matches(ServerWorld p_226649_1_, BlockPos p_226649_2_) {
-      if (this == ANY) {
-         return true;
-      } else if (!p_226649_1_.isLoaded(p_226649_2_)) {
-         return false;
-      } else {
-         FluidState fluidstate = p_226649_1_.getFluidState(p_226649_2_);
-         Fluid fluid = fluidstate.getType();
-         if (this.tag != null && !this.tag.contains(fluid)) {
+    public boolean test(ServerWorld world, BlockPos pos)
+    {
+        if (this == ANY)
+        {
+            return true;
+        }
+        else if (!world.isBlockPresent(pos))
+        {
             return false;
-         } else if (this.fluid != null && fluid != this.fluid) {
-            return false;
-         } else {
-            return this.properties.matches(fluidstate);
-         }
-      }
-   }
+        }
+        else
+        {
+            FluidState fluidstate = world.getFluidState(pos);
+            Fluid fluid = fluidstate.getFluid();
 
-   public static FluidPredicate fromJson(@Nullable JsonElement p_226648_0_) {
-      if (p_226648_0_ != null && !p_226648_0_.isJsonNull()) {
-         JsonObject jsonobject = JSONUtils.convertToJsonObject(p_226648_0_, "fluid");
-         Fluid fluid = null;
-         if (jsonobject.has("fluid")) {
-            ResourceLocation resourcelocation = new ResourceLocation(JSONUtils.getAsString(jsonobject, "fluid"));
-            fluid = Registry.FLUID.get(resourcelocation);
-         }
-
-         ITag<Fluid> itag = null;
-         if (jsonobject.has("tag")) {
-            ResourceLocation resourcelocation1 = new ResourceLocation(JSONUtils.getAsString(jsonobject, "tag"));
-            itag = TagCollectionManager.getInstance().getFluids().getTag(resourcelocation1);
-            if (itag == null) {
-               throw new JsonSyntaxException("Unknown fluid tag '" + resourcelocation1 + "'");
+            if (this.fluidTag != null && !this.fluidTag.contains(fluid))
+            {
+                return false;
             }
-         }
+            else if (this.fluid != null && fluid != this.fluid)
+            {
+                return false;
+            }
+            else
+            {
+                return this.stateCondition.matches(fluidstate);
+            }
+        }
+    }
 
-         StatePropertiesPredicate statepropertiespredicate = StatePropertiesPredicate.fromJson(jsonobject.get("state"));
-         return new FluidPredicate(itag, fluid, statepropertiespredicate);
-      } else {
-         return ANY;
-      }
-   }
+    public static FluidPredicate deserialize(@Nullable JsonElement element)
+    {
+        if (element != null && !element.isJsonNull())
+        {
+            JsonObject jsonobject = JSONUtils.getJsonObject(element, "fluid");
+            Fluid fluid = null;
 
-   public JsonElement serializeToJson() {
-      if (this == ANY) {
-         return JsonNull.INSTANCE;
-      } else {
-         JsonObject jsonobject = new JsonObject();
-         if (this.fluid != null) {
-            jsonobject.addProperty("fluid", Registry.FLUID.getKey(this.fluid).toString());
-         }
+            if (jsonobject.has("fluid"))
+            {
+                ResourceLocation resourcelocation = new ResourceLocation(JSONUtils.getString(jsonobject, "fluid"));
+                fluid = Registry.FLUID.getOrDefault(resourcelocation);
+            }
 
-         if (this.tag != null) {
-            jsonobject.addProperty("tag", TagCollectionManager.getInstance().getFluids().getIdOrThrow(this.tag).toString());
-         }
+            ITag<Fluid> itag = null;
 
-         jsonobject.add("state", this.properties.serializeToJson());
-         return jsonobject;
-      }
-   }
+            if (jsonobject.has("tag"))
+            {
+                ResourceLocation resourcelocation1 = new ResourceLocation(JSONUtils.getString(jsonobject, "tag"));
+                itag = TagCollectionManager.getManager().getFluidTags().get(resourcelocation1);
+
+                if (itag == null)
+                {
+                    throw new JsonSyntaxException("Unknown fluid tag '" + resourcelocation1 + "'");
+                }
+            }
+
+            StatePropertiesPredicate statepropertiespredicate = StatePropertiesPredicate.deserializeProperties(jsonobject.get("state"));
+            return new FluidPredicate(itag, fluid, statepropertiespredicate);
+        }
+        else
+        {
+            return ANY;
+        }
+    }
+
+    public JsonElement serialize()
+    {
+        if (this == ANY)
+        {
+            return JsonNull.INSTANCE;
+        }
+        else
+        {
+            JsonObject jsonobject = new JsonObject();
+
+            if (this.fluid != null)
+            {
+                jsonobject.addProperty("fluid", Registry.FLUID.getKey(this.fluid).toString());
+            }
+
+            if (this.fluidTag != null)
+            {
+                jsonobject.addProperty("tag", TagCollectionManager.getManager().getFluidTags().getValidatedIdFromTag(this.fluidTag).toString());
+            }
+
+            jsonobject.add("state", this.stateCondition.toJsonElement());
+            return jsonobject;
+        }
+    }
 }

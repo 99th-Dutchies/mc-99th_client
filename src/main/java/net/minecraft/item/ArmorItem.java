@@ -24,96 +24,130 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class ArmorItem extends Item implements IArmorVanishable {
-   private static final UUID[] ARMOR_MODIFIER_UUID_PER_SLOT = new UUID[]{UUID.fromString("845DB27C-C624-495F-8C9F-6020A9A58B6B"), UUID.fromString("D8499B04-0E66-4726-AB29-64469D734E0D"), UUID.fromString("9F3D476D-C118-4544-8365-64846904B48E"), UUID.fromString("2AD3F246-FEE1-4E67-B886-69FD380BB150")};
-   public static final IDispenseItemBehavior DISPENSE_ITEM_BEHAVIOR = new DefaultDispenseItemBehavior() {
-      protected ItemStack execute(IBlockSource p_82487_1_, ItemStack p_82487_2_) {
-         return ArmorItem.dispenseArmor(p_82487_1_, p_82487_2_) ? p_82487_2_ : super.execute(p_82487_1_, p_82487_2_);
-      }
-   };
-   protected final EquipmentSlotType slot;
-   private final int defense;
-   private final float toughness;
-   protected final float knockbackResistance;
-   protected final IArmorMaterial material;
-   private final Multimap<Attribute, AttributeModifier> defaultModifiers;
+public class ArmorItem extends Item implements IArmorVanishable
+{
+    private static final UUID[] ARMOR_MODIFIERS = new UUID[] {UUID.fromString("845DB27C-C624-495F-8C9F-6020A9A58B6B"), UUID.fromString("D8499B04-0E66-4726-AB29-64469D734E0D"), UUID.fromString("9F3D476D-C118-4544-8365-64846904B48E"), UUID.fromString("2AD3F246-FEE1-4E67-B886-69FD380BB150")};
+    public static final IDispenseItemBehavior DISPENSER_BEHAVIOR = new DefaultDispenseItemBehavior()
+    {
+        protected ItemStack dispenseStack(IBlockSource source, ItemStack stack)
+        {
+            return ArmorItem.func_226626_a_(source, stack) ? stack : super.dispenseStack(source, stack);
+        }
+    };
+    protected final EquipmentSlotType slot;
+    private final int damageReduceAmount;
+    private final float toughness;
+    protected final float knockbackResistance;
+    protected final IArmorMaterial material;
+    private final Multimap<Attribute, AttributeModifier> field_234656_m_;
 
-   public static boolean dispenseArmor(IBlockSource p_226626_0_, ItemStack p_226626_1_) {
-      BlockPos blockpos = p_226626_0_.getPos().relative(p_226626_0_.getBlockState().getValue(DispenserBlock.FACING));
-      List<LivingEntity> list = p_226626_0_.getLevel().getEntitiesOfClass(LivingEntity.class, new AxisAlignedBB(blockpos), EntityPredicates.NO_SPECTATORS.and(new EntityPredicates.ArmoredMob(p_226626_1_)));
-      if (list.isEmpty()) {
-         return false;
-      } else {
-         LivingEntity livingentity = list.get(0);
-         EquipmentSlotType equipmentslottype = MobEntity.getEquipmentSlotForItem(p_226626_1_);
-         ItemStack itemstack = p_226626_1_.split(1);
-         livingentity.setItemSlot(equipmentslottype, itemstack);
-         if (livingentity instanceof MobEntity) {
-            ((MobEntity)livingentity).setDropChance(equipmentslottype, 2.0F);
-            ((MobEntity)livingentity).setPersistenceRequired();
-         }
+    public static boolean func_226626_a_(IBlockSource blockSource, ItemStack stack)
+    {
+        BlockPos blockpos = blockSource.getBlockPos().offset(blockSource.getBlockState().get(DispenserBlock.FACING));
+        List<LivingEntity> list = blockSource.getWorld().getEntitiesWithinAABB(LivingEntity.class, new AxisAlignedBB(blockpos), EntityPredicates.NOT_SPECTATING.and(new EntityPredicates.ArmoredMob(stack)));
 
-         return true;
-      }
-   }
+        if (list.isEmpty())
+        {
+            return false;
+        }
+        else
+        {
+            LivingEntity livingentity = list.get(0);
+            EquipmentSlotType equipmentslottype = MobEntity.getSlotForItemStack(stack);
+            ItemStack itemstack = stack.split(1);
+            livingentity.setItemStackToSlot(equipmentslottype, itemstack);
 
-   public ArmorItem(IArmorMaterial p_i48534_1_, EquipmentSlotType p_i48534_2_, Item.Properties p_i48534_3_) {
-      super(p_i48534_3_.defaultDurability(p_i48534_1_.getDurabilityForSlot(p_i48534_2_)));
-      this.material = p_i48534_1_;
-      this.slot = p_i48534_2_;
-      this.defense = p_i48534_1_.getDefenseForSlot(p_i48534_2_);
-      this.toughness = p_i48534_1_.getToughness();
-      this.knockbackResistance = p_i48534_1_.getKnockbackResistance();
-      DispenserBlock.registerBehavior(this, DISPENSE_ITEM_BEHAVIOR);
-      Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-      UUID uuid = ARMOR_MODIFIER_UUID_PER_SLOT[p_i48534_2_.getIndex()];
-      builder.put(Attributes.ARMOR, new AttributeModifier(uuid, "Armor modifier", (double)this.defense, AttributeModifier.Operation.ADDITION));
-      builder.put(Attributes.ARMOR_TOUGHNESS, new AttributeModifier(uuid, "Armor toughness", (double)this.toughness, AttributeModifier.Operation.ADDITION));
-      if (p_i48534_1_ == ArmorMaterial.NETHERITE) {
-         builder.put(Attributes.KNOCKBACK_RESISTANCE, new AttributeModifier(uuid, "Armor knockback resistance", (double)this.knockbackResistance, AttributeModifier.Operation.ADDITION));
-      }
+            if (livingentity instanceof MobEntity)
+            {
+                ((MobEntity)livingentity).setDropChance(equipmentslottype, 2.0F);
+                ((MobEntity)livingentity).enablePersistence();
+            }
 
-      this.defaultModifiers = builder.build();
-   }
+            return true;
+        }
+    }
 
-   public EquipmentSlotType getSlot() {
-      return this.slot;
-   }
+    public ArmorItem(IArmorMaterial materialIn, EquipmentSlotType slot, Item.Properties builderIn)
+    {
+        super(builderIn.defaultMaxDamage(materialIn.getDurability(slot)));
+        this.material = materialIn;
+        this.slot = slot;
+        this.damageReduceAmount = materialIn.getDamageReductionAmount(slot);
+        this.toughness = materialIn.getToughness();
+        this.knockbackResistance = materialIn.getKnockbackResistance();
+        DispenserBlock.registerDispenseBehavior(this, DISPENSER_BEHAVIOR);
+        Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+        UUID uuid = ARMOR_MODIFIERS[slot.getIndex()];
+        builder.put(Attributes.ARMOR, new AttributeModifier(uuid, "Armor modifier", (double)this.damageReduceAmount, AttributeModifier.Operation.ADDITION));
+        builder.put(Attributes.ARMOR_TOUGHNESS, new AttributeModifier(uuid, "Armor toughness", (double)this.toughness, AttributeModifier.Operation.ADDITION));
 
-   public int getEnchantmentValue() {
-      return this.material.getEnchantmentValue();
-   }
+        if (materialIn == ArmorMaterial.NETHERITE)
+        {
+            builder.put(Attributes.KNOCKBACK_RESISTANCE, new AttributeModifier(uuid, "Armor knockback resistance", (double)this.knockbackResistance, AttributeModifier.Operation.ADDITION));
+        }
 
-   public IArmorMaterial getMaterial() {
-      return this.material;
-   }
+        this.field_234656_m_ = builder.build();
+    }
 
-   public boolean isValidRepairItem(ItemStack p_82789_1_, ItemStack p_82789_2_) {
-      return this.material.getRepairIngredient().test(p_82789_2_) || super.isValidRepairItem(p_82789_1_, p_82789_2_);
-   }
+    /**
+     * Gets the equipment slot of this armor piece (formerly known as armor type)
+     */
+    public EquipmentSlotType getEquipmentSlot()
+    {
+        return this.slot;
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      EquipmentSlotType equipmentslottype = MobEntity.getEquipmentSlotForItem(itemstack);
-      ItemStack itemstack1 = p_77659_2_.getItemBySlot(equipmentslottype);
-      if (itemstack1.isEmpty()) {
-         p_77659_2_.setItemSlot(equipmentslottype, itemstack.copy());
-         itemstack.setCount(0);
-         return ActionResult.sidedSuccess(itemstack, p_77659_1_.isClientSide());
-      } else {
-         return ActionResult.fail(itemstack);
-      }
-   }
+    /**
+     * Return the enchantability factor of the item, most of the time is based on material.
+     */
+    public int getItemEnchantability()
+    {
+        return this.material.getEnchantability();
+    }
 
-   public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlotType p_111205_1_) {
-      return p_111205_1_ == this.slot ? this.defaultModifiers : super.getDefaultAttributeModifiers(p_111205_1_);
-   }
+    public IArmorMaterial getArmorMaterial()
+    {
+        return this.material;
+    }
 
-   public int getDefense() {
-      return this.defense;
-   }
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
+    public boolean getIsRepairable(ItemStack toRepair, ItemStack repair)
+    {
+        return this.material.getRepairMaterial().test(repair) || super.getIsRepairable(toRepair, repair);
+    }
 
-   public float getToughness() {
-      return this.toughness;
-   }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        EquipmentSlotType equipmentslottype = MobEntity.getSlotForItemStack(itemstack);
+        ItemStack itemstack1 = playerIn.getItemStackFromSlot(equipmentslottype);
+
+        if (itemstack1.isEmpty())
+        {
+            playerIn.setItemStackToSlot(equipmentslottype, itemstack.copy());
+            itemstack.setCount(0);
+            return ActionResult.func_233538_a_(itemstack, worldIn.isRemote());
+        }
+        else
+        {
+            return ActionResult.resultFail(itemstack);
+        }
+    }
+
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType equipmentSlot)
+    {
+        return equipmentSlot == this.slot ? this.field_234656_m_ : super.getAttributeModifiers(equipmentSlot);
+    }
+
+    public int getDamageReduceAmount()
+    {
+        return this.damageReduceAmount;
+    }
+
+    public float func_234657_f_()
+    {
+        return this.toughness;
+    }
 }

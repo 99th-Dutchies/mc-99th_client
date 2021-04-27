@@ -8,20 +8,25 @@ import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class BlastFurnaceTileEntity extends AbstractFurnaceTileEntity {
-   public BlastFurnaceTileEntity() {
-      super(TileEntityType.BLAST_FURNACE, IRecipeType.BLASTING);
-   }
+public class BlastFurnaceTileEntity extends AbstractFurnaceTileEntity
+{
+    public BlastFurnaceTileEntity()
+    {
+        super(TileEntityType.BLAST_FURNACE, IRecipeType.BLASTING);
+    }
 
-   protected ITextComponent getDefaultName() {
-      return new TranslationTextComponent("container.blast_furnace");
-   }
+    protected ITextComponent getDefaultName()
+    {
+        return new TranslationTextComponent("container.blast_furnace");
+    }
 
-   protected int getBurnDuration(ItemStack p_213997_1_) {
-      return super.getBurnDuration(p_213997_1_) / 2;
-   }
+    protected int getBurnTime(ItemStack fuel)
+    {
+        return super.getBurnTime(fuel) / 2;
+    }
 
-   protected Container createMenu(int p_213906_1_, PlayerInventory p_213906_2_) {
-      return new BlastFurnaceContainer(p_213906_1_, p_213906_2_, this, this.dataAccess);
-   }
+    protected Container createMenu(int id, PlayerInventory player)
+    {
+        return new BlastFurnaceContainer(id, player, this, this.furnaceData);
+    }
 }

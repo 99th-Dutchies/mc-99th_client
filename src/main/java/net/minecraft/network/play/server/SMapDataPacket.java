@@ -7,122 +7,149 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.storage.MapData;
 import net.minecraft.world.storage.MapDecoration;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SMapDataPacket implements IPacket<IClientPlayNetHandler> {
-   private int mapId;
-   private byte scale;
-   private boolean trackingPosition;
-   private boolean locked;
-   private MapDecoration[] decorations;
-   private int startX;
-   private int startY;
-   private int width;
-   private int height;
-   private byte[] mapColors;
+public class SMapDataPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int mapId;
+    private byte mapScale;
+    private boolean trackingPosition;
+    private boolean field_218730_d;
+    private MapDecoration[] icons;
+    private int minX;
+    private int minZ;
+    private int columns;
+    private int rows;
+    private byte[] mapDataBytes;
 
-   public SMapDataPacket() {
-   }
+    public SMapDataPacket()
+    {
+    }
 
-   public SMapDataPacket(int p_i50772_1_, byte p_i50772_2_, boolean p_i50772_3_, boolean p_i50772_4_, Collection<MapDecoration> p_i50772_5_, byte[] p_i50772_6_, int p_i50772_7_, int p_i50772_8_, int p_i50772_9_, int p_i50772_10_) {
-      this.mapId = p_i50772_1_;
-      this.scale = p_i50772_2_;
-      this.trackingPosition = p_i50772_3_;
-      this.locked = p_i50772_4_;
-      this.decorations = p_i50772_5_.toArray(new MapDecoration[p_i50772_5_.size()]);
-      this.startX = p_i50772_7_;
-      this.startY = p_i50772_8_;
-      this.width = p_i50772_9_;
-      this.height = p_i50772_10_;
-      this.mapColors = new byte[p_i50772_9_ * p_i50772_10_];
+    public SMapDataPacket(int p_i50772_1_, byte p_i50772_2_, boolean p_i50772_3_, boolean p_i50772_4_, Collection<MapDecoration> p_i50772_5_, byte[] p_i50772_6_, int p_i50772_7_, int p_i50772_8_, int p_i50772_9_, int p_i50772_10_)
+    {
+        this.mapId = p_i50772_1_;
+        this.mapScale = p_i50772_2_;
+        this.trackingPosition = p_i50772_3_;
+        this.field_218730_d = p_i50772_4_;
+        this.icons = p_i50772_5_.toArray(new MapDecoration[p_i50772_5_.size()]);
+        this.minX = p_i50772_7_;
+        this.minZ = p_i50772_8_;
+        this.columns = p_i50772_9_;
+        this.rows = p_i50772_10_;
+        this.mapDataBytes = new byte[p_i50772_9_ * p_i50772_10_];
 
-      for(int i = 0; i < p_i50772_9_; ++i) {
-         for(int j = 0; j < p_i50772_10_; ++j) {
-            this.mapColors[i + j * p_i50772_9_] = p_i50772_6_[p_i50772_7_ + i + (p_i50772_8_ + j) * 128];
-         }
-      }
+        for (int i = 0; i < p_i50772_9_; ++i)
+        {
+            for (int j = 0; j < p_i50772_10_; ++j)
+            {
+                this.mapDataBytes[i + j * p_i50772_9_] = p_i50772_6_[p_i50772_7_ + i + (p_i50772_8_ + j) * 128];
+            }
+        }
+    }
 
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.mapId = buf.readVarInt();
+        this.mapScale = buf.readByte();
+        this.trackingPosition = buf.readBoolean();
+        this.field_218730_d = buf.readBoolean();
+        this.icons = new MapDecoration[buf.readVarInt()];
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.mapId = p_148837_1_.readVarInt();
-      this.scale = p_148837_1_.readByte();
-      this.trackingPosition = p_148837_1_.readBoolean();
-      this.locked = p_148837_1_.readBoolean();
-      this.decorations = new MapDecoration[p_148837_1_.readVarInt()];
+        for (int i = 0; i < this.icons.length; ++i)
+        {
+            MapDecoration.Type mapdecoration$type = buf.readEnumValue(MapDecoration.Type.class);
+            this.icons[i] = new MapDecoration(mapdecoration$type, buf.readByte(), buf.readByte(), (byte)(buf.readByte() & 15), buf.readBoolean() ? buf.readTextComponent() : null);
+        }
 
-      for(int i = 0; i < this.decorations.length; ++i) {
-         MapDecoration.Type mapdecoration$type = p_148837_1_.readEnum(MapDecoration.Type.class);
-         this.decorations[i] = new MapDecoration(mapdecoration$type, p_148837_1_.readByte(), p_148837_1_.readByte(), (byte)(p_148837_1_.readByte() & 15), p_148837_1_.readBoolean() ? p_148837_1_.readComponent() : null);
-      }
+        this.columns = buf.readUnsignedByte();
 
-      this.width = p_148837_1_.readUnsignedByte();
-      if (this.width > 0) {
-         this.height = p_148837_1_.readUnsignedByte();
-         this.startX = p_148837_1_.readUnsignedByte();
-         this.startY = p_148837_1_.readUnsignedByte();
-         this.mapColors = p_148837_1_.readByteArray();
-      }
+        if (this.columns > 0)
+        {
+            this.rows = buf.readUnsignedByte();
+            this.minX = buf.readUnsignedByte();
+            this.minZ = buf.readUnsignedByte();
+            this.mapDataBytes = buf.readByteArray();
+        }
+    }
 
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.mapId);
+        buf.writeByte(this.mapScale);
+        buf.writeBoolean(this.trackingPosition);
+        buf.writeBoolean(this.field_218730_d);
+        buf.writeVarInt(this.icons.length);
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.mapId);
-      p_148840_1_.writeByte(this.scale);
-      p_148840_1_.writeBoolean(this.trackingPosition);
-      p_148840_1_.writeBoolean(this.locked);
-      p_148840_1_.writeVarInt(this.decorations.length);
+        for (MapDecoration mapdecoration : this.icons)
+        {
+            buf.writeEnumValue(mapdecoration.getType());
+            buf.writeByte(mapdecoration.getX());
+            buf.writeByte(mapdecoration.getY());
+            buf.writeByte(mapdecoration.getRotation() & 15);
 
-      for(MapDecoration mapdecoration : this.decorations) {
-         p_148840_1_.writeEnum(mapdecoration.getType());
-         p_148840_1_.writeByte(mapdecoration.getX());
-         p_148840_1_.writeByte(mapdecoration.getY());
-         p_148840_1_.writeByte(mapdecoration.getRot() & 15);
-         if (mapdecoration.getName() != null) {
-            p_148840_1_.writeBoolean(true);
-            p_148840_1_.writeComponent(mapdecoration.getName());
-         } else {
-            p_148840_1_.writeBoolean(false);
-         }
-      }
+            if (mapdecoration.getCustomName() != null)
+            {
+                buf.writeBoolean(true);
+                buf.writeTextComponent(mapdecoration.getCustomName());
+            }
+            else
+            {
+                buf.writeBoolean(false);
+            }
+        }
 
-      p_148840_1_.writeByte(this.width);
-      if (this.width > 0) {
-         p_148840_1_.writeByte(this.height);
-         p_148840_1_.writeByte(this.startX);
-         p_148840_1_.writeByte(this.startY);
-         p_148840_1_.writeByteArray(this.mapColors);
-      }
+        buf.writeByte(this.columns);
 
-   }
+        if (this.columns > 0)
+        {
+            buf.writeByte(this.rows);
+            buf.writeByte(this.minX);
+            buf.writeByte(this.minZ);
+            buf.writeByteArray(this.mapDataBytes);
+        }
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleMapItemData(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleMaps(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getMapId() {
-      return this.mapId;
-   }
+    public int getMapId()
+    {
+        return this.mapId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void applyToMap(MapData p_179734_1_) {
-      p_179734_1_.scale = this.scale;
-      p_179734_1_.trackingPosition = this.trackingPosition;
-      p_179734_1_.locked = this.locked;
-      p_179734_1_.decorations.clear();
+    /**
+     * Sets new MapData from the packet to given MapData param
+     */
+    public void setMapdataTo(MapData mapdataIn)
+    {
+        mapdataIn.scale = this.mapScale;
+        mapdataIn.trackingPosition = this.trackingPosition;
+        mapdataIn.locked = this.field_218730_d;
+        mapdataIn.mapDecorations.clear();
 
-      for(int i = 0; i < this.decorations.length; ++i) {
-         MapDecoration mapdecoration = this.decorations[i];
-         p_179734_1_.decorations.put("icon-" + i, mapdecoration);
-      }
+        for (int i = 0; i < this.icons.length; ++i)
+        {
+            MapDecoration mapdecoration = this.icons[i];
+            mapdataIn.mapDecorations.put("icon-" + i, mapdecoration);
+        }
 
-      for(int j = 0; j < this.width; ++j) {
-         for(int k = 0; k < this.height; ++k) {
-            p_179734_1_.colors[this.startX + j + (this.startY + k) * 128] = this.mapColors[j + k * this.width];
-         }
-      }
-
-   }
+        for (int j = 0; j < this.columns; ++j)
+        {
+            for (int k = 0; k < this.rows; ++k)
+            {
+                mapdataIn.colors[this.minX + j + (this.minZ + k) * 128] = this.mapDataBytes[j + k * this.columns];
+            }
+        }
+    }
 }

@@ -3,51 +3,56 @@ package net.minecraft.advancements;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public enum FrameType {
-   TASK("task", 0, TextFormatting.GREEN),
-   CHALLENGE("challenge", 26, TextFormatting.DARK_PURPLE),
-   GOAL("goal", 52, TextFormatting.GREEN);
+public enum FrameType
+{
+    TASK("task", 0, TextFormatting.GREEN),
+    CHALLENGE("challenge", 26, TextFormatting.DARK_PURPLE),
+    GOAL("goal", 52, TextFormatting.GREEN);
 
-   private final String name;
-   private final int texture;
-   private final TextFormatting chatColor;
-   private final ITextComponent displayName;
+    private final String name;
+    private final int icon;
+    private final TextFormatting format;
+    private final ITextComponent translatedToast;
 
-   private FrameType(String p_i47585_3_, int p_i47585_4_, TextFormatting p_i47585_5_) {
-      this.name = p_i47585_3_;
-      this.texture = p_i47585_4_;
-      this.chatColor = p_i47585_5_;
-      this.displayName = new TranslationTextComponent("advancements.toast." + p_i47585_3_);
-   }
+    private FrameType(String nameIn, int iconIn, TextFormatting formatIn)
+    {
+        this.name = nameIn;
+        this.icon = iconIn;
+        this.format = formatIn;
+        this.translatedToast = new TranslationTextComponent("advancements.toast." + nameIn);
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getTexture() {
-      return this.texture;
-   }
+    public int getIcon()
+    {
+        return this.icon;
+    }
 
-   public static FrameType byName(String p_192308_0_) {
-      for(FrameType frametype : values()) {
-         if (frametype.name.equals(p_192308_0_)) {
-            return frametype;
-         }
-      }
+    public static FrameType byName(String nameIn)
+    {
+        for (FrameType frametype : values())
+        {
+            if (frametype.name.equals(nameIn))
+            {
+                return frametype;
+            }
+        }
 
-      throw new IllegalArgumentException("Unknown frame type '" + p_192308_0_ + "'");
-   }
+        throw new IllegalArgumentException("Unknown frame type '" + nameIn + "'");
+    }
 
-   public TextFormatting getChatColor() {
-      return this.chatColor;
-   }
+    public TextFormatting getFormat()
+    {
+        return this.format;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getDisplayName() {
-      return this.displayName;
-   }
+    public ITextComponent getTranslatedToast()
+    {
+        return this.translatedToast;
+    }
 }

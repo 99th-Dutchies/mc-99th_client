@@ -14,126 +14,163 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 
-public class MessageArgument implements ArgumentType<MessageArgument.Message> {
-   private static final Collection<String> EXAMPLES = Arrays.asList("Hello world!", "foo", "@e", "Hello @p :)");
+public class MessageArgument implements ArgumentType<MessageArgument.Message>
+{
+    private static final Collection<String> EXAMPLES = Arrays.asList("Hello world!", "foo", "@e", "Hello @p :)");
 
-   public static MessageArgument message() {
-      return new MessageArgument();
-   }
+    public static MessageArgument message()
+    {
+        return new MessageArgument();
+    }
 
-   public static ITextComponent getMessage(CommandContext<CommandSource> p_197124_0_, String p_197124_1_) throws CommandSyntaxException {
-      return p_197124_0_.getArgument(p_197124_1_, MessageArgument.Message.class).toComponent(p_197124_0_.getSource(), p_197124_0_.getSource().hasPermission(2));
-   }
+    public static ITextComponent getMessage(CommandContext<CommandSource> context, String name) throws CommandSyntaxException
+    {
+        return context.getArgument(name, MessageArgument.Message.class).toComponent(context.getSource(), context.getSource().hasPermissionLevel(2));
+    }
 
-   public MessageArgument.Message parse(StringReader p_parse_1_) throws CommandSyntaxException {
-      return MessageArgument.Message.parseText(p_parse_1_, true);
-   }
+    public MessageArgument.Message parse(StringReader p_parse_1_) throws CommandSyntaxException
+    {
+        return MessageArgument.Message.parse(p_parse_1_, true);
+    }
 
-   public Collection<String> getExamples() {
-      return EXAMPLES;
-   }
+    public Collection<String> getExamples()
+    {
+        return EXAMPLES;
+    }
 
-   public static class Message {
-      private final String text;
-      private final MessageArgument.Part[] parts;
+    public static class Message
+    {
+        private final String text;
+        private final MessageArgument.Part[] selectors;
 
-      public Message(String p_i48021_1_, MessageArgument.Part[] p_i48021_2_) {
-         this.text = p_i48021_1_;
-         this.parts = p_i48021_2_;
-      }
+        public Message(String textIn, MessageArgument.Part[] selectorsIn)
+        {
+            this.text = textIn;
+            this.selectors = selectorsIn;
+        }
 
-      public ITextComponent toComponent(CommandSource p_201312_1_, boolean p_201312_2_) throws CommandSyntaxException {
-         if (this.parts.length != 0 && p_201312_2_) {
-            IFormattableTextComponent iformattabletextcomponent = new StringTextComponent(this.text.substring(0, this.parts[0].getStart()));
-            int i = this.parts[0].getStart();
+        public ITextComponent toComponent(CommandSource source, boolean allowSelectors) throws CommandSyntaxException
+        {
+            if (this.selectors.length != 0 && allowSelectors)
+            {
+                IFormattableTextComponent iformattabletextcomponent = new StringTextComponent(this.text.substring(0, this.selectors[0].getStart()));
+                int i = this.selectors[0].getStart();
 
-            for(MessageArgument.Part messageargument$part : this.parts) {
-               ITextComponent itextcomponent = messageargument$part.toComponent(p_201312_1_);
-               if (i < messageargument$part.getStart()) {
-                  iformattabletextcomponent.append(this.text.substring(i, messageargument$part.getStart()));
-               }
+                for (MessageArgument.Part messageargument$part : this.selectors)
+                {
+                    ITextComponent itextcomponent = messageargument$part.toComponent(source);
 
-               if (itextcomponent != null) {
-                  iformattabletextcomponent.append(itextcomponent);
-               }
+                    if (i < messageargument$part.getStart())
+                    {
+                        iformattabletextcomponent.appendString(this.text.substring(i, messageargument$part.getStart()));
+                    }
 
-               i = messageargument$part.getEnd();
+                    if (itextcomponent != null)
+                    {
+                        iformattabletextcomponent.append(itextcomponent);
+                    }
+
+                    i = messageargument$part.getEnd();
+                }
+
+                if (i < this.text.length())
+                {
+                    iformattabletextcomponent.appendString(this.text.substring(i, this.text.length()));
+                }
+
+                return iformattabletextcomponent;
             }
-
-            if (i < this.text.length()) {
-               iformattabletextcomponent.append(this.text.substring(i, this.text.length()));
+            else
+            {
+                return new StringTextComponent(this.text);
             }
+        }
 
-            return iformattabletextcomponent;
-         } else {
-            return new StringTextComponent(this.text);
-         }
-      }
+        public static MessageArgument.Message parse(StringReader reader, boolean allowSelectors) throws CommandSyntaxException
+        {
+            String s = reader.getString().substring(reader.getCursor(), reader.getTotalLength());
 
-      public static MessageArgument.Message parseText(StringReader p_197113_0_, boolean p_197113_1_) throws CommandSyntaxException {
-         String s = p_197113_0_.getString().substring(p_197113_0_.getCursor(), p_197113_0_.getTotalLength());
-         if (!p_197113_1_) {
-            p_197113_0_.setCursor(p_197113_0_.getTotalLength());
-            return new MessageArgument.Message(s, new MessageArgument.Part[0]);
-         } else {
-            List<MessageArgument.Part> list = Lists.newArrayList();
-            int i = p_197113_0_.getCursor();
+            if (!allowSelectors)
+            {
+                reader.setCursor(reader.getTotalLength());
+                return new MessageArgument.Message(s, new MessageArgument.Part[0]);
+            }
+            else
+            {
+                List<MessageArgument.Part> list = Lists.newArrayList();
+                int i = reader.getCursor();
 
-            while(true) {
-               int j;
-               EntitySelector entityselector;
-               while(true) {
-                  if (!p_197113_0_.canRead()) {
-                     return new MessageArgument.Message(s, list.toArray(new MessageArgument.Part[list.size()]));
-                  }
+                while (true)
+                {
+                    int j;
+                    EntitySelector entityselector;
 
-                  if (p_197113_0_.peek() == '@') {
-                     j = p_197113_0_.getCursor();
-
-                     try {
-                        EntitySelectorParser entityselectorparser = new EntitySelectorParser(p_197113_0_);
-                        entityselector = entityselectorparser.parse();
-                        break;
-                     } catch (CommandSyntaxException commandsyntaxexception) {
-                        if (commandsyntaxexception.getType() != EntitySelectorParser.ERROR_MISSING_SELECTOR_TYPE && commandsyntaxexception.getType() != EntitySelectorParser.ERROR_UNKNOWN_SELECTOR_TYPE) {
-                           throw commandsyntaxexception;
+                    while (true)
+                    {
+                        if (!reader.canRead())
+                        {
+                            return new MessageArgument.Message(s, list.toArray(new MessageArgument.Part[list.size()]));
                         }
 
-                        p_197113_0_.setCursor(j + 1);
-                     }
-                  } else {
-                     p_197113_0_.skip();
-                  }
-               }
+                        if (reader.peek() == '@')
+                        {
+                            j = reader.getCursor();
 
-               list.add(new MessageArgument.Part(j - i, p_197113_0_.getCursor() - i, entityselector));
+                            try
+                            {
+                                EntitySelectorParser entityselectorparser = new EntitySelectorParser(reader);
+                                entityselector = entityselectorparser.parse();
+                                break;
+                            }
+                            catch (CommandSyntaxException commandsyntaxexception)
+                            {
+                                if (commandsyntaxexception.getType() != EntitySelectorParser.SELECTOR_TYPE_MISSING && commandsyntaxexception.getType() != EntitySelectorParser.UNKNOWN_SELECTOR_TYPE)
+                                {
+                                    throw commandsyntaxexception;
+                                }
+
+                                reader.setCursor(j + 1);
+                            }
+                        }
+                        else
+                        {
+                            reader.skip();
+                        }
+                    }
+
+                    list.add(new MessageArgument.Part(j - i, reader.getCursor() - i, entityselector));
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
-   public static class Part {
-      private final int start;
-      private final int end;
-      private final EntitySelector selector;
+    public static class Part
+    {
+        private final int start;
+        private final int end;
+        private final EntitySelector selector;
 
-      public Part(int p_i48020_1_, int p_i48020_2_, EntitySelector p_i48020_3_) {
-         this.start = p_i48020_1_;
-         this.end = p_i48020_2_;
-         this.selector = p_i48020_3_;
-      }
+        public Part(int startIn, int endIn, EntitySelector selectorIn)
+        {
+            this.start = startIn;
+            this.end = endIn;
+            this.selector = selectorIn;
+        }
 
-      public int getStart() {
-         return this.start;
-      }
+        public int getStart()
+        {
+            return this.start;
+        }
 
-      public int getEnd() {
-         return this.end;
-      }
+        public int getEnd()
+        {
+            return this.end;
+        }
 
-      @Nullable
-      public ITextComponent toComponent(CommandSource p_197116_1_) throws CommandSyntaxException {
-         return EntitySelector.joinNames(this.selector.findEntities(p_197116_1_));
-      }
-   }
+        @Nullable
+        public ITextComponent toComponent(CommandSource source) throws CommandSyntaxException
+        {
+            return EntitySelector.joinNames(this.selector.select(source));
+        }
+    }
 }

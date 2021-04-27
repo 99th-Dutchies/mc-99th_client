@@ -35,290 +35,385 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.LockCode;
 import net.minecraft.world.gen.Heightmap;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class BeaconTileEntity extends TileEntity implements INamedContainerProvider, ITickableTileEntity {
-   public static final Effect[][] BEACON_EFFECTS = new Effect[][]{{Effects.MOVEMENT_SPEED, Effects.DIG_SPEED}, {Effects.DAMAGE_RESISTANCE, Effects.JUMP}, {Effects.DAMAGE_BOOST}, {Effects.REGENERATION}};
-   private static final Set<Effect> VALID_EFFECTS = Arrays.stream(BEACON_EFFECTS).flatMap(Arrays::stream).collect(Collectors.toSet());
-   private List<BeaconTileEntity.BeamSegment> beamSections = Lists.newArrayList();
-   private List<BeaconTileEntity.BeamSegment> checkingBeamSections = Lists.newArrayList();
-   private int levels;
-   private int lastCheckY = -1;
-   @Nullable
-   private Effect primaryPower;
-   @Nullable
-   private Effect secondaryPower;
-   @Nullable
-   private ITextComponent name;
-   private LockCode lockKey = LockCode.NO_LOCK;
-   private final IIntArray dataAccess = new IIntArray() {
-      public int get(int p_221476_1_) {
-         switch(p_221476_1_) {
-         case 0:
-            return BeaconTileEntity.this.levels;
-         case 1:
-            return Effect.getId(BeaconTileEntity.this.primaryPower);
-         case 2:
-            return Effect.getId(BeaconTileEntity.this.secondaryPower);
-         default:
-            return 0;
-         }
-      }
+public class BeaconTileEntity extends TileEntity implements INamedContainerProvider, ITickableTileEntity
+{
+    /** List of effects that Beacons can apply */
+    public static final Effect[][] EFFECTS_LIST = new Effect[][] {{Effects.SPEED, Effects.HASTE}, {Effects.RESISTANCE, Effects.JUMP_BOOST}, {Effects.STRENGTH}, {Effects.REGENERATION}};
+    private static final Set<Effect> VALID_EFFECTS = Arrays.stream(EFFECTS_LIST).flatMap(Arrays::stream).collect(Collectors.toSet());
+    private List<BeaconTileEntity.BeamSegment> beamSegments = Lists.newArrayList();
+    private List<BeaconTileEntity.BeamSegment> beamColorSegments = Lists.newArrayList();
 
-      public void set(int p_221477_1_, int p_221477_2_) {
-         switch(p_221477_1_) {
-         case 0:
-            BeaconTileEntity.this.levels = p_221477_2_;
-            break;
-         case 1:
-            if (!BeaconTileEntity.this.level.isClientSide && !BeaconTileEntity.this.beamSections.isEmpty()) {
-               BeaconTileEntity.this.playSound(SoundEvents.BEACON_POWER_SELECT);
+    /** Level of this beacon's pyramid. */
+    private int levels;
+    private int beaconSize = -1;
+    @Nullable
+
+    /** Primary potion effect given by this beacon */
+    private Effect primaryEffect;
+    @Nullable
+
+    /** Secondary potion effect given by this beacon. */
+    private Effect secondaryEffect;
+    @Nullable
+
+    /**
+     * The custom name for this beacon. This was unused until 1.14; see https://bugs.mojang.com/browse/MC-124395
+     */
+    private ITextComponent customName;
+    private LockCode lockCode = LockCode.EMPTY_CODE;
+    private final IIntArray beaconData = new IIntArray()
+    {
+        public int get(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return BeaconTileEntity.this.levels;
+
+                case 1:
+                    return Effect.getId(BeaconTileEntity.this.primaryEffect);
+
+                case 2:
+                    return Effect.getId(BeaconTileEntity.this.secondaryEffect);
+
+                default:
+                    return 0;
+            }
+        }
+        public void set(int index, int value)
+        {
+            switch (index)
+            {
+                case 0:
+                    BeaconTileEntity.this.levels = value;
+                    break;
+
+                case 1:
+                    if (!BeaconTileEntity.this.world.isRemote && !BeaconTileEntity.this.beamSegments.isEmpty())
+                    {
+                        BeaconTileEntity.this.playSound(SoundEvents.BLOCK_BEACON_POWER_SELECT);
+                    }
+
+                    BeaconTileEntity.this.primaryEffect = BeaconTileEntity.isBeaconEffect(value);
+                    break;
+
+                case 2:
+                    BeaconTileEntity.this.secondaryEffect = BeaconTileEntity.isBeaconEffect(value);
+            }
+        }
+        public int size()
+        {
+            return 3;
+        }
+    };
+
+    public BeaconTileEntity()
+    {
+        super(TileEntityType.BEACON);
+    }
+
+    public void tick()
+    {
+        int i = this.pos.getX();
+        int j = this.pos.getY();
+        int k = this.pos.getZ();
+        BlockPos blockpos;
+
+        if (this.beaconSize < j)
+        {
+            blockpos = this.pos;
+            this.beamColorSegments = Lists.newArrayList();
+            this.beaconSize = blockpos.getY() - 1;
+        }
+        else
+        {
+            blockpos = new BlockPos(i, this.beaconSize + 1, k);
+        }
+
+        BeaconTileEntity.BeamSegment beacontileentity$beamsegment = this.beamColorSegments.isEmpty() ? null : this.beamColorSegments.get(this.beamColorSegments.size() - 1);
+        int l = this.world.getHeight(Heightmap.Type.WORLD_SURFACE, i, k);
+
+        for (int i1 = 0; i1 < 10 && blockpos.getY() <= l; ++i1)
+        {
+            BlockState blockstate = this.world.getBlockState(blockpos);
+            Block block = blockstate.getBlock();
+
+            if (block instanceof IBeaconBeamColorProvider)
+            {
+                float[] afloat = ((IBeaconBeamColorProvider)block).getColor().getColorComponentValues();
+
+                if (this.beamColorSegments.size() <= 1)
+                {
+                    beacontileentity$beamsegment = new BeaconTileEntity.BeamSegment(afloat);
+                    this.beamColorSegments.add(beacontileentity$beamsegment);
+                }
+                else if (beacontileentity$beamsegment != null)
+                {
+                    if (Arrays.equals(afloat, beacontileentity$beamsegment.colors))
+                    {
+                        beacontileentity$beamsegment.incrementHeight();
+                    }
+                    else
+                    {
+                        beacontileentity$beamsegment = new BeaconTileEntity.BeamSegment(new float[] {(beacontileentity$beamsegment.colors[0] + afloat[0]) / 2.0F, (beacontileentity$beamsegment.colors[1] + afloat[1]) / 2.0F, (beacontileentity$beamsegment.colors[2] + afloat[2]) / 2.0F});
+                        this.beamColorSegments.add(beacontileentity$beamsegment);
+                    }
+                }
+            }
+            else
+            {
+                if (beacontileentity$beamsegment == null || blockstate.getOpacity(this.world, blockpos) >= 15 && block != Blocks.BEDROCK)
+                {
+                    this.beamColorSegments.clear();
+                    this.beaconSize = l;
+                    break;
+                }
+
+                beacontileentity$beamsegment.incrementHeight();
             }
 
-            BeaconTileEntity.this.primaryPower = BeaconTileEntity.getValidEffectById(p_221477_2_);
-            break;
-         case 2:
-            BeaconTileEntity.this.secondaryPower = BeaconTileEntity.getValidEffectById(p_221477_2_);
-         }
+            blockpos = blockpos.up();
+            ++this.beaconSize;
+        }
 
-      }
+        int j1 = this.levels;
 
-      public int getCount() {
-         return 3;
-      }
-   };
-
-   public BeaconTileEntity() {
-      super(TileEntityType.BEACON);
-   }
-
-   public void tick() {
-      int i = this.worldPosition.getX();
-      int j = this.worldPosition.getY();
-      int k = this.worldPosition.getZ();
-      BlockPos blockpos;
-      if (this.lastCheckY < j) {
-         blockpos = this.worldPosition;
-         this.checkingBeamSections = Lists.newArrayList();
-         this.lastCheckY = blockpos.getY() - 1;
-      } else {
-         blockpos = new BlockPos(i, this.lastCheckY + 1, k);
-      }
-
-      BeaconTileEntity.BeamSegment beacontileentity$beamsegment = this.checkingBeamSections.isEmpty() ? null : this.checkingBeamSections.get(this.checkingBeamSections.size() - 1);
-      int l = this.level.getHeight(Heightmap.Type.WORLD_SURFACE, i, k);
-
-      for(int i1 = 0; i1 < 10 && blockpos.getY() <= l; ++i1) {
-         BlockState blockstate = this.level.getBlockState(blockpos);
-         Block block = blockstate.getBlock();
-         if (block instanceof IBeaconBeamColorProvider) {
-            float[] afloat = ((IBeaconBeamColorProvider)block).getColor().getTextureDiffuseColors();
-            if (this.checkingBeamSections.size() <= 1) {
-               beacontileentity$beamsegment = new BeaconTileEntity.BeamSegment(afloat);
-               this.checkingBeamSections.add(beacontileentity$beamsegment);
-            } else if (beacontileentity$beamsegment != null) {
-               if (Arrays.equals(afloat, beacontileentity$beamsegment.color)) {
-                  beacontileentity$beamsegment.increaseHeight();
-               } else {
-                  beacontileentity$beamsegment = new BeaconTileEntity.BeamSegment(new float[]{(beacontileentity$beamsegment.color[0] + afloat[0]) / 2.0F, (beacontileentity$beamsegment.color[1] + afloat[1]) / 2.0F, (beacontileentity$beamsegment.color[2] + afloat[2]) / 2.0F});
-                  this.checkingBeamSections.add(beacontileentity$beamsegment);
-               }
-            }
-         } else {
-            if (beacontileentity$beamsegment == null || blockstate.getLightBlock(this.level, blockpos) >= 15 && block != Blocks.BEDROCK) {
-               this.checkingBeamSections.clear();
-               this.lastCheckY = l;
-               break;
+        if (this.world.getGameTime() % 80L == 0L)
+        {
+            if (!this.beamSegments.isEmpty())
+            {
+                this.checkBeaconLevel(i, j, k);
             }
 
-            beacontileentity$beamsegment.increaseHeight();
-         }
-
-         blockpos = blockpos.above();
-         ++this.lastCheckY;
-      }
-
-      int j1 = this.levels;
-      if (this.level.getGameTime() % 80L == 0L) {
-         if (!this.beamSections.isEmpty()) {
-            this.updateBase(i, j, k);
-         }
-
-         if (this.levels > 0 && !this.beamSections.isEmpty()) {
-            this.applyEffects();
-            this.playSound(SoundEvents.BEACON_AMBIENT);
-         }
-      }
-
-      if (this.lastCheckY >= l) {
-         this.lastCheckY = -1;
-         boolean flag = j1 > 0;
-         this.beamSections = this.checkingBeamSections;
-         if (!this.level.isClientSide) {
-            boolean flag1 = this.levels > 0;
-            if (!flag && flag1) {
-               this.playSound(SoundEvents.BEACON_ACTIVATE);
-
-               for(ServerPlayerEntity serverplayerentity : this.level.getEntitiesOfClass(ServerPlayerEntity.class, (new AxisAlignedBB((double)i, (double)j, (double)k, (double)i, (double)(j - 4), (double)k)).inflate(10.0D, 5.0D, 10.0D))) {
-                  CriteriaTriggers.CONSTRUCT_BEACON.trigger(serverplayerentity, this);
-               }
-            } else if (flag && !flag1) {
-               this.playSound(SoundEvents.BEACON_DEACTIVATE);
+            if (this.levels > 0 && !this.beamSegments.isEmpty())
+            {
+                this.addEffectsToPlayers();
+                this.playSound(SoundEvents.BLOCK_BEACON_AMBIENT);
             }
-         }
-      }
+        }
 
-   }
+        if (this.beaconSize >= l)
+        {
+            this.beaconSize = -1;
+            boolean flag = j1 > 0;
+            this.beamSegments = this.beamColorSegments;
 
-   private void updateBase(int p_213927_1_, int p_213927_2_, int p_213927_3_) {
-      this.levels = 0;
+            if (!this.world.isRemote)
+            {
+                boolean flag1 = this.levels > 0;
 
-      for(int i = 1; i <= 4; this.levels = i++) {
-         int j = p_213927_2_ - i;
-         if (j < 0) {
-            break;
-         }
+                if (!flag && flag1)
+                {
+                    this.playSound(SoundEvents.BLOCK_BEACON_ACTIVATE);
 
-         boolean flag = true;
-
-         for(int k = p_213927_1_ - i; k <= p_213927_1_ + i && flag; ++k) {
-            for(int l = p_213927_3_ - i; l <= p_213927_3_ + i; ++l) {
-               if (!this.level.getBlockState(new BlockPos(k, j, l)).is(BlockTags.BEACON_BASE_BLOCKS)) {
-                  flag = false;
-                  break;
-               }
+                    for (ServerPlayerEntity serverplayerentity : this.world.getEntitiesWithinAABB(ServerPlayerEntity.class, (new AxisAlignedBB((double)i, (double)j, (double)k, (double)i, (double)(j - 4), (double)k)).grow(10.0D, 5.0D, 10.0D)))
+                    {
+                        CriteriaTriggers.CONSTRUCT_BEACON.trigger(serverplayerentity, this);
+                    }
+                }
+                else if (flag && !flag1)
+                {
+                    this.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE);
+                }
             }
-         }
+        }
+    }
 
-         if (!flag) {
-            break;
-         }
-      }
+    private void checkBeaconLevel(int beaconXIn, int beaconYIn, int beaconZIn)
+    {
+        this.levels = 0;
 
-   }
+        for (int i = 1; i <= 4; this.levels = i++)
+        {
+            int j = beaconYIn - i;
 
-   public void setRemoved() {
-      this.playSound(SoundEvents.BEACON_DEACTIVATE);
-      super.setRemoved();
-   }
-
-   private void applyEffects() {
-      if (!this.level.isClientSide && this.primaryPower != null) {
-         double d0 = (double)(this.levels * 10 + 10);
-         int i = 0;
-         if (this.levels >= 4 && this.primaryPower == this.secondaryPower) {
-            i = 1;
-         }
-
-         int j = (9 + this.levels * 2) * 20;
-         AxisAlignedBB axisalignedbb = (new AxisAlignedBB(this.worldPosition)).inflate(d0).expandTowards(0.0D, (double)this.level.getMaxBuildHeight(), 0.0D);
-         List<PlayerEntity> list = this.level.getEntitiesOfClass(PlayerEntity.class, axisalignedbb);
-
-         for(PlayerEntity playerentity : list) {
-            playerentity.addEffect(new EffectInstance(this.primaryPower, j, i, true, true));
-         }
-
-         if (this.levels >= 4 && this.primaryPower != this.secondaryPower && this.secondaryPower != null) {
-            for(PlayerEntity playerentity1 : list) {
-               playerentity1.addEffect(new EffectInstance(this.secondaryPower, j, 0, true, true));
+            if (j < 0)
+            {
+                break;
             }
-         }
 
-      }
-   }
+            boolean flag = true;
 
-   public void playSound(SoundEvent p_205736_1_) {
-      this.level.playSound((PlayerEntity)null, this.worldPosition, p_205736_1_, SoundCategory.BLOCKS, 1.0F, 1.0F);
-   }
+            for (int k = beaconXIn - i; k <= beaconXIn + i && flag; ++k)
+            {
+                for (int l = beaconZIn - i; l <= beaconZIn + i; ++l)
+                {
+                    if (!this.world.getBlockState(new BlockPos(k, j, l)).isIn(BlockTags.BEACON_BASE_BLOCKS))
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+            }
 
-   @OnlyIn(Dist.CLIENT)
-   public List<BeaconTileEntity.BeamSegment> getBeamSections() {
-      return (List<BeaconTileEntity.BeamSegment>)(this.levels == 0 ? ImmutableList.of() : this.beamSections);
-   }
+            if (!flag)
+            {
+                break;
+            }
+        }
+    }
 
-   public int getLevels() {
-      return this.levels;
-   }
+    /**
+     * invalidates a tile entity
+     */
+    public void remove()
+    {
+        this.playSound(SoundEvents.BLOCK_BEACON_DEACTIVATE);
+        super.remove();
+    }
 
-   @Nullable
-   public SUpdateTileEntityPacket getUpdatePacket() {
-      return new SUpdateTileEntityPacket(this.worldPosition, 3, this.getUpdateTag());
-   }
+    private void addEffectsToPlayers()
+    {
+        if (!this.world.isRemote && this.primaryEffect != null)
+        {
+            double d0 = (double)(this.levels * 10 + 10);
+            int i = 0;
 
-   public CompoundNBT getUpdateTag() {
-      return this.save(new CompoundNBT());
-   }
+            if (this.levels >= 4 && this.primaryEffect == this.secondaryEffect)
+            {
+                i = 1;
+            }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getViewDistance() {
-      return 256.0D;
-   }
+            int j = (9 + this.levels * 2) * 20;
+            AxisAlignedBB axisalignedbb = (new AxisAlignedBB(this.pos)).grow(d0).expand(0.0D, (double)this.world.getHeight(), 0.0D);
+            List<PlayerEntity> list = this.world.getEntitiesWithinAABB(PlayerEntity.class, axisalignedbb);
 
-   @Nullable
-   private static Effect getValidEffectById(int p_184279_0_) {
-      Effect effect = Effect.byId(p_184279_0_);
-      return VALID_EFFECTS.contains(effect) ? effect : null;
-   }
+            for (PlayerEntity playerentity : list)
+            {
+                playerentity.addPotionEffect(new EffectInstance(this.primaryEffect, j, i, true, true));
+            }
 
-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
-      super.load(p_230337_1_, p_230337_2_);
-      this.primaryPower = getValidEffectById(p_230337_2_.getInt("Primary"));
-      this.secondaryPower = getValidEffectById(p_230337_2_.getInt("Secondary"));
-      if (p_230337_2_.contains("CustomName", 8)) {
-         this.name = ITextComponent.Serializer.fromJson(p_230337_2_.getString("CustomName"));
-      }
+            if (this.levels >= 4 && this.primaryEffect != this.secondaryEffect && this.secondaryEffect != null)
+            {
+                for (PlayerEntity playerentity1 : list)
+                {
+                    playerentity1.addPotionEffect(new EffectInstance(this.secondaryEffect, j, 0, true, true));
+                }
+            }
+        }
+    }
 
-      this.lockKey = LockCode.fromTag(p_230337_2_);
-   }
+    public void playSound(SoundEvent sound)
+    {
+        this.world.playSound((PlayerEntity)null, this.pos, sound, SoundCategory.BLOCKS, 1.0F, 1.0F);
+    }
 
-   public CompoundNBT save(CompoundNBT p_189515_1_) {
-      super.save(p_189515_1_);
-      p_189515_1_.putInt("Primary", Effect.getId(this.primaryPower));
-      p_189515_1_.putInt("Secondary", Effect.getId(this.secondaryPower));
-      p_189515_1_.putInt("Levels", this.levels);
-      if (this.name != null) {
-         p_189515_1_.putString("CustomName", ITextComponent.Serializer.toJson(this.name));
-      }
+    public List<BeaconTileEntity.BeamSegment> getBeamSegments()
+    {
+        return (List<BeaconTileEntity.BeamSegment>)(this.levels == 0 ? ImmutableList.of() : this.beamSegments);
+    }
 
-      this.lockKey.addToTag(p_189515_1_);
-      return p_189515_1_;
-   }
+    public int getLevels()
+    {
+        return this.levels;
+    }
 
-   public void setCustomName(@Nullable ITextComponent p_200227_1_) {
-      this.name = p_200227_1_;
-   }
+    @Nullable
 
-   @Nullable
-   public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
-      return LockableTileEntity.canUnlock(p_createMenu_3_, this.lockKey, this.getDisplayName()) ? new BeaconContainer(p_createMenu_1_, p_createMenu_2_, this.dataAccess, IWorldPosCallable.create(this.level, this.getBlockPos())) : null;
-   }
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate. For
+     * modded TE's, this packet comes back to you clientside in {@link #onDataPacket}
+     */
+    public SUpdateTileEntityPacket getUpdatePacket()
+    {
+        return new SUpdateTileEntityPacket(this.pos, 3, this.getUpdateTag());
+    }
 
-   public ITextComponent getDisplayName() {
-      return (ITextComponent)(this.name != null ? this.name : new TranslationTextComponent("container.beacon"));
-   }
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to you clientside in {@link handleUpdateTag}
+     */
+    public CompoundNBT getUpdateTag()
+    {
+        return this.write(new CompoundNBT());
+    }
 
-   public static class BeamSegment {
-      private final float[] color;
-      private int height;
+    public double getMaxRenderDistanceSquared()
+    {
+        return 256.0D;
+    }
 
-      public BeamSegment(float[] p_i45669_1_) {
-         this.color = p_i45669_1_;
-         this.height = 1;
-      }
+    @Nullable
+    private static Effect isBeaconEffect(int effectId)
+    {
+        Effect effect = Effect.get(effectId);
+        return VALID_EFFECTS.contains(effect) ? effect : null;
+    }
 
-      protected void increaseHeight() {
-         ++this.height;
-      }
+    public void read(BlockState state, CompoundNBT nbt)
+    {
+        super.read(state, nbt);
+        this.primaryEffect = isBeaconEffect(nbt.getInt("Primary"));
+        this.secondaryEffect = isBeaconEffect(nbt.getInt("Secondary"));
 
-      @OnlyIn(Dist.CLIENT)
-      public float[] getColor() {
-         return this.color;
-      }
+        if (nbt.contains("CustomName", 8))
+        {
+            this.customName = ITextComponent.Serializer.getComponentFromJson(nbt.getString("CustomName"));
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public int getHeight() {
-         return this.height;
-      }
-   }
+        this.lockCode = LockCode.read(nbt);
+    }
+
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        super.write(compound);
+        compound.putInt("Primary", Effect.getId(this.primaryEffect));
+        compound.putInt("Secondary", Effect.getId(this.secondaryEffect));
+        compound.putInt("Levels", this.levels);
+
+        if (this.customName != null)
+        {
+            compound.putString("CustomName", ITextComponent.Serializer.toJson(this.customName));
+        }
+
+        this.lockCode.write(compound);
+        return compound;
+    }
+
+    /**
+     * Sets the custom name for this beacon.
+     */
+    public void setCustomName(@Nullable ITextComponent aname)
+    {
+        this.customName = aname;
+    }
+
+    @Nullable
+    public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_)
+    {
+        return LockableTileEntity.canUnlock(p_createMenu_3_, this.lockCode, this.getDisplayName()) ? new BeaconContainer(p_createMenu_1_, p_createMenu_2_, this.beaconData, IWorldPosCallable.of(this.world, this.getPos())) : null;
+    }
+
+    public ITextComponent getDisplayName()
+    {
+        return (ITextComponent)(this.customName != null ? this.customName : new TranslationTextComponent("container.beacon"));
+    }
+
+    public static class BeamSegment
+    {
+        private final float[] colors;
+        private int height;
+
+        public BeamSegment(float[] colorsIn)
+        {
+            this.colors = colorsIn;
+            this.height = 1;
+        }
+
+        protected void incrementHeight()
+        {
+            ++this.height;
+        }
+
+        public float[] getColors()
+        {
+            return this.colors;
+        }
+
+        public int getHeight()
+        {
+            return this.height;
+        }
+    }
 }

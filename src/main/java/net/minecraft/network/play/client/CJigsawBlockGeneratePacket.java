@@ -5,49 +5,64 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CJigsawBlockGeneratePacket implements IPacket<IServerPlayNetHandler> {
-   private BlockPos pos;
-   private int levels;
-   private boolean keepJigsaws;
+public class CJigsawBlockGeneratePacket implements IPacket<IServerPlayNetHandler>
+{
+    private BlockPos field_240841_a_;
+    private int field_240842_b_;
+    private boolean field_240843_c_;
 
-   public CJigsawBlockGeneratePacket() {
-   }
+    public CJigsawBlockGeneratePacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CJigsawBlockGeneratePacket(BlockPos p_i232583_1_, int p_i232583_2_, boolean p_i232583_3_) {
-      this.pos = p_i232583_1_;
-      this.levels = p_i232583_2_;
-      this.keepJigsaws = p_i232583_3_;
-   }
+    public CJigsawBlockGeneratePacket(BlockPos p_i232583_1_, int p_i232583_2_, boolean p_i232583_3_)
+    {
+        this.field_240841_a_ = p_i232583_1_;
+        this.field_240842_b_ = p_i232583_2_;
+        this.field_240843_c_ = p_i232583_3_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.pos = p_148837_1_.readBlockPos();
-      this.levels = p_148837_1_.readVarInt();
-      this.keepJigsaws = p_148837_1_.readBoolean();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.field_240841_a_ = buf.readBlockPos();
+        this.field_240842_b_ = buf.readVarInt();
+        this.field_240843_c_ = buf.readBoolean();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeBlockPos(this.pos);
-      p_148840_1_.writeVarInt(this.levels);
-      p_148840_1_.writeBoolean(this.keepJigsaws);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeBlockPos(this.field_240841_a_);
+        buf.writeVarInt(this.field_240842_b_);
+        buf.writeBoolean(this.field_240843_c_);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleJigsawGenerate(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.func_230549_a_(this);
+    }
 
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    public BlockPos func_240844_b_()
+    {
+        return this.field_240841_a_;
+    }
 
-   public int levels() {
-      return this.levels;
-   }
+    public int func_240845_c_()
+    {
+        return this.field_240842_b_;
+    }
 
-   public boolean keepJigsaws() {
-      return this.keepJigsaws;
-   }
+    public boolean func_240846_d_()
+    {
+        return this.field_240843_c_;
+    }
 }

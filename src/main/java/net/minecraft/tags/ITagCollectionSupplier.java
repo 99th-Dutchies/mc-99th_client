@@ -8,54 +8,62 @@ import net.minecraft.item.Item;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.registry.Registry;
 
-public interface ITagCollectionSupplier {
-   ITagCollectionSupplier EMPTY = of(ITagCollection.empty(), ITagCollection.empty(), ITagCollection.empty(), ITagCollection.empty());
+public interface ITagCollectionSupplier
+{
+    /** CONFIGURED_FEATURE_KEY */
+    ITagCollectionSupplier TAG_COLLECTION_SUPPLIER = getTagCollectionSupplier(ITagCollection.getEmptyTagCollection(), ITagCollection.getEmptyTagCollection(), ITagCollection.getEmptyTagCollection(), ITagCollection.getEmptyTagCollection());
 
-   ITagCollection<Block> getBlocks();
+    ITagCollection<Block> getBlockTags();
 
-   ITagCollection<Item> getItems();
+    ITagCollection<Item> getItemTags();
 
-   ITagCollection<Fluid> getFluids();
+    ITagCollection<Fluid> getFluidTags();
 
-   ITagCollection<EntityType<?>> getEntityTypes();
+    ITagCollection < EntityType<? >> getEntityTypeTags();
 
-   default void bindToGlobal() {
-      TagRegistryManager.resetAll(this);
-      Blocks.rebuildCache();
-   }
+default void updateTags()
+    {
+        TagRegistryManager.fetchTags(this);
+        Blocks.cacheBlockStates();
+    }
 
-   default void serializeToNetwork(PacketBuffer p_242210_1_) {
-      this.getBlocks().serializeToNetwork(p_242210_1_, Registry.BLOCK);
-      this.getItems().serializeToNetwork(p_242210_1_, Registry.ITEM);
-      this.getFluids().serializeToNetwork(p_242210_1_, Registry.FLUID);
-      this.getEntityTypes().serializeToNetwork(p_242210_1_, Registry.ENTITY_TYPE);
-   }
+default void writeTagCollectionSupplierToBuffer(PacketBuffer buffer)
+    {
+        this.getBlockTags().writeTagCollectionToBuffer(buffer, Registry.BLOCK);
+        this.getItemTags().writeTagCollectionToBuffer(buffer, Registry.ITEM);
+        this.getFluidTags().writeTagCollectionToBuffer(buffer, Registry.FLUID);
+        this.getEntityTypeTags().writeTagCollectionToBuffer(buffer, Registry.ENTITY_TYPE);
+    }
 
-   static ITagCollectionSupplier deserializeFromNetwork(PacketBuffer p_242211_0_) {
-      ITagCollection<Block> itagcollection = ITagCollection.loadFromNetwork(p_242211_0_, Registry.BLOCK);
-      ITagCollection<Item> itagcollection1 = ITagCollection.loadFromNetwork(p_242211_0_, Registry.ITEM);
-      ITagCollection<Fluid> itagcollection2 = ITagCollection.loadFromNetwork(p_242211_0_, Registry.FLUID);
-      ITagCollection<EntityType<?>> itagcollection3 = ITagCollection.loadFromNetwork(p_242211_0_, Registry.ENTITY_TYPE);
-      return of(itagcollection, itagcollection1, itagcollection2, itagcollection3);
-   }
+    static ITagCollectionSupplier readTagCollectionSupplierFromBuffer(PacketBuffer buffer)
+    {
+        ITagCollection<Block> itagcollection = ITagCollection.readTagCollectionFromBuffer(buffer, Registry.BLOCK);
+        ITagCollection<Item> itagcollection1 = ITagCollection.readTagCollectionFromBuffer(buffer, Registry.ITEM);
+        ITagCollection<Fluid> itagcollection2 = ITagCollection.readTagCollectionFromBuffer(buffer, Registry.FLUID);
+        ITagCollection < EntityType<? >> itagcollection3 = ITagCollection.readTagCollectionFromBuffer(buffer, Registry.ENTITY_TYPE);
+        return getTagCollectionSupplier(itagcollection, itagcollection1, itagcollection2, itagcollection3);
+    }
 
-   static ITagCollectionSupplier of(final ITagCollection<Block> p_242209_0_, final ITagCollection<Item> p_242209_1_, final ITagCollection<Fluid> p_242209_2_, final ITagCollection<EntityType<?>> p_242209_3_) {
-      return new ITagCollectionSupplier() {
-         public ITagCollection<Block> getBlocks() {
-            return p_242209_0_;
-         }
-
-         public ITagCollection<Item> getItems() {
-            return p_242209_1_;
-         }
-
-         public ITagCollection<Fluid> getFluids() {
-            return p_242209_2_;
-         }
-
-         public ITagCollection<EntityType<?>> getEntityTypes() {
-            return p_242209_3_;
-         }
-      };
-   }
+    static ITagCollectionSupplier getTagCollectionSupplier(final ITagCollection<Block> blockTags, final ITagCollection<Item> itemTags, final ITagCollection<Fluid> fluidTags, final ITagCollection < EntityType<? >> entityTypeTags)
+    {
+        return new ITagCollectionSupplier()
+        {
+            public ITagCollection<Block> getBlockTags()
+            {
+                return blockTags;
+            }
+            public ITagCollection<Item> getItemTags()
+            {
+                return itemTags;
+            }
+            public ITagCollection<Fluid> getFluidTags()
+            {
+                return fluidTags;
+            }
+            public ITagCollection < EntityType<? >> getEntityTypeTags()
+            {
+                return entityTypeTags;
+            }
+        };
+    }
 }

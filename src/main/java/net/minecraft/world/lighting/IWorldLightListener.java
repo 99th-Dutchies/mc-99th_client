@@ -5,25 +5,30 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.SectionPos;
 import net.minecraft.world.chunk.NibbleArray;
 
-public interface IWorldLightListener extends ILightListener {
-   @Nullable
-   NibbleArray getDataLayerData(SectionPos p_215612_1_);
+public interface IWorldLightListener extends ILightListener
+{
+    @Nullable
+    NibbleArray getData(SectionPos p_215612_1_);
 
-   int getLightValue(BlockPos p_215611_1_);
+    int getLightFor(BlockPos worldPos);
 
-   public static enum Dummy implements IWorldLightListener {
-      INSTANCE;
+    public static enum Dummy implements IWorldLightListener
+    {
+        INSTANCE;
 
-      @Nullable
-      public NibbleArray getDataLayerData(SectionPos p_215612_1_) {
-         return null;
-      }
+        @Nullable
+        public NibbleArray getData(SectionPos p_215612_1_)
+        {
+            return null;
+        }
 
-      public int getLightValue(BlockPos p_215611_1_) {
-         return 0;
-      }
+        public int getLightFor(BlockPos worldPos)
+        {
+            return 0;
+        }
 
-      public void updateSectionStatus(SectionPos p_215566_1_, boolean p_215566_2_) {
-      }
-   }
+        public void updateSectionStatus(SectionPos pos, boolean isEmpty)
+        {
+        }
+    }
 }

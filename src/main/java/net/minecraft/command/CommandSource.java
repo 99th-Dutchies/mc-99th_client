@@ -34,224 +34,276 @@ import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class CommandSource implements ISuggestionProvider {
-   public static final SimpleCommandExceptionType ERROR_NOT_PLAYER = new SimpleCommandExceptionType(new TranslationTextComponent("permissions.requires.player"));
-   public static final SimpleCommandExceptionType ERROR_NOT_ENTITY = new SimpleCommandExceptionType(new TranslationTextComponent("permissions.requires.entity"));
-   private final ICommandSource source;
-   private final Vector3d worldPosition;
-   private final ServerWorld level;
-   private final int permissionLevel;
-   private final String textName;
-   private final ITextComponent displayName;
-   private final MinecraftServer server;
-   private final boolean silent;
-   @Nullable
-   private final Entity entity;
-   private final ResultConsumer<CommandSource> consumer;
-   private final EntityAnchorArgument.Type anchor;
-   private final Vector2f rotation;
+public class CommandSource implements ISuggestionProvider
+{
+    public static final SimpleCommandExceptionType REQUIRES_PLAYER_EXCEPTION_TYPE = new SimpleCommandExceptionType(new TranslationTextComponent("permissions.requires.player"));
+    public static final SimpleCommandExceptionType REQUIRES_ENTITY_EXCEPTION_TYPE = new SimpleCommandExceptionType(new TranslationTextComponent("permissions.requires.entity"));
+    private final ICommandSource source;
+    private final Vector3d pos;
+    private final ServerWorld world;
+    private final int permissionLevel;
+    private final String name;
+    private final ITextComponent displayName;
+    private final MinecraftServer server;
+    private final boolean feedbackDisabled;
+    @Nullable
+    private final Entity entity;
+    private final ResultConsumer<CommandSource> resultConsumer;
+    private final EntityAnchorArgument.Type entityAnchorType;
+    private final Vector2f rotation;
 
-   public CommandSource(ICommandSource p_i49552_1_, Vector3d p_i49552_2_, Vector2f p_i49552_3_, ServerWorld p_i49552_4_, int p_i49552_5_, String p_i49552_6_, ITextComponent p_i49552_7_, MinecraftServer p_i49552_8_, @Nullable Entity p_i49552_9_) {
-      this(p_i49552_1_, p_i49552_2_, p_i49552_3_, p_i49552_4_, p_i49552_5_, p_i49552_6_, p_i49552_7_, p_i49552_8_, p_i49552_9_, false, (p_197032_0_, p_197032_1_, p_197032_2_) -> {
-      }, EntityAnchorArgument.Type.FEET);
-   }
+    public CommandSource(ICommandSource sourceIn, Vector3d posIn, Vector2f rotationIn, ServerWorld worldIn, int permissionLevelIn, String nameIn, ITextComponent displayNameIn, MinecraftServer serverIn, @Nullable Entity entityIn)
+    {
+        this(sourceIn, posIn, rotationIn, worldIn, permissionLevelIn, nameIn, displayNameIn, serverIn, entityIn, false, (p_197032_0_, p_197032_1_, p_197032_2_) ->
+        {
+        }, EntityAnchorArgument.Type.FEET);
+    }
 
-   protected CommandSource(ICommandSource p_i49553_1_, Vector3d p_i49553_2_, Vector2f p_i49553_3_, ServerWorld p_i49553_4_, int p_i49553_5_, String p_i49553_6_, ITextComponent p_i49553_7_, MinecraftServer p_i49553_8_, @Nullable Entity p_i49553_9_, boolean p_i49553_10_, ResultConsumer<CommandSource> p_i49553_11_, EntityAnchorArgument.Type p_i49553_12_) {
-      this.source = p_i49553_1_;
-      this.worldPosition = p_i49553_2_;
-      this.level = p_i49553_4_;
-      this.silent = p_i49553_10_;
-      this.entity = p_i49553_9_;
-      this.permissionLevel = p_i49553_5_;
-      this.textName = p_i49553_6_;
-      this.displayName = p_i49553_7_;
-      this.server = p_i49553_8_;
-      this.consumer = p_i49553_11_;
-      this.anchor = p_i49553_12_;
-      this.rotation = p_i49553_3_;
-   }
+    protected CommandSource(ICommandSource sourceIn, Vector3d posIn, Vector2f rotationIn, ServerWorld worldIn, int permissionLevelIn, String nameIn, ITextComponent displayNameIn, MinecraftServer serverIn, @Nullable Entity entityIn, boolean feedbackDisabledIn, ResultConsumer<CommandSource> resultConsumerIn, EntityAnchorArgument.Type entityAnchorTypeIn)
+    {
+        this.source = sourceIn;
+        this.pos = posIn;
+        this.world = worldIn;
+        this.feedbackDisabled = feedbackDisabledIn;
+        this.entity = entityIn;
+        this.permissionLevel = permissionLevelIn;
+        this.name = nameIn;
+        this.displayName = displayNameIn;
+        this.server = serverIn;
+        this.resultConsumer = resultConsumerIn;
+        this.entityAnchorType = entityAnchorTypeIn;
+        this.rotation = rotationIn;
+    }
 
-   public CommandSource withEntity(Entity p_197024_1_) {
-      return this.entity == p_197024_1_ ? this : new CommandSource(this.source, this.worldPosition, this.rotation, this.level, this.permissionLevel, p_197024_1_.getName().getString(), p_197024_1_.getDisplayName(), this.server, p_197024_1_, this.silent, this.consumer, this.anchor);
-   }
+    public CommandSource withEntity(Entity entityIn)
+    {
+        return this.entity == entityIn ? this : new CommandSource(this.source, this.pos, this.rotation, this.world, this.permissionLevel, entityIn.getName().getString(), entityIn.getDisplayName(), this.server, entityIn, this.feedbackDisabled, this.resultConsumer, this.entityAnchorType);
+    }
 
-   public CommandSource withPosition(Vector3d p_201009_1_) {
-      return this.worldPosition.equals(p_201009_1_) ? this : new CommandSource(this.source, p_201009_1_, this.rotation, this.level, this.permissionLevel, this.textName, this.displayName, this.server, this.entity, this.silent, this.consumer, this.anchor);
-   }
+    public CommandSource withPos(Vector3d posIn)
+    {
+        return this.pos.equals(posIn) ? this : new CommandSource(this.source, posIn, this.rotation, this.world, this.permissionLevel, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, this.resultConsumer, this.entityAnchorType);
+    }
 
-   public CommandSource withRotation(Vector2f p_201007_1_) {
-      return this.rotation.equals(p_201007_1_) ? this : new CommandSource(this.source, this.worldPosition, p_201007_1_, this.level, this.permissionLevel, this.textName, this.displayName, this.server, this.entity, this.silent, this.consumer, this.anchor);
-   }
+    public CommandSource withRotation(Vector2f pitchYawIn)
+    {
+        return this.rotation.equals(pitchYawIn) ? this : new CommandSource(this.source, this.pos, pitchYawIn, this.world, this.permissionLevel, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, this.resultConsumer, this.entityAnchorType);
+    }
 
-   public CommandSource withCallback(ResultConsumer<CommandSource> p_197029_1_) {
-      return this.consumer.equals(p_197029_1_) ? this : new CommandSource(this.source, this.worldPosition, this.rotation, this.level, this.permissionLevel, this.textName, this.displayName, this.server, this.entity, this.silent, p_197029_1_, this.anchor);
-   }
+    public CommandSource withResultConsumer(ResultConsumer<CommandSource> resultConsumerIn)
+    {
+        return this.resultConsumer.equals(resultConsumerIn) ? this : new CommandSource(this.source, this.pos, this.rotation, this.world, this.permissionLevel, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, resultConsumerIn, this.entityAnchorType);
+    }
 
-   public CommandSource withCallback(ResultConsumer<CommandSource> p_209550_1_, BinaryOperator<ResultConsumer<CommandSource>> p_209550_2_) {
-      ResultConsumer<CommandSource> resultconsumer = p_209550_2_.apply(this.consumer, p_209550_1_);
-      return this.withCallback(resultconsumer);
-   }
+    public CommandSource withResultConsumer(ResultConsumer<CommandSource> resultConsumerIn, BinaryOperator<ResultConsumer<CommandSource>> resultConsumerSelector)
+    {
+        ResultConsumer<CommandSource> resultconsumer = resultConsumerSelector.apply(this.resultConsumer, resultConsumerIn);
+        return this.withResultConsumer(resultconsumer);
+    }
 
-   public CommandSource withSuppressedOutput() {
-      return this.silent ? this : new CommandSource(this.source, this.worldPosition, this.rotation, this.level, this.permissionLevel, this.textName, this.displayName, this.server, this.entity, true, this.consumer, this.anchor);
-   }
+    public CommandSource withFeedbackDisabled()
+    {
+        return this.feedbackDisabled ? this : new CommandSource(this.source, this.pos, this.rotation, this.world, this.permissionLevel, this.name, this.displayName, this.server, this.entity, true, this.resultConsumer, this.entityAnchorType);
+    }
 
-   public CommandSource withPermission(int p_197033_1_) {
-      return p_197033_1_ == this.permissionLevel ? this : new CommandSource(this.source, this.worldPosition, this.rotation, this.level, p_197033_1_, this.textName, this.displayName, this.server, this.entity, this.silent, this.consumer, this.anchor);
-   }
+    public CommandSource withPermissionLevel(int level)
+    {
+        return level == this.permissionLevel ? this : new CommandSource(this.source, this.pos, this.rotation, this.world, level, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, this.resultConsumer, this.entityAnchorType);
+    }
 
-   public CommandSource withMaximumPermission(int p_197026_1_) {
-      return p_197026_1_ <= this.permissionLevel ? this : new CommandSource(this.source, this.worldPosition, this.rotation, this.level, p_197026_1_, this.textName, this.displayName, this.server, this.entity, this.silent, this.consumer, this.anchor);
-   }
+    public CommandSource withMinPermissionLevel(int level)
+    {
+        return level <= this.permissionLevel ? this : new CommandSource(this.source, this.pos, this.rotation, this.world, level, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, this.resultConsumer, this.entityAnchorType);
+    }
 
-   public CommandSource withAnchor(EntityAnchorArgument.Type p_201010_1_) {
-      return p_201010_1_ == this.anchor ? this : new CommandSource(this.source, this.worldPosition, this.rotation, this.level, this.permissionLevel, this.textName, this.displayName, this.server, this.entity, this.silent, this.consumer, p_201010_1_);
-   }
+    public CommandSource withEntityAnchorType(EntityAnchorArgument.Type entityAnchorTypeIn)
+    {
+        return entityAnchorTypeIn == this.entityAnchorType ? this : new CommandSource(this.source, this.pos, this.rotation, this.world, this.permissionLevel, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, this.resultConsumer, entityAnchorTypeIn);
+    }
 
-   public CommandSource withLevel(ServerWorld p_201003_1_) {
-      if (p_201003_1_ == this.level) {
-         return this;
-      } else {
-         double d0 = DimensionType.getTeleportationScale(this.level.dimensionType(), p_201003_1_.dimensionType());
-         Vector3d vector3d = new Vector3d(this.worldPosition.x * d0, this.worldPosition.y, this.worldPosition.z * d0);
-         return new CommandSource(this.source, vector3d, this.rotation, p_201003_1_, this.permissionLevel, this.textName, this.displayName, this.server, this.entity, this.silent, this.consumer, this.anchor);
-      }
-   }
+    public CommandSource withWorld(ServerWorld worldIn)
+    {
+        if (worldIn == this.world)
+        {
+            return this;
+        }
+        else
+        {
+            double d0 = DimensionType.getCoordinateDifference(this.world.getDimensionType(), worldIn.getDimensionType());
+            Vector3d vector3d = new Vector3d(this.pos.x * d0, this.pos.y, this.pos.z * d0);
+            return new CommandSource(this.source, vector3d, this.rotation, worldIn, this.permissionLevel, this.name, this.displayName, this.server, this.entity, this.feedbackDisabled, this.resultConsumer, this.entityAnchorType);
+        }
+    }
 
-   public CommandSource facing(Entity p_201006_1_, EntityAnchorArgument.Type p_201006_2_) throws CommandSyntaxException {
-      return this.facing(p_201006_2_.apply(p_201006_1_));
-   }
+    public CommandSource withRotation(Entity entityIn, EntityAnchorArgument.Type anchorType) throws CommandSyntaxException
+    {
+        return this.withRotation(anchorType.apply(entityIn));
+    }
 
-   public CommandSource facing(Vector3d p_201005_1_) throws CommandSyntaxException {
-      Vector3d vector3d = this.anchor.apply(this);
-      double d0 = p_201005_1_.x - vector3d.x;
-      double d1 = p_201005_1_.y - vector3d.y;
-      double d2 = p_201005_1_.z - vector3d.z;
-      double d3 = (double)MathHelper.sqrt(d0 * d0 + d2 * d2);
-      float f = MathHelper.wrapDegrees((float)(-(MathHelper.atan2(d1, d3) * (double)(180F / (float)Math.PI))));
-      float f1 = MathHelper.wrapDegrees((float)(MathHelper.atan2(d2, d0) * (double)(180F / (float)Math.PI)) - 90.0F);
-      return this.withRotation(new Vector2f(f, f1));
-   }
+    public CommandSource withRotation(Vector3d lookPos) throws CommandSyntaxException
+    {
+        Vector3d vector3d = this.entityAnchorType.apply(this);
+        double d0 = lookPos.x - vector3d.x;
+        double d1 = lookPos.y - vector3d.y;
+        double d2 = lookPos.z - vector3d.z;
+        double d3 = (double)MathHelper.sqrt(d0 * d0 + d2 * d2);
+        float f = MathHelper.wrapDegrees((float)(-(MathHelper.atan2(d1, d3) * (double)(180F / (float)Math.PI))));
+        float f1 = MathHelper.wrapDegrees((float)(MathHelper.atan2(d2, d0) * (double)(180F / (float)Math.PI)) - 90.0F);
+        return this.withRotation(new Vector2f(f, f1));
+    }
 
-   public ITextComponent getDisplayName() {
-      return this.displayName;
-   }
+    public ITextComponent getDisplayName()
+    {
+        return this.displayName;
+    }
 
-   public String getTextName() {
-      return this.textName;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   public boolean hasPermission(int p_197034_1_) {
-      return this.permissionLevel >= p_197034_1_;
-   }
+    public boolean hasPermissionLevel(int level)
+    {
+        return this.permissionLevel >= level;
+    }
 
-   public Vector3d getPosition() {
-      return this.worldPosition;
-   }
+    public Vector3d getPos()
+    {
+        return this.pos;
+    }
 
-   public ServerWorld getLevel() {
-      return this.level;
-   }
+    public ServerWorld getWorld()
+    {
+        return this.world;
+    }
 
-   @Nullable
-   public Entity getEntity() {
-      return this.entity;
-   }
+    @Nullable
+    public Entity getEntity()
+    {
+        return this.entity;
+    }
 
-   public Entity getEntityOrException() throws CommandSyntaxException {
-      if (this.entity == null) {
-         throw ERROR_NOT_ENTITY.create();
-      } else {
-         return this.entity;
-      }
-   }
+    public Entity assertIsEntity() throws CommandSyntaxException
+    {
+        if (this.entity == null)
+        {
+            throw REQUIRES_ENTITY_EXCEPTION_TYPE.create();
+        }
+        else
+        {
+            return this.entity;
+        }
+    }
 
-   public ServerPlayerEntity getPlayerOrException() throws CommandSyntaxException {
-      if (!(this.entity instanceof ServerPlayerEntity)) {
-         throw ERROR_NOT_PLAYER.create();
-      } else {
-         return (ServerPlayerEntity)this.entity;
-      }
-   }
+    public ServerPlayerEntity asPlayer() throws CommandSyntaxException
+    {
+        if (!(this.entity instanceof ServerPlayerEntity))
+        {
+            throw REQUIRES_PLAYER_EXCEPTION_TYPE.create();
+        }
+        else
+        {
+            return (ServerPlayerEntity)this.entity;
+        }
+    }
 
-   public Vector2f getRotation() {
-      return this.rotation;
-   }
+    public Vector2f getRotation()
+    {
+        return this.rotation;
+    }
 
-   public MinecraftServer getServer() {
-      return this.server;
-   }
+    public MinecraftServer getServer()
+    {
+        return this.server;
+    }
 
-   public EntityAnchorArgument.Type getAnchor() {
-      return this.anchor;
-   }
+    public EntityAnchorArgument.Type getEntityAnchorType()
+    {
+        return this.entityAnchorType;
+    }
 
-   public void sendSuccess(ITextComponent p_197030_1_, boolean p_197030_2_) {
-      if (this.source.acceptsSuccess() && !this.silent) {
-         this.source.sendMessage(p_197030_1_, Util.NIL_UUID);
-      }
+    public void sendFeedback(ITextComponent message, boolean allowLogging)
+    {
+        if (this.source.shouldReceiveFeedback() && !this.feedbackDisabled)
+        {
+            this.source.sendMessage(message, Util.DUMMY_UUID);
+        }
 
-      if (p_197030_2_ && this.source.shouldInformAdmins() && !this.silent) {
-         this.broadcastToAdmins(p_197030_1_);
-      }
+        if (allowLogging && this.source.allowLogging() && !this.feedbackDisabled)
+        {
+            this.logFeedback(message);
+        }
+    }
 
-   }
+    private void logFeedback(ITextComponent message)
+    {
+        ITextComponent itextcomponent = (new TranslationTextComponent("chat.type.admin", this.getDisplayName(), message)).mergeStyle(new TextFormatting[] {TextFormatting.GRAY, TextFormatting.ITALIC});
 
-   private void broadcastToAdmins(ITextComponent p_197020_1_) {
-      ITextComponent itextcomponent = (new TranslationTextComponent("chat.type.admin", this.getDisplayName(), p_197020_1_)).withStyle(new TextFormatting[]{TextFormatting.GRAY, TextFormatting.ITALIC});
-      if (this.server.getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {
-         for(ServerPlayerEntity serverplayerentity : this.server.getPlayerList().getPlayers()) {
-            if (serverplayerentity != this.source && this.server.getPlayerList().isOp(serverplayerentity.getGameProfile())) {
-               serverplayerentity.sendMessage(itextcomponent, Util.NIL_UUID);
+        if (this.server.getGameRules().getBoolean(GameRules.SEND_COMMAND_FEEDBACK))
+        {
+            for (ServerPlayerEntity serverplayerentity : this.server.getPlayerList().getPlayers())
+            {
+                if (serverplayerentity != this.source && this.server.getPlayerList().canSendCommands(serverplayerentity.getGameProfile()))
+                {
+                    serverplayerentity.sendMessage(itextcomponent, Util.DUMMY_UUID);
+                }
             }
-         }
-      }
+        }
 
-      if (this.source != this.server && this.server.getGameRules().getBoolean(GameRules.RULE_LOGADMINCOMMANDS)) {
-         this.server.sendMessage(itextcomponent, Util.NIL_UUID);
-      }
+        if (this.source != this.server && this.server.getGameRules().getBoolean(GameRules.LOG_ADMIN_COMMANDS))
+        {
+            this.server.sendMessage(itextcomponent, Util.DUMMY_UUID);
+        }
+    }
 
-   }
+    public void sendErrorMessage(ITextComponent message)
+    {
+        if (this.source.shouldReceiveErrors() && !this.feedbackDisabled)
+        {
+            this.source.sendMessage((new StringTextComponent("")).append(message).mergeStyle(TextFormatting.RED), Util.DUMMY_UUID);
+        }
+    }
 
-   public void sendFailure(ITextComponent p_197021_1_) {
-      if (this.source.acceptsFailure() && !this.silent) {
-         this.source.sendMessage((new StringTextComponent("")).append(p_197021_1_).withStyle(TextFormatting.RED), Util.NIL_UUID);
-      }
+    public void onCommandComplete(CommandContext<CommandSource> context, boolean success, int result)
+    {
+        if (this.resultConsumer != null)
+        {
+            this.resultConsumer.onCommandComplete(context, success, result);
+        }
+    }
 
-   }
+    public Collection<String> getPlayerNames()
+    {
+        return Lists.newArrayList(this.server.getOnlinePlayerNames());
+    }
 
-   public void onCommandComplete(CommandContext<CommandSource> p_197038_1_, boolean p_197038_2_, int p_197038_3_) {
-      if (this.consumer != null) {
-         this.consumer.onCommandComplete(p_197038_1_, p_197038_2_, p_197038_3_);
-      }
+    public Collection<String> getTeamNames()
+    {
+        return this.server.getScoreboard().getTeamNames();
+    }
 
-   }
+    public Collection<ResourceLocation> getSoundResourceLocations()
+    {
+        return Registry.SOUND_EVENT.keySet();
+    }
 
-   public Collection<String> getOnlinePlayerNames() {
-      return Lists.newArrayList(this.server.getPlayerNames());
-   }
+    public Stream<ResourceLocation> getRecipeResourceLocations()
+    {
+        return this.server.getRecipeManager().getKeys();
+    }
 
-   public Collection<String> getAllTeams() {
-      return this.server.getScoreboard().getTeamNames();
-   }
+    public CompletableFuture<Suggestions> getSuggestionsFromServer(CommandContext<ISuggestionProvider> context, SuggestionsBuilder suggestionsBuilder)
+    {
+        return null;
+    }
 
-   public Collection<ResourceLocation> getAvailableSoundEvents() {
-      return Registry.SOUND_EVENT.keySet();
-   }
+    public Set<RegistryKey<World>> func_230390_p_()
+    {
+        return this.server.func_240770_D_();
+    }
 
-   public Stream<ResourceLocation> getRecipeNames() {
-      return this.server.getRecipeManager().getRecipeIds();
-   }
-
-   public CompletableFuture<Suggestions> customSuggestion(CommandContext<ISuggestionProvider> p_197009_1_, SuggestionsBuilder p_197009_2_) {
-      return null;
-   }
-
-   public Set<RegistryKey<World>> levels() {
-      return this.server.levelKeys();
-   }
-
-   public DynamicRegistries registryAccess() {
-      return this.server.registryAccess();
-   }
+    public DynamicRegistries func_241861_q()
+    {
+        return this.server.func_244267_aX();
+    }
 }

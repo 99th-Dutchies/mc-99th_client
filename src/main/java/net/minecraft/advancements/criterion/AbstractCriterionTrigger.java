@@ -14,61 +14,78 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.loot.ConditionArrayParser;
 import net.minecraft.loot.LootContext;
 
-public abstract class AbstractCriterionTrigger<T extends CriterionInstance> implements ICriterionTrigger<T> {
-   private final Map<PlayerAdvancements, Set<ICriterionTrigger.Listener<T>>> players = Maps.newIdentityHashMap();
+public abstract class AbstractCriterionTrigger<T extends CriterionInstance> implements ICriterionTrigger<T>
+{
+    private final Map<PlayerAdvancements, Set<ICriterionTrigger.Listener<T>>> triggerListeners = Maps.newIdentityHashMap();
 
-   public final void addPlayerListener(PlayerAdvancements p_192165_1_, ICriterionTrigger.Listener<T> p_192165_2_) {
-      this.players.computeIfAbsent(p_192165_1_, (p_227072_0_) -> {
-         return Sets.newHashSet();
-      }).add(p_192165_2_);
-   }
+    public final void addListener(PlayerAdvancements playerAdvancementsIn, ICriterionTrigger.Listener<T> listener)
+    {
+        this.triggerListeners.computeIfAbsent(playerAdvancementsIn, (playerAdvancements) ->
+        {
+            return Sets.newHashSet();
+        }).add(listener);
+    }
 
-   public final void removePlayerListener(PlayerAdvancements p_192164_1_, ICriterionTrigger.Listener<T> p_192164_2_) {
-      Set<ICriterionTrigger.Listener<T>> set = this.players.get(p_192164_1_);
-      if (set != null) {
-         set.remove(p_192164_2_);
-         if (set.isEmpty()) {
-            this.players.remove(p_192164_1_);
-         }
-      }
+    public final void removeListener(PlayerAdvancements playerAdvancementsIn, ICriterionTrigger.Listener<T> listener)
+    {
+        Set<ICriterionTrigger.Listener<T>> set = this.triggerListeners.get(playerAdvancementsIn);
 
-   }
+        if (set != null)
+        {
+            set.remove(listener);
 
-   public final void removePlayerListeners(PlayerAdvancements p_192167_1_) {
-      this.players.remove(p_192167_1_);
-   }
-
-   protected abstract T createInstance(JsonObject p_230241_1_, EntityPredicate.AndPredicate p_230241_2_, ConditionArrayParser p_230241_3_);
-
-   public final T createInstance(JsonObject p_230307_1_, ConditionArrayParser p_230307_2_) {
-      EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.fromJson(p_230307_1_, "player", p_230307_2_);
-      return this.createInstance(p_230307_1_, entitypredicate$andpredicate, p_230307_2_);
-   }
-
-   protected void trigger(ServerPlayerEntity p_235959_1_, Predicate<T> p_235959_2_) {
-      PlayerAdvancements playeradvancements = p_235959_1_.getAdvancements();
-      Set<ICriterionTrigger.Listener<T>> set = this.players.get(playeradvancements);
-      if (set != null && !set.isEmpty()) {
-         LootContext lootcontext = EntityPredicate.createContext(p_235959_1_, p_235959_1_);
-         List<ICriterionTrigger.Listener<T>> list = null;
-
-         for(ICriterionTrigger.Listener<T> listener : set) {
-            T t = listener.getTriggerInstance();
-            if (t.getPlayerPredicate().matches(lootcontext) && p_235959_2_.test(t)) {
-               if (list == null) {
-                  list = Lists.newArrayList();
-               }
-
-               list.add(listener);
+            if (set.isEmpty())
+            {
+                this.triggerListeners.remove(playerAdvancementsIn);
             }
-         }
+        }
+    }
 
-         if (list != null) {
-            for(ICriterionTrigger.Listener<T> listener1 : list) {
-               listener1.run(playeradvancements);
+    public final void removeAllListeners(PlayerAdvancements playerAdvancementsIn)
+    {
+        this.triggerListeners.remove(playerAdvancementsIn);
+    }
+
+    protected abstract T deserializeTrigger(JsonObject json, EntityPredicate.AndPredicate entityPredicate, ConditionArrayParser conditionsParser);
+
+    public final T deserialize(JsonObject object, ConditionArrayParser conditions)
+    {
+        EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.deserializeJSONObject(object, "player", conditions);
+        return this.deserializeTrigger(object, entitypredicate$andpredicate, conditions);
+    }
+
+    protected void triggerListeners(ServerPlayerEntity serverPlayer, Predicate<T> testTrigger)
+    {
+        PlayerAdvancements playeradvancements = serverPlayer.getAdvancements();
+        Set<ICriterionTrigger.Listener<T>> set = this.triggerListeners.get(playeradvancements);
+
+        if (set != null && !set.isEmpty())
+        {
+            LootContext lootcontext = EntityPredicate.getLootContext(serverPlayer, serverPlayer);
+            List<ICriterionTrigger.Listener<T>> list = null;
+
+            for (ICriterionTrigger.Listener<T> listener : set)
+            {
+                T t = listener.getCriterionInstance();
+
+                if (t.getPlayerCondition().testContext(lootcontext) && testTrigger.test(t))
+                {
+                    if (list == null)
+                    {
+                        list = Lists.newArrayList();
+                    }
+
+                    list.add(listener);
+                }
             }
-         }
 
-      }
-   }
+            if (list != null)
+            {
+                for (ICriterionTrigger.Listener<T> listener1 : list)
+                {
+                    listener1.grantCriterion(playeradvancements);
+                }
+            }
+        }
+    }
 }

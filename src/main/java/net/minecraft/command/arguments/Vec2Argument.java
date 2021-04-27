@@ -18,58 +18,80 @@ import net.minecraft.util.math.vector.Vector2f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class Vec2Argument implements ArgumentType<ILocationArgument> {
-   private static final Collection<String> EXAMPLES = Arrays.asList("0 0", "~ ~", "0.1 -0.5", "~1 ~-2");
-   public static final SimpleCommandExceptionType ERROR_NOT_COMPLETE = new SimpleCommandExceptionType(new TranslationTextComponent("argument.pos2d.incomplete"));
-   private final boolean centerCorrect;
+public class Vec2Argument implements ArgumentType<ILocationArgument>
+{
+    private static final Collection<String> EXAMPLES = Arrays.asList("0 0", "~ ~", "0.1 -0.5", "~1 ~-2");
+    public static final SimpleCommandExceptionType VEC2_INCOMPLETE = new SimpleCommandExceptionType(new TranslationTextComponent("argument.pos2d.incomplete"));
+    private final boolean centerIntegers;
 
-   public Vec2Argument(boolean p_i47965_1_) {
-      this.centerCorrect = p_i47965_1_;
-   }
+    public Vec2Argument(boolean centerIntegersIn)
+    {
+        this.centerIntegers = centerIntegersIn;
+    }
 
-   public static Vec2Argument vec2() {
-      return new Vec2Argument(true);
-   }
+    public static Vec2Argument vec2()
+    {
+        return new Vec2Argument(true);
+    }
 
-   public static Vector2f getVec2(CommandContext<CommandSource> p_197295_0_, String p_197295_1_) throws CommandSyntaxException {
-      Vector3d vector3d = p_197295_0_.getArgument(p_197295_1_, ILocationArgument.class).getPosition(p_197295_0_.getSource());
-      return new Vector2f((float)vector3d.x, (float)vector3d.z);
-   }
+    public static Vector2f getVec2f(CommandContext<CommandSource> context, String name) throws CommandSyntaxException
+    {
+        Vector3d vector3d = context.getArgument(name, ILocationArgument.class).getPosition(context.getSource());
+        return new Vector2f((float)vector3d.x, (float)vector3d.z);
+    }
 
-   public ILocationArgument parse(StringReader p_parse_1_) throws CommandSyntaxException {
-      int i = p_parse_1_.getCursor();
-      if (!p_parse_1_.canRead()) {
-         throw ERROR_NOT_COMPLETE.createWithContext(p_parse_1_);
-      } else {
-         LocationPart locationpart = LocationPart.parseDouble(p_parse_1_, this.centerCorrect);
-         if (p_parse_1_.canRead() && p_parse_1_.peek() == ' ') {
-            p_parse_1_.skip();
-            LocationPart locationpart1 = LocationPart.parseDouble(p_parse_1_, this.centerCorrect);
-            return new LocationInput(locationpart, new LocationPart(true, 0.0D), locationpart1);
-         } else {
-            p_parse_1_.setCursor(i);
-            throw ERROR_NOT_COMPLETE.createWithContext(p_parse_1_);
-         }
-      }
-   }
+    public ILocationArgument parse(StringReader p_parse_1_) throws CommandSyntaxException
+    {
+        int i = p_parse_1_.getCursor();
 
-   public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_listSuggestions_1_, SuggestionsBuilder p_listSuggestions_2_) {
-      if (!(p_listSuggestions_1_.getSource() instanceof ISuggestionProvider)) {
-         return Suggestions.empty();
-      } else {
-         String s = p_listSuggestions_2_.getRemaining();
-         Collection<ISuggestionProvider.Coordinates> collection;
-         if (!s.isEmpty() && s.charAt(0) == '^') {
-            collection = Collections.singleton(ISuggestionProvider.Coordinates.DEFAULT_LOCAL);
-         } else {
-            collection = ((ISuggestionProvider)p_listSuggestions_1_.getSource()).getAbsoluteCoordinates();
-         }
+        if (!p_parse_1_.canRead())
+        {
+            throw VEC2_INCOMPLETE.createWithContext(p_parse_1_);
+        }
+        else
+        {
+            LocationPart locationpart = LocationPart.parseDouble(p_parse_1_, this.centerIntegers);
 
-         return ISuggestionProvider.suggest2DCoordinates(s, collection, p_listSuggestions_2_, Commands.createValidator(this::parse));
-      }
-   }
+            if (p_parse_1_.canRead() && p_parse_1_.peek() == ' ')
+            {
+                p_parse_1_.skip();
+                LocationPart locationpart1 = LocationPart.parseDouble(p_parse_1_, this.centerIntegers);
+                return new LocationInput(locationpart, new LocationPart(true, 0.0D), locationpart1);
+            }
+            else
+            {
+                p_parse_1_.setCursor(i);
+                throw VEC2_INCOMPLETE.createWithContext(p_parse_1_);
+            }
+        }
+    }
 
-   public Collection<String> getExamples() {
-      return EXAMPLES;
-   }
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_listSuggestions_1_, SuggestionsBuilder p_listSuggestions_2_)
+    {
+        if (!(p_listSuggestions_1_.getSource() instanceof ISuggestionProvider))
+        {
+            return Suggestions.empty();
+        }
+        else
+        {
+            String s = p_listSuggestions_2_.getRemaining();
+            Collection<ISuggestionProvider.Coordinates> collection;
+
+            if (!s.isEmpty() && s.charAt(0) == '^')
+            {
+                collection = Collections.singleton(ISuggestionProvider.Coordinates.DEFAULT_LOCAL);
+            }
+            else
+            {
+                collection = ((ISuggestionProvider)p_listSuggestions_1_.getSource()).func_217293_r();
+            }
+
+            return ISuggestionProvider.func_211269_a(s, collection, p_listSuggestions_2_, Commands.predicate(this::parse));
+        }
+    }
+
+    public Collection<String> getExamples()
+    {
+        return EXAMPLES;
+    }
 }

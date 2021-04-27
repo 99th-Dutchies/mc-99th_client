@@ -18,118 +18,150 @@ import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class BarrelTileEntity extends LockableLootTileEntity {
-   private NonNullList<ItemStack> items = NonNullList.withSize(27, ItemStack.EMPTY);
-   private int openCount;
+public class BarrelTileEntity extends LockableLootTileEntity
+{
+    private NonNullList<ItemStack> barrelContents = NonNullList.withSize(27, ItemStack.EMPTY);
+    private int numPlayersUsing;
 
-   private BarrelTileEntity(TileEntityType<?> p_i49963_1_) {
-      super(p_i49963_1_);
-   }
+    private BarrelTileEntity(TileEntityType<?> barrelType)
+    {
+        super(barrelType);
+    }
 
-   public BarrelTileEntity() {
-      this(TileEntityType.BARREL);
-   }
+    public BarrelTileEntity()
+    {
+        this(TileEntityType.BARREL);
+    }
 
-   public CompoundNBT save(CompoundNBT p_189515_1_) {
-      super.save(p_189515_1_);
-      if (!this.trySaveLootTable(p_189515_1_)) {
-         ItemStackHelper.saveAllItems(p_189515_1_, this.items);
-      }
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        super.write(compound);
 
-      return p_189515_1_;
-   }
+        if (!this.checkLootAndWrite(compound))
+        {
+            ItemStackHelper.saveAllItems(compound, this.barrelContents);
+        }
 
-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
-      super.load(p_230337_1_, p_230337_2_);
-      this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-      if (!this.tryLoadLootTable(p_230337_2_)) {
-         ItemStackHelper.loadAllItems(p_230337_2_, this.items);
-      }
+        return compound;
+    }
 
-   }
+    public void read(BlockState state, CompoundNBT nbt)
+    {
+        super.read(state, nbt);
+        this.barrelContents = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
 
-   public int getContainerSize() {
-      return 27;
-   }
+        if (!this.checkLootAndRead(nbt))
+        {
+            ItemStackHelper.loadAllItems(nbt, this.barrelContents);
+        }
+    }
 
-   protected NonNullList<ItemStack> getItems() {
-      return this.items;
-   }
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return 27;
+    }
 
-   protected void setItems(NonNullList<ItemStack> p_199721_1_) {
-      this.items = p_199721_1_;
-   }
+    protected NonNullList<ItemStack> getItems()
+    {
+        return this.barrelContents;
+    }
 
-   protected ITextComponent getDefaultName() {
-      return new TranslationTextComponent("container.barrel");
-   }
+    protected void setItems(NonNullList<ItemStack> itemsIn)
+    {
+        this.barrelContents = itemsIn;
+    }
 
-   protected Container createMenu(int p_213906_1_, PlayerInventory p_213906_2_) {
-      return ChestContainer.threeRows(p_213906_1_, p_213906_2_, this);
-   }
+    protected ITextComponent getDefaultName()
+    {
+        return new TranslationTextComponent("container.barrel");
+    }
 
-   public void startOpen(PlayerEntity p_174889_1_) {
-      if (!p_174889_1_.isSpectator()) {
-         if (this.openCount < 0) {
-            this.openCount = 0;
-         }
+    protected Container createMenu(int id, PlayerInventory player)
+    {
+        return ChestContainer.createGeneric9X3(id, player, this);
+    }
 
-         ++this.openCount;
-         BlockState blockstate = this.getBlockState();
-         boolean flag = blockstate.getValue(BarrelBlock.OPEN);
-         if (!flag) {
-            this.playSound(blockstate, SoundEvents.BARREL_OPEN);
-            this.updateBlockState(blockstate, true);
-         }
+    public void openInventory(PlayerEntity player)
+    {
+        if (!player.isSpectator())
+        {
+            if (this.numPlayersUsing < 0)
+            {
+                this.numPlayersUsing = 0;
+            }
 
-         this.scheduleRecheck();
-      }
+            ++this.numPlayersUsing;
+            BlockState blockstate = this.getBlockState();
+            boolean flag = blockstate.get(BarrelBlock.PROPERTY_OPEN);
 
-   }
+            if (!flag)
+            {
+                this.playSound(blockstate, SoundEvents.BLOCK_BARREL_OPEN);
+                this.setOpenProperty(blockstate, true);
+            }
 
-   private void scheduleRecheck() {
-      this.level.getBlockTicks().scheduleTick(this.getBlockPos(), this.getBlockState().getBlock(), 5);
-   }
+            this.scheduleTick();
+        }
+    }
 
-   public void recheckOpen() {
-      int i = this.worldPosition.getX();
-      int j = this.worldPosition.getY();
-      int k = this.worldPosition.getZ();
-      this.openCount = ChestTileEntity.getOpenCount(this.level, this, i, j, k);
-      if (this.openCount > 0) {
-         this.scheduleRecheck();
-      } else {
-         BlockState blockstate = this.getBlockState();
-         if (!blockstate.is(Blocks.BARREL)) {
-            this.setRemoved();
-            return;
-         }
+    private void scheduleTick()
+    {
+        this.world.getPendingBlockTicks().scheduleTick(this.getPos(), this.getBlockState().getBlock(), 5);
+    }
 
-         boolean flag = blockstate.getValue(BarrelBlock.OPEN);
-         if (flag) {
-            this.playSound(blockstate, SoundEvents.BARREL_CLOSE);
-            this.updateBlockState(blockstate, false);
-         }
-      }
+    public void barrelTick()
+    {
+        int i = this.pos.getX();
+        int j = this.pos.getY();
+        int k = this.pos.getZ();
+        this.numPlayersUsing = ChestTileEntity.calculatePlayersUsing(this.world, this, i, j, k);
 
-   }
+        if (this.numPlayersUsing > 0)
+        {
+            this.scheduleTick();
+        }
+        else
+        {
+            BlockState blockstate = this.getBlockState();
 
-   public void stopOpen(PlayerEntity p_174886_1_) {
-      if (!p_174886_1_.isSpectator()) {
-         --this.openCount;
-      }
+            if (!blockstate.isIn(Blocks.BARREL))
+            {
+                this.remove();
+                return;
+            }
 
-   }
+            boolean flag = blockstate.get(BarrelBlock.PROPERTY_OPEN);
 
-   private void updateBlockState(BlockState p_213963_1_, boolean p_213963_2_) {
-      this.level.setBlock(this.getBlockPos(), p_213963_1_.setValue(BarrelBlock.OPEN, Boolean.valueOf(p_213963_2_)), 3);
-   }
+            if (flag)
+            {
+                this.playSound(blockstate, SoundEvents.BLOCK_BARREL_CLOSE);
+                this.setOpenProperty(blockstate, false);
+            }
+        }
+    }
 
-   private void playSound(BlockState p_213965_1_, SoundEvent p_213965_2_) {
-      Vector3i vector3i = p_213965_1_.getValue(BarrelBlock.FACING).getNormal();
-      double d0 = (double)this.worldPosition.getX() + 0.5D + (double)vector3i.getX() / 2.0D;
-      double d1 = (double)this.worldPosition.getY() + 0.5D + (double)vector3i.getY() / 2.0D;
-      double d2 = (double)this.worldPosition.getZ() + 0.5D + (double)vector3i.getZ() / 2.0D;
-      this.level.playSound((PlayerEntity)null, d0, d1, d2, p_213965_2_, SoundCategory.BLOCKS, 0.5F, this.level.random.nextFloat() * 0.1F + 0.9F);
-   }
+    public void closeInventory(PlayerEntity player)
+    {
+        if (!player.isSpectator())
+        {
+            --this.numPlayersUsing;
+        }
+    }
+
+    private void setOpenProperty(BlockState state, boolean open)
+    {
+        this.world.setBlockState(this.getPos(), state.with(BarrelBlock.PROPERTY_OPEN, Boolean.valueOf(open)), 3);
+    }
+
+    private void playSound(BlockState state, SoundEvent sound)
+    {
+        Vector3i vector3i = state.get(BarrelBlock.PROPERTY_FACING).getDirectionVec();
+        double d0 = (double)this.pos.getX() + 0.5D + (double)vector3i.getX() / 2.0D;
+        double d1 = (double)this.pos.getY() + 0.5D + (double)vector3i.getY() / 2.0D;
+        double d2 = (double)this.pos.getZ() + 0.5D + (double)vector3i.getZ() / 2.0D;
+        this.world.playSound((PlayerEntity)null, d0, d1, d2, sound, SoundCategory.BLOCKS, 0.5F, this.world.rand.nextFloat() * 0.1F + 0.9F);
+    }
 }

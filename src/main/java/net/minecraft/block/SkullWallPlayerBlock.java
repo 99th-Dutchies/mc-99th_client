@@ -8,16 +8,23 @@ import net.minecraft.loot.LootContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class SkullWallPlayerBlock extends WallSkullBlock {
-   protected SkullWallPlayerBlock(AbstractBlock.Properties p_i48353_1_) {
-      super(SkullBlock.Types.PLAYER, p_i48353_1_);
-   }
+public class SkullWallPlayerBlock extends WallSkullBlock
+{
+    protected SkullWallPlayerBlock(AbstractBlock.Properties properties)
+    {
+        super(SkullBlock.Types.PLAYER, properties);
+    }
 
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, @Nullable LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      Blocks.PLAYER_HEAD.setPlacedBy(p_180633_1_, p_180633_2_, p_180633_3_, p_180633_4_, p_180633_5_);
-   }
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack)
+    {
+        Blocks.PLAYER_HEAD.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+    }
 
-   public List<ItemStack> getDrops(BlockState p_220076_1_, LootContext.Builder p_220076_2_) {
-      return Blocks.PLAYER_HEAD.getDrops(p_220076_1_, p_220076_2_);
-   }
+    public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder)
+    {
+        return Blocks.PLAYER_HEAD.getDrops(state, builder);
+    }
 }

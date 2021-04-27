@@ -4,152 +4,182 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CPlayerPacket implements IPacket<IServerPlayNetHandler> {
-   protected double x;
-   protected double y;
-   protected double z;
-   protected float yRot;
-   protected float xRot;
-   protected boolean onGround;
-   protected boolean hasPos;
-   protected boolean hasRot;
+public class CPlayerPacket implements IPacket<IServerPlayNetHandler>
+{
+    protected double x;
+    protected double y;
+    protected double z;
+    protected float yaw;
+    protected float pitch;
+    protected boolean onGround;
+    protected boolean moving;
+    protected boolean rotating;
 
-   public CPlayerPacket() {
-   }
+    public CPlayerPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CPlayerPacket(boolean p_i46875_1_) {
-      this.onGround = p_i46875_1_;
-   }
+    public CPlayerPacket(boolean onGroundIn)
+    {
+        this.onGround = onGroundIn;
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleMovePlayer(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processPlayer(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.onGround = p_148837_1_.readUnsignedByte() != 0;
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.onGround = buf.readUnsignedByte() != 0;
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.onGround ? 1 : 0);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.onGround ? 1 : 0);
+    }
 
-   public double getX(double p_186997_1_) {
-      return this.hasPos ? this.x : p_186997_1_;
-   }
+    public double getX(double defaultValue)
+    {
+        return this.moving ? this.x : defaultValue;
+    }
 
-   public double getY(double p_186996_1_) {
-      return this.hasPos ? this.y : p_186996_1_;
-   }
+    public double getY(double defaultValue)
+    {
+        return this.moving ? this.y : defaultValue;
+    }
 
-   public double getZ(double p_187000_1_) {
-      return this.hasPos ? this.z : p_187000_1_;
-   }
+    public double getZ(double defaultValue)
+    {
+        return this.moving ? this.z : defaultValue;
+    }
 
-   public float getYRot(float p_186999_1_) {
-      return this.hasRot ? this.yRot : p_186999_1_;
-   }
+    public float getYaw(float defaultValue)
+    {
+        return this.rotating ? this.yaw : defaultValue;
+    }
 
-   public float getXRot(float p_186998_1_) {
-      return this.hasRot ? this.xRot : p_186998_1_;
-   }
+    public float getPitch(float defaultValue)
+    {
+        return this.rotating ? this.pitch : defaultValue;
+    }
 
-   public boolean isOnGround() {
-      return this.onGround;
-   }
+    public boolean isOnGround()
+    {
+        return this.onGround;
+    }
 
-   public static class PositionPacket extends CPlayerPacket {
-      public PositionPacket() {
-         this.hasPos = true;
-      }
+    public static class PositionPacket extends CPlayerPacket
+    {
+        public PositionPacket()
+        {
+            this.moving = true;
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public PositionPacket(double p_i46867_1_, double p_i46867_3_, double p_i46867_5_, boolean p_i46867_7_) {
-         this.x = p_i46867_1_;
-         this.y = p_i46867_3_;
-         this.z = p_i46867_5_;
-         this.onGround = p_i46867_7_;
-         this.hasPos = true;
-      }
+        public PositionPacket(double xIn, double yIn, double zIn, boolean onGroundIn)
+        {
+            this.x = xIn;
+            this.y = yIn;
+            this.z = zIn;
+            this.onGround = onGroundIn;
+            this.moving = true;
+        }
 
-      public void read(PacketBuffer p_148837_1_) throws IOException {
-         this.x = p_148837_1_.readDouble();
-         this.y = p_148837_1_.readDouble();
-         this.z = p_148837_1_.readDouble();
-         super.read(p_148837_1_);
-      }
+        public void readPacketData(PacketBuffer buf) throws IOException
+        {
+            this.x = buf.readDouble();
+            this.y = buf.readDouble();
+            this.z = buf.readDouble();
+            super.readPacketData(buf);
+        }
 
-      public void write(PacketBuffer p_148840_1_) throws IOException {
-         p_148840_1_.writeDouble(this.x);
-         p_148840_1_.writeDouble(this.y);
-         p_148840_1_.writeDouble(this.z);
-         super.write(p_148840_1_);
-      }
-   }
+        public void writePacketData(PacketBuffer buf) throws IOException
+        {
+            buf.writeDouble(this.x);
+            buf.writeDouble(this.y);
+            buf.writeDouble(this.z);
+            super.writePacketData(buf);
+        }
+    }
 
-   public static class PositionRotationPacket extends CPlayerPacket {
-      public PositionRotationPacket() {
-         this.hasPos = true;
-         this.hasRot = true;
-      }
+    public static class PositionRotationPacket extends CPlayerPacket
+    {
+        public PositionRotationPacket()
+        {
+            this.moving = true;
+            this.rotating = true;
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public PositionRotationPacket(double p_i46865_1_, double p_i46865_3_, double p_i46865_5_, float p_i46865_7_, float p_i46865_8_, boolean p_i46865_9_) {
-         this.x = p_i46865_1_;
-         this.y = p_i46865_3_;
-         this.z = p_i46865_5_;
-         this.yRot = p_i46865_7_;
-         this.xRot = p_i46865_8_;
-         this.onGround = p_i46865_9_;
-         this.hasRot = true;
-         this.hasPos = true;
-      }
+        public PositionRotationPacket(double xIn, double yIn, double zIn, float yawIn, float pitchIn, boolean onGroundIn)
+        {
+            this.x = xIn;
+            this.y = yIn;
+            this.z = zIn;
+            this.yaw = yawIn;
+            this.pitch = pitchIn;
+            this.onGround = onGroundIn;
+            this.rotating = true;
+            this.moving = true;
+        }
 
-      public void read(PacketBuffer p_148837_1_) throws IOException {
-         this.x = p_148837_1_.readDouble();
-         this.y = p_148837_1_.readDouble();
-         this.z = p_148837_1_.readDouble();
-         this.yRot = p_148837_1_.readFloat();
-         this.xRot = p_148837_1_.readFloat();
-         super.read(p_148837_1_);
-      }
+        public void readPacketData(PacketBuffer buf) throws IOException
+        {
+            this.x = buf.readDouble();
+            this.y = buf.readDouble();
+            this.z = buf.readDouble();
+            this.yaw = buf.readFloat();
+            this.pitch = buf.readFloat();
+            super.readPacketData(buf);
+        }
 
-      public void write(PacketBuffer p_148840_1_) throws IOException {
-         p_148840_1_.writeDouble(this.x);
-         p_148840_1_.writeDouble(this.y);
-         p_148840_1_.writeDouble(this.z);
-         p_148840_1_.writeFloat(this.yRot);
-         p_148840_1_.writeFloat(this.xRot);
-         super.write(p_148840_1_);
-      }
-   }
+        public void writePacketData(PacketBuffer buf) throws IOException
+        {
+            buf.writeDouble(this.x);
+            buf.writeDouble(this.y);
+            buf.writeDouble(this.z);
+            buf.writeFloat(this.yaw);
+            buf.writeFloat(this.pitch);
+            super.writePacketData(buf);
+        }
+    }
 
-   public static class RotationPacket extends CPlayerPacket {
-      public RotationPacket() {
-         this.hasRot = true;
-      }
+    public static class RotationPacket extends CPlayerPacket
+    {
+        public RotationPacket()
+        {
+            this.rotating = true;
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public RotationPacket(float p_i46863_1_, float p_i46863_2_, boolean p_i46863_3_) {
-         this.yRot = p_i46863_1_;
-         this.xRot = p_i46863_2_;
-         this.onGround = p_i46863_3_;
-         this.hasRot = true;
-      }
+        public RotationPacket(float yawIn, float pitchIn, boolean onGroundIn)
+        {
+            this.yaw = yawIn;
+            this.pitch = pitchIn;
+            this.onGround = onGroundIn;
+            this.rotating = true;
+        }
 
-      public void read(PacketBuffer p_148837_1_) throws IOException {
-         this.yRot = p_148837_1_.readFloat();
-         this.xRot = p_148837_1_.readFloat();
-         super.read(p_148837_1_);
-      }
+        public void readPacketData(PacketBuffer buf) throws IOException
+        {
+            this.yaw = buf.readFloat();
+            this.pitch = buf.readFloat();
+            super.readPacketData(buf);
+        }
 
-      public void write(PacketBuffer p_148840_1_) throws IOException {
-         p_148840_1_.writeFloat(this.yRot);
-         p_148840_1_.writeFloat(this.xRot);
-         super.write(p_148840_1_);
-      }
-   }
+        public void writePacketData(PacketBuffer buf) throws IOException
+        {
+            buf.writeFloat(this.yaw);
+            buf.writeFloat(this.pitch);
+            super.writePacketData(buf);
+        }
+    }
 }

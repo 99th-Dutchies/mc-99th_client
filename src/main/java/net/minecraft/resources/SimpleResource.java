@@ -11,109 +11,137 @@ import javax.annotation.Nullable;
 import net.minecraft.resources.data.IMetadataSectionSerializer;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.io.IOUtils;
 
-public class SimpleResource implements IResource {
-   private final String sourceName;
-   private final ResourceLocation location;
-   private final InputStream resourceStream;
-   private final InputStream metadataStream;
-   @OnlyIn(Dist.CLIENT)
-   private boolean triedMetadata;
-   @OnlyIn(Dist.CLIENT)
-   private JsonObject metadata;
+public class SimpleResource implements IResource
+{
+    private final String packName;
+    private final ResourceLocation location;
+    private final InputStream inputStream;
+    private final InputStream metadataInputStream;
+    private boolean wasMetadataRead;
+    private JsonObject metadataJson;
 
-   public SimpleResource(String p_i47904_1_, ResourceLocation p_i47904_2_, InputStream p_i47904_3_, @Nullable InputStream p_i47904_4_) {
-      this.sourceName = p_i47904_1_;
-      this.location = p_i47904_2_;
-      this.resourceStream = p_i47904_3_;
-      this.metadataStream = p_i47904_4_;
-   }
+    public SimpleResource(String packNameIn, ResourceLocation locationIn, InputStream inputStreamIn, @Nullable InputStream metadataInputStreamIn)
+    {
+        this.packName = packNameIn;
+        this.location = locationIn;
+        this.inputStream = inputStreamIn;
+        this.metadataInputStream = metadataInputStreamIn;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ResourceLocation getLocation() {
-      return this.location;
-   }
+    public ResourceLocation getLocation()
+    {
+        return this.location;
+    }
 
-   public InputStream getInputStream() {
-      return this.resourceStream;
-   }
+    public InputStream getInputStream()
+    {
+        return this.inputStream;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean hasMetadata() {
-      return this.metadataStream != null;
-   }
+    public boolean hasMetadata()
+    {
+        return this.metadataInputStream != null;
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public <T> T getMetadata(IMetadataSectionSerializer<T> p_199028_1_) {
-      if (!this.hasMetadata()) {
-         return (T)null;
-      } else {
-         if (this.metadata == null && !this.triedMetadata) {
-            this.triedMetadata = true;
-            BufferedReader bufferedreader = null;
-
-            try {
-               bufferedreader = new BufferedReader(new InputStreamReader(this.metadataStream, StandardCharsets.UTF_8));
-               this.metadata = JSONUtils.parse(bufferedreader);
-            } finally {
-               IOUtils.closeQuietly((Reader)bufferedreader);
-            }
-         }
-
-         if (this.metadata == null) {
+    @Nullable
+    public <T> T getMetadata(IMetadataSectionSerializer<T> serializer)
+    {
+        if (!this.hasMetadata())
+        {
             return (T)null;
-         } else {
-            String s = p_199028_1_.getMetadataSectionName();
-            return (T)(this.metadata.has(s) ? p_199028_1_.fromJson(JSONUtils.getAsJsonObject(this.metadata, s)) : null);
-         }
-      }
-   }
+        }
+        else
+        {
+            if (this.metadataJson == null && !this.wasMetadataRead)
+            {
+                this.wasMetadataRead = true;
+                BufferedReader bufferedreader = null;
 
-   public String getSourceName() {
-      return this.sourceName;
-   }
-
-   public boolean equals(Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else if (!(p_equals_1_ instanceof SimpleResource)) {
-         return false;
-      } else {
-         SimpleResource simpleresource = (SimpleResource)p_equals_1_;
-         if (this.location != null) {
-            if (!this.location.equals(simpleresource.location)) {
-               return false;
+                try
+                {
+                    bufferedreader = new BufferedReader(new InputStreamReader(this.metadataInputStream, StandardCharsets.UTF_8));
+                    this.metadataJson = JSONUtils.fromJson(bufferedreader);
+                }
+                finally
+                {
+                    IOUtils.closeQuietly((Reader)bufferedreader);
+                }
             }
-         } else if (simpleresource.location != null) {
-            return false;
-         }
 
-         if (this.sourceName != null) {
-            if (!this.sourceName.equals(simpleresource.sourceName)) {
-               return false;
+            if (this.metadataJson == null)
+            {
+                return (T)null;
             }
-         } else if (simpleresource.sourceName != null) {
+            else
+            {
+                String s = serializer.getSectionName();
+                return (T)(this.metadataJson.has(s) ? serializer.deserialize(JSONUtils.getJsonObject(this.metadataJson, s)) : null);
+            }
+        }
+    }
+
+    public String getPackName()
+    {
+        return this.packName;
+    }
+
+    public boolean equals(Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else if (!(p_equals_1_ instanceof SimpleResource))
+        {
             return false;
-         }
+        }
+        else
+        {
+            SimpleResource simpleresource = (SimpleResource)p_equals_1_;
 
-         return true;
-      }
-   }
+            if (this.location != null)
+            {
+                if (!this.location.equals(simpleresource.location))
+                {
+                    return false;
+                }
+            }
+            else if (simpleresource.location != null)
+            {
+                return false;
+            }
 
-   public int hashCode() {
-      int i = this.sourceName != null ? this.sourceName.hashCode() : 0;
-      return 31 * i + (this.location != null ? this.location.hashCode() : 0);
-   }
+            if (this.packName != null)
+            {
+                if (!this.packName.equals(simpleresource.packName))
+                {
+                    return false;
+                }
+            }
+            else if (simpleresource.packName != null)
+            {
+                return false;
+            }
 
-   public void close() throws IOException {
-      this.resourceStream.close();
-      if (this.metadataStream != null) {
-         this.metadataStream.close();
-      }
+            return true;
+        }
+    }
 
-   }
+    public int hashCode()
+    {
+        int i = this.packName != null ? this.packName.hashCode() : 0;
+        return 31 * i + (this.location != null ? this.location.hashCode() : 0);
+    }
+
+    public void close() throws IOException
+    {
+        this.inputStream.close();
+
+        if (this.metadataInputStream != null)
+        {
+            this.metadataInputStream.close();
+        }
+    }
 }

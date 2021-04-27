@@ -8,34 +8,40 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Vector3f;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity> {
-   private final net.minecraft.client.renderer.ItemRenderer itemRenderer;
+public class FireworkRocketRenderer extends EntityRenderer<FireworkRocketEntity>
+{
+    private final net.minecraft.client.renderer.ItemRenderer itemRenderer;
 
-   public FireworkRocketRenderer(EntityRendererManager p_i50970_1_, net.minecraft.client.renderer.ItemRenderer p_i50970_2_) {
-      super(p_i50970_1_);
-      this.itemRenderer = p_i50970_2_;
-   }
+    public FireworkRocketRenderer(EntityRendererManager renderManagerIn, net.minecraft.client.renderer.ItemRenderer itemRendererIn)
+    {
+        super(renderManagerIn);
+        this.itemRenderer = itemRendererIn;
+    }
 
-   public void render(FireworkRocketEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      p_225623_4_.pushPose();
-      p_225623_4_.mulPose(this.entityRenderDispatcher.cameraOrientation());
-      p_225623_4_.mulPose(Vector3f.YP.rotationDegrees(180.0F));
-      if (p_225623_1_.isShotAtAngle()) {
-         p_225623_4_.mulPose(Vector3f.ZP.rotationDegrees(180.0F));
-         p_225623_4_.mulPose(Vector3f.YP.rotationDegrees(180.0F));
-         p_225623_4_.mulPose(Vector3f.XP.rotationDegrees(90.0F));
-      }
+    public void render(FireworkRocketEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        matrixStackIn.push();
+        matrixStackIn.rotate(this.renderManager.getCameraOrientation());
+        matrixStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F));
 
-      this.itemRenderer.renderStatic(p_225623_1_.getItem(), ItemCameraTransforms.TransformType.GROUND, p_225623_6_, OverlayTexture.NO_OVERLAY, p_225623_4_, p_225623_5_);
-      p_225623_4_.popPose();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+        if (entityIn.func_213889_i())
+        {
+            matrixStackIn.rotate(Vector3f.ZP.rotationDegrees(180.0F));
+            matrixStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F));
+            matrixStackIn.rotate(Vector3f.XP.rotationDegrees(90.0F));
+        }
 
-   public ResourceLocation getTextureLocation(FireworkRocketEntity p_110775_1_) {
-      return AtlasTexture.LOCATION_BLOCKS;
-   }
+        this.itemRenderer.renderItem(entityIn.getItem(), ItemCameraTransforms.TransformType.GROUND, packedLightIn, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn);
+        matrixStackIn.pop();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
+
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(FireworkRocketEntity entity)
+    {
+        return AtlasTexture.LOCATION_BLOCKS_TEXTURE;
+    }
 }

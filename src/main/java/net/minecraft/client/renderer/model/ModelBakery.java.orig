@@ -1,0 +1,699 @@
+package net.minecraft.client.renderer.model;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import java.io.Closeable;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.client.renderer.Atlases;
+import net.minecraft.client.renderer.BlockModelShapes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.renderer.model.multipart.Multipart;
+import net.minecraft.client.renderer.model.multipart.Selector;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.MissingTextureSprite;
+import net.minecraft.client.renderer.texture.SpriteMap;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.tileentity.BellTileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.ConduitTileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.EnchantmentTableTileEntityRenderer;
+import net.minecraft.inventory.container.PlayerContainer;
+import net.minecraft.profiler.IProfiler;
+import net.minecraft.resources.IResource;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.Property;
+import net.minecraft.state.StateContainer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
+import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.util.registry.Registry;
+import net.optifine.reflect.Reflector;
+import net.optifine.util.StrUtils;
+import net.optifine.util.TextureUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Triple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class ModelBakery {
+   public static final RenderMaterial field_207763_a = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("block/fire_0"));
+   public static final RenderMaterial field_207764_b = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("block/fire_1"));
+   public static final RenderMaterial field_207766_d = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("block/lava_flow"));
+   public static final RenderMaterial field_207768_f = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("block/water_flow"));
+   public static final RenderMaterial field_207769_g = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("block/water_overlay"));
+   public static final RenderMaterial field_229315_f_ = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("entity/banner_base"));
+   public static final RenderMaterial field_229316_g_ = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("entity/shield_base"));
+   public static final RenderMaterial field_229317_h_ = new RenderMaterial(AtlasTexture.field_110575_b, new ResourceLocation("entity/shield_base_nopattern"));
+   public static final List<ResourceLocation> field_229318_i_ = IntStream.range(0, 10).mapToObj((p_lambda$static$0_0_) -> {
+      return new ResourceLocation("block/destroy_stage_" + p_lambda$static$0_0_);
+   }).collect(Collectors.toList());
+   public static final List<ResourceLocation> field_229319_j_ = field_229318_i_.stream().map((p_lambda$static$1_0_) -> {
+      return new ResourceLocation("textures/" + p_lambda$static$1_0_.func_110623_a() + ".png");
+   }).collect(Collectors.toList());
+   public static final List<RenderType> field_229320_k_ = field_229319_j_.stream().map(RenderType::func_228656_k_).collect(Collectors.toList());
+   private static final Set<RenderMaterial> field_177602_b = Util.func_200696_a(Sets.newHashSet(), (p_lambda$static$2_0_) -> {
+      p_lambda$static$2_0_.add(field_207768_f);
+      p_lambda$static$2_0_.add(field_207766_d);
+      p_lambda$static$2_0_.add(field_207769_g);
+      p_lambda$static$2_0_.add(field_207763_a);
+      p_lambda$static$2_0_.add(field_207764_b);
+      p_lambda$static$2_0_.add(BellTileEntityRenderer.field_217653_c);
+      p_lambda$static$2_0_.add(ConduitTileEntityRenderer.field_205118_a);
+      p_lambda$static$2_0_.add(ConduitTileEntityRenderer.field_205119_d);
+      p_lambda$static$2_0_.add(ConduitTileEntityRenderer.field_205120_e);
+      p_lambda$static$2_0_.add(ConduitTileEntityRenderer.field_205121_f);
+      p_lambda$static$2_0_.add(ConduitTileEntityRenderer.field_207746_g);
+      p_lambda$static$2_0_.add(ConduitTileEntityRenderer.field_207747_h);
+      p_lambda$static$2_0_.add(EnchantmentTableTileEntityRenderer.field_147540_b);
+      p_lambda$static$2_0_.add(field_229315_f_);
+      p_lambda$static$2_0_.add(field_229316_g_);
+      p_lambda$static$2_0_.add(field_229317_h_);
+
+      for(ResourceLocation resourcelocation : field_229318_i_) {
+         p_lambda$static$2_0_.add(new RenderMaterial(AtlasTexture.field_110575_b, resourcelocation));
+      }
+
+      p_lambda$static$2_0_.add(new RenderMaterial(AtlasTexture.field_110575_b, PlayerContainer.field_226616_d_));
+      p_lambda$static$2_0_.add(new RenderMaterial(AtlasTexture.field_110575_b, PlayerContainer.field_226617_e_));
+      p_lambda$static$2_0_.add(new RenderMaterial(AtlasTexture.field_110575_b, PlayerContainer.field_226618_f_));
+      p_lambda$static$2_0_.add(new RenderMaterial(AtlasTexture.field_110575_b, PlayerContainer.field_226619_g_));
+      p_lambda$static$2_0_.add(new RenderMaterial(AtlasTexture.field_110575_b, PlayerContainer.field_226620_h_));
+      Atlases.func_228775_a_(p_lambda$static$2_0_::add);
+   });
+   private static final Logger field_177603_c = LogManager.getLogger();
+   public static final ModelResourceLocation field_177604_a = new ModelResourceLocation("builtin/missing", "missing");
+   private static final String field_229321_r_ = field_177604_a.toString();
+   @VisibleForTesting
+   public static final String field_188641_d = ("{    'textures': {       'particle': '" + MissingTextureSprite.func_195675_b().func_110623_a() + "',       'missingno': '" + MissingTextureSprite.func_195675_b().func_110623_a() + "'    },    'elements': [         {  'from': [ 0, 0, 0 ],            'to': [ 16, 16, 16 ],            'faces': {                'down':  { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'down',  'texture': '#missingno' },                'up':    { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'up',    'texture': '#missingno' },                'north': { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'north', 'texture': '#missingno' },                'south': { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'south', 'texture': '#missingno' },                'west':  { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'west',  'texture': '#missingno' },                'east':  { 'uv': [ 0, 0, 16, 16 ], 'cullface': 'east',  'texture': '#missingno' }            }        }    ]}").replace('\'', '"');
+   private static final Map<String, String> field_177600_d = Maps.newHashMap(ImmutableMap.of("missing", field_188641_d));
+   private static final Splitter field_209611_w = Splitter.on(',');
+   private static final Splitter field_209612_x = Splitter.on('=').limit(2);
+   public static final BlockModel field_177606_o = Util.func_200696_a(BlockModel.func_178294_a("{\"gui_light\": \"front\"}"), (p_lambda$static$3_0_) -> {
+      p_lambda$static$3_0_.field_178317_b = "generation marker";
+   });
+   public static final BlockModel field_177616_r = Util.func_200696_a(BlockModel.func_178294_a("{\"gui_light\": \"side\"}"), (p_lambda$static$4_0_) -> {
+      p_lambda$static$4_0_.field_178317_b = "block entity marker";
+   });
+   private static final StateContainer<Block, BlockState> field_209613_y = (new StateContainer.Builder<Block, BlockState>(Blocks.field_150350_a)).func_206894_a(BooleanProperty.func_177716_a("map")).func_235882_a_(Block::func_176223_P, BlockState::new);
+   private static final ItemModelGenerator field_217854_z = new ItemModelGenerator();
+   private static final Map<ResourceLocation, StateContainer<Block, BlockState>> field_209607_C = ImmutableMap.of(new ResourceLocation("item_frame"), field_209613_y);
+   private final IResourceManager field_177598_f;
+   @Nullable
+   private SpriteMap field_229322_z_;
+   private final BlockColors field_225365_D;
+   private final Set<ResourceLocation> field_217848_D = Sets.newHashSet();
+   private final BlockModelDefinition.ContainerHolder field_209610_F = new BlockModelDefinition.ContainerHolder();
+   private final Map<ResourceLocation, IUnbakedModel> field_217849_F = Maps.newHashMap();
+   private final Map<Triple<ResourceLocation, TransformationMatrix, Boolean>, IBakedModel> field_217850_G = Maps.newHashMap();
+   private final Map<ResourceLocation, IUnbakedModel> field_217851_H = Maps.newHashMap();
+   private final Map<ResourceLocation, IBakedModel> field_217852_I = Maps.newHashMap();
+   private Map<ResourceLocation, Pair<AtlasTexture, AtlasTexture.SheetData>> field_217853_J;
+   private int field_225366_L = 1;
+   private final Object2IntMap<BlockState> field_225367_M = Util.func_200696_a(new Object2IntOpenHashMap<>(), (p_lambda$new$5_0_) -> {
+      p_lambda$new$5_0_.defaultReturnValue(-1);
+   });
+   public Map<ResourceLocation, IUnbakedModel> mapUnbakedModels;
+
+   public ModelBakery(IResourceManager p_i226056_1_, BlockColors p_i226056_2_, IProfiler p_i226056_3_, int p_i226056_4_) {
+      this(p_i226056_1_, p_i226056_2_, true);
+      this.processLoading(p_i226056_3_, p_i226056_4_);
+   }
+
+   protected ModelBakery(IResourceManager p_i242117_1_, BlockColors p_i242117_2_, boolean p_i242117_3_) {
+      this.field_177598_f = p_i242117_1_;
+      this.field_225365_D = p_i242117_2_;
+   }
+
+   protected void processLoading(IProfiler p_processLoading_1_, int p_processLoading_2_) {
+      Reflector.ModelLoaderRegistry_onModelLoadingStart.callVoid();
+      p_processLoading_1_.func_76320_a("missing_model");
+
+      try {
+         this.field_217849_F.put(field_177604_a, this.func_177594_c(field_177604_a));
+         this.func_217843_a(field_177604_a);
+      } catch (IOException ioexception) {
+         field_177603_c.error("Error loading missing model, should never happen :(", (Throwable)ioexception);
+         throw new RuntimeException(ioexception);
+      }
+
+      p_processLoading_1_.func_219895_b("static_definitions");
+      field_209607_C.forEach((p_lambda$processLoading$7_1_, p_lambda$processLoading$7_2_) -> {
+         p_lambda$processLoading$7_2_.func_177619_a().forEach((p_lambda$null$6_2_) -> {
+            this.func_217843_a(BlockModelShapes.func_209553_a(p_lambda$processLoading$7_1_, p_lambda$null$6_2_));
+         });
+      });
+      p_processLoading_1_.func_219895_b("blocks");
+
+      for(Block block : Registry.field_212618_g) {
+         block.func_176194_O().func_177619_a().forEach((p_lambda$processLoading$8_1_) -> {
+            this.func_217843_a(BlockModelShapes.func_209554_c(p_lambda$processLoading$8_1_));
+         });
+      }
+
+      p_processLoading_1_.func_219895_b("items");
+
+      for(ResourceLocation resourcelocation : Registry.field_212630_s.func_148742_b()) {
+         this.func_217843_a(new ModelResourceLocation(resourcelocation, "inventory"));
+      }
+
+      p_processLoading_1_.func_219895_b("special");
+      this.func_217843_a(new ModelResourceLocation("minecraft:trident_in_hand#inventory"));
+
+      for(ResourceLocation resourcelocation1 : this.getSpecialModels()) {
+         this.addModelToCache(resourcelocation1);
+      }
+
+      p_processLoading_1_.func_219895_b("textures");
+      this.mapUnbakedModels = this.field_217849_F;
+      TextureUtils.registerCustomModels(this);
+      Set<Pair<String, String>> set = Sets.newLinkedHashSet();
+      Set<RenderMaterial> set1 = this.field_217851_H.values().stream().flatMap((p_lambda$processLoading$9_2_) -> {
+         return p_lambda$processLoading$9_2_.func_225614_a_(this::func_209597_a, set).stream();
+      }).collect(Collectors.toSet());
+      set1.addAll(field_177602_b);
+      Reflector.call(Reflector.ForgeHooksClient_gatherFluidTextures, set1);
+      set.stream().filter((p_lambda$processLoading$10_0_) -> {
+         return !p_lambda$processLoading$10_0_.getSecond().equals(field_229321_r_);
+      }).forEach((p_lambda$processLoading$11_0_) -> {
+         field_177603_c.warn("Unable to resolve texture reference: {} in {}", p_lambda$processLoading$11_0_.getFirst(), p_lambda$processLoading$11_0_.getSecond());
+      });
+      Map<ResourceLocation, List<RenderMaterial>> map = set1.stream().collect(Collectors.groupingBy(RenderMaterial::func_229310_a_));
+      p_processLoading_1_.func_219895_b("stitching");
+      this.field_217853_J = Maps.newHashMap();
+
+      for(Entry<ResourceLocation, List<RenderMaterial>> entry : map.entrySet()) {
+         AtlasTexture atlastexture = new AtlasTexture(entry.getKey());
+         AtlasTexture.SheetData atlastexture$sheetdata = atlastexture.func_229220_a_(this.field_177598_f, entry.getValue().stream().map(RenderMaterial::func_229313_b_), p_processLoading_1_, p_processLoading_2_);
+         this.field_217853_J.put(entry.getKey(), Pair.of(atlastexture, atlastexture$sheetdata));
+      }
+
+      p_processLoading_1_.func_76319_b();
+   }
+
+   public SpriteMap func_229333_a_(TextureManager p_229333_1_, IProfiler p_229333_2_) {
+      p_229333_2_.func_76320_a("atlas");
+
+      for(Pair<AtlasTexture, AtlasTexture.SheetData> pair : this.field_217853_J.values()) {
+         AtlasTexture atlastexture = pair.getFirst();
+         AtlasTexture.SheetData atlastexture$sheetdata = pair.getSecond();
+         atlastexture.func_215260_a(atlastexture$sheetdata);
+         p_229333_1_.func_229263_a_(atlastexture.func_229223_g_(), atlastexture);
+         p_229333_1_.func_110577_a(atlastexture.func_229223_g_());
+         atlastexture.func_229221_b_(atlastexture$sheetdata);
+      }
+
+      this.field_229322_z_ = new SpriteMap(this.field_217853_J.values().stream().map(Pair::getFirst).collect(Collectors.toList()));
+      p_229333_2_.func_219895_b("baking");
+      this.field_217851_H.keySet().forEach((p_lambda$uploadTextures$12_1_) -> {
+         IBakedModel ibakedmodel = null;
+
+         try {
+            ibakedmodel = this.func_217845_a(p_lambda$uploadTextures$12_1_, ModelRotation.X0_Y0);
+         } catch (Exception exception) {
+            field_177603_c.warn("Unable to bake model: '{}': {}", p_lambda$uploadTextures$12_1_, exception);
+         }
+
+         if (ibakedmodel != null) {
+            this.field_217852_I.put(p_lambda$uploadTextures$12_1_, ibakedmodel);
+         }
+
+      });
+      p_229333_2_.func_76319_b();
+      return this.field_229322_z_;
+   }
+
+   private static Predicate<BlockState> func_209605_a(StateContainer<Block, BlockState> p_209605_0_, String p_209605_1_) {
+      Map<Property<?>, Comparable<?>> map = Maps.newHashMap();
+
+      for(String s : field_209611_w.split(p_209605_1_)) {
+         Iterator<String> iterator = field_209612_x.split(s).iterator();
+         if (iterator.hasNext()) {
+            String s1 = iterator.next();
+            Property<?> property = p_209605_0_.func_185920_a(s1);
+            if (property != null && iterator.hasNext()) {
+               String s2 = iterator.next();
+               Comparable<?> comparable = func_209592_a(property, s2);
+               if (comparable == null) {
+                  throw new RuntimeException("Unknown value: '" + s2 + "' for blockstate property: '" + s1 + "' " + property.func_177700_c());
+               }
+
+               map.put(property, comparable);
+            } else if (!s1.isEmpty()) {
+               throw new RuntimeException("Unknown blockstate property: '" + s1 + "'");
+            }
+         }
+      }
+
+      Block block = p_209605_0_.func_177622_c();
+      return (p_lambda$parseVariantKey$13_2_) -> {
+         if (p_lambda$parseVariantKey$13_2_ != null && block == p_lambda$parseVariantKey$13_2_.func_177230_c()) {
+            for(Entry<Property<?>, Comparable<?>> entry : map.entrySet()) {
+               if (!Objects.equals(p_lambda$parseVariantKey$13_2_.func_177229_b(entry.getKey()), entry.getValue())) {
+                  return false;
+               }
+            }
+
+            return true;
+         } else {
+            return false;
+         }
+      };
+   }
+
+   @Nullable
+   static <T extends Comparable<T>> T func_209592_a(Property<T> p_209592_0_, String p_209592_1_) {
+      return p_209592_0_.func_185929_b(p_209592_1_).orElse((T)(null));
+   }
+
+   public IUnbakedModel func_209597_a(ResourceLocation p_209597_1_) {
+      if (this.field_217849_F.containsKey(p_209597_1_)) {
+         return this.field_217849_F.get(p_209597_1_);
+      } else if (this.field_217848_D.contains(p_209597_1_)) {
+         throw new IllegalStateException("Circular reference while loading " + p_209597_1_);
+      } else {
+         this.field_217848_D.add(p_209597_1_);
+         IUnbakedModel iunbakedmodel = this.field_217849_F.get(field_177604_a);
+
+         while(!this.field_217848_D.isEmpty()) {
+            ResourceLocation resourcelocation = this.field_217848_D.iterator().next();
+
+            try {
+               if (!this.field_217849_F.containsKey(resourcelocation)) {
+                  this.func_209598_b(resourcelocation);
+               }
+            } catch (ModelBakery.BlockStateDefinitionException modelbakery$blockstatedefinitionexception) {
+               field_177603_c.warn(modelbakery$blockstatedefinitionexception.getMessage());
+               this.field_217849_F.put(resourcelocation, iunbakedmodel);
+            } catch (Exception exception) {
+               field_177603_c.warn("Unable to load model: '{}' referenced from: {}: {}", resourcelocation, p_209597_1_);
+               field_177603_c.warn(exception.getClass().getName() + ": " + exception.getMessage());
+               this.field_217849_F.put(resourcelocation, iunbakedmodel);
+            } finally {
+               this.field_217848_D.remove(resourcelocation);
+            }
+         }
+
+         return this.field_217849_F.getOrDefault(p_209597_1_, iunbakedmodel);
+      }
+   }
+
+   private void func_209598_b(ResourceLocation p_209598_1_) throws Exception {
+      if (!(p_209598_1_ instanceof ModelResourceLocation)) {
+         this.func_209593_a(p_209598_1_, this.func_177594_c(p_209598_1_));
+      } else {
+         ModelResourceLocation modelresourcelocation = (ModelResourceLocation)p_209598_1_;
+         if (Objects.equals(modelresourcelocation.func_177518_c(), "inventory")) {
+            ResourceLocation resourcelocation2 = new ResourceLocation(p_209598_1_.func_110624_b(), "item/" + p_209598_1_.func_110623_a());
+            String s = p_209598_1_.func_110623_a();
+            if (s.startsWith("optifine/") || s.startsWith("item/")) {
+               resourcelocation2 = p_209598_1_;
+            }
+
+            BlockModel blockmodel = this.func_177594_c(resourcelocation2);
+            this.func_209593_a(modelresourcelocation, blockmodel);
+            this.field_217849_F.put(resourcelocation2, blockmodel);
+         } else {
+            ResourceLocation resourcelocation = new ResourceLocation(p_209598_1_.func_110624_b(), p_209598_1_.func_110623_a());
+            StateContainer<Block, BlockState> statecontainer = Optional.ofNullable(field_209607_C.get(resourcelocation)).orElseGet(() -> {
+               return Registry.field_212618_g.func_82594_a(resourcelocation).func_176194_O();
+            });
+            this.field_209610_F.func_209573_a(statecontainer);
+            List<Property<?>> list = ImmutableList.copyOf(this.field_225365_D.func_225310_a(statecontainer.func_177622_c()));
+            ImmutableList<BlockState> immutablelist = statecontainer.func_177619_a();
+            Map<ModelResourceLocation, BlockState> map = Maps.newHashMap();
+            immutablelist.forEach((p_lambda$loadBlockstate$15_2_) -> {
+               BlockState blockstate = map.put(BlockModelShapes.func_209553_a(resourcelocation, p_lambda$loadBlockstate$15_2_), p_lambda$loadBlockstate$15_2_);
+            });
+            Map<BlockState, Pair<IUnbakedModel, Supplier<ModelBakery.ModelListWrapper>>> map1 = Maps.newHashMap();
+            ResourceLocation resourcelocation1 = new ResourceLocation(p_209598_1_.func_110624_b(), "blockstates/" + p_209598_1_.func_110623_a() + ".json");
+            IUnbakedModel iunbakedmodel = this.field_217849_F.get(field_177604_a);
+            ModelBakery.ModelListWrapper modelbakery$modellistwrapper = new ModelBakery.ModelListWrapper(ImmutableList.of(iunbakedmodel), ImmutableList.of());
+            Pair<IUnbakedModel, Supplier<ModelBakery.ModelListWrapper>> pair = Pair.of(iunbakedmodel, () -> {
+               return modelbakery$modellistwrapper;
+            });
+
+            try {
+               List<Pair<String, BlockModelDefinition>> list1;
+               try {
+                  list1 = this.field_177598_f.func_199004_b(resourcelocation1).stream().map((p_lambda$loadBlockstate$17_1_) -> {
+                     try (InputStream inputstream = p_lambda$loadBlockstate$17_1_.func_199027_b()) {
+                        return Pair.of(p_lambda$loadBlockstate$17_1_.func_199026_d(), BlockModelDefinition.func_209577_a(this.field_209610_F, new InputStreamReader(inputstream, StandardCharsets.UTF_8)));
+                     } catch (Exception exception11) {
+                        throw new ModelBakery.BlockStateDefinitionException(String.format("Exception loading blockstate definition: '%s' in resourcepack: '%s': %s", p_lambda$loadBlockstate$17_1_.func_199029_a(), p_lambda$loadBlockstate$17_1_.func_199026_d(), exception11.getMessage()));
+                     }
+                  }).collect(Collectors.toList());
+               } catch (IOException ioexception) {
+                  field_177603_c.warn("Exception loading blockstate definition: {}: {}", resourcelocation1, ioexception);
+                  return;
+               }
+
+               for(Pair<String, BlockModelDefinition> pair1 : list1) {
+                  BlockModelDefinition blockmodeldefinition = pair1.getSecond();
+                  Map<BlockState, Pair<IUnbakedModel, Supplier<ModelBakery.ModelListWrapper>>> map2 = Maps.newIdentityHashMap();
+                  Multipart multipart;
+                  if (blockmodeldefinition.func_188002_b()) {
+                     multipart = blockmodeldefinition.func_188001_c();
+                     immutablelist.forEach((p_lambda$loadBlockstate$19_3_) -> {
+                        Pair pair2 = map2.put(p_lambda$loadBlockstate$19_3_, Pair.of(multipart, () -> {
+                           return ModelBakery.ModelListWrapper.func_225335_a(p_lambda$loadBlockstate$19_3_, multipart, list);
+                        }));
+                     });
+                  } else {
+                     multipart = null;
+                  }
+
+                  blockmodeldefinition.func_209578_a().forEach((p_lambda$loadBlockstate$23_9_, p_lambda$loadBlockstate$23_10_) -> {
+                     try {
+                        immutablelist.stream().filter(func_209605_a(statecontainer, p_lambda$loadBlockstate$23_9_)).forEach((p_lambda$null$22_6_) -> {
+                           Pair<IUnbakedModel, Supplier<ModelBakery.ModelListWrapper>> pair2 = map2.put(p_lambda$null$22_6_, Pair.of(p_lambda$loadBlockstate$23_10_, () -> {
+                              return ModelBakery.ModelListWrapper.func_225336_a(p_lambda$null$22_6_, p_lambda$loadBlockstate$23_10_, list);
+                           }));
+                           if (pair2 != null && pair2.getFirst() != multipart) {
+                              map2.put(p_lambda$null$22_6_, pair);
+                              throw new RuntimeException("Overlapping definition with: " + (String)blockmodeldefinition.func_209578_a().entrySet().stream().filter((p_lambda$null$21_1_) -> {
+                                 return p_lambda$null$21_1_.getValue() == pair2.getFirst();
+                              }).findFirst().get().getKey());
+                           }
+                        });
+                     } catch (Exception exception1) {
+                        field_177603_c.warn("Exception loading blockstate definition: '{}' in resourcepack: '{}' for variant: '{}': {}", resourcelocation1, pair1.getFirst(), p_lambda$loadBlockstate$23_9_, exception1.getMessage());
+                     }
+
+                  });
+                  map1.putAll(map2);
+               }
+
+               return;
+            } catch (ModelBakery.BlockStateDefinitionException modelbakery$blockstatedefinitionexception) {
+               throw modelbakery$blockstatedefinitionexception;
+            } catch (Exception exception1) {
+               throw new ModelBakery.BlockStateDefinitionException(String.format("Exception loading blockstate definition: '%s': %s", resourcelocation1, exception1));
+            } finally {
+               HashMap lvt_20_1_ = Maps.newHashMap();
+               map.forEach((p_lambda$loadBlockstate$25_5_, p_lambda$loadBlockstate$25_6_) -> {
+                  Pair<IUnbakedModel, Supplier<ModelBakery.ModelListWrapper>> pair2 = map1.get(p_lambda$loadBlockstate$25_6_);
+                  if (pair2 == null) {
+                     field_177603_c.warn("Exception loading blockstate definition: '{}' missing model for variant: '{}'", resourcelocation1, p_lambda$loadBlockstate$25_5_);
+                     pair2 = pair;
+                  }
+
+                  this.func_209593_a(p_lambda$loadBlockstate$25_5_, pair2.getFirst());
+
+                  try {
+                     ModelBakery.ModelListWrapper modelbakery$modellistwrapper1 = pair2.getSecond().get();
+                     lvt_20_1_.computeIfAbsent(modelbakery$modellistwrapper1, (p_lambda$null$24_0_) -> {
+                        return Sets.newIdentityHashSet();
+                     }).add(p_lambda$loadBlockstate$25_6_);
+                  } catch (Exception exception11) {
+                     field_177603_c.warn("Exception evaluating model definition: '{}'", p_lambda$loadBlockstate$25_5_, exception11);
+                  }
+
+               });
+               lvt_20_1_.forEach((p_lambda$loadBlockstate$26_1_, p_lambda$loadBlockstate$26_2_) -> {
+                  Iterator<BlockState> iterator = p_lambda$loadBlockstate$26_2_.iterator();
+
+                  while(iterator.hasNext()) {
+                     BlockState blockstate = iterator.next();
+                     if (blockstate.func_185901_i() != BlockRenderType.MODEL) {
+                        iterator.remove();
+                        this.field_225367_M.put(blockstate, 0);
+                     }
+                  }
+
+                  if (p_lambda$loadBlockstate$26_2_.size() > 1) {
+                     this.func_225352_a(p_lambda$loadBlockstate$26_2_);
+                  }
+
+               });
+            }
+         }
+      }
+
+   }
+
+   private void func_209593_a(ResourceLocation p_209593_1_, IUnbakedModel p_209593_2_) {
+      this.field_217849_F.put(p_209593_1_, p_209593_2_);
+      this.field_217848_D.addAll(p_209593_2_.func_187965_e());
+   }
+
+   private void addModelToCache(ResourceLocation p_addModelToCache_1_) {
+      IUnbakedModel iunbakedmodel = this.func_209597_a(p_addModelToCache_1_);
+      this.field_217849_F.put(p_addModelToCache_1_, iunbakedmodel);
+      this.field_217851_H.put(p_addModelToCache_1_, iunbakedmodel);
+   }
+
+   public void func_217843_a(ModelResourceLocation p_217843_1_) {
+      IUnbakedModel iunbakedmodel = this.func_209597_a(p_217843_1_);
+      this.field_217849_F.put(p_217843_1_, iunbakedmodel);
+      this.field_217851_H.put(p_217843_1_, iunbakedmodel);
+   }
+
+   private void func_225352_a(Iterable<BlockState> p_225352_1_) {
+      int i = this.field_225366_L++;
+      p_225352_1_.forEach((p_lambda$registerModelIds$27_2_) -> {
+         this.field_225367_M.put(p_lambda$registerModelIds$27_2_, i);
+      });
+   }
+
+   @Nullable
+   public IBakedModel func_217845_a(ResourceLocation p_217845_1_, IModelTransform p_217845_2_) {
+      return this.getBakedModel(p_217845_1_, p_217845_2_, this.field_229322_z_::func_229151_a_);
+   }
+
+   public IBakedModel getBakedModel(ResourceLocation p_getBakedModel_1_, IModelTransform p_getBakedModel_2_, Function<RenderMaterial, TextureAtlasSprite> p_getBakedModel_3_) {
+      Triple<ResourceLocation, TransformationMatrix, Boolean> triple = Triple.of(p_getBakedModel_1_, p_getBakedModel_2_.func_225615_b_(), p_getBakedModel_2_.func_188049_c());
+      if (this.field_217850_G.containsKey(triple)) {
+         return this.field_217850_G.get(triple);
+      } else if (this.field_229322_z_ == null) {
+         throw new IllegalStateException("bake called too early");
+      } else {
+         IUnbakedModel iunbakedmodel = this.func_209597_a(p_getBakedModel_1_);
+         if (iunbakedmodel instanceof BlockModel) {
+            BlockModel blockmodel = (BlockModel)iunbakedmodel;
+            if (blockmodel.func_178310_f() == field_177606_o) {
+               if (Reflector.ForgeHooksClient.exists()) {
+                  return field_217854_z.func_209579_a(p_getBakedModel_3_, blockmodel).func_228813_a_(this, blockmodel, p_getBakedModel_3_, p_getBakedModel_2_, p_getBakedModel_1_, false);
+               }
+
+               return field_217854_z.func_209579_a(this.field_229322_z_::func_229151_a_, blockmodel).func_228813_a_(this, blockmodel, this.field_229322_z_::func_229151_a_, p_getBakedModel_2_, p_getBakedModel_1_, false);
+            }
+         }
+
+         IBakedModel ibakedmodel = iunbakedmodel.func_225613_a_(this, this.field_229322_z_::func_229151_a_, p_getBakedModel_2_, p_getBakedModel_1_);
+         if (Reflector.ForgeHooksClient.exists()) {
+            ibakedmodel = iunbakedmodel.func_225613_a_(this, p_getBakedModel_3_, p_getBakedModel_2_, p_getBakedModel_1_);
+         }
+
+         this.field_217850_G.put(triple, ibakedmodel);
+         return ibakedmodel;
+      }
+   }
+
+   private BlockModel func_177594_c(ResourceLocation p_177594_1_) throws IOException {
+      Reader reader = null;
+      IResource iresource = null;
+
+      BlockModel basePath;
+      try {
+         String s = p_177594_1_.func_110623_a();
+         ResourceLocation resourcelocation = p_177594_1_;
+         if ("builtin/generated".equals(s)) {
+            return field_177606_o;
+         }
+
+         if (!"builtin/entity".equals(s)) {
+            if (s.startsWith("builtin/")) {
+               String s2 = s.substring("builtin/".length());
+               String s1 = field_177600_d.get(s2);
+               if (s1 == null) {
+                  throw new FileNotFoundException(p_177594_1_.toString());
+               }
+
+               reader = new StringReader(s1);
+            } else {
+               resourcelocation = this.getModelLocation(p_177594_1_);
+               iresource = this.field_177598_f.func_199002_a(resourcelocation);
+               reader = new InputStreamReader(iresource.func_199027_b(), StandardCharsets.UTF_8);
+            }
+
+            BlockModel blockmodel = BlockModel.func_178307_a(reader);
+            blockmodel.field_178317_b = p_177594_1_.toString();
+            String s3 = TextureUtils.getBasePath(resourcelocation.func_110623_a());
+            fixModelLocations(blockmodel, s3);
+            return blockmodel;
+         }
+
+         basePath = field_177616_r;
+      } finally {
+         IOUtils.closeQuietly(reader);
+         IOUtils.closeQuietly((Closeable)iresource);
+      }
+
+      return basePath;
+   }
+
+   public Map<ResourceLocation, IBakedModel> func_217846_a() {
+      return this.field_217852_I;
+   }
+
+   public Object2IntMap<BlockState> func_225354_b() {
+      return this.field_225367_M;
+   }
+
+   private ResourceLocation getModelLocation(ResourceLocation p_getModelLocation_1_) {
+      String s = p_getModelLocation_1_.func_110623_a();
+      if (s.startsWith("optifine/")) {
+         if (!s.endsWith(".json")) {
+            p_getModelLocation_1_ = new ResourceLocation(p_getModelLocation_1_.func_110624_b(), s + ".json");
+         }
+
+         return p_getModelLocation_1_;
+      } else {
+         return new ResourceLocation(p_getModelLocation_1_.func_110624_b(), "models/" + p_getModelLocation_1_.func_110623_a() + ".json");
+      }
+   }
+
+   public static void fixModelLocations(BlockModel p_fixModelLocations_0_, String p_fixModelLocations_1_) {
+      ResourceLocation resourcelocation = fixModelLocation(p_fixModelLocations_0_.field_178316_e, p_fixModelLocations_1_);
+      if (resourcelocation != p_fixModelLocations_0_.field_178316_e) {
+         p_fixModelLocations_0_.field_178316_e = resourcelocation;
+      }
+
+      if (p_fixModelLocations_0_.field_178318_c != null) {
+         for(Entry<String, Either<RenderMaterial, String>> entry : p_fixModelLocations_0_.field_178318_c.entrySet()) {
+            Either<RenderMaterial, String> either = entry.getValue();
+            Optional<RenderMaterial> optional = either.left();
+            if (optional.isPresent()) {
+               RenderMaterial rendermaterial = optional.get();
+               ResourceLocation resourcelocation1 = rendermaterial.func_229313_b_();
+               String s = resourcelocation1.func_110623_a();
+               String s1 = fixResourcePath(s, p_fixModelLocations_1_);
+               if (!s1.equals(s)) {
+                  ResourceLocation resourcelocation2 = new ResourceLocation(resourcelocation1.func_110624_b(), s1);
+                  RenderMaterial rendermaterial1 = new RenderMaterial(rendermaterial.func_229310_a_(), resourcelocation2);
+                  Either<RenderMaterial, String> either1 = Either.left(rendermaterial1);
+                  entry.setValue(either1);
+               }
+            }
+         }
+      }
+
+   }
+
+   public static ResourceLocation fixModelLocation(ResourceLocation p_fixModelLocation_0_, String p_fixModelLocation_1_) {
+      if (p_fixModelLocation_0_ != null && p_fixModelLocation_1_ != null) {
+         if (!p_fixModelLocation_0_.func_110624_b().equals("minecraft")) {
+            return p_fixModelLocation_0_;
+         } else {
+            String s = p_fixModelLocation_0_.func_110623_a();
+            String s1 = fixResourcePath(s, p_fixModelLocation_1_);
+            if (s1 != s) {
+               p_fixModelLocation_0_ = new ResourceLocation(p_fixModelLocation_0_.func_110624_b(), s1);
+            }
+
+            return p_fixModelLocation_0_;
+         }
+      } else {
+         return p_fixModelLocation_0_;
+      }
+   }
+
+   private static String fixResourcePath(String p_fixResourcePath_0_, String p_fixResourcePath_1_) {
+      p_fixResourcePath_0_ = TextureUtils.fixResourcePath(p_fixResourcePath_0_, p_fixResourcePath_1_);
+      p_fixResourcePath_0_ = StrUtils.removeSuffix(p_fixResourcePath_0_, ".json");
+      return StrUtils.removeSuffix(p_fixResourcePath_0_, ".png");
+   }
+
+   public Set<ResourceLocation> getSpecialModels() {
+      return Collections.emptySet();
+   }
+
+   public SpriteMap getSpriteMap() {
+      return this.field_229322_z_;
+   }
+
+   static class BlockStateDefinitionException extends RuntimeException {
+      public BlockStateDefinitionException(String p_i49526_1_) {
+         super(p_i49526_1_);
+      }
+   }
+
+   static class ModelListWrapper {
+      private final List<IUnbakedModel> field_225339_a;
+      private final List<Object> field_225340_b;
+
+      public ModelListWrapper(List<IUnbakedModel> p_i51613_1_, List<Object> p_i51613_2_) {
+         this.field_225339_a = p_i51613_1_;
+         this.field_225340_b = p_i51613_2_;
+      }
+
+      public boolean equals(Object p_equals_1_) {
+         if (this == p_equals_1_) {
+            return true;
+         } else if (!(p_equals_1_ instanceof ModelBakery.ModelListWrapper)) {
+            return false;
+         } else {
+            ModelBakery.ModelListWrapper modelbakery$modellistwrapper = (ModelBakery.ModelListWrapper)p_equals_1_;
+            return Objects.equals(this.field_225339_a, modelbakery$modellistwrapper.field_225339_a) && Objects.equals(this.field_225340_b, modelbakery$modellistwrapper.field_225340_b);
+         }
+      }
+
+      public int hashCode() {
+         return 31 * this.field_225339_a.hashCode() + this.field_225340_b.hashCode();
+      }
+
+      public static ModelBakery.ModelListWrapper func_225335_a(BlockState p_225335_0_, Multipart p_225335_1_, Collection<Property<?>> p_225335_2_) {
+         StateContainer<Block, BlockState> statecontainer = p_225335_0_.func_177230_c().func_176194_O();
+         List<IUnbakedModel> list = p_225335_1_.func_188136_a().stream().filter((p_lambda$makeWrapper$0_2_) -> {
+            return p_lambda$makeWrapper$0_2_.func_188166_a(statecontainer).test(p_225335_0_);
+         }).map(Selector::func_188165_a).collect(ImmutableList.toImmutableList());
+         List<Object> list1 = func_225337_a(p_225335_0_, p_225335_2_);
+         return new ModelBakery.ModelListWrapper(list, list1);
+      }
+
+      public static ModelBakery.ModelListWrapper func_225336_a(BlockState p_225336_0_, IUnbakedModel p_225336_1_, Collection<Property<?>> p_225336_2_) {
+         List<Object> list = func_225337_a(p_225336_0_, p_225336_2_);
+         return new ModelBakery.ModelListWrapper(ImmutableList.of(p_225336_1_), list);
+      }
+
+      private static List<Object> func_225337_a(BlockState p_225337_0_, Collection<Property<?>> p_225337_1_) {
+         return p_225337_1_.stream().map(p_225337_0_::func_177229_b).collect(ImmutableList.toImmutableList());
+      }
+   }
+}

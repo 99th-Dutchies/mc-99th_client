@@ -18,112 +18,145 @@ import net.minecraft.util.datafix.DefaultTypeReferences;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DimensionSavedDataManager {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final Map<String, WorldSavedData> cache = Maps.newHashMap();
-   private final DataFixer fixerUpper;
-   private final File dataFolder;
+public class DimensionSavedDataManager
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final Map<String, WorldSavedData> savedDatum = Maps.newHashMap();
+    private final DataFixer dataFixer;
+    private final File folder;
 
-   public DimensionSavedDataManager(File p_i51279_1_, DataFixer p_i51279_2_) {
-      this.fixerUpper = p_i51279_2_;
-      this.dataFolder = p_i51279_1_;
-   }
+    public DimensionSavedDataManager(File dataFolder, DataFixer dataFixerIn)
+    {
+        this.dataFixer = dataFixerIn;
+        this.folder = dataFolder;
+    }
 
-   private File getDataFile(String p_215754_1_) {
-      return new File(this.dataFolder, p_215754_1_ + ".dat");
-   }
+    private File getDataFile(String name)
+    {
+        return new File(this.folder, name + ".dat");
+    }
 
-   public <T extends WorldSavedData> T computeIfAbsent(Supplier<T> p_215752_1_, String p_215752_2_) {
-      T t = this.get(p_215752_1_, p_215752_2_);
-      if (t != null) {
-         return t;
-      } else {
-         T t1 = p_215752_1_.get();
-         this.set(t1);
-         return t1;
-      }
-   }
+    public <T extends WorldSavedData> T getOrCreate(Supplier<T> defaultSupplier, String name)
+    {
+        T t = this.get(defaultSupplier, name);
 
-   @Nullable
-   public <T extends WorldSavedData> T get(Supplier<T> p_215753_1_, String p_215753_2_) {
-      WorldSavedData worldsaveddata = this.cache.get(p_215753_2_);
-      if (worldsaveddata == null && !this.cache.containsKey(p_215753_2_)) {
-         worldsaveddata = this.readSavedData(p_215753_1_, p_215753_2_);
-         this.cache.put(p_215753_2_, worldsaveddata);
-      }
-
-      return (T)worldsaveddata;
-   }
-
-   @Nullable
-   private <T extends WorldSavedData> T readSavedData(Supplier<T> p_223409_1_, String p_223409_2_) {
-      try {
-         File file1 = this.getDataFile(p_223409_2_);
-         if (file1.exists()) {
-            T t = p_223409_1_.get();
-            CompoundNBT compoundnbt = this.readTagFromDisk(p_223409_2_, SharedConstants.getCurrentVersion().getWorldVersion());
-            t.load(compoundnbt.getCompound("data"));
+        if (t != null)
+        {
             return t;
-         }
-      } catch (Exception exception) {
-         LOGGER.error("Error loading saved data: {}", p_223409_2_, exception);
-      }
+        }
+        else
+        {
+            T t1 = defaultSupplier.get();
+            this.set(t1);
+            return t1;
+        }
+    }
 
-      return (T)null;
-   }
+    @Nullable
+    public <T extends WorldSavedData> T get(Supplier<T> defaultSupplier, String name)
+    {
+        WorldSavedData worldsaveddata = this.savedDatum.get(name);
 
-   public void set(WorldSavedData p_215757_1_) {
-      this.cache.put(p_215757_1_.getId(), p_215757_1_);
-   }
+        if (worldsaveddata == null && !this.savedDatum.containsKey(name))
+        {
+            worldsaveddata = this.loadSavedData(defaultSupplier, name);
+            this.savedDatum.put(name, worldsaveddata);
+        }
 
-   public CompoundNBT readTagFromDisk(String p_215755_1_, int p_215755_2_) throws IOException {
-      File file1 = this.getDataFile(p_215755_1_);
+        return (T)worldsaveddata;
+    }
 
-      CompoundNBT compoundnbt1;
-      try (
-         FileInputStream fileinputstream = new FileInputStream(file1);
-         PushbackInputStream pushbackinputstream = new PushbackInputStream(fileinputstream, 2);
-      ) {
-         CompoundNBT compoundnbt;
-         if (this.isGzip(pushbackinputstream)) {
-            compoundnbt = CompressedStreamTools.readCompressed(pushbackinputstream);
-         } else {
-            try (DataInputStream datainputstream = new DataInputStream(pushbackinputstream)) {
-               compoundnbt = CompressedStreamTools.read(datainputstream);
+    @Nullable
+    private <T extends WorldSavedData> T loadSavedData(Supplier<T> defaultSupplier, String name)
+    {
+        try
+        {
+            File file1 = this.getDataFile(name);
+
+            if (file1.exists())
+            {
+                T t = defaultSupplier.get();
+                CompoundNBT compoundnbt = this.load(name, SharedConstants.getVersion().getWorldVersion());
+                t.read(compoundnbt.getCompound("data"));
+                return t;
             }
-         }
+        }
+        catch (Exception exception)
+        {
+            LOGGER.error("Error loading saved data: {}", name, exception);
+        }
 
-         int i = compoundnbt.contains("DataVersion", 99) ? compoundnbt.getInt("DataVersion") : 1343;
-         compoundnbt1 = NBTUtil.update(this.fixerUpper, DefaultTypeReferences.SAVED_DATA, compoundnbt, i, p_215755_2_);
-      }
+        return (T)null;
+    }
 
-      return compoundnbt1;
-   }
+    public void set(WorldSavedData data)
+    {
+        this.savedDatum.put(data.getName(), data);
+    }
 
-   private boolean isGzip(PushbackInputStream p_215756_1_) throws IOException {
-      byte[] abyte = new byte[2];
-      boolean flag = false;
-      int i = p_215756_1_.read(abyte, 0, 2);
-      if (i == 2) {
-         int j = (abyte[1] & 255) << 8 | abyte[0] & 255;
-         if (j == 35615) {
-            flag = true;
-         }
-      }
+    public CompoundNBT load(String name, int worldVersion) throws IOException
+    {
+        File file1 = this.getDataFile(name);
+        CompoundNBT compoundnbt1;
 
-      if (i != 0) {
-         p_215756_1_.unread(abyte, 0, i);
-      }
+        try (
+                FileInputStream fileinputstream = new FileInputStream(file1);
+                PushbackInputStream pushbackinputstream = new PushbackInputStream(fileinputstream, 2);
+            )
+        {
+            CompoundNBT compoundnbt;
 
-      return flag;
-   }
+            if (this.isCompressed(pushbackinputstream))
+            {
+                compoundnbt = CompressedStreamTools.readCompressed(pushbackinputstream);
+            }
+            else
+            {
+                try (DataInputStream datainputstream = new DataInputStream(pushbackinputstream))
+                {
+                    compoundnbt = CompressedStreamTools.read(datainputstream);
+                }
+            }
 
-   public void save() {
-      for(WorldSavedData worldsaveddata : this.cache.values()) {
-         if (worldsaveddata != null) {
-            worldsaveddata.save(this.getDataFile(worldsaveddata.getId()));
-         }
-      }
+            int i = compoundnbt.contains("DataVersion", 99) ? compoundnbt.getInt("DataVersion") : 1343;
+            compoundnbt1 = NBTUtil.update(this.dataFixer, DefaultTypeReferences.SAVED_DATA, compoundnbt, i, worldVersion);
+        }
 
-   }
+        return compoundnbt1;
+    }
+
+    private boolean isCompressed(PushbackInputStream inputStream) throws IOException
+    {
+        byte[] abyte = new byte[2];
+        boolean flag = false;
+        int i = inputStream.read(abyte, 0, 2);
+
+        if (i == 2)
+        {
+            int j = (abyte[1] & 255) << 8 | abyte[0] & 255;
+
+            if (j == 35615)
+            {
+                flag = true;
+            }
+        }
+
+        if (i != 0)
+        {
+            inputStream.unread(abyte, 0, i);
+        }
+
+        return flag;
+    }
+
+    public void save()
+    {
+        for (WorldSavedData worldsaveddata : this.savedDatum.values())
+        {
+            if (worldsaveddata != null)
+            {
+                worldsaveddata.save(this.getDataFile(worldsaveddata.getName()));
+            }
+        }
+    }
 }

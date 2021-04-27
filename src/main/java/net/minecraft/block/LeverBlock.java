@@ -19,127 +19,172 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class LeverBlock extends HorizontalFaceBlock {
-   public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-   protected static final VoxelShape NORTH_AABB = Block.box(5.0D, 4.0D, 10.0D, 11.0D, 12.0D, 16.0D);
-   protected static final VoxelShape SOUTH_AABB = Block.box(5.0D, 4.0D, 0.0D, 11.0D, 12.0D, 6.0D);
-   protected static final VoxelShape WEST_AABB = Block.box(10.0D, 4.0D, 5.0D, 16.0D, 12.0D, 11.0D);
-   protected static final VoxelShape EAST_AABB = Block.box(0.0D, 4.0D, 5.0D, 6.0D, 12.0D, 11.0D);
-   protected static final VoxelShape UP_AABB_Z = Block.box(5.0D, 0.0D, 4.0D, 11.0D, 6.0D, 12.0D);
-   protected static final VoxelShape UP_AABB_X = Block.box(4.0D, 0.0D, 5.0D, 12.0D, 6.0D, 11.0D);
-   protected static final VoxelShape DOWN_AABB_Z = Block.box(5.0D, 10.0D, 4.0D, 11.0D, 16.0D, 12.0D);
-   protected static final VoxelShape DOWN_AABB_X = Block.box(4.0D, 10.0D, 5.0D, 12.0D, 16.0D, 11.0D);
+public class LeverBlock extends HorizontalFaceBlock
+{
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    protected static final VoxelShape LEVER_NORTH_AABB = Block.makeCuboidShape(5.0D, 4.0D, 10.0D, 11.0D, 12.0D, 16.0D);
+    protected static final VoxelShape LEVER_SOUTH_AABB = Block.makeCuboidShape(5.0D, 4.0D, 0.0D, 11.0D, 12.0D, 6.0D);
+    protected static final VoxelShape LEVER_WEST_AABB = Block.makeCuboidShape(10.0D, 4.0D, 5.0D, 16.0D, 12.0D, 11.0D);
+    protected static final VoxelShape LEVER_EAST_AABB = Block.makeCuboidShape(0.0D, 4.0D, 5.0D, 6.0D, 12.0D, 11.0D);
+    protected static final VoxelShape FLOOR_Z_SHAPE = Block.makeCuboidShape(5.0D, 0.0D, 4.0D, 11.0D, 6.0D, 12.0D);
+    protected static final VoxelShape FLOOR_X_SHAPE = Block.makeCuboidShape(4.0D, 0.0D, 5.0D, 12.0D, 6.0D, 11.0D);
+    protected static final VoxelShape CEILING_Z_SHAPE = Block.makeCuboidShape(5.0D, 10.0D, 4.0D, 11.0D, 16.0D, 12.0D);
+    protected static final VoxelShape CEILING_X_SHAPE = Block.makeCuboidShape(4.0D, 10.0D, 5.0D, 12.0D, 16.0D, 11.0D);
 
-   protected LeverBlock(AbstractBlock.Properties p_i48369_1_) {
-      super(p_i48369_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, Boolean.valueOf(false)).setValue(FACE, AttachFace.WALL));
-   }
+    protected LeverBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(HORIZONTAL_FACING, Direction.NORTH).with(POWERED, Boolean.valueOf(false)).with(FACE, AttachFace.WALL));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      switch((AttachFace)p_220053_1_.getValue(FACE)) {
-      case FLOOR:
-         switch(p_220053_1_.getValue(FACING).getAxis()) {
-         case X:
-            return UP_AABB_X;
-         case Z:
-         default:
-            return UP_AABB_Z;
-         }
-      case WALL:
-         switch((Direction)p_220053_1_.getValue(FACING)) {
-         case EAST:
-            return EAST_AABB;
-         case WEST:
-            return WEST_AABB;
-         case SOUTH:
-            return SOUTH_AABB;
-         case NORTH:
-         default:
-            return NORTH_AABB;
-         }
-      case CEILING:
-      default:
-         switch(p_220053_1_.getValue(FACING).getAxis()) {
-         case X:
-            return DOWN_AABB_X;
-         case Z:
-         default:
-            return DOWN_AABB_Z;
-         }
-      }
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        switch ((AttachFace)state.get(FACE))
+        {
+            case FLOOR:
+                switch (state.get(HORIZONTAL_FACING).getAxis())
+                {
+                    case X:
+                        return FLOOR_X_SHAPE;
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         BlockState blockstate1 = p_225533_1_.cycle(POWERED);
-         if (blockstate1.getValue(POWERED)) {
-            makeParticle(blockstate1, p_225533_2_, p_225533_3_, 1.0F);
-         }
+                    case Z:
+                    default:
+                        return FLOOR_Z_SHAPE;
+                }
 
-         return ActionResultType.SUCCESS;
-      } else {
-         BlockState blockstate = this.pull(p_225533_1_, p_225533_2_, p_225533_3_);
-         float f = blockstate.getValue(POWERED) ? 0.6F : 0.5F;
-         p_225533_2_.playSound((PlayerEntity)null, p_225533_3_, SoundEvents.LEVER_CLICK, SoundCategory.BLOCKS, 0.3F, f);
-         return ActionResultType.CONSUME;
-      }
-   }
+            case WALL:
+                switch ((Direction)state.get(HORIZONTAL_FACING))
+                {
+                    case EAST:
+                        return LEVER_EAST_AABB;
 
-   public BlockState pull(BlockState p_226939_1_, World p_226939_2_, BlockPos p_226939_3_) {
-      p_226939_1_ = p_226939_1_.cycle(POWERED);
-      p_226939_2_.setBlock(p_226939_3_, p_226939_1_, 3);
-      this.updateNeighbours(p_226939_1_, p_226939_2_, p_226939_3_);
-      return p_226939_1_;
-   }
+                    case WEST:
+                        return LEVER_WEST_AABB;
 
-   private static void makeParticle(BlockState p_196379_0_, IWorld p_196379_1_, BlockPos p_196379_2_, float p_196379_3_) {
-      Direction direction = p_196379_0_.getValue(FACING).getOpposite();
-      Direction direction1 = getConnectedDirection(p_196379_0_).getOpposite();
-      double d0 = (double)p_196379_2_.getX() + 0.5D + 0.1D * (double)direction.getStepX() + 0.2D * (double)direction1.getStepX();
-      double d1 = (double)p_196379_2_.getY() + 0.5D + 0.1D * (double)direction.getStepY() + 0.2D * (double)direction1.getStepY();
-      double d2 = (double)p_196379_2_.getZ() + 0.5D + 0.1D * (double)direction.getStepZ() + 0.2D * (double)direction1.getStepZ();
-      p_196379_1_.addParticle(new RedstoneParticleData(1.0F, 0.0F, 0.0F, p_196379_3_), d0, d1, d2, 0.0D, 0.0D, 0.0D);
-   }
+                    case SOUTH:
+                        return LEVER_SOUTH_AABB;
 
-   @OnlyIn(Dist.CLIENT)
-   public void animateTick(BlockState p_180655_1_, World p_180655_2_, BlockPos p_180655_3_, Random p_180655_4_) {
-      if (p_180655_1_.getValue(POWERED) && p_180655_4_.nextFloat() < 0.25F) {
-         makeParticle(p_180655_1_, p_180655_2_, p_180655_3_, 0.5F);
-      }
+                    case NORTH:
+                    default:
+                        return LEVER_NORTH_AABB;
+                }
 
-   }
+            case CEILING:
+            default:
+                switch (state.get(HORIZONTAL_FACING).getAxis())
+                {
+                    case X:
+                        return CEILING_X_SHAPE;
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_5_ && !p_196243_1_.is(p_196243_4_.getBlock())) {
-         if (p_196243_1_.getValue(POWERED)) {
-            this.updateNeighbours(p_196243_1_, p_196243_2_, p_196243_3_);
-         }
+                    case Z:
+                    default:
+                        return CEILING_Z_SHAPE;
+                }
+        }
+    }
 
-         super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
-      }
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            BlockState blockstate1 = state.func_235896_a_(POWERED);
 
-   public int getSignal(BlockState p_180656_1_, IBlockReader p_180656_2_, BlockPos p_180656_3_, Direction p_180656_4_) {
-      return p_180656_1_.getValue(POWERED) ? 15 : 0;
-   }
+            if (blockstate1.get(POWERED))
+            {
+                addParticles(blockstate1, worldIn, pos, 1.0F);
+            }
 
-   public int getDirectSignal(BlockState p_176211_1_, IBlockReader p_176211_2_, BlockPos p_176211_3_, Direction p_176211_4_) {
-      return p_176211_1_.getValue(POWERED) && getConnectedDirection(p_176211_1_) == p_176211_4_ ? 15 : 0;
-   }
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            BlockState blockstate = this.setPowered(state, worldIn, pos);
+            float f = blockstate.get(POWERED) ? 0.6F : 0.5F;
+            worldIn.playSound((PlayerEntity)null, pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 0.3F, f);
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   public boolean isSignalSource(BlockState p_149744_1_) {
-      return true;
-   }
+    public BlockState setPowered(BlockState state, World world, BlockPos pos)
+    {
+        state = state.func_235896_a_(POWERED);
+        world.setBlockState(pos, state, 3);
+        this.updateNeighbors(state, world, pos);
+        return state;
+    }
 
-   private void updateNeighbours(BlockState p_196378_1_, World p_196378_2_, BlockPos p_196378_3_) {
-      p_196378_2_.updateNeighborsAt(p_196378_3_, this);
-      p_196378_2_.updateNeighborsAt(p_196378_3_.relative(getConnectedDirection(p_196378_1_).getOpposite()), this);
-   }
+    private static void addParticles(BlockState state, IWorld worldIn, BlockPos pos, float alpha)
+    {
+        Direction direction = state.get(HORIZONTAL_FACING).getOpposite();
+        Direction direction1 = getFacing(state).getOpposite();
+        double d0 = (double)pos.getX() + 0.5D + 0.1D * (double)direction.getXOffset() + 0.2D * (double)direction1.getXOffset();
+        double d1 = (double)pos.getY() + 0.5D + 0.1D * (double)direction.getYOffset() + 0.2D * (double)direction1.getYOffset();
+        double d2 = (double)pos.getZ() + 0.5D + 0.1D * (double)direction.getZOffset() + 0.2D * (double)direction1.getZOffset();
+        worldIn.addParticle(new RedstoneParticleData(1.0F, 0.0F, 0.0F, alpha), d0, d1, d2, 0.0D, 0.0D, 0.0D);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACE, FACING, POWERED);
-   }
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles). Note that
+     * this method is unrelated to {@link randomTick} and {@link #needsRandomTick}, and will always be called regardless
+     * of whether the block can receive random update ticks
+     */
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand)
+    {
+        if (stateIn.get(POWERED) && rand.nextFloat() < 0.25F)
+        {
+            addParticles(stateIn, worldIn, pos, 0.5F);
+        }
+    }
+
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!isMoving && !state.isIn(newState.getBlock()))
+        {
+            if (state.get(POWERED))
+            {
+                this.updateNeighbors(state, worldIn, pos);
+            }
+
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+        }
+    }
+
+    /**
+     * @deprecated call via {@link IBlockState#getWeakPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return blockState.get(POWERED) ? 15 : 0;
+    }
+
+    /**
+     * @deprecated call via {@link IBlockState#getStrongPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getStrongPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return blockState.get(POWERED) && getFacing(blockState) == side ? 15 : 0;
+    }
+
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     * @deprecated call via {@link IBlockState#canProvidePower()} whenever possible. Implementing/overriding is fine.
+     */
+    public boolean canProvidePower(BlockState state)
+    {
+        return true;
+    }
+
+    private void updateNeighbors(BlockState state, World world, BlockPos pos)
+    {
+        world.notifyNeighborsOfStateChange(pos, this);
+        world.notifyNeighborsOfStateChange(pos.offset(getFacing(state).getOpposite()), this);
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(FACE, HORIZONTAL_FACING, POWERED);
+    }
 }

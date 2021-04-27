@@ -8,127 +8,161 @@ import net.minecraft.world.storage.PlayerData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DedicatedPlayerList extends PlayerList {
-   private static final Logger LOGGER = LogManager.getLogger();
+public class DedicatedPlayerList extends PlayerList
+{
+    private static final Logger LOGGER = LogManager.getLogger();
 
-   public DedicatedPlayerList(DedicatedServer p_i232600_1_, DynamicRegistries.Impl p_i232600_2_, PlayerData p_i232600_3_) {
-      super(p_i232600_1_, p_i232600_2_, p_i232600_3_, p_i232600_1_.getProperties().maxPlayers);
-      ServerProperties serverproperties = p_i232600_1_.getProperties();
-      this.setViewDistance(serverproperties.viewDistance);
-      super.setUsingWhiteList(serverproperties.whiteList.get());
-      this.loadUserBanList();
-      this.saveUserBanList();
-      this.loadIpBanList();
-      this.saveIpBanList();
-      this.loadOps();
-      this.loadWhiteList();
-      this.saveOps();
-      if (!this.getWhiteList().getFile().exists()) {
-         this.saveWhiteList();
-      }
+    public DedicatedPlayerList(DedicatedServer p_i232600_1_, DynamicRegistries.Impl p_i232600_2_, PlayerData p_i232600_3_)
+    {
+        super(p_i232600_1_, p_i232600_2_, p_i232600_3_, p_i232600_1_.getServerProperties().maxPlayers);
+        ServerProperties serverproperties = p_i232600_1_.getServerProperties();
+        this.setViewDistance(serverproperties.viewDistance);
+        super.setWhiteListEnabled(serverproperties.whitelistEnabled.get());
+        this.loadPlayerBanList();
+        this.savePlayerBanList();
+        this.loadIPBanList();
+        this.saveIPBanList();
+        this.loadOpsList();
+        this.readWhiteList();
+        this.saveOpsList();
 
-   }
+        if (!this.getWhitelistedPlayers().getSaveFile().exists())
+        {
+            this.saveWhiteList();
+        }
+    }
 
-   public void setUsingWhiteList(boolean p_72371_1_) {
-      super.setUsingWhiteList(p_72371_1_);
-      this.getServer().storeUsingWhiteList(p_72371_1_);
-   }
+    public void setWhiteListEnabled(boolean whitelistEnabled)
+    {
+        super.setWhiteListEnabled(whitelistEnabled);
+        this.getServer().func_213223_o(whitelistEnabled);
+    }
 
-   public void op(GameProfile p_152605_1_) {
-      super.op(p_152605_1_);
-      this.saveOps();
-   }
+    public void addOp(GameProfile profile)
+    {
+        super.addOp(profile);
+        this.saveOpsList();
+    }
 
-   public void deop(GameProfile p_152610_1_) {
-      super.deop(p_152610_1_);
-      this.saveOps();
-   }
+    public void removeOp(GameProfile profile)
+    {
+        super.removeOp(profile);
+        this.saveOpsList();
+    }
 
-   public void reloadWhiteList() {
-      this.loadWhiteList();
-   }
+    public void reloadWhitelist()
+    {
+        this.readWhiteList();
+    }
 
-   private void saveIpBanList() {
-      try {
-         this.getIpBans().save();
-      } catch (IOException ioexception) {
-         LOGGER.warn("Failed to save ip banlist: ", (Throwable)ioexception);
-      }
+    private void saveIPBanList()
+    {
+        try
+        {
+            this.getBannedIPs().writeChanges();
+        }
+        catch (IOException ioexception)
+        {
+            LOGGER.warn("Failed to save ip banlist: ", (Throwable)ioexception);
+        }
+    }
 
-   }
+    private void savePlayerBanList()
+    {
+        try
+        {
+            this.getBannedPlayers().writeChanges();
+        }
+        catch (IOException ioexception)
+        {
+            LOGGER.warn("Failed to save user banlist: ", (Throwable)ioexception);
+        }
+    }
 
-   private void saveUserBanList() {
-      try {
-         this.getBans().save();
-      } catch (IOException ioexception) {
-         LOGGER.warn("Failed to save user banlist: ", (Throwable)ioexception);
-      }
+    private void loadIPBanList()
+    {
+        try
+        {
+            this.getBannedIPs().readSavedFile();
+        }
+        catch (IOException ioexception)
+        {
+            LOGGER.warn("Failed to load ip banlist: ", (Throwable)ioexception);
+        }
+    }
 
-   }
+    private void loadPlayerBanList()
+    {
+        try
+        {
+            this.getBannedPlayers().readSavedFile();
+        }
+        catch (IOException ioexception)
+        {
+            LOGGER.warn("Failed to load user banlist: ", (Throwable)ioexception);
+        }
+    }
 
-   private void loadIpBanList() {
-      try {
-         this.getIpBans().load();
-      } catch (IOException ioexception) {
-         LOGGER.warn("Failed to load ip banlist: ", (Throwable)ioexception);
-      }
+    private void loadOpsList()
+    {
+        try
+        {
+            this.getOppedPlayers().readSavedFile();
+        }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Failed to load operators list: ", (Throwable)exception);
+        }
+    }
 
-   }
+    private void saveOpsList()
+    {
+        try
+        {
+            this.getOppedPlayers().writeChanges();
+        }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Failed to save operators list: ", (Throwable)exception);
+        }
+    }
 
-   private void loadUserBanList() {
-      try {
-         this.getBans().load();
-      } catch (IOException ioexception) {
-         LOGGER.warn("Failed to load user banlist: ", (Throwable)ioexception);
-      }
+    private void readWhiteList()
+    {
+        try
+        {
+            this.getWhitelistedPlayers().readSavedFile();
+        }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Failed to load white-list: ", (Throwable)exception);
+        }
+    }
 
-   }
+    private void saveWhiteList()
+    {
+        try
+        {
+            this.getWhitelistedPlayers().writeChanges();
+        }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Failed to save white-list: ", (Throwable)exception);
+        }
+    }
 
-   private void loadOps() {
-      try {
-         this.getOps().load();
-      } catch (Exception exception) {
-         LOGGER.warn("Failed to load operators list: ", (Throwable)exception);
-      }
+    public boolean canJoin(GameProfile profile)
+    {
+        return !this.isWhiteListEnabled() || this.canSendCommands(profile) || this.getWhitelistedPlayers().isWhitelisted(profile);
+    }
 
-   }
+    public DedicatedServer getServer()
+    {
+        return (DedicatedServer)super.getServer();
+    }
 
-   private void saveOps() {
-      try {
-         this.getOps().save();
-      } catch (Exception exception) {
-         LOGGER.warn("Failed to save operators list: ", (Throwable)exception);
-      }
-
-   }
-
-   private void loadWhiteList() {
-      try {
-         this.getWhiteList().load();
-      } catch (Exception exception) {
-         LOGGER.warn("Failed to load white-list: ", (Throwable)exception);
-      }
-
-   }
-
-   private void saveWhiteList() {
-      try {
-         this.getWhiteList().save();
-      } catch (Exception exception) {
-         LOGGER.warn("Failed to save white-list: ", (Throwable)exception);
-      }
-
-   }
-
-   public boolean isWhiteListed(GameProfile p_152607_1_) {
-      return !this.isUsingWhitelist() || this.isOp(p_152607_1_) || this.getWhiteList().isWhiteListed(p_152607_1_);
-   }
-
-   public DedicatedServer getServer() {
-      return (DedicatedServer)super.getServer();
-   }
-
-   public boolean canBypassPlayerLimit(GameProfile p_183023_1_) {
-      return this.getOps().canBypassPlayerLimit(p_183023_1_);
-   }
+    public boolean bypassesPlayerLimit(GameProfile profile)
+    {
+        return this.getOppedPlayers().bypassesPlayerLimit(profile);
+    }
 }

@@ -10,38 +10,46 @@ import net.minecraft.client.renderer.entity.model.EndermanModel;
 import net.minecraft.entity.monster.EndermanEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class EndermanRenderer extends MobRenderer<EndermanEntity, EndermanModel<EndermanEntity>> {
-   private static final ResourceLocation ENDERMAN_LOCATION = new ResourceLocation("textures/entity/enderman/enderman.png");
-   private final Random random = new Random();
+public class EndermanRenderer extends MobRenderer<EndermanEntity, EndermanModel<EndermanEntity>>
+{
+    private static final ResourceLocation ENDERMAN_TEXTURES = new ResourceLocation("textures/entity/enderman/enderman.png");
+    private final Random rnd = new Random();
 
-   public EndermanRenderer(EntityRendererManager p_i46182_1_) {
-      super(p_i46182_1_, new EndermanModel<>(0.0F), 0.5F);
-      this.addLayer(new EndermanEyesLayer<>(this));
-      this.addLayer(new HeldBlockLayer(this));
-   }
+    public EndermanRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn, new EndermanModel<>(0.0F), 0.5F);
+        this.addLayer(new EndermanEyesLayer<>(this));
+        this.addLayer(new HeldBlockLayer(this));
+    }
 
-   public void render(EndermanEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      BlockState blockstate = p_225623_1_.getCarriedBlock();
-      EndermanModel<EndermanEntity> endermanmodel = this.getModel();
-      endermanmodel.carrying = blockstate != null;
-      endermanmodel.creepy = p_225623_1_.isCreepy();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+    public void render(EndermanEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        BlockState blockstate = entityIn.getHeldBlockState();
+        EndermanModel<EndermanEntity> endermanmodel = this.getEntityModel();
+        endermanmodel.isCarrying = blockstate != null;
+        endermanmodel.isAttacking = entityIn.isScreaming();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
 
-   public Vector3d getRenderOffset(EndermanEntity p_225627_1_, float p_225627_2_) {
-      if (p_225627_1_.isCreepy()) {
-         double d0 = 0.02D;
-         return new Vector3d(this.random.nextGaussian() * 0.02D, 0.0D, this.random.nextGaussian() * 0.02D);
-      } else {
-         return super.getRenderOffset(p_225627_1_, p_225627_2_);
-      }
-   }
+    public Vector3d getRenderOffset(EndermanEntity entityIn, float partialTicks)
+    {
+        if (entityIn.isScreaming())
+        {
+            double d0 = 0.02D;
+            return new Vector3d(this.rnd.nextGaussian() * 0.02D, 0.0D, this.rnd.nextGaussian() * 0.02D);
+        }
+        else
+        {
+            return super.getRenderOffset(entityIn, partialTicks);
+        }
+    }
 
-   public ResourceLocation getTextureLocation(EndermanEntity p_110775_1_) {
-      return ENDERMAN_LOCATION;
-   }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(EndermanEntity entity)
+    {
+        return ENDERMAN_TEXTURES;
+    }
 }

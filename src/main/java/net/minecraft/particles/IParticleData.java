@@ -4,17 +4,19 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.network.PacketBuffer;
 
-public interface IParticleData {
-   ParticleType<?> getType();
+public interface IParticleData
+{
+    ParticleType<?> getType();
 
-   void writeToNetwork(PacketBuffer p_197553_1_);
+    void write(PacketBuffer buffer);
 
-   String writeToString();
+    String getParameters();
 
-   @Deprecated
-   public interface IDeserializer<T extends IParticleData> {
-      T fromCommand(ParticleType<T> p_197544_1_, StringReader p_197544_2_) throws CommandSyntaxException;
+    @Deprecated
+    public interface IDeserializer<T extends IParticleData>
+    {
+        T deserialize(ParticleType<T> particleTypeIn, StringReader reader) throws CommandSyntaxException;
 
-      T fromNetwork(ParticleType<T> p_197543_1_, PacketBuffer p_197543_2_);
-   }
+        T read(ParticleType<T> particleTypeIn, PacketBuffer buffer);
+    }
 }

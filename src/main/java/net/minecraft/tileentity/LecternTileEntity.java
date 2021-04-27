@@ -26,197 +26,268 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerWorld;
 
-public class LecternTileEntity extends TileEntity implements IClearable, INamedContainerProvider {
-   private final IInventory bookAccess = new IInventory() {
-      public int getContainerSize() {
-         return 1;
-      }
+public class LecternTileEntity extends TileEntity implements IClearable, INamedContainerProvider
+{
+    private final IInventory inventory = new IInventory()
+    {
+        public int getSizeInventory()
+        {
+            return 1;
+        }
+        public boolean isEmpty()
+        {
+            return LecternTileEntity.this.book.isEmpty();
+        }
+        public ItemStack getStackInSlot(int index)
+        {
+            return index == 0 ? LecternTileEntity.this.book : ItemStack.EMPTY;
+        }
+        public ItemStack decrStackSize(int index, int count)
+        {
+            if (index == 0)
+            {
+                ItemStack itemstack = LecternTileEntity.this.book.split(count);
 
-      public boolean isEmpty() {
-         return LecternTileEntity.this.book.isEmpty();
-      }
+                if (LecternTileEntity.this.book.isEmpty())
+                {
+                    LecternTileEntity.this.bookRemoved();
+                }
 
-      public ItemStack getItem(int p_70301_1_) {
-         return p_70301_1_ == 0 ? LecternTileEntity.this.book : ItemStack.EMPTY;
-      }
-
-      public ItemStack removeItem(int p_70298_1_, int p_70298_2_) {
-         if (p_70298_1_ == 0) {
-            ItemStack itemstack = LecternTileEntity.this.book.split(p_70298_2_);
-            if (LecternTileEntity.this.book.isEmpty()) {
-               LecternTileEntity.this.onBookItemRemove();
+                return itemstack;
             }
-
-            return itemstack;
-         } else {
-            return ItemStack.EMPTY;
-         }
-      }
-
-      public ItemStack removeItemNoUpdate(int p_70304_1_) {
-         if (p_70304_1_ == 0) {
-            ItemStack itemstack = LecternTileEntity.this.book;
-            LecternTileEntity.this.book = ItemStack.EMPTY;
-            LecternTileEntity.this.onBookItemRemove();
-            return itemstack;
-         } else {
-            return ItemStack.EMPTY;
-         }
-      }
-
-      public void setItem(int p_70299_1_, ItemStack p_70299_2_) {
-      }
-
-      public int getMaxStackSize() {
-         return 1;
-      }
-
-      public void setChanged() {
-         LecternTileEntity.this.setChanged();
-      }
-
-      public boolean stillValid(PlayerEntity p_70300_1_) {
-         if (LecternTileEntity.this.level.getBlockEntity(LecternTileEntity.this.worldPosition) != LecternTileEntity.this) {
+            else
+            {
+                return ItemStack.EMPTY;
+            }
+        }
+        public ItemStack removeStackFromSlot(int index)
+        {
+            if (index == 0)
+            {
+                ItemStack itemstack = LecternTileEntity.this.book;
+                LecternTileEntity.this.book = ItemStack.EMPTY;
+                LecternTileEntity.this.bookRemoved();
+                return itemstack;
+            }
+            else
+            {
+                return ItemStack.EMPTY;
+            }
+        }
+        public void setInventorySlotContents(int index, ItemStack stack)
+        {
+        }
+        public int getInventoryStackLimit()
+        {
+            return 1;
+        }
+        public void markDirty()
+        {
+            LecternTileEntity.this.markDirty();
+        }
+        public boolean isUsableByPlayer(PlayerEntity player)
+        {
+            if (LecternTileEntity.this.world.getTileEntity(LecternTileEntity.this.pos) != LecternTileEntity.this)
+            {
+                return false;
+            }
+            else
+            {
+                return player.getDistanceSq((double)LecternTileEntity.this.pos.getX() + 0.5D, (double)LecternTileEntity.this.pos.getY() + 0.5D, (double)LecternTileEntity.this.pos.getZ() + 0.5D) > 64.0D ? false : LecternTileEntity.this.hasBook();
+            }
+        }
+        public boolean isItemValidForSlot(int index, ItemStack stack)
+        {
             return false;
-         } else {
-            return p_70300_1_.distanceToSqr((double)LecternTileEntity.this.worldPosition.getX() + 0.5D, (double)LecternTileEntity.this.worldPosition.getY() + 0.5D, (double)LecternTileEntity.this.worldPosition.getZ() + 0.5D) > 64.0D ? false : LecternTileEntity.this.hasBook();
-         }
-      }
+        }
+        public void clear()
+        {
+        }
+    };
+    private final IIntArray field_214049_b = new IIntArray()
+    {
+        public int get(int index)
+        {
+            return index == 0 ? LecternTileEntity.this.page : 0;
+        }
+        public void set(int index, int value)
+        {
+            if (index == 0)
+            {
+                LecternTileEntity.this.setPage(value);
+            }
+        }
+        public int size()
+        {
+            return 1;
+        }
+    };
+    private ItemStack book = ItemStack.EMPTY;
+    private int page;
+    private int pages;
 
-      public boolean canPlaceItem(int p_94041_1_, ItemStack p_94041_2_) {
-         return false;
-      }
+    public LecternTileEntity()
+    {
+        super(TileEntityType.LECTERN);
+    }
 
-      public void clearContent() {
-      }
-   };
-   private final IIntArray dataAccess = new IIntArray() {
-      public int get(int p_221476_1_) {
-         return p_221476_1_ == 0 ? LecternTileEntity.this.page : 0;
-      }
+    public ItemStack getBook()
+    {
+        return this.book;
+    }
 
-      public void set(int p_221477_1_, int p_221477_2_) {
-         if (p_221477_1_ == 0) {
-            LecternTileEntity.this.setPage(p_221477_2_);
-         }
+    /**
+     * True if the item in this lectern is a book or written book. False if it is another item (i.e. an empty stack)
+     */
+    public boolean hasBook()
+    {
+        Item item = this.book.getItem();
+        return item == Items.WRITABLE_BOOK || item == Items.WRITTEN_BOOK;
+    }
 
-      }
+    /**
+     * Sets the item stack in this lectern. Note that this does not update the block state; use {@link
+     * LecternBlock#tryPlaceBook} for that.
+     */
+    public void setBook(ItemStack stack)
+    {
+        this.setBook(stack, (PlayerEntity)null);
+    }
 
-      public int getCount() {
-         return 1;
-      }
-   };
-   private ItemStack book = ItemStack.EMPTY;
-   private int page;
-   private int pageCount;
+    private void bookRemoved()
+    {
+        this.page = 0;
+        this.pages = 0;
+        LecternBlock.setHasBook(this.getWorld(), this.getPos(), this.getBlockState(), false);
+    }
 
-   public LecternTileEntity() {
-      super(TileEntityType.LECTERN);
-   }
+    /**
+     * Sets the item stack in this lectern. Note that this does not update the block state; use {@link
+     * LecternBlock#tryPlaceBook} for that.
+     */
+    public void setBook(ItemStack stack, @Nullable PlayerEntity player)
+    {
+        this.book = this.ensureResolved(stack, player);
+        this.page = 0;
+        this.pages = WrittenBookItem.getPageCount(this.book);
+        this.markDirty();
+    }
 
-   public ItemStack getBook() {
-      return this.book;
-   }
+    private void setPage(int pageIn)
+    {
+        int i = MathHelper.clamp(pageIn, 0, this.pages - 1);
 
-   public boolean hasBook() {
-      Item item = this.book.getItem();
-      return item == Items.WRITABLE_BOOK || item == Items.WRITTEN_BOOK;
-   }
+        if (i != this.page)
+        {
+            this.page = i;
+            this.markDirty();
+            LecternBlock.pulse(this.getWorld(), this.getPos(), this.getBlockState());
+        }
+    }
 
-   public void setBook(ItemStack p_214045_1_) {
-      this.setBook(p_214045_1_, (PlayerEntity)null);
-   }
+    public int getPage()
+    {
+        return this.page;
+    }
 
-   private void onBookItemRemove() {
-      this.page = 0;
-      this.pageCount = 0;
-      LecternBlock.resetBookState(this.getLevel(), this.getBlockPos(), this.getBlockState(), false);
-   }
+    public int getComparatorSignalLevel()
+    {
+        float f = this.pages > 1 ? (float)this.getPage() / ((float)this.pages - 1.0F) : 1.0F;
+        return MathHelper.floor(f * 14.0F) + (this.hasBook() ? 1 : 0);
+    }
 
-   public void setBook(ItemStack p_214040_1_, @Nullable PlayerEntity p_214040_2_) {
-      this.book = this.resolveBook(p_214040_1_, p_214040_2_);
-      this.page = 0;
-      this.pageCount = WrittenBookItem.getPageCount(this.book);
-      this.setChanged();
-   }
+    /**
+     * Resolves the passed book, if it is a book and has not yet been resolved.
+     */
+    private ItemStack ensureResolved(ItemStack stack, @Nullable PlayerEntity player)
+    {
+        if (this.world instanceof ServerWorld && stack.getItem() == Items.WRITTEN_BOOK)
+        {
+            WrittenBookItem.resolveContents(stack, this.createCommandSource(player), player);
+        }
 
-   private void setPage(int p_214035_1_) {
-      int i = MathHelper.clamp(p_214035_1_, 0, this.pageCount - 1);
-      if (i != this.page) {
-         this.page = i;
-         this.setChanged();
-         LecternBlock.signalPageChange(this.getLevel(), this.getBlockPos(), this.getBlockState());
-      }
+        return stack;
+    }
 
-   }
+    /**
+     * Creates a CommandSource for resolving the contents of a book. If the player is null, a fake commandsource for
+     * this lectern is used.
+     */
+    private CommandSource createCommandSource(@Nullable PlayerEntity player)
+    {
+        String s;
+        ITextComponent itextcomponent;
 
-   public int getPage() {
-      return this.page;
-   }
+        if (player == null)
+        {
+            s = "Lectern";
+            itextcomponent = new StringTextComponent("Lectern");
+        }
+        else
+        {
+            s = player.getName().getString();
+            itextcomponent = player.getDisplayName();
+        }
 
-   public int getRedstoneSignal() {
-      float f = this.pageCount > 1 ? (float)this.getPage() / ((float)this.pageCount - 1.0F) : 1.0F;
-      return MathHelper.floor(f * 14.0F) + (this.hasBook() ? 1 : 0);
-   }
+        Vector3d vector3d = Vector3d.copyCentered(this.pos);
+        return new CommandSource(ICommandSource.DUMMY, vector3d, Vector2f.ZERO, (ServerWorld)this.world, 2, s, itextcomponent, this.world.getServer(), player);
+    }
 
-   private ItemStack resolveBook(ItemStack p_214047_1_, @Nullable PlayerEntity p_214047_2_) {
-      if (this.level instanceof ServerWorld && p_214047_1_.getItem() == Items.WRITTEN_BOOK) {
-         WrittenBookItem.resolveBookComponents(p_214047_1_, this.createCommandSourceStack(p_214047_2_), p_214047_2_);
-      }
+    /**
+     * Checks if players can use this tile entity to access operator (permission level 2) commands either directly or
+     * indirectly, such as give or setblock. A similar method exists for entities at {@link
+     * net.minecraft.entity.Entity#ignoreItemEntityData()}.<p>For example, {@link
+     * net.minecraft.tileentity.TileEntitySign#onlyOpsCanSetNbt() signs} (player right-clicking) and {@link
+     * net.minecraft.tileentity.TileEntityCommandBlock#onlyOpsCanSetNbt() command blocks} are considered
+     * accessible.</p>@return true if this block entity offers ways for unauthorized players to use restricted commands
+     */
+    public boolean onlyOpsCanSetNbt()
+    {
+        return true;
+    }
 
-      return p_214047_1_;
-   }
+    public void read(BlockState state, CompoundNBT nbt)
+    {
+        super.read(state, nbt);
 
-   private CommandSource createCommandSourceStack(@Nullable PlayerEntity p_214039_1_) {
-      String s;
-      ITextComponent itextcomponent;
-      if (p_214039_1_ == null) {
-         s = "Lectern";
-         itextcomponent = new StringTextComponent("Lectern");
-      } else {
-         s = p_214039_1_.getName().getString();
-         itextcomponent = p_214039_1_.getDisplayName();
-      }
+        if (nbt.contains("Book", 10))
+        {
+            this.book = this.ensureResolved(ItemStack.read(nbt.getCompound("Book")), (PlayerEntity)null);
+        }
+        else
+        {
+            this.book = ItemStack.EMPTY;
+        }
 
-      Vector3d vector3d = Vector3d.atCenterOf(this.worldPosition);
-      return new CommandSource(ICommandSource.NULL, vector3d, Vector2f.ZERO, (ServerWorld)this.level, 2, s, itextcomponent, this.level.getServer(), p_214039_1_);
-   }
+        this.pages = WrittenBookItem.getPageCount(this.book);
+        this.page = MathHelper.clamp(nbt.getInt("Page"), 0, this.pages - 1);
+    }
 
-   public boolean onlyOpCanSetNbt() {
-      return true;
-   }
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        super.write(compound);
 
-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
-      super.load(p_230337_1_, p_230337_2_);
-      if (p_230337_2_.contains("Book", 10)) {
-         this.book = this.resolveBook(ItemStack.of(p_230337_2_.getCompound("Book")), (PlayerEntity)null);
-      } else {
-         this.book = ItemStack.EMPTY;
-      }
+        if (!this.getBook().isEmpty())
+        {
+            compound.put("Book", this.getBook().write(new CompoundNBT()));
+            compound.putInt("Page", this.page);
+        }
 
-      this.pageCount = WrittenBookItem.getPageCount(this.book);
-      this.page = MathHelper.clamp(p_230337_2_.getInt("Page"), 0, this.pageCount - 1);
-   }
+        return compound;
+    }
 
-   public CompoundNBT save(CompoundNBT p_189515_1_) {
-      super.save(p_189515_1_);
-      if (!this.getBook().isEmpty()) {
-         p_189515_1_.put("Book", this.getBook().save(new CompoundNBT()));
-         p_189515_1_.putInt("Page", this.page);
-      }
+    public void clear()
+    {
+        this.setBook(ItemStack.EMPTY);
+    }
 
-      return p_189515_1_;
-   }
+    public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_)
+    {
+        return new LecternContainer(p_createMenu_1_, this.inventory, this.field_214049_b);
+    }
 
-   public void clearContent() {
-      this.setBook(ItemStack.EMPTY);
-   }
-
-   public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
-      return new LecternContainer(p_createMenu_1_, this.bookAccess, this.dataAccess);
-   }
-
-   public ITextComponent getDisplayName() {
-      return new TranslationTextComponent("container.lectern");
-   }
+    public ITextComponent getDisplayName()
+    {
+        return new TranslationTextComponent("container.lectern");
+    }
 }

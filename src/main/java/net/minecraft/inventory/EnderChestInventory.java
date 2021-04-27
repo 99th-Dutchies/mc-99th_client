@@ -6,66 +6,85 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.tileentity.EnderChestTileEntity;
 
-public class EnderChestInventory extends Inventory {
-   private EnderChestTileEntity activeChest;
+public class EnderChestInventory extends Inventory
+{
+    private EnderChestTileEntity associatedChest;
 
-   public EnderChestInventory() {
-      super(27);
-   }
+    public EnderChestInventory()
+    {
+        super(27);
+    }
 
-   public void setActiveChest(EnderChestTileEntity p_146031_1_) {
-      this.activeChest = p_146031_1_;
-   }
+    public void setChestTileEntity(EnderChestTileEntity chestTileEntity)
+    {
+        this.associatedChest = chestTileEntity;
+    }
 
-   public void fromTag(ListNBT p_70486_1_) {
-      for(int i = 0; i < this.getContainerSize(); ++i) {
-         this.setItem(i, ItemStack.EMPTY);
-      }
+    public void read(ListNBT p_70486_1_)
+    {
+        for (int i = 0; i < this.getSizeInventory(); ++i)
+        {
+            this.setInventorySlotContents(i, ItemStack.EMPTY);
+        }
 
-      for(int k = 0; k < p_70486_1_.size(); ++k) {
-         CompoundNBT compoundnbt = p_70486_1_.getCompound(k);
-         int j = compoundnbt.getByte("Slot") & 255;
-         if (j >= 0 && j < this.getContainerSize()) {
-            this.setItem(j, ItemStack.of(compoundnbt));
-         }
-      }
+        for (int k = 0; k < p_70486_1_.size(); ++k)
+        {
+            CompoundNBT compoundnbt = p_70486_1_.getCompound(k);
+            int j = compoundnbt.getByte("Slot") & 255;
 
-   }
+            if (j >= 0 && j < this.getSizeInventory())
+            {
+                this.setInventorySlotContents(j, ItemStack.read(compoundnbt));
+            }
+        }
+    }
 
-   public ListNBT createTag() {
-      ListNBT listnbt = new ListNBT();
+    public ListNBT write()
+    {
+        ListNBT listnbt = new ListNBT();
 
-      for(int i = 0; i < this.getContainerSize(); ++i) {
-         ItemStack itemstack = this.getItem(i);
-         if (!itemstack.isEmpty()) {
-            CompoundNBT compoundnbt = new CompoundNBT();
-            compoundnbt.putByte("Slot", (byte)i);
-            itemstack.save(compoundnbt);
-            listnbt.add(compoundnbt);
-         }
-      }
+        for (int i = 0; i < this.getSizeInventory(); ++i)
+        {
+            ItemStack itemstack = this.getStackInSlot(i);
 
-      return listnbt;
-   }
+            if (!itemstack.isEmpty())
+            {
+                CompoundNBT compoundnbt = new CompoundNBT();
+                compoundnbt.putByte("Slot", (byte)i);
+                itemstack.write(compoundnbt);
+                listnbt.add(compoundnbt);
+            }
+        }
 
-   public boolean stillValid(PlayerEntity p_70300_1_) {
-      return this.activeChest != null && !this.activeChest.stillValid(p_70300_1_) ? false : super.stillValid(p_70300_1_);
-   }
+        return listnbt;
+    }
 
-   public void startOpen(PlayerEntity p_174889_1_) {
-      if (this.activeChest != null) {
-         this.activeChest.startOpen();
-      }
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
+    public boolean isUsableByPlayer(PlayerEntity player)
+    {
+        return this.associatedChest != null && !this.associatedChest.canBeUsed(player) ? false : super.isUsableByPlayer(player);
+    }
 
-      super.startOpen(p_174889_1_);
-   }
+    public void openInventory(PlayerEntity player)
+    {
+        if (this.associatedChest != null)
+        {
+            this.associatedChest.openChest();
+        }
 
-   public void stopOpen(PlayerEntity p_174886_1_) {
-      if (this.activeChest != null) {
-         this.activeChest.stopOpen();
-      }
+        super.openInventory(player);
+    }
 
-      super.stopOpen(p_174886_1_);
-      this.activeChest = null;
-   }
+    public void closeInventory(PlayerEntity player)
+    {
+        if (this.associatedChest != null)
+        {
+            this.associatedChest.closeChest();
+        }
+
+        super.closeInventory(player);
+        this.associatedChest = null;
+    }
 }

@@ -18,62 +18,93 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 
-public class DeadCoralWallFanBlock extends CoralFanBlock {
-   public static final DirectionProperty FACING = HorizontalBlock.FACING;
-   private static final Map<Direction, VoxelShape> SHAPES = Maps.newEnumMap(ImmutableMap.of(Direction.NORTH, Block.box(0.0D, 4.0D, 5.0D, 16.0D, 12.0D, 16.0D), Direction.SOUTH, Block.box(0.0D, 4.0D, 0.0D, 16.0D, 12.0D, 11.0D), Direction.WEST, Block.box(5.0D, 4.0D, 0.0D, 16.0D, 12.0D, 16.0D), Direction.EAST, Block.box(0.0D, 4.0D, 0.0D, 11.0D, 12.0D, 16.0D)));
+public class DeadCoralWallFanBlock extends CoralFanBlock
+{
+    public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
+    private static final Map<Direction, VoxelShape> SHAPES = Maps.newEnumMap(ImmutableMap.of(Direction.NORTH, Block.makeCuboidShape(0.0D, 4.0D, 5.0D, 16.0D, 12.0D, 16.0D), Direction.SOUTH, Block.makeCuboidShape(0.0D, 4.0D, 0.0D, 16.0D, 12.0D, 11.0D), Direction.WEST, Block.makeCuboidShape(5.0D, 4.0D, 0.0D, 16.0D, 12.0D, 16.0D), Direction.EAST, Block.makeCuboidShape(0.0D, 4.0D, 0.0D, 11.0D, 12.0D, 16.0D)));
 
-   protected DeadCoralWallFanBlock(AbstractBlock.Properties p_i49776_1_) {
-      super(p_i49776_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, Boolean.valueOf(true)));
-   }
+    protected DeadCoralWallFanBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(FACING, Direction.NORTH).with(WATERLOGGED, Boolean.valueOf(true)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPES.get(p_220053_1_.getValue(FACING));
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPES.get(state.get(FACING));
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      return p_185499_1_.setValue(FACING, p_185499_2_.rotate(p_185499_1_.getValue(FACING)));
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        return state.with(FACING, rot.rotate(state.get(FACING)));
+    }
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      return p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
-   }
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        return state.rotate(mirrorIn.toRotation(state.get(FACING)));
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, WATERLOGGED);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(FACING, WATERLOGGED);
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_1_.getValue(WATERLOGGED)) {
-         p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (stateIn.get(WATERLOGGED))
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+        }
 
-      return p_196271_2_.getOpposite() == p_196271_1_.getValue(FACING) && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_) ? Blocks.AIR.defaultBlockState() : p_196271_1_;
-   }
+        return facing.getOpposite() == stateIn.get(FACING) && !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : stateIn;
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      Direction direction = p_196260_1_.getValue(FACING);
-      BlockPos blockpos = p_196260_3_.relative(direction.getOpposite());
-      BlockState blockstate = p_196260_2_.getBlockState(blockpos);
-      return blockstate.isFaceSturdy(p_196260_2_, blockpos, direction);
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        Direction direction = state.get(FACING);
+        BlockPos blockpos = pos.offset(direction.getOpposite());
+        BlockState blockstate = worldIn.getBlockState(blockpos);
+        return blockstate.isSolidSide(worldIn, blockpos, direction);
+    }
 
-   @Nullable
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      BlockState blockstate = super.getStateForPlacement(p_196258_1_);
-      IWorldReader iworldreader = p_196258_1_.getLevel();
-      BlockPos blockpos = p_196258_1_.getClickedPos();
-      Direction[] adirection = p_196258_1_.getNearestLookingDirections();
+    @Nullable
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        BlockState blockstate = super.getStateForPlacement(context);
+        IWorldReader iworldreader = context.getWorld();
+        BlockPos blockpos = context.getPos();
+        Direction[] adirection = context.getNearestLookingDirections();
 
-      for(Direction direction : adirection) {
-         if (direction.getAxis().isHorizontal()) {
-            blockstate = blockstate.setValue(FACING, direction.getOpposite());
-            if (blockstate.canSurvive(iworldreader, blockpos)) {
-               return blockstate;
+        for (Direction direction : adirection)
+        {
+            if (direction.getAxis().isHorizontal())
+            {
+                blockstate = blockstate.with(FACING, direction.getOpposite());
+
+                if (blockstate.isValidPosition(iworldreader, blockpos))
+                {
+                    return blockstate;
+                }
             }
-         }
-      }
+        }
 
-      return null;
-   }
+        return null;
+    }
 }

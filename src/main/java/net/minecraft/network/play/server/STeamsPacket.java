@@ -11,152 +11,179 @@ import net.minecraft.scoreboard.Team;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class STeamsPacket implements IPacket<IClientPlayNetHandler> {
-   private String name = "";
-   private ITextComponent displayName = StringTextComponent.EMPTY;
-   private ITextComponent playerPrefix = StringTextComponent.EMPTY;
-   private ITextComponent playerSuffix = StringTextComponent.EMPTY;
-   private String nametagVisibility = Team.Visible.ALWAYS.name;
-   private String collisionRule = Team.CollisionRule.ALWAYS.name;
-   private TextFormatting color = TextFormatting.RESET;
-   private final Collection<String> players = Lists.newArrayList();
-   private int method;
-   private int options;
+public class STeamsPacket implements IPacket<IClientPlayNetHandler>
+{
+    private String name = "";
+    private ITextComponent displayName = StringTextComponent.EMPTY;
+    private ITextComponent prefix = StringTextComponent.EMPTY;
+    private ITextComponent suffix = StringTextComponent.EMPTY;
+    private String nameTagVisibility = Team.Visible.ALWAYS.internalName;
+    private String collisionRule = Team.CollisionRule.ALWAYS.name;
+    private TextFormatting color = TextFormatting.RESET;
+    private final Collection<String> players = Lists.newArrayList();
+    private int action;
+    private int friendlyFlags;
 
-   public STeamsPacket() {
-   }
+    public STeamsPacket()
+    {
+    }
 
-   public STeamsPacket(ScorePlayerTeam p_i46907_1_, int p_i46907_2_) {
-      this.name = p_i46907_1_.getName();
-      this.method = p_i46907_2_;
-      if (p_i46907_2_ == 0 || p_i46907_2_ == 2) {
-         this.displayName = p_i46907_1_.getDisplayName();
-         this.options = p_i46907_1_.packOptions();
-         this.nametagVisibility = p_i46907_1_.getNameTagVisibility().name;
-         this.collisionRule = p_i46907_1_.getCollisionRule().name;
-         this.color = p_i46907_1_.getColor();
-         this.playerPrefix = p_i46907_1_.getPlayerPrefix();
-         this.playerSuffix = p_i46907_1_.getPlayerSuffix();
-      }
+    public STeamsPacket(ScorePlayerTeam teamIn, int actionIn)
+    {
+        this.name = teamIn.getName();
+        this.action = actionIn;
 
-      if (p_i46907_2_ == 0) {
-         this.players.addAll(p_i46907_1_.getPlayers());
-      }
+        if (actionIn == 0 || actionIn == 2)
+        {
+            this.displayName = teamIn.getDisplayName();
+            this.friendlyFlags = teamIn.getFriendlyFlags();
+            this.nameTagVisibility = teamIn.getNameTagVisibility().internalName;
+            this.collisionRule = teamIn.getCollisionRule().name;
+            this.color = teamIn.getColor();
+            this.prefix = teamIn.getPrefix();
+            this.suffix = teamIn.getSuffix();
+        }
 
-   }
+        if (actionIn == 0)
+        {
+            this.players.addAll(teamIn.getMembershipCollection());
+        }
+    }
 
-   public STeamsPacket(ScorePlayerTeam p_i46908_1_, Collection<String> p_i46908_2_, int p_i46908_3_) {
-      if (p_i46908_3_ != 3 && p_i46908_3_ != 4) {
-         throw new IllegalArgumentException("Method must be join or leave for player constructor");
-      } else if (p_i46908_2_ != null && !p_i46908_2_.isEmpty()) {
-         this.method = p_i46908_3_;
-         this.name = p_i46908_1_.getName();
-         this.players.addAll(p_i46908_2_);
-      } else {
-         throw new IllegalArgumentException("Players cannot be null/empty");
-      }
-   }
+    public STeamsPacket(ScorePlayerTeam teamIn, Collection<String> playersIn, int actionIn)
+    {
+        if (actionIn != 3 && actionIn != 4)
+        {
+            throw new IllegalArgumentException("Method must be join or leave for player constructor");
+        }
+        else if (playersIn != null && !playersIn.isEmpty())
+        {
+            this.action = actionIn;
+            this.name = teamIn.getName();
+            this.players.addAll(playersIn);
+        }
+        else
+        {
+            throw new IllegalArgumentException("Players cannot be null/empty");
+        }
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.name = p_148837_1_.readUtf(16);
-      this.method = p_148837_1_.readByte();
-      if (this.method == 0 || this.method == 2) {
-         this.displayName = p_148837_1_.readComponent();
-         this.options = p_148837_1_.readByte();
-         this.nametagVisibility = p_148837_1_.readUtf(40);
-         this.collisionRule = p_148837_1_.readUtf(40);
-         this.color = p_148837_1_.readEnum(TextFormatting.class);
-         this.playerPrefix = p_148837_1_.readComponent();
-         this.playerSuffix = p_148837_1_.readComponent();
-      }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.name = buf.readString(16);
+        this.action = buf.readByte();
 
-      if (this.method == 0 || this.method == 3 || this.method == 4) {
-         int i = p_148837_1_.readVarInt();
+        if (this.action == 0 || this.action == 2)
+        {
+            this.displayName = buf.readTextComponent();
+            this.friendlyFlags = buf.readByte();
+            this.nameTagVisibility = buf.readString(40);
+            this.collisionRule = buf.readString(40);
+            this.color = buf.readEnumValue(TextFormatting.class);
+            this.prefix = buf.readTextComponent();
+            this.suffix = buf.readTextComponent();
+        }
 
-         for(int j = 0; j < i; ++j) {
-            this.players.add(p_148837_1_.readUtf(40));
-         }
-      }
+        if (this.action == 0 || this.action == 3 || this.action == 4)
+        {
+            int i = buf.readVarInt();
 
-   }
+            for (int j = 0; j < i; ++j)
+            {
+                this.players.add(buf.readString(40));
+            }
+        }
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeUtf(this.name);
-      p_148840_1_.writeByte(this.method);
-      if (this.method == 0 || this.method == 2) {
-         p_148840_1_.writeComponent(this.displayName);
-         p_148840_1_.writeByte(this.options);
-         p_148840_1_.writeUtf(this.nametagVisibility);
-         p_148840_1_.writeUtf(this.collisionRule);
-         p_148840_1_.writeEnum(this.color);
-         p_148840_1_.writeComponent(this.playerPrefix);
-         p_148840_1_.writeComponent(this.playerSuffix);
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeString(this.name);
+        buf.writeByte(this.action);
 
-      if (this.method == 0 || this.method == 3 || this.method == 4) {
-         p_148840_1_.writeVarInt(this.players.size());
+        if (this.action == 0 || this.action == 2)
+        {
+            buf.writeTextComponent(this.displayName);
+            buf.writeByte(this.friendlyFlags);
+            buf.writeString(this.nameTagVisibility);
+            buf.writeString(this.collisionRule);
+            buf.writeEnumValue(this.color);
+            buf.writeTextComponent(this.prefix);
+            buf.writeTextComponent(this.suffix);
+        }
 
-         for(String s : this.players) {
-            p_148840_1_.writeUtf(s);
-         }
-      }
+        if (this.action == 0 || this.action == 3 || this.action == 4)
+        {
+            buf.writeVarInt(this.players.size());
 
-   }
+            for (String s : this.players)
+            {
+                buf.writeString(s);
+            }
+        }
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetPlayerTeamPacket(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleTeams(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getName() {
-      return this.name;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getDisplayName() {
-      return this.displayName;
-   }
+    public ITextComponent getDisplayName()
+    {
+        return this.displayName;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Collection<String> getPlayers() {
-      return this.players;
-   }
+    public Collection<String> getPlayers()
+    {
+        return this.players;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getMethod() {
-      return this.method;
-   }
+    public int getAction()
+    {
+        return this.action;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getOptions() {
-      return this.options;
-   }
+    public int getFriendlyFlags()
+    {
+        return this.friendlyFlags;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public TextFormatting getColor() {
-      return this.color;
-   }
+    public TextFormatting getColor()
+    {
+        return this.color;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getNametagVisibility() {
-      return this.nametagVisibility;
-   }
+    public String getNameTagVisibility()
+    {
+        return this.nameTagVisibility;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getCollisionRule() {
-      return this.collisionRule;
-   }
+    public String getCollisionRule()
+    {
+        return this.collisionRule;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getPlayerPrefix() {
-      return this.playerPrefix;
-   }
+    public ITextComponent getPrefix()
+    {
+        return this.prefix;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getPlayerSuffix() {
-      return this.playerSuffix;
-   }
+    public ITextComponent getSuffix()
+    {
+        return this.suffix;
+    }
 }

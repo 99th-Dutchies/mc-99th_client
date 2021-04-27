@@ -15,108 +15,141 @@ import javax.annotation.Nullable;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.server.ChunkManager;
 
-public class ChunkTaskPriorityQueue<T> {
-   public static final int PRIORITY_LEVEL_COUNT = ChunkManager.MAX_CHUNK_DISTANCE + 2;
-   private final List<Long2ObjectLinkedOpenHashMap<List<Optional<T>>>> taskQueue = IntStream.range(0, PRIORITY_LEVEL_COUNT).mapToObj((p_219415_0_) -> {
-      return new Long2ObjectLinkedOpenHashMap<List<Optional<T>>>();
-   }).collect(Collectors.toList());
-   private volatile int firstQueue = PRIORITY_LEVEL_COUNT;
-   private final String name;
-   private final LongSet acquired = new LongOpenHashSet();
-   private final int maxTasks;
+public class ChunkTaskPriorityQueue<T>
+{
+    public static final int MAX_LOADED_LEVELS = ChunkManager.MAX_LOADED_LEVEL + 2 + 32;
+    private final List<Long2ObjectLinkedOpenHashMap<List<Optional<T>>>> chunkPriorityQueue = IntStream.range(0, MAX_LOADED_LEVELS).mapToObj((p_lambda$new$0_0_) ->
+    {
+    	return new Long2ObjectLinkedOpenHashMap<List<Optional<T>>>();
+    }).collect(Collectors.toList());
+    private volatile int maxLoaded = MAX_LOADED_LEVELS;
+    private final String queueName;
+    private final LongSet loadedChunks = new LongOpenHashSet();
+    private final int priority;
 
-   public ChunkTaskPriorityQueue(String p_i50714_1_, int p_i50714_2_) {
-      this.name = p_i50714_1_;
-      this.maxTasks = p_i50714_2_;
-   }
+    public ChunkTaskPriorityQueue(String queueName, int priority)
+    {
+        this.queueName = queueName;
+        this.priority = priority;
+    }
 
-   protected void resortChunkTasks(int p_219407_1_, ChunkPos p_219407_2_, int p_219407_3_) {
-      if (p_219407_1_ < PRIORITY_LEVEL_COUNT) {
-         Long2ObjectLinkedOpenHashMap<List<Optional<T>>> long2objectlinkedopenhashmap = this.taskQueue.get(p_219407_1_);
-         List<Optional<T>> list = long2objectlinkedopenhashmap.remove(p_219407_2_.toLong());
-         if (p_219407_1_ == this.firstQueue) {
-            while(this.firstQueue < PRIORITY_LEVEL_COUNT && this.taskQueue.get(this.firstQueue).isEmpty()) {
-               ++this.firstQueue;
-            }
-         }
+    protected void func_219407_a(int p_219407_1_, ChunkPos pos, int p_219407_3_)
+    {
+        if (p_219407_1_ < MAX_LOADED_LEVELS)
+        {
+            Long2ObjectLinkedOpenHashMap<List<Optional<T>>> long2objectlinkedopenhashmap = this.chunkPriorityQueue.get(p_219407_1_);
+            List<Optional<T>> list = long2objectlinkedopenhashmap.remove(pos.asLong());
 
-         if (list != null && !list.isEmpty()) {
-            this.taskQueue.get(p_219407_3_).computeIfAbsent(p_219407_2_.toLong(), (p_219411_0_) -> {
-               return Lists.newArrayList();
-            }).addAll(list);
-            this.firstQueue = Math.min(this.firstQueue, p_219407_3_);
-         }
-
-      }
-   }
-
-   protected void submit(Optional<T> p_219412_1_, long p_219412_2_, int p_219412_4_) {
-      this.taskQueue.get(p_219412_4_).computeIfAbsent(p_219412_2_, (p_219410_0_) -> {
-         return Lists.newArrayList();
-      }).add(p_219412_1_);
-      this.firstQueue = Math.min(this.firstQueue, p_219412_4_);
-   }
-
-   protected void release(long p_219416_1_, boolean p_219416_3_) {
-      for(Long2ObjectLinkedOpenHashMap<List<Optional<T>>> long2objectlinkedopenhashmap : this.taskQueue) {
-         List<Optional<T>> list = long2objectlinkedopenhashmap.get(p_219416_1_);
-         if (list != null) {
-            if (p_219416_3_) {
-               list.clear();
-            } else {
-               list.removeIf((p_219413_0_) -> {
-                  return !p_219413_0_.isPresent();
-               });
+            if (p_219407_1_ == this.maxLoaded)
+            {
+                while (this.maxLoaded < MAX_LOADED_LEVELS && this.chunkPriorityQueue.get(this.maxLoaded).isEmpty())
+                {
+                    ++this.maxLoaded;
+                }
             }
 
-            if (list.isEmpty()) {
-               long2objectlinkedopenhashmap.remove(p_219416_1_);
+            if (list != null && !list.isEmpty())
+            {
+                this.chunkPriorityQueue.get(p_219407_3_).computeIfAbsent(pos.asLong(), (p_lambda$func_219407_a$1_0_) ->
+                {
+                    return Lists.newArrayList();
+                }).addAll(list);
+                this.maxLoaded = Math.min(this.maxLoaded, p_219407_3_);
             }
-         }
-      }
+        }
+    }
 
-      while(this.firstQueue < PRIORITY_LEVEL_COUNT && this.taskQueue.get(this.firstQueue).isEmpty()) {
-         ++this.firstQueue;
-      }
+    protected void addTaskToChunk(Optional<T> task, long chunkPos, int chunkLevel)
+    {
+        this.chunkPriorityQueue.get(chunkLevel).computeIfAbsent(chunkPos, (p_lambda$addTaskToChunk$2_0_) ->
+        {
+            return Lists.newArrayList();
+        }).add(task);
+        this.maxLoaded = Math.min(this.maxLoaded, chunkLevel);
+    }
 
-      this.acquired.remove(p_219416_1_);
-   }
+    protected void clearChunkFromQueue(long chunkPos, boolean fullClear)
+    {
+        for (Long2ObjectLinkedOpenHashMap<List<Optional<T>>> long2objectlinkedopenhashmap : this.chunkPriorityQueue)
+        {
+            List<Optional<T>> list = long2objectlinkedopenhashmap.get(chunkPos);
 
-   private Runnable acquire(long p_219418_1_) {
-      return () -> {
-         this.acquired.add(p_219418_1_);
-      };
-   }
+            if (list != null)
+            {
+                if (fullClear)
+                {
+                    list.clear();
+                }
+                else
+                {
+                    list.removeIf((p_lambda$clearChunkFromQueue$3_0_) ->
+                    {
+                        return !p_lambda$clearChunkFromQueue$3_0_.isPresent();
+                    });
+                }
 
-   @Nullable
-   public Stream<Either<T, Runnable>> pop() {
-      if (this.acquired.size() >= this.maxTasks) {
-         return null;
-      } else if (this.firstQueue >= PRIORITY_LEVEL_COUNT) {
-         return null;
-      } else {
-         int i = this.firstQueue;
-         Long2ObjectLinkedOpenHashMap<List<Optional<T>>> long2objectlinkedopenhashmap = this.taskQueue.get(i);
-         long j = long2objectlinkedopenhashmap.firstLongKey();
+                if (list.isEmpty())
+                {
+                    long2objectlinkedopenhashmap.remove(chunkPos);
+                }
+            }
+        }
 
-         List<Optional<T>> list;
-         for(list = long2objectlinkedopenhashmap.removeFirst(); this.firstQueue < PRIORITY_LEVEL_COUNT && this.taskQueue.get(this.firstQueue).isEmpty(); ++this.firstQueue) {
-         }
+        while (this.maxLoaded < MAX_LOADED_LEVELS && this.chunkPriorityQueue.get(this.maxLoaded).isEmpty())
+        {
+            ++this.maxLoaded;
+        }
 
-         return list.stream().map((p_219408_3_) -> {
-            return p_219408_3_.<Either<T, Runnable>>map(Either::left).orElseGet(() -> {
-               return Either.right(this.acquire(j));
+        this.loadedChunks.remove(chunkPos);
+    }
+
+    private Runnable func_219418_a(long chunkPos)
+    {
+        return () ->
+        {
+            this.loadedChunks.add(chunkPos);
+        };
+    }
+
+    @Nullable
+    public Stream<Object> func_219417_a()
+    {
+        if (this.loadedChunks.size() >= this.priority)
+        {
+            return null;
+        }
+        else if (this.maxLoaded >= MAX_LOADED_LEVELS)
+        {
+            return null;
+        }
+        else
+        {
+            int i = this.maxLoaded;
+            Long2ObjectLinkedOpenHashMap<List<Optional<T>>> long2objectlinkedopenhashmap = this.chunkPriorityQueue.get(i);
+            long j = long2objectlinkedopenhashmap.firstLongKey();
+            List<Optional<T>> list;
+
+            for (list = long2objectlinkedopenhashmap.removeFirst(); this.maxLoaded < MAX_LOADED_LEVELS && this.chunkPriorityQueue.get(this.maxLoaded).isEmpty(); ++this.maxLoaded)
+            {
+            }
+
+            return list.stream().map((p_lambda$func_219417_a$6_3_) ->
+            {
+                return p_lambda$func_219417_a$6_3_.map(Either::left).orElseGet(() -> {
+                    return Either.right(this.func_219418_a(j));
+                });
             });
-         });
-      }
-   }
+        }
+    }
 
-   public String toString() {
-      return this.name + " " + this.firstQueue + "...";
-   }
+    public String toString()
+    {
+        return this.queueName + " " + this.maxLoaded + "...";
+    }
 
-   @VisibleForTesting
-   LongSet getAcquired() {
-      return new LongOpenHashSet(this.acquired);
-   }
+    @VisibleForTesting
+    LongSet getLoadedChunks()
+    {
+        return new LongOpenHashSet(this.loadedChunks);
+    }
 }

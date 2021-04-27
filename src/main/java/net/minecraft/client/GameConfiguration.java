@@ -8,86 +8,90 @@ import net.minecraft.client.renderer.ScreenSize;
 import net.minecraft.client.resources.FolderResourceIndex;
 import net.minecraft.client.resources.ResourceIndex;
 import net.minecraft.util.Session;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class GameConfiguration {
-   public final GameConfiguration.UserInformation user;
-   public final ScreenSize display;
-   public final GameConfiguration.FolderInformation location;
-   public final GameConfiguration.GameInformation game;
-   public final GameConfiguration.ServerInformation server;
+public class GameConfiguration
+{
+    public final GameConfiguration.UserInformation userInfo;
+    public final ScreenSize displayInfo;
+    public final GameConfiguration.FolderInformation folderInfo;
+    public final GameConfiguration.GameInformation gameInfo;
+    public final GameConfiguration.ServerInformation serverInfo;
 
-   public GameConfiguration(GameConfiguration.UserInformation p_i51071_1_, ScreenSize p_i51071_2_, GameConfiguration.FolderInformation p_i51071_3_, GameConfiguration.GameInformation p_i51071_4_, GameConfiguration.ServerInformation p_i51071_5_) {
-      this.user = p_i51071_1_;
-      this.display = p_i51071_2_;
-      this.location = p_i51071_3_;
-      this.game = p_i51071_4_;
-      this.server = p_i51071_5_;
-   }
+    public GameConfiguration(GameConfiguration.UserInformation userInfo, ScreenSize screenSize, GameConfiguration.FolderInformation folderInfo, GameConfiguration.GameInformation gameInfo, GameConfiguration.ServerInformation serverInfo)
+    {
+        this.userInfo = userInfo;
+        this.displayInfo = screenSize;
+        this.folderInfo = folderInfo;
+        this.gameInfo = gameInfo;
+        this.serverInfo = serverInfo;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class FolderInformation {
-      public final File gameDirectory;
-      public final File resourcePackDirectory;
-      public final File assetDirectory;
-      @Nullable
-      public final String assetIndex;
+    public static class FolderInformation
+    {
+        public final File gameDir;
+        public final File resourcePacksDir;
+        public final File assetsDir;
+        @Nullable
+        public final String assetIndex;
 
-      public FolderInformation(File p_i45489_1_, File p_i45489_2_, File p_i45489_3_, @Nullable String p_i45489_4_) {
-         this.gameDirectory = p_i45489_1_;
-         this.resourcePackDirectory = p_i45489_2_;
-         this.assetDirectory = p_i45489_3_;
-         this.assetIndex = p_i45489_4_;
-      }
+        public FolderInformation(File mcDataDirIn, File resourcePacksDirIn, File assetsDirIn, @Nullable String assetIndexIn)
+        {
+            this.gameDir = mcDataDirIn;
+            this.resourcePacksDir = resourcePacksDirIn;
+            this.assetsDir = assetsDirIn;
+            this.assetIndex = assetIndexIn;
+        }
 
-      public ResourceIndex getAssetIndex() {
-         return (ResourceIndex)(this.assetIndex == null ? new FolderResourceIndex(this.assetDirectory) : new ResourceIndex(this.assetDirectory, this.assetIndex));
-      }
-   }
+        public ResourceIndex getAssetsIndex()
+        {
+            return (ResourceIndex)(this.assetIndex == null ? new FolderResourceIndex(this.assetsDir) : new ResourceIndex(this.assetsDir, this.assetIndex));
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class GameInformation {
-      public final boolean demo;
-      public final String launchVersion;
-      public final String versionType;
-      public final boolean disableMultiplayer;
-      public final boolean disableChat;
+    public static class GameInformation
+    {
+        public final boolean isDemo;
+        public final String version;
+        public final String versionType;
+        public final boolean disableMultiplayer;
+        public final boolean disableChat;
 
-      public GameInformation(boolean p_i232334_1_, String p_i232334_2_, String p_i232334_3_, boolean p_i232334_4_, boolean p_i232334_5_) {
-         this.demo = p_i232334_1_;
-         this.launchVersion = p_i232334_2_;
-         this.versionType = p_i232334_3_;
-         this.disableMultiplayer = p_i232334_4_;
-         this.disableChat = p_i232334_5_;
-      }
-   }
+        public GameInformation(boolean isDemo, String version, String versionType, boolean disableMultiplayer, boolean disableChat)
+        {
+            this.isDemo = isDemo;
+            this.version = version;
+            this.versionType = versionType;
+            this.disableMultiplayer = disableMultiplayer;
+            this.disableChat = disableChat;
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class ServerInformation {
-      @Nullable
-      public final String hostname;
-      public final int port;
+    public static class ServerInformation
+    {
+        @Nullable
+        public final String serverName;
+        public final int serverPort;
 
-      public ServerInformation(@Nullable String p_i45487_1_, int p_i45487_2_) {
-         this.hostname = p_i45487_1_;
-         this.port = p_i45487_2_;
-      }
-   }
+        public ServerInformation(@Nullable String serverNameIn, int serverPortIn)
+        {
+            this.serverName = serverNameIn;
+            this.serverPort = serverPortIn;
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class UserInformation {
-      public final Session user;
-      public final PropertyMap userProperties;
-      public final PropertyMap profileProperties;
-      public final Proxy proxy;
+    public static class UserInformation
+    {
+        public final Session session;
+        public final PropertyMap userProperties;
+        public final PropertyMap profileProperties;
+        public final Proxy proxy;
 
-      public UserInformation(Session p_i46375_1_, PropertyMap p_i46375_2_, PropertyMap p_i46375_3_, Proxy p_i46375_4_) {
-         this.user = p_i46375_1_;
-         this.userProperties = p_i46375_2_;
-         this.profileProperties = p_i46375_3_;
-         this.proxy = p_i46375_4_;
-      }
-   }
+        public UserInformation(Session sessionIn, PropertyMap userPropertiesIn, PropertyMap profilePropertiesIn, Proxy proxyIn)
+        {
+            this.session = sessionIn;
+            this.userProperties = userPropertiesIn;
+            this.profileProperties = profilePropertiesIn;
+            this.proxy = proxyIn;
+        }
+    }
 }

@@ -20,104 +20,160 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class WitherSkullEntity extends DamagingProjectileEntity {
-   private static final DataParameter<Boolean> DATA_DANGEROUS = EntityDataManager.defineId(WitherSkullEntity.class, DataSerializers.BOOLEAN);
+public class WitherSkullEntity extends DamagingProjectileEntity
+{
+    private static final DataParameter<Boolean> INVULNERABLE = EntityDataManager.createKey(WitherSkullEntity.class, DataSerializers.BOOLEAN);
 
-   public WitherSkullEntity(EntityType<? extends WitherSkullEntity> p_i50147_1_, World p_i50147_2_) {
-      super(p_i50147_1_, p_i50147_2_);
-   }
+    public WitherSkullEntity(EntityType <? extends WitherSkullEntity > p_i50147_1_, World p_i50147_2_)
+    {
+        super(p_i50147_1_, p_i50147_2_);
+    }
 
-   public WitherSkullEntity(World p_i1794_1_, LivingEntity p_i1794_2_, double p_i1794_3_, double p_i1794_5_, double p_i1794_7_) {
-      super(EntityType.WITHER_SKULL, p_i1794_2_, p_i1794_3_, p_i1794_5_, p_i1794_7_, p_i1794_1_);
-   }
+    public WitherSkullEntity(World worldIn, LivingEntity shooter, double accelX, double accelY, double accelZ)
+    {
+        super(EntityType.WITHER_SKULL, shooter, accelX, accelY, accelZ, worldIn);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public WitherSkullEntity(World p_i1795_1_, double p_i1795_2_, double p_i1795_4_, double p_i1795_6_, double p_i1795_8_, double p_i1795_10_, double p_i1795_12_) {
-      super(EntityType.WITHER_SKULL, p_i1795_2_, p_i1795_4_, p_i1795_6_, p_i1795_8_, p_i1795_10_, p_i1795_12_, p_i1795_1_);
-   }
+    public WitherSkullEntity(World worldIn, double x, double y, double z, double accelX, double accelY, double accelZ)
+    {
+        super(EntityType.WITHER_SKULL, x, y, z, accelX, accelY, accelZ, worldIn);
+    }
 
-   protected float getInertia() {
-      return this.isDangerous() ? 0.73F : super.getInertia();
-   }
+    /**
+     * Return the motion factor for this projectile. The factor is multiplied by the original motion.
+     */
+    protected float getMotionFactor()
+    {
+        return this.isSkullInvulnerable() ? 0.73F : super.getMotionFactor();
+    }
 
-   public boolean isOnFire() {
-      return false;
-   }
+    /**
+     * Returns true if the entity is on fire. Used by render to add the fire effect on rendering.
+     */
+    public boolean isBurning()
+    {
+        return false;
+    }
 
-   public float getBlockExplosionResistance(Explosion p_180428_1_, IBlockReader p_180428_2_, BlockPos p_180428_3_, BlockState p_180428_4_, FluidState p_180428_5_, float p_180428_6_) {
-      return this.isDangerous() && WitherEntity.canDestroy(p_180428_4_) ? Math.min(0.8F, p_180428_6_) : p_180428_6_;
-   }
+    /**
+     * Explosion resistance of a block relative to this entity
+     */
+    public float getExplosionResistance(Explosion explosionIn, IBlockReader worldIn, BlockPos pos, BlockState blockStateIn, FluidState fluidState, float explosionPower)
+    {
+        return this.isSkullInvulnerable() && WitherEntity.canDestroyBlock(blockStateIn) ? Math.min(0.8F, explosionPower) : explosionPower;
+    }
 
-   protected void onHitEntity(EntityRayTraceResult p_213868_1_) {
-      super.onHitEntity(p_213868_1_);
-      if (!this.level.isClientSide) {
-         Entity entity = p_213868_1_.getEntity();
-         Entity entity1 = this.getOwner();
-         boolean flag;
-         if (entity1 instanceof LivingEntity) {
-            LivingEntity livingentity = (LivingEntity)entity1;
-            flag = entity.hurt(DamageSource.witherSkull(this, livingentity), 8.0F);
-            if (flag) {
-               if (entity.isAlive()) {
-                  this.doEnchantDamageEffects(livingentity, entity);
-               } else {
-                  livingentity.heal(5.0F);
-               }
+    /**
+     * Called when the arrow hits an entity
+     */
+    protected void onEntityHit(EntityRayTraceResult p_213868_1_)
+    {
+        super.onEntityHit(p_213868_1_);
+
+        if (!this.world.isRemote)
+        {
+            Entity entity = p_213868_1_.getEntity();
+            Entity entity1 = this.func_234616_v_();
+            boolean flag;
+
+            if (entity1 instanceof LivingEntity)
+            {
+                LivingEntity livingentity = (LivingEntity)entity1;
+                flag = entity.attackEntityFrom(DamageSource.func_233549_a_(this, livingentity), 8.0F);
+
+                if (flag)
+                {
+                    if (entity.isAlive())
+                    {
+                        this.applyEnchantments(livingentity, entity);
+                    }
+                    else
+                    {
+                        livingentity.heal(5.0F);
+                    }
+                }
             }
-         } else {
-            flag = entity.hurt(DamageSource.MAGIC, 5.0F);
-         }
-
-         if (flag && entity instanceof LivingEntity) {
-            int i = 0;
-            if (this.level.getDifficulty() == Difficulty.NORMAL) {
-               i = 10;
-            } else if (this.level.getDifficulty() == Difficulty.HARD) {
-               i = 40;
+            else
+            {
+                flag = entity.attackEntityFrom(DamageSource.MAGIC, 5.0F);
             }
 
-            if (i > 0) {
-               ((LivingEntity)entity).addEffect(new EffectInstance(Effects.WITHER, 20 * i, 1));
+            if (flag && entity instanceof LivingEntity)
+            {
+                int i = 0;
+
+                if (this.world.getDifficulty() == Difficulty.NORMAL)
+                {
+                    i = 10;
+                }
+                else if (this.world.getDifficulty() == Difficulty.HARD)
+                {
+                    i = 40;
+                }
+
+                if (i > 0)
+                {
+                    ((LivingEntity)entity).addPotionEffect(new EffectInstance(Effects.WITHER, 20 * i, 1));
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
+    protected void onImpact(RayTraceResult result)
+    {
+        super.onImpact(result);
 
-   protected void onHit(RayTraceResult p_70227_1_) {
-      super.onHit(p_70227_1_);
-      if (!this.level.isClientSide) {
-         Explosion.Mode explosion$mode = this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
-         this.level.explode(this, this.getX(), this.getY(), this.getZ(), 1.0F, false, explosion$mode);
-         this.remove();
-      }
+        if (!this.world.isRemote)
+        {
+            Explosion.Mode explosion$mode = this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
+            this.world.createExplosion(this, this.getPosX(), this.getPosY(), this.getPosZ(), 1.0F, false, explosion$mode);
+            this.remove();
+        }
+    }
 
-   }
+    /**
+     * Returns true if other Entities should be prevented from moving through this Entity.
+     */
+    public boolean canBeCollidedWith()
+    {
+        return false;
+    }
 
-   public boolean isPickable() {
-      return false;
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        return false;
+    }
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      return false;
-   }
+    protected void registerData()
+    {
+        this.dataManager.register(INVULNERABLE, false);
+    }
 
-   protected void defineSynchedData() {
-      this.entityData.define(DATA_DANGEROUS, false);
-   }
+    /**
+     * Return whether this skull comes from an invulnerable (aura) wither boss.
+     */
+    public boolean isSkullInvulnerable()
+    {
+        return this.dataManager.get(INVULNERABLE);
+    }
 
-   public boolean isDangerous() {
-      return this.entityData.get(DATA_DANGEROUS);
-   }
+    /**
+     * Set whether this skull comes from an invulnerable (aura) wither boss.
+     */
+    public void setSkullInvulnerable(boolean invulnerable)
+    {
+        this.dataManager.set(INVULNERABLE, invulnerable);
+    }
 
-   public void setDangerous(boolean p_82343_1_) {
-      this.entityData.set(DATA_DANGEROUS, p_82343_1_);
-   }
-
-   protected boolean shouldBurn() {
-      return false;
-   }
+    protected boolean isFireballFiery()
+    {
+        return false;
+    }
 }

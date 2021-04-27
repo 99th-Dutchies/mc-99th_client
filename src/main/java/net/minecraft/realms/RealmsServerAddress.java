@@ -1,29 +1,31 @@
 package net.minecraft.realms;
 
 import net.minecraft.client.multiplayer.ServerAddress;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class RealmsServerAddress {
-   private final String host;
-   private final int port;
+public class RealmsServerAddress
+{
+    private final String field_230727_a_;
+    private final int field_230728_b_;
 
-   protected RealmsServerAddress(String p_i1121_1_, int p_i1121_2_) {
-      this.host = p_i1121_1_;
-      this.port = p_i1121_2_;
-   }
+    protected RealmsServerAddress(String hostIn, int portIn)
+    {
+        this.field_230727_a_ = hostIn;
+        this.field_230728_b_ = portIn;
+    }
 
-   public String getHost() {
-      return this.host;
-   }
+    public String func_231412_a_()
+    {
+        return this.field_230727_a_;
+    }
 
-   public int getPort() {
-      return this.port;
-   }
+    public int func_231414_b_()
+    {
+        return this.field_230728_b_;
+    }
 
-   public static RealmsServerAddress parseString(String p_231413_0_) {
-      ServerAddress serveraddress = ServerAddress.parseString(p_231413_0_);
-      return new RealmsServerAddress(serveraddress.getHost(), serveraddress.getPort());
-   }
+    public static RealmsServerAddress func_231413_a_(String p_231413_0_)
+    {
+        ServerAddress serveraddress = ServerAddress.fromString(p_231413_0_);
+        return new RealmsServerAddress(serveraddress.getIP(), serveraddress.getPort());
+    }
 }

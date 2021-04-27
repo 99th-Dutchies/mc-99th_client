@@ -14,43 +14,57 @@ import net.minecraft.loot.conditions.ILootCondition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Smelt extends LootFunction {
-   private static final Logger LOGGER = LogManager.getLogger();
+public class Smelt extends LootFunction
+{
+    private static final Logger LOGGER = LogManager.getLogger();
 
-   private Smelt(ILootCondition[] p_i46619_1_) {
-      super(p_i46619_1_);
-   }
+    private Smelt(ILootCondition[] conditionsIn)
+    {
+        super(conditionsIn);
+    }
 
-   public LootFunctionType getType() {
-      return LootFunctionManager.FURNACE_SMELT;
-   }
+    public LootFunctionType getFunctionType()
+    {
+        return LootFunctionManager.FURNACE_SMELT;
+    }
 
-   public ItemStack run(ItemStack p_215859_1_, LootContext p_215859_2_) {
-      if (p_215859_1_.isEmpty()) {
-         return p_215859_1_;
-      } else {
-         Optional<FurnaceRecipe> optional = p_215859_2_.getLevel().getRecipeManager().getRecipeFor(IRecipeType.SMELTING, new Inventory(p_215859_1_), p_215859_2_.getLevel());
-         if (optional.isPresent()) {
-            ItemStack itemstack = optional.get().getResultItem();
-            if (!itemstack.isEmpty()) {
-               ItemStack itemstack1 = itemstack.copy();
-               itemstack1.setCount(p_215859_1_.getCount());
-               return itemstack1;
+    public ItemStack doApply(ItemStack stack, LootContext context)
+    {
+        if (stack.isEmpty())
+        {
+            return stack;
+        }
+        else
+        {
+            Optional<FurnaceRecipe> optional = context.getWorld().getRecipeManager().getRecipe(IRecipeType.SMELTING, new Inventory(stack), context.getWorld());
+
+            if (optional.isPresent())
+            {
+                ItemStack itemstack = optional.get().getRecipeOutput();
+
+                if (!itemstack.isEmpty())
+                {
+                    ItemStack itemstack1 = itemstack.copy();
+                    itemstack1.setCount(stack.getCount());
+                    return itemstack1;
+                }
             }
-         }
 
-         LOGGER.warn("Couldn't smelt {} because there is no smelting recipe", (Object)p_215859_1_);
-         return p_215859_1_;
-      }
-   }
+            LOGGER.warn("Couldn't smelt {} because there is no smelting recipe", (Object)stack);
+            return stack;
+        }
+    }
 
-   public static LootFunction.Builder<?> smelted() {
-      return simpleBuilder(Smelt::new);
-   }
+    public static LootFunction.Builder<?> func_215953_b()
+    {
+        return builder(Smelt::new);
+    }
 
-   public static class Serializer extends LootFunction.Serializer<Smelt> {
-      public Smelt deserialize(JsonObject p_186530_1_, JsonDeserializationContext p_186530_2_, ILootCondition[] p_186530_3_) {
-         return new Smelt(p_186530_3_);
-      }
-   }
+    public static class Serializer extends LootFunction.Serializer<Smelt>
+    {
+        public Smelt deserialize(JsonObject object, JsonDeserializationContext deserializationContext, ILootCondition[] conditionsIn)
+        {
+            return new Smelt(conditionsIn);
+        }
+    }
 }

@@ -43,191 +43,246 @@ import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.raid.Raid;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class VindicatorEntity extends AbstractIllagerEntity {
-   private static final Predicate<Difficulty> DOOR_BREAKING_PREDICATE = (p_213678_0_) -> {
-      return p_213678_0_ == Difficulty.NORMAL || p_213678_0_ == Difficulty.HARD;
-   };
-   private boolean isJohnny;
+public class VindicatorEntity extends AbstractIllagerEntity
+{
+    private static final Predicate<Difficulty> field_213681_b = (p_213678_0_) ->
+    {
+        return p_213678_0_ == Difficulty.NORMAL || p_213678_0_ == Difficulty.HARD;
+    };
+    private boolean johnny;
 
-   public VindicatorEntity(EntityType<? extends VindicatorEntity> p_i50189_1_, World p_i50189_2_) {
-      super(p_i50189_1_, p_i50189_2_);
-   }
+    public VindicatorEntity(EntityType <? extends VindicatorEntity > p_i50189_1_, World p_i50189_2_)
+    {
+        super(p_i50189_1_, p_i50189_2_);
+    }
 
-   protected void registerGoals() {
-      super.registerGoals();
-      this.goalSelector.addGoal(0, new SwimGoal(this));
-      this.goalSelector.addGoal(1, new VindicatorEntity.BreakDoorGoal(this));
-      this.goalSelector.addGoal(2, new AbstractIllagerEntity.RaidOpenDoorGoal(this));
-      this.goalSelector.addGoal(3, new AbstractRaiderEntity.FindTargetGoal(this, 10.0F));
-      this.goalSelector.addGoal(4, new VindicatorEntity.AttackGoal(this));
-      this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, AbstractRaiderEntity.class)).setAlertOthers());
-      this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));
-      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillagerEntity.class, true));
-      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolemEntity.class, true));
-      this.targetSelector.addGoal(4, new VindicatorEntity.JohnnyAttackGoal(this));
-      this.goalSelector.addGoal(8, new RandomWalkingGoal(this, 0.6D));
-      this.goalSelector.addGoal(9, new LookAtGoal(this, PlayerEntity.class, 3.0F, 1.0F));
-      this.goalSelector.addGoal(10, new LookAtGoal(this, MobEntity.class, 8.0F));
-   }
+    protected void registerGoals()
+    {
+        super.registerGoals();
+        this.goalSelector.addGoal(0, new SwimGoal(this));
+        this.goalSelector.addGoal(1, new VindicatorEntity.BreakDoorGoal(this));
+        this.goalSelector.addGoal(2, new AbstractIllagerEntity.RaidOpenDoorGoal(this));
+        this.goalSelector.addGoal(3, new AbstractRaiderEntity.FindTargetGoal(this, 10.0F));
+        this.goalSelector.addGoal(4, new VindicatorEntity.AttackGoal(this));
+        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, AbstractRaiderEntity.class)).setCallsForHelp());
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillagerEntity.class, true));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolemEntity.class, true));
+        this.targetSelector.addGoal(4, new VindicatorEntity.JohnnyAttackGoal(this));
+        this.goalSelector.addGoal(8, new RandomWalkingGoal(this, 0.6D));
+        this.goalSelector.addGoal(9, new LookAtGoal(this, PlayerEntity.class, 3.0F, 1.0F));
+        this.goalSelector.addGoal(10, new LookAtGoal(this, MobEntity.class, 8.0F));
+    }
 
-   protected void customServerAiStep() {
-      if (!this.isNoAi() && GroundPathHelper.hasGroundPathNavigation(this)) {
-         boolean flag = ((ServerWorld)this.level).isRaided(this.blockPosition());
-         ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(flag);
-      }
+    protected void updateAITasks()
+    {
+        if (!this.isAIDisabled() && GroundPathHelper.isGroundNavigator(this))
+        {
+            boolean flag = ((ServerWorld)this.world).hasRaid(this.getPosition());
+            ((GroundPathNavigator)this.getNavigator()).setBreakDoors(flag);
+        }
 
-      super.customServerAiStep();
-   }
+        super.updateAITasks();
+    }
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MonsterEntity.createMonsterAttributes().add(Attributes.MOVEMENT_SPEED, (double)0.35F).add(Attributes.FOLLOW_RANGE, 12.0D).add(Attributes.MAX_HEALTH, 24.0D).add(Attributes.ATTACK_DAMAGE, 5.0D);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234322_eI_()
+    {
+        return MonsterEntity.func_234295_eP_().createMutableAttribute(Attributes.MOVEMENT_SPEED, (double)0.35F).createMutableAttribute(Attributes.FOLLOW_RANGE, 12.0D).createMutableAttribute(Attributes.MAX_HEALTH, 24.0D).createMutableAttribute(Attributes.ATTACK_DAMAGE, 5.0D);
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      if (this.isJohnny) {
-         p_213281_1_.putBoolean("Johnny", true);
-      }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
 
-   }
+        if (this.johnny)
+        {
+            compound.putBoolean("Johnny", true);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public AbstractIllagerEntity.ArmPose getArmPose() {
-      if (this.isAggressive()) {
-         return AbstractIllagerEntity.ArmPose.ATTACKING;
-      } else {
-         return this.isCelebrating() ? AbstractIllagerEntity.ArmPose.CELEBRATING : AbstractIllagerEntity.ArmPose.CROSSED;
-      }
-   }
+    public AbstractIllagerEntity.ArmPose getArmPose()
+    {
+        if (this.isAggressive())
+        {
+            return AbstractIllagerEntity.ArmPose.ATTACKING;
+        }
+        else
+        {
+            return this.getCelebrating() ? AbstractIllagerEntity.ArmPose.CELEBRATING : AbstractIllagerEntity.ArmPose.CROSSED;
+        }
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      if (p_70037_1_.contains("Johnny", 99)) {
-         this.isJohnny = p_70037_1_.getBoolean("Johnny");
-      }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
 
-   }
+        if (compound.contains("Johnny", 99))
+        {
+            this.johnny = compound.getBoolean("Johnny");
+        }
+    }
 
-   public SoundEvent getCelebrateSound() {
-      return SoundEvents.VINDICATOR_CELEBRATE;
-   }
+    public SoundEvent getRaidLossSound()
+    {
+        return SoundEvents.ENTITY_VINDICATOR_CELEBRATE;
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      ILivingEntityData ilivingentitydata = super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-      ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
-      this.populateDefaultEquipmentSlots(p_213386_2_);
-      this.populateDefaultEquipmentEnchantments(p_213386_2_);
-      return ilivingentitydata;
-   }
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        ILivingEntityData ilivingentitydata = super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+        ((GroundPathNavigator)this.getNavigator()).setBreakDoors(true);
+        this.setEquipmentBasedOnDifficulty(difficultyIn);
+        this.setEnchantmentBasedOnDifficulty(difficultyIn);
+        return ilivingentitydata;
+    }
 
-   protected void populateDefaultEquipmentSlots(DifficultyInstance p_180481_1_) {
-      if (this.getCurrentRaid() == null) {
-         this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.IRON_AXE));
-      }
+    /**
+     * Gives armor or weapon for entity based on given DifficultyInstance
+     */
+    protected void setEquipmentBasedOnDifficulty(DifficultyInstance difficulty)
+    {
+        if (this.getRaid() == null)
+        {
+            this.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.IRON_AXE));
+        }
+    }
 
-   }
+    /**
+     * Returns whether this Entity is on the same team as the given Entity.
+     */
+    public boolean isOnSameTeam(Entity entityIn)
+    {
+        if (super.isOnSameTeam(entityIn))
+        {
+            return true;
+        }
+        else if (entityIn instanceof LivingEntity && ((LivingEntity)entityIn).getCreatureAttribute() == CreatureAttribute.ILLAGER)
+        {
+            return this.getTeam() == null && entityIn.getTeam() == null;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public boolean isAlliedTo(Entity p_184191_1_) {
-      if (super.isAlliedTo(p_184191_1_)) {
-         return true;
-      } else if (p_184191_1_ instanceof LivingEntity && ((LivingEntity)p_184191_1_).getMobType() == CreatureAttribute.ILLAGER) {
-         return this.getTeam() == null && p_184191_1_.getTeam() == null;
-      } else {
-         return false;
-      }
-   }
+    public void setCustomName(@Nullable ITextComponent name)
+    {
+        super.setCustomName(name);
 
-   public void setCustomName(@Nullable ITextComponent p_200203_1_) {
-      super.setCustomName(p_200203_1_);
-      if (!this.isJohnny && p_200203_1_ != null && p_200203_1_.getString().equals("Johnny")) {
-         this.isJohnny = true;
-      }
+        if (!this.johnny && name != null && name.getString().equals("Johnny"))
+        {
+            this.johnny = true;
+        }
+    }
 
-   }
+    protected SoundEvent getAmbientSound()
+    {
+        return SoundEvents.ENTITY_VINDICATOR_AMBIENT;
+    }
 
-   protected SoundEvent getAmbientSound() {
-      return SoundEvents.VINDICATOR_AMBIENT;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_VINDICATOR_DEATH;
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.VINDICATOR_DEATH;
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_VINDICATOR_HURT;
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.VINDICATOR_HURT;
-   }
+    public void applyWaveBonus(int wave, boolean p_213660_2_)
+    {
+        ItemStack itemstack = new ItemStack(Items.IRON_AXE);
+        Raid raid = this.getRaid();
+        int i = 1;
 
-   public void applyRaidBuffs(int p_213660_1_, boolean p_213660_2_) {
-      ItemStack itemstack = new ItemStack(Items.IRON_AXE);
-      Raid raid = this.getCurrentRaid();
-      int i = 1;
-      if (p_213660_1_ > raid.getNumGroups(Difficulty.NORMAL)) {
-         i = 2;
-      }
+        if (wave > raid.getWaves(Difficulty.NORMAL))
+        {
+            i = 2;
+        }
 
-      boolean flag = this.random.nextFloat() <= raid.getEnchantOdds();
-      if (flag) {
-         Map<Enchantment, Integer> map = Maps.newHashMap();
-         map.put(Enchantments.SHARPNESS, i);
-         EnchantmentHelper.setEnchantments(map, itemstack);
-      }
+        boolean flag = this.rand.nextFloat() <= raid.getEnchantOdds();
 
-      this.setItemSlot(EquipmentSlotType.MAINHAND, itemstack);
-   }
+        if (flag)
+        {
+            Map<Enchantment, Integer> map = Maps.newHashMap();
+            map.put(Enchantments.SHARPNESS, i);
+            EnchantmentHelper.setEnchantments(map, itemstack);
+        }
 
-   class AttackGoal extends MeleeAttackGoal {
-      public AttackGoal(VindicatorEntity p_i50577_2_) {
-         super(p_i50577_2_, 1.0D, false);
-      }
+        this.setItemStackToSlot(EquipmentSlotType.MAINHAND, itemstack);
+    }
 
-      protected double getAttackReachSqr(LivingEntity p_179512_1_) {
-         if (this.mob.getVehicle() instanceof RavagerEntity) {
-            float f = this.mob.getVehicle().getBbWidth() - 0.1F;
-            return (double)(f * 2.0F * f * 2.0F + p_179512_1_.getBbWidth());
-         } else {
-            return super.getAttackReachSqr(p_179512_1_);
-         }
-      }
-   }
+    class AttackGoal extends MeleeAttackGoal
+    {
+        public AttackGoal(VindicatorEntity p_i50577_2_)
+        {
+            super(p_i50577_2_, 1.0D, false);
+        }
 
-   static class BreakDoorGoal extends net.minecraft.entity.ai.goal.BreakDoorGoal {
-      public BreakDoorGoal(MobEntity p_i50578_1_) {
-         super(p_i50578_1_, 6, VindicatorEntity.DOOR_BREAKING_PREDICATE);
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      }
+        protected double getAttackReachSqr(LivingEntity attackTarget)
+        {
+            if (this.attacker.getRidingEntity() instanceof RavagerEntity)
+            {
+                float f = this.attacker.getRidingEntity().getWidth() - 0.1F;
+                return (double)(f * 2.0F * f * 2.0F + attackTarget.getWidth());
+            }
+            else
+            {
+                return super.getAttackReachSqr(attackTarget);
+            }
+        }
+    }
 
-      public boolean canContinueToUse() {
-         VindicatorEntity vindicatorentity = (VindicatorEntity)this.mob;
-         return vindicatorentity.hasActiveRaid() && super.canContinueToUse();
-      }
+    static class BreakDoorGoal extends net.minecraft.entity.ai.goal.BreakDoorGoal
+    {
+        public BreakDoorGoal(MobEntity p_i50578_1_)
+        {
+            super(p_i50578_1_, 6, VindicatorEntity.field_213681_b);
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
 
-      public boolean canUse() {
-         VindicatorEntity vindicatorentity = (VindicatorEntity)this.mob;
-         return vindicatorentity.hasActiveRaid() && vindicatorentity.random.nextInt(10) == 0 && super.canUse();
-      }
+        public boolean shouldContinueExecuting()
+        {
+            VindicatorEntity vindicatorentity = (VindicatorEntity)this.entity;
+            return vindicatorentity.isRaidActive() && super.shouldContinueExecuting();
+        }
 
-      public void start() {
-         super.start();
-         this.mob.setNoActionTime(0);
-      }
-   }
+        public boolean shouldExecute()
+        {
+            VindicatorEntity vindicatorentity = (VindicatorEntity)this.entity;
+            return vindicatorentity.isRaidActive() && vindicatorentity.rand.nextInt(10) == 0 && super.shouldExecute();
+        }
 
-   static class JohnnyAttackGoal extends NearestAttackableTargetGoal<LivingEntity> {
-      public JohnnyAttackGoal(VindicatorEntity p_i47345_1_) {
-         super(p_i47345_1_, LivingEntity.class, 0, true, true, LivingEntity::attackable);
-      }
+        public void startExecuting()
+        {
+            super.startExecuting();
+            this.entity.setIdleTime(0);
+        }
+    }
 
-      public boolean canUse() {
-         return ((VindicatorEntity)this.mob).isJohnny && super.canUse();
-      }
+    static class JohnnyAttackGoal extends NearestAttackableTargetGoal<LivingEntity>
+    {
+        public JohnnyAttackGoal(VindicatorEntity vindicator)
+        {
+            super(vindicator, LivingEntity.class, 0, true, true, LivingEntity::attackable);
+        }
 
-      public void start() {
-         super.start();
-         this.mob.setNoActionTime(0);
-      }
-   }
+        public boolean shouldExecute()
+        {
+            return ((VindicatorEntity)this.goalOwner).johnny && super.shouldExecute();
+        }
+
+        public void startExecuting()
+        {
+            super.startExecuting();
+            this.goalOwner.setIdleTime(0);
+        }
+    }
 }

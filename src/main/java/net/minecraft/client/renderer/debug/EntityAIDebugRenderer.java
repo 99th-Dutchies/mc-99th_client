@@ -9,63 +9,69 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class EntityAIDebugRenderer implements DebugRenderer.IDebugRenderer {
-   private final Minecraft minecraft;
-   private final Map<Integer, List<EntityAIDebugRenderer.Entry>> goalSelectors = Maps.newHashMap();
+public class EntityAIDebugRenderer implements DebugRenderer.IDebugRenderer
+{
+    private final Minecraft client;
+    private final Map<Integer, List<EntityAIDebugRenderer.Entry>> field_217685_b = Maps.newHashMap();
 
-   public void clear() {
-      this.goalSelectors.clear();
-   }
+    public void clear()
+    {
+        this.field_217685_b.clear();
+    }
 
-   public void addGoalSelector(int p_217682_1_, List<EntityAIDebugRenderer.Entry> p_217682_2_) {
-      this.goalSelectors.put(p_217682_1_, p_217682_2_);
-   }
+    public void func_217682_a(int p_217682_1_, List<EntityAIDebugRenderer.Entry> p_217682_2_)
+    {
+        this.field_217685_b.put(p_217682_1_, p_217682_2_);
+    }
 
-   public EntityAIDebugRenderer(Minecraft p_i50977_1_) {
-      this.minecraft = p_i50977_1_;
-   }
+    public EntityAIDebugRenderer(Minecraft client)
+    {
+        this.client = client;
+    }
 
-   public void render(MatrixStack p_225619_1_, IRenderTypeBuffer p_225619_2_, double p_225619_3_, double p_225619_5_, double p_225619_7_) {
-      ActiveRenderInfo activerenderinfo = this.minecraft.gameRenderer.getMainCamera();
-      RenderSystem.pushMatrix();
-      RenderSystem.enableBlend();
-      RenderSystem.defaultBlendFunc();
-      RenderSystem.disableTexture();
-      BlockPos blockpos = new BlockPos(activerenderinfo.getPosition().x, 0.0D, activerenderinfo.getPosition().z);
-      this.goalSelectors.forEach((p_217683_1_, p_217683_2_) -> {
-         for(int i = 0; i < p_217683_2_.size(); ++i) {
-            EntityAIDebugRenderer.Entry entityaidebugrenderer$entry = p_217683_2_.get(i);
-            if (blockpos.closerThan(entityaidebugrenderer$entry.pos, 160.0D)) {
-               double d0 = (double)entityaidebugrenderer$entry.pos.getX() + 0.5D;
-               double d1 = (double)entityaidebugrenderer$entry.pos.getY() + 2.0D + (double)i * 0.25D;
-               double d2 = (double)entityaidebugrenderer$entry.pos.getZ() + 0.5D;
-               int j = entityaidebugrenderer$entry.isRunning ? -16711936 : -3355444;
-               DebugRenderer.renderFloatingText(entityaidebugrenderer$entry.name, d0, d1, d2, j);
+    public void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, double camX, double camY, double camZ)
+    {
+        ActiveRenderInfo activerenderinfo = this.client.gameRenderer.getActiveRenderInfo();
+        RenderSystem.pushMatrix();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableTexture();
+        BlockPos blockpos = new BlockPos(activerenderinfo.getProjectedView().x, 0.0D, activerenderinfo.getProjectedView().z);
+        this.field_217685_b.forEach((p_217683_1_, p_217683_2_) ->
+        {
+            for (int i = 0; i < p_217683_2_.size(); ++i)
+            {
+                EntityAIDebugRenderer.Entry entityaidebugrenderer$entry = p_217683_2_.get(i);
+
+                if (blockpos.withinDistance(entityaidebugrenderer$entry.field_217723_a, 160.0D))
+                {
+                    double d0 = (double)entityaidebugrenderer$entry.field_217723_a.getX() + 0.5D;
+                    double d1 = (double)entityaidebugrenderer$entry.field_217723_a.getY() + 2.0D + (double)i * 0.25D;
+                    double d2 = (double)entityaidebugrenderer$entry.field_217723_a.getZ() + 0.5D;
+                    int j = entityaidebugrenderer$entry.field_217726_d ? -16711936 : -3355444;
+                    DebugRenderer.renderText(entityaidebugrenderer$entry.field_217725_c, d0, d1, d2, j);
+                }
             }
-         }
+        });
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableTexture();
+        RenderSystem.popMatrix();
+    }
 
-      });
-      RenderSystem.enableDepthTest();
-      RenderSystem.enableTexture();
-      RenderSystem.popMatrix();
-   }
+    public static class Entry
+    {
+        public final BlockPos field_217723_a;
+        public final int field_217724_b;
+        public final String field_217725_c;
+        public final boolean field_217726_d;
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Entry {
-      public final BlockPos pos;
-      public final int priority;
-      public final String name;
-      public final boolean isRunning;
-
-      public Entry(BlockPos p_i50834_1_, int p_i50834_2_, String p_i50834_3_, boolean p_i50834_4_) {
-         this.pos = p_i50834_1_;
-         this.priority = p_i50834_2_;
-         this.name = p_i50834_3_;
-         this.isRunning = p_i50834_4_;
-      }
-   }
+        public Entry(BlockPos p_i50834_1_, int p_i50834_2_, String p_i50834_3_, boolean p_i50834_4_)
+        {
+            this.field_217723_a = p_i50834_1_;
+            this.field_217724_b = p_i50834_2_;
+            this.field_217725_c = p_i50834_3_;
+            this.field_217726_d = p_i50834_4_;
+        }
+    }
 }

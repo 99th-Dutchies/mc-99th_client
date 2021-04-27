@@ -5,25 +5,40 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 
-public class SCloseWindowPacket implements IPacket<IClientPlayNetHandler> {
-   private int containerId;
+public class SCloseWindowPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int windowId;
 
-   public SCloseWindowPacket() {
-   }
+    public SCloseWindowPacket()
+    {
+    }
 
-   public SCloseWindowPacket(int p_i46957_1_) {
-      this.containerId = p_i46957_1_;
-   }
+    public SCloseWindowPacket(int windowIdIn)
+    {
+        this.windowId = windowIdIn;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleContainerClose(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleCloseWindow(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.containerId = p_148837_1_.readUnsignedByte();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.windowId = buf.readUnsignedByte();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.containerId);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.windowId);
+    }
 }

@@ -5,44 +5,68 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.AbstractFurnaceTileEntity;
 
-public class FurnaceResultSlot extends Slot {
-   private final PlayerEntity player;
-   private int removeCount;
+public class FurnaceResultSlot extends Slot
+{
+    private final PlayerEntity player;
+    private int removeCount;
 
-   public FurnaceResultSlot(PlayerEntity p_i45793_1_, IInventory p_i45793_2_, int p_i45793_3_, int p_i45793_4_, int p_i45793_5_) {
-      super(p_i45793_2_, p_i45793_3_, p_i45793_4_, p_i45793_5_);
-      this.player = p_i45793_1_;
-   }
+    public FurnaceResultSlot(PlayerEntity player, IInventory inventoryIn, int slotIndex, int xPosition, int yPosition)
+    {
+        super(inventoryIn, slotIndex, xPosition, yPosition);
+        this.player = player;
+    }
 
-   public boolean mayPlace(ItemStack p_75214_1_) {
-      return false;
-   }
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
+    public boolean isItemValid(ItemStack stack)
+    {
+        return false;
+    }
 
-   public ItemStack remove(int p_75209_1_) {
-      if (this.hasItem()) {
-         this.removeCount += Math.min(p_75209_1_, this.getItem().getCount());
-      }
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new
+     * stack.
+     */
+    public ItemStack decrStackSize(int amount)
+    {
+        if (this.getHasStack())
+        {
+            this.removeCount += Math.min(amount, this.getStack().getCount());
+        }
 
-      return super.remove(p_75209_1_);
-   }
+        return super.decrStackSize(amount);
+    }
 
-   public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
-      this.checkTakeAchievements(p_190901_2_);
-      super.onTake(p_190901_1_, p_190901_2_);
-      return p_190901_2_;
-   }
+    public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+    {
+        this.onCrafting(stack);
+        super.onTake(thePlayer, stack);
+        return stack;
+    }
 
-   protected void onQuickCraft(ItemStack p_75210_1_, int p_75210_2_) {
-      this.removeCount += p_75210_2_;
-      this.checkTakeAchievements(p_75210_1_);
-   }
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood. Typically increases an
+     * internal count then calls onCrafting(item).
+     */
+    protected void onCrafting(ItemStack stack, int amount)
+    {
+        this.removeCount += amount;
+        this.onCrafting(stack);
+    }
 
-   protected void checkTakeAchievements(ItemStack p_75208_1_) {
-      p_75208_1_.onCraftedBy(this.player.level, this.player, this.removeCount);
-      if (!this.player.level.isClientSide && this.container instanceof AbstractFurnaceTileEntity) {
-         ((AbstractFurnaceTileEntity)this.container).awardUsedRecipesAndPopExperience(this.player);
-      }
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void onCrafting(ItemStack stack)
+    {
+        stack.onCrafting(this.player.world, this.player, this.removeCount);
 
-      this.removeCount = 0;
-   }
+        if (!this.player.world.isRemote && this.inventory instanceof AbstractFurnaceTileEntity)
+        {
+            ((AbstractFurnaceTileEntity)this.inventory).unlockRecipes(this.player);
+        }
+
+        this.removeCount = 0;
+    }
 }

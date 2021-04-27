@@ -10,41 +10,56 @@ import net.minecraft.potion.Potions;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
-public class ExperienceBottleEntity extends ProjectileItemEntity {
-   public ExperienceBottleEntity(EntityType<? extends ExperienceBottleEntity> p_i50152_1_, World p_i50152_2_) {
-      super(p_i50152_1_, p_i50152_2_);
-   }
+public class ExperienceBottleEntity extends ProjectileItemEntity
+{
+    public ExperienceBottleEntity(EntityType <? extends ExperienceBottleEntity > p_i50152_1_, World world)
+    {
+        super(p_i50152_1_, world);
+    }
 
-   public ExperienceBottleEntity(World p_i1786_1_, LivingEntity p_i1786_2_) {
-      super(EntityType.EXPERIENCE_BOTTLE, p_i1786_2_, p_i1786_1_);
-   }
+    public ExperienceBottleEntity(World worldIn, LivingEntity throwerIn)
+    {
+        super(EntityType.EXPERIENCE_BOTTLE, throwerIn, worldIn);
+    }
 
-   public ExperienceBottleEntity(World p_i1787_1_, double p_i1787_2_, double p_i1787_4_, double p_i1787_6_) {
-      super(EntityType.EXPERIENCE_BOTTLE, p_i1787_2_, p_i1787_4_, p_i1787_6_, p_i1787_1_);
-   }
+    public ExperienceBottleEntity(World worldIn, double x, double y, double z)
+    {
+        super(EntityType.EXPERIENCE_BOTTLE, x, y, z, worldIn);
+    }
 
-   protected Item getDefaultItem() {
-      return Items.EXPERIENCE_BOTTLE;
-   }
+    protected Item getDefaultItem()
+    {
+        return Items.EXPERIENCE_BOTTLE;
+    }
 
-   protected float getGravity() {
-      return 0.07F;
-   }
+    /**
+     * Gets the amount of gravity to apply to the thrown entity with each tick.
+     */
+    protected float getGravityVelocity()
+    {
+        return 0.07F;
+    }
 
-   protected void onHit(RayTraceResult p_70227_1_) {
-      super.onHit(p_70227_1_);
-      if (!this.level.isClientSide) {
-         this.level.levelEvent(2002, this.blockPosition(), PotionUtils.getColor(Potions.WATER));
-         int i = 3 + this.level.random.nextInt(5) + this.level.random.nextInt(5);
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
+    protected void onImpact(RayTraceResult result)
+    {
+        super.onImpact(result);
 
-         while(i > 0) {
-            int j = ExperienceOrbEntity.getExperienceValue(i);
-            i -= j;
-            this.level.addFreshEntity(new ExperienceOrbEntity(this.level, this.getX(), this.getY(), this.getZ(), j));
-         }
+        if (!this.world.isRemote)
+        {
+            this.world.playEvent(2002, this.getPosition(), PotionUtils.getPotionColor(Potions.WATER));
+            int i = 3 + this.world.rand.nextInt(5) + this.world.rand.nextInt(5);
 
-         this.remove();
-      }
+            while (i > 0)
+            {
+                int j = ExperienceOrbEntity.getXPSplit(i);
+                i -= j;
+                this.world.addEntity(new ExperienceOrbEntity(this.world, this.getPosX(), this.getPosY(), this.getPosZ(), j));
+            }
 
-   }
+            this.remove();
+        }
+    }
 }

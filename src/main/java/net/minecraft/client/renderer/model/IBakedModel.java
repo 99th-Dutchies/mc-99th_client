@@ -6,24 +6,26 @@ import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.extensions.IForgeBakedModel;
 
-@OnlyIn(Dist.CLIENT)
-public interface IBakedModel {
-   List<BakedQuad> getQuads(@Nullable BlockState p_200117_1_, @Nullable Direction p_200117_2_, Random p_200117_3_);
+public interface IBakedModel extends IForgeBakedModel
+{
+    List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand);
 
-   boolean useAmbientOcclusion();
+    boolean isAmbientOcclusion();
 
-   boolean isGui3d();
+    boolean isGui3d();
 
-   boolean usesBlockLight();
+    boolean isSideLit();
 
-   boolean isCustomRenderer();
+    boolean isBuiltInRenderer();
 
-   TextureAtlasSprite getParticleIcon();
+    TextureAtlasSprite getParticleTexture();
 
-   ItemCameraTransforms getTransforms();
+default ItemCameraTransforms getItemCameraTransforms()
+    {
+        return ItemCameraTransforms.DEFAULT;
+    }
 
-   ItemOverrideList getOverrides();
+    ItemOverrideList getOverrides();
 }

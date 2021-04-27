@@ -7,14 +7,15 @@ import net.minecraft.network.login.server.SEnableCompressionPacket;
 import net.minecraft.network.login.server.SEncryptionRequestPacket;
 import net.minecraft.network.login.server.SLoginSuccessPacket;
 
-public interface IClientLoginNetHandler extends INetHandler {
-   void handleHello(SEncryptionRequestPacket p_147389_1_);
+public interface IClientLoginNetHandler extends INetHandler
+{
+    void handleEncryptionRequest(SEncryptionRequestPacket packetIn);
 
-   void handleGameProfile(SLoginSuccessPacket p_147390_1_);
+    void handleLoginSuccess(SLoginSuccessPacket packetIn);
 
-   void handleDisconnect(SDisconnectLoginPacket p_147388_1_);
+    void handleDisconnect(SDisconnectLoginPacket packetIn);
 
-   void handleCompression(SEnableCompressionPacket p_180464_1_);
+    void handleEnableCompression(SEnableCompressionPacket packetIn);
 
-   void handleCustomQuery(SCustomPayloadLoginPacket p_209521_1_);
+    void handleCustomPayloadLogin(SCustomPayloadLoginPacket packetIn);
 }

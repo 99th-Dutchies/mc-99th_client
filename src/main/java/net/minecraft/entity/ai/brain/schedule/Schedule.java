@@ -8,38 +8,46 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import net.minecraft.util.registry.Registry;
 
-public class Schedule {
-   public static final Schedule EMPTY = register("empty").changeActivityAt(0, Activity.IDLE).build();
-   public static final Schedule SIMPLE = register("simple").changeActivityAt(5000, Activity.WORK).changeActivityAt(11000, Activity.REST).build();
-   public static final Schedule VILLAGER_BABY = register("villager_baby").changeActivityAt(10, Activity.IDLE).changeActivityAt(3000, Activity.PLAY).changeActivityAt(6000, Activity.IDLE).changeActivityAt(10000, Activity.PLAY).changeActivityAt(12000, Activity.REST).build();
-   public static final Schedule VILLAGER_DEFAULT = register("villager_default").changeActivityAt(10, Activity.IDLE).changeActivityAt(2000, Activity.WORK).changeActivityAt(9000, Activity.MEET).changeActivityAt(11000, Activity.IDLE).changeActivityAt(12000, Activity.REST).build();
-   private final Map<Activity, ScheduleDuties> timelines = Maps.newHashMap();
+public class Schedule
+{
+    public static final Schedule EMPTY = register("empty").add(0, Activity.IDLE).build();
+    public static final Schedule SIMPLE = register("simple").add(5000, Activity.WORK).add(11000, Activity.REST).build();
+    public static final Schedule VILLAGER_BABY = register("villager_baby").add(10, Activity.IDLE).add(3000, Activity.PLAY).add(6000, Activity.IDLE).add(10000, Activity.PLAY).add(12000, Activity.REST).build();
+    public static final Schedule VILLAGER_DEFAULT = register("villager_default").add(10, Activity.IDLE).add(2000, Activity.WORK).add(9000, Activity.MEET).add(11000, Activity.IDLE).add(12000, Activity.REST).build();
+    private final Map<Activity, ScheduleDuties> activityToDutiesMap = Maps.newHashMap();
 
-   protected static ScheduleBuilder register(String p_221380_0_) {
-      Schedule schedule = Registry.register(Registry.SCHEDULE, p_221380_0_, new Schedule());
-      return new ScheduleBuilder(schedule);
-   }
+    protected static ScheduleBuilder register(String key)
+    {
+        Schedule schedule = Registry.register(Registry.SCHEDULE, key, new Schedule());
+        return new ScheduleBuilder(schedule);
+    }
 
-   protected void ensureTimelineExistsFor(Activity p_221379_1_) {
-      if (!this.timelines.containsKey(p_221379_1_)) {
-         this.timelines.put(p_221379_1_, new ScheduleDuties());
-      }
+    protected void createDutiesFor(Activity activityIn)
+    {
+        if (!this.activityToDutiesMap.containsKey(activityIn))
+        {
+            this.activityToDutiesMap.put(activityIn, new ScheduleDuties());
+        }
+    }
 
-   }
+    protected ScheduleDuties getDutiesFor(Activity activityIn)
+    {
+        return this.activityToDutiesMap.get(activityIn);
+    }
 
-   protected ScheduleDuties getTimelineFor(Activity p_221382_1_) {
-      return this.timelines.get(p_221382_1_);
-   }
+    protected List<ScheduleDuties> getAllDutiesExcept(Activity activityIn)
+    {
+        return this.activityToDutiesMap.entrySet().stream().filter((entry) ->
+        {
+            return entry.getKey() != activityIn;
+        }).map(Entry::getValue).collect(Collectors.toList());
+    }
 
-   protected List<ScheduleDuties> getAllTimelinesExceptFor(Activity p_221381_1_) {
-      return this.timelines.entrySet().stream().filter((p_221378_1_) -> {
-         return p_221378_1_.getKey() != p_221381_1_;
-      }).map(Entry::getValue).collect(Collectors.toList());
-   }
-
-   public Activity getActivityAt(int p_221377_1_) {
-      return this.timelines.entrySet().stream().max(Comparator.comparingDouble((p_221376_1_) -> {
-         return (double)p_221376_1_.getValue().getValueAt(p_221377_1_);
-      })).map(Entry::getKey).orElse(Activity.IDLE);
-   }
+    public Activity getScheduledActivity(int dayTime)
+    {
+        return this.activityToDutiesMap.entrySet().stream().max(Comparator.comparingDouble((entry) ->
+        {
+            return (double)entry.getValue().updateActiveDutyTime(dayTime);
+        })).map(Entry::getKey).orElse(Activity.IDLE);
+    }
 }

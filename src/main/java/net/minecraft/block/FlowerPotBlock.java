@@ -18,72 +18,102 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class FlowerPotBlock extends Block {
-   private static final Map<Block, Block> POTTED_BY_CONTENT = Maps.newHashMap();
-   protected static final VoxelShape SHAPE = Block.box(5.0D, 0.0D, 5.0D, 11.0D, 6.0D, 11.0D);
-   private final Block content;
+public class FlowerPotBlock extends Block
+{
+    private static final Map<Block, Block> POTTED_CONTENT = Maps.newHashMap();
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(5.0D, 0.0D, 5.0D, 11.0D, 6.0D, 11.0D);
+    private final Block flower;
 
-   public FlowerPotBlock(Block p_i48395_1_, AbstractBlock.Properties p_i48395_2_) {
-      super(p_i48395_2_);
-      this.content = p_i48395_1_;
-      POTTED_BY_CONTENT.put(p_i48395_1_, this);
-   }
+    public FlowerPotBlock(Block block, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.flower = block;
+        POTTED_CONTENT.put(block, this);
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.MODEL;
-   }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.MODEL;
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      ItemStack itemstack = p_225533_4_.getItemInHand(p_225533_5_);
-      Item item = itemstack.getItem();
-      Block block = item instanceof BlockItem ? POTTED_BY_CONTENT.getOrDefault(((BlockItem)item).getBlock(), Blocks.AIR) : Blocks.AIR;
-      boolean flag = block == Blocks.AIR;
-      boolean flag1 = this.content == Blocks.AIR;
-      if (flag != flag1) {
-         if (flag1) {
-            p_225533_2_.setBlock(p_225533_3_, block.defaultBlockState(), 3);
-            p_225533_4_.awardStat(Stats.POT_FLOWER);
-            if (!p_225533_4_.abilities.instabuild) {
-               itemstack.shrink(1);
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        ItemStack itemstack = player.getHeldItem(handIn);
+        Item item = itemstack.getItem();
+        Block block = item instanceof BlockItem ? POTTED_CONTENT.getOrDefault(((BlockItem)item).getBlock(), Blocks.AIR) : Blocks.AIR;
+        boolean flag = block == Blocks.AIR;
+        boolean flag1 = this.flower == Blocks.AIR;
+
+        if (flag != flag1)
+        {
+            if (flag1)
+            {
+                worldIn.setBlockState(pos, block.getDefaultState(), 3);
+                player.addStat(Stats.POT_FLOWER);
+
+                if (!player.abilities.isCreativeMode)
+                {
+                    itemstack.shrink(1);
+                }
             }
-         } else {
-            ItemStack itemstack1 = new ItemStack(this.content);
-            if (itemstack.isEmpty()) {
-               p_225533_4_.setItemInHand(p_225533_5_, itemstack1);
-            } else if (!p_225533_4_.addItem(itemstack1)) {
-               p_225533_4_.drop(itemstack1, false);
+            else
+            {
+                ItemStack itemstack1 = new ItemStack(this.flower);
+
+                if (itemstack.isEmpty())
+                {
+                    player.setHeldItem(handIn, itemstack1);
+                }
+                else if (!player.addItemStackToInventory(itemstack1))
+                {
+                    player.dropItem(itemstack1, false);
+                }
+
+                worldIn.setBlockState(pos, Blocks.FLOWER_POT.getDefaultState(), 3);
             }
 
-            p_225533_2_.setBlock(p_225533_3_, Blocks.FLOWER_POT.defaultBlockState(), 3);
-         }
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+        else
+        {
+            return ActionResultType.CONSUME;
+        }
+    }
 
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      } else {
-         return ActionResultType.CONSUME;
-      }
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        return this.flower == Blocks.AIR ? super.getItem(worldIn, pos, state) : new ItemStack(this.flower);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      return this.content == Blocks.AIR ? super.getCloneItemStack(p_185473_1_, p_185473_2_, p_185473_3_) : new ItemStack(this.content);
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        return facing == Direction.DOWN && !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      return p_196271_2_ == Direction.DOWN && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_) ? Blocks.AIR.defaultBlockState() : super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    public Block getFlower()
+    {
+        return this.flower;
+    }
 
-   public Block getContent() {
-      return this.content;
-   }
-
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

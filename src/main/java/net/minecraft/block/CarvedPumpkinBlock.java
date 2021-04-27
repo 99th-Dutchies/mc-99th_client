@@ -22,126 +22,156 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-public class CarvedPumpkinBlock extends HorizontalBlock implements IArmorVanishable {
-   public static final DirectionProperty FACING = HorizontalBlock.FACING;
-   @Nullable
-   private BlockPattern snowGolemBase;
-   @Nullable
-   private BlockPattern snowGolemFull;
-   @Nullable
-   private BlockPattern ironGolemBase;
-   @Nullable
-   private BlockPattern ironGolemFull;
-   private static final Predicate<BlockState> PUMPKINS_PREDICATE = (p_210301_0_) -> {
-      return p_210301_0_ != null && (p_210301_0_.is(Blocks.CARVED_PUMPKIN) || p_210301_0_.is(Blocks.JACK_O_LANTERN));
-   };
+public class CarvedPumpkinBlock extends HorizontalBlock implements IArmorVanishable
+{
+    public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
+    @Nullable
+    private BlockPattern snowmanBasePattern;
+    @Nullable
+    private BlockPattern snowmanPattern;
+    @Nullable
+    private BlockPattern golemBasePattern;
+    @Nullable
+    private BlockPattern golemPattern;
+    private static final Predicate<BlockState> IS_PUMPKIN = (state) ->
+    {
+        return state != null && (state.isIn(Blocks.CARVED_PUMPKIN) || state.isIn(Blocks.JACK_O_LANTERN));
+    };
 
-   protected CarvedPumpkinBlock(AbstractBlock.Properties p_i48432_1_) {
-      super(p_i48432_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
-   }
+    protected CarvedPumpkinBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(FACING, Direction.NORTH));
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      if (!p_220082_4_.is(p_220082_1_.getBlock())) {
-         this.trySpawnGolem(p_220082_2_, p_220082_3_);
-      }
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        if (!oldState.isIn(state.getBlock()))
+        {
+            this.trySpawnGolem(worldIn, pos);
+        }
+    }
 
-   public boolean canSpawnGolem(IWorldReader p_196354_1_, BlockPos p_196354_2_) {
-      return this.getOrCreateSnowGolemBase().find(p_196354_1_, p_196354_2_) != null || this.getOrCreateIronGolemBase().find(p_196354_1_, p_196354_2_) != null;
-   }
+    public boolean canDispenserPlace(IWorldReader reader, BlockPos pos)
+    {
+        return this.getSnowmanBasePattern().match(reader, pos) != null || this.getGolemBasePattern().match(reader, pos) != null;
+    }
 
-   private void trySpawnGolem(World p_196358_1_, BlockPos p_196358_2_) {
-      BlockPattern.PatternHelper blockpattern$patternhelper = this.getOrCreateSnowGolemFull().find(p_196358_1_, p_196358_2_);
-      if (blockpattern$patternhelper != null) {
-         for(int i = 0; i < this.getOrCreateSnowGolemFull().getHeight(); ++i) {
-            CachedBlockInfo cachedblockinfo = blockpattern$patternhelper.getBlock(0, i, 0);
-            p_196358_1_.setBlock(cachedblockinfo.getPos(), Blocks.AIR.defaultBlockState(), 2);
-            p_196358_1_.levelEvent(2001, cachedblockinfo.getPos(), Block.getId(cachedblockinfo.getState()));
-         }
+    private void trySpawnGolem(World world, BlockPos pos)
+    {
+        BlockPattern.PatternHelper blockpattern$patternhelper = this.getSnowmanPattern().match(world, pos);
 
-         SnowGolemEntity snowgolementity = EntityType.SNOW_GOLEM.create(p_196358_1_);
-         BlockPos blockpos1 = blockpattern$patternhelper.getBlock(0, 2, 0).getPos();
-         snowgolementity.moveTo((double)blockpos1.getX() + 0.5D, (double)blockpos1.getY() + 0.05D, (double)blockpos1.getZ() + 0.5D, 0.0F, 0.0F);
-         p_196358_1_.addFreshEntity(snowgolementity);
-
-         for(ServerPlayerEntity serverplayerentity : p_196358_1_.getEntitiesOfClass(ServerPlayerEntity.class, snowgolementity.getBoundingBox().inflate(5.0D))) {
-            CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayerentity, snowgolementity);
-         }
-
-         for(int l = 0; l < this.getOrCreateSnowGolemFull().getHeight(); ++l) {
-            CachedBlockInfo cachedblockinfo3 = blockpattern$patternhelper.getBlock(0, l, 0);
-            p_196358_1_.blockUpdated(cachedblockinfo3.getPos(), Blocks.AIR);
-         }
-      } else {
-         blockpattern$patternhelper = this.getOrCreateIronGolemFull().find(p_196358_1_, p_196358_2_);
-         if (blockpattern$patternhelper != null) {
-            for(int j = 0; j < this.getOrCreateIronGolemFull().getWidth(); ++j) {
-               for(int k = 0; k < this.getOrCreateIronGolemFull().getHeight(); ++k) {
-                  CachedBlockInfo cachedblockinfo2 = blockpattern$patternhelper.getBlock(j, k, 0);
-                  p_196358_1_.setBlock(cachedblockinfo2.getPos(), Blocks.AIR.defaultBlockState(), 2);
-                  p_196358_1_.levelEvent(2001, cachedblockinfo2.getPos(), Block.getId(cachedblockinfo2.getState()));
-               }
+        if (blockpattern$patternhelper != null)
+        {
+            for (int i = 0; i < this.getSnowmanPattern().getThumbLength(); ++i)
+            {
+                CachedBlockInfo cachedblockinfo = blockpattern$patternhelper.translateOffset(0, i, 0);
+                world.setBlockState(cachedblockinfo.getPos(), Blocks.AIR.getDefaultState(), 2);
+                world.playEvent(2001, cachedblockinfo.getPos(), Block.getStateId(cachedblockinfo.getBlockState()));
             }
 
-            BlockPos blockpos = blockpattern$patternhelper.getBlock(1, 2, 0).getPos();
-            IronGolemEntity irongolementity = EntityType.IRON_GOLEM.create(p_196358_1_);
-            irongolementity.setPlayerCreated(true);
-            irongolementity.moveTo((double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.05D, (double)blockpos.getZ() + 0.5D, 0.0F, 0.0F);
-            p_196358_1_.addFreshEntity(irongolementity);
+            SnowGolemEntity snowgolementity = EntityType.SNOW_GOLEM.create(world);
+            BlockPos blockpos1 = blockpattern$patternhelper.translateOffset(0, 2, 0).getPos();
+            snowgolementity.setLocationAndAngles((double)blockpos1.getX() + 0.5D, (double)blockpos1.getY() + 0.05D, (double)blockpos1.getZ() + 0.5D, 0.0F, 0.0F);
+            world.addEntity(snowgolementity);
 
-            for(ServerPlayerEntity serverplayerentity1 : p_196358_1_.getEntitiesOfClass(ServerPlayerEntity.class, irongolementity.getBoundingBox().inflate(5.0D))) {
-               CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayerentity1, irongolementity);
+            for (ServerPlayerEntity serverplayerentity : world.getEntitiesWithinAABB(ServerPlayerEntity.class, snowgolementity.getBoundingBox().grow(5.0D)))
+            {
+                CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayerentity, snowgolementity);
             }
 
-            for(int i1 = 0; i1 < this.getOrCreateIronGolemFull().getWidth(); ++i1) {
-               for(int j1 = 0; j1 < this.getOrCreateIronGolemFull().getHeight(); ++j1) {
-                  CachedBlockInfo cachedblockinfo1 = blockpattern$patternhelper.getBlock(i1, j1, 0);
-                  p_196358_1_.blockUpdated(cachedblockinfo1.getPos(), Blocks.AIR);
-               }
+            for (int l = 0; l < this.getSnowmanPattern().getThumbLength(); ++l)
+            {
+                CachedBlockInfo cachedblockinfo3 = blockpattern$patternhelper.translateOffset(0, l, 0);
+                world.func_230547_a_(cachedblockinfo3.getPos(), Blocks.AIR);
             }
-         }
-      }
+        }
+        else
+        {
+            blockpattern$patternhelper = this.getGolemPattern().match(world, pos);
 
-   }
+            if (blockpattern$patternhelper != null)
+            {
+                for (int j = 0; j < this.getGolemPattern().getPalmLength(); ++j)
+                {
+                    for (int k = 0; k < this.getGolemPattern().getThumbLength(); ++k)
+                    {
+                        CachedBlockInfo cachedblockinfo2 = blockpattern$patternhelper.translateOffset(j, k, 0);
+                        world.setBlockState(cachedblockinfo2.getPos(), Blocks.AIR.getDefaultState(), 2);
+                        world.playEvent(2001, cachedblockinfo2.getPos(), Block.getStateId(cachedblockinfo2.getBlockState()));
+                    }
+                }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      return this.defaultBlockState().setValue(FACING, p_196258_1_.getHorizontalDirection().getOpposite());
-   }
+                BlockPos blockpos = blockpattern$patternhelper.translateOffset(1, 2, 0).getPos();
+                IronGolemEntity irongolementity = EntityType.IRON_GOLEM.create(world);
+                irongolementity.setPlayerCreated(true);
+                irongolementity.setLocationAndAngles((double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.05D, (double)blockpos.getZ() + 0.5D, 0.0F, 0.0F);
+                world.addEntity(irongolementity);
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING);
-   }
+                for (ServerPlayerEntity serverplayerentity1 : world.getEntitiesWithinAABB(ServerPlayerEntity.class, irongolementity.getBoundingBox().grow(5.0D)))
+                {
+                    CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayerentity1, irongolementity);
+                }
 
-   private BlockPattern getOrCreateSnowGolemBase() {
-      if (this.snowGolemBase == null) {
-         this.snowGolemBase = BlockPatternBuilder.start().aisle(" ", "#", "#").where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.SNOW_BLOCK))).build();
-      }
+                for (int i1 = 0; i1 < this.getGolemPattern().getPalmLength(); ++i1)
+                {
+                    for (int j1 = 0; j1 < this.getGolemPattern().getThumbLength(); ++j1)
+                    {
+                        CachedBlockInfo cachedblockinfo1 = blockpattern$patternhelper.translateOffset(i1, j1, 0);
+                        world.func_230547_a_(cachedblockinfo1.getPos(), Blocks.AIR);
+                    }
+                }
+            }
+        }
+    }
 
-      return this.snowGolemBase;
-   }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        return this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing().getOpposite());
+    }
 
-   private BlockPattern getOrCreateSnowGolemFull() {
-      if (this.snowGolemFull == null) {
-         this.snowGolemFull = BlockPatternBuilder.start().aisle("^", "#", "#").where('^', CachedBlockInfo.hasState(PUMPKINS_PREDICATE)).where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.SNOW_BLOCK))).build();
-      }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(FACING);
+    }
 
-      return this.snowGolemFull;
-   }
+    private BlockPattern getSnowmanBasePattern()
+    {
+        if (this.snowmanBasePattern == null)
+        {
+            this.snowmanBasePattern = BlockPatternBuilder.start().aisle(" ", "#", "#").where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.SNOW_BLOCK))).build();
+        }
 
-   private BlockPattern getOrCreateIronGolemBase() {
-      if (this.ironGolemBase == null) {
-         this.ironGolemBase = BlockPatternBuilder.start().aisle("~ ~", "###", "~#~").where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.IRON_BLOCK))).where('~', CachedBlockInfo.hasState(BlockMaterialMatcher.forMaterial(Material.AIR))).build();
-      }
+        return this.snowmanBasePattern;
+    }
 
-      return this.ironGolemBase;
-   }
+    private BlockPattern getSnowmanPattern()
+    {
+        if (this.snowmanPattern == null)
+        {
+            this.snowmanPattern = BlockPatternBuilder.start().aisle("^", "#", "#").where('^', CachedBlockInfo.hasState(IS_PUMPKIN)).where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.SNOW_BLOCK))).build();
+        }
 
-   private BlockPattern getOrCreateIronGolemFull() {
-      if (this.ironGolemFull == null) {
-         this.ironGolemFull = BlockPatternBuilder.start().aisle("~^~", "###", "~#~").where('^', CachedBlockInfo.hasState(PUMPKINS_PREDICATE)).where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.IRON_BLOCK))).where('~', CachedBlockInfo.hasState(BlockMaterialMatcher.forMaterial(Material.AIR))).build();
-      }
+        return this.snowmanPattern;
+    }
 
-      return this.ironGolemFull;
-   }
+    private BlockPattern getGolemBasePattern()
+    {
+        if (this.golemBasePattern == null)
+        {
+            this.golemBasePattern = BlockPatternBuilder.start().aisle("~ ~", "###", "~#~").where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.IRON_BLOCK))).where('~', CachedBlockInfo.hasState(BlockMaterialMatcher.forMaterial(Material.AIR))).build();
+        }
+
+        return this.golemBasePattern;
+    }
+
+    private BlockPattern getGolemPattern()
+    {
+        if (this.golemPattern == null)
+        {
+            this.golemPattern = BlockPatternBuilder.start().aisle("~^~", "###", "~#~").where('^', CachedBlockInfo.hasState(IS_PUMPKIN)).where('#', CachedBlockInfo.hasState(BlockStateMatcher.forBlock(Blocks.IRON_BLOCK))).where('~', CachedBlockInfo.hasState(BlockMaterialMatcher.forMaterial(Material.AIR))).build();
+        }
+
+        return this.golemPattern;
+    }
 }

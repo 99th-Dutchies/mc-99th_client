@@ -6,22 +6,31 @@ import net.minecraft.client.renderer.entity.IEntityRenderer;
 import net.minecraft.client.renderer.entity.model.CatModel;
 import net.minecraft.entity.passive.CatEntity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
+import net.optifine.CustomColors;
 
-@OnlyIn(Dist.CLIENT)
-public class CatCollarLayer extends LayerRenderer<CatEntity, CatModel<CatEntity>> {
-   private static final ResourceLocation CAT_COLLAR_LOCATION = new ResourceLocation("textures/entity/cat/cat_collar.png");
-   private final CatModel<CatEntity> catModel = new CatModel<>(0.01F);
+public class CatCollarLayer extends LayerRenderer<CatEntity, CatModel<CatEntity>>
+{
+    private static final ResourceLocation CAT_COLLAR = new ResourceLocation("textures/entity/cat/cat_collar.png");
+    private final CatModel<CatEntity> model = new CatModel<>(0.01F);
 
-   public CatCollarLayer(IEntityRenderer<CatEntity, CatModel<CatEntity>> p_i50948_1_) {
-      super(p_i50948_1_);
-   }
+    public CatCollarLayer(IEntityRenderer<CatEntity, CatModel<CatEntity>> p_i50948_1_)
+    {
+        super(p_i50948_1_);
+    }
 
-   public void render(MatrixStack p_225628_1_, IRenderTypeBuffer p_225628_2_, int p_225628_3_, CatEntity p_225628_4_, float p_225628_5_, float p_225628_6_, float p_225628_7_, float p_225628_8_, float p_225628_9_, float p_225628_10_) {
-      if (p_225628_4_.isTame()) {
-         float[] afloat = p_225628_4_.getCollarColor().getTextureDiffuseColors();
-         coloredCutoutModelCopyLayerRender(this.getParentModel(), this.catModel, CAT_COLLAR_LOCATION, p_225628_1_, p_225628_2_, p_225628_3_, p_225628_4_, p_225628_5_, p_225628_6_, p_225628_8_, p_225628_9_, p_225628_10_, p_225628_7_, afloat[0], afloat[1], afloat[2]);
-      }
-   }
+    public void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, CatEntity entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        if (entitylivingbaseIn.isTamed())
+        {
+            float[] afloat = entitylivingbaseIn.getCollarColor().getColorComponentValues();
+
+            if (Config.isCustomColors())
+            {
+                afloat = CustomColors.getWolfCollarColors(entitylivingbaseIn.getCollarColor(), afloat);
+            }
+
+            renderCopyCutoutModel(this.getEntityModel(), this.model, CAT_COLLAR, matrixStackIn, bufferIn, packedLightIn, entitylivingbaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, partialTicks, afloat[0], afloat[1], afloat[2]);
+        }
+    }
 }

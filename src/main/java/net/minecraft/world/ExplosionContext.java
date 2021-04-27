@@ -5,12 +5,15 @@ import net.minecraft.block.BlockState;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 
-public class ExplosionContext {
-   public Optional<Float> getBlockExplosionResistance(Explosion p_230312_1_, IBlockReader p_230312_2_, BlockPos p_230312_3_, BlockState p_230312_4_, FluidState p_230312_5_) {
-      return p_230312_4_.isAir() && p_230312_5_.isEmpty() ? Optional.empty() : Optional.of(Math.max(p_230312_4_.getBlock().getExplosionResistance(), p_230312_5_.getExplosionResistance()));
-   }
+public class ExplosionContext
+{
+    public Optional<Float> getExplosionResistance(Explosion explosion, IBlockReader reader, BlockPos pos, BlockState state, FluidState fluid)
+    {
+        return state.isAir() && fluid.isEmpty() ? Optional.empty() : Optional.of(Math.max(state.getBlock().getExplosionResistance(), fluid.getExplosionResistance()));
+    }
 
-   public boolean shouldBlockExplode(Explosion p_230311_1_, IBlockReader p_230311_2_, BlockPos p_230311_3_, BlockState p_230311_4_, float p_230311_5_) {
-      return true;
-   }
+    public boolean canExplosionDestroyBlock(Explosion explosion, IBlockReader reader, BlockPos pos, BlockState state, float power)
+    {
+        return true;
+    }
 }

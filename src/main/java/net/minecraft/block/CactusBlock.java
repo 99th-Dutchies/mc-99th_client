@@ -19,83 +19,115 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class CactusBlock extends Block {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_15;
-   protected static final VoxelShape COLLISION_SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 15.0D, 15.0D);
-   protected static final VoxelShape OUTLINE_SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 16.0D, 15.0D);
+public class CactusBlock extends Block
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_15;
+    protected static final VoxelShape COLLISION_SHAPE = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 15.0D, 15.0D);
+    protected static final VoxelShape OUTLINE_SHAPE = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 16.0D, 15.0D);
 
-   protected CactusBlock(AbstractBlock.Properties p_i48435_1_) {
-      super(p_i48435_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
-   }
+    protected CactusBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(AGE, Integer.valueOf(0)));
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!p_225534_1_.canSurvive(p_225534_2_, p_225534_3_)) {
-         p_225534_2_.destroyBlock(p_225534_3_, true);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!state.isValidPosition(worldIn, pos))
+        {
+            worldIn.destroyBlock(pos, true);
+        }
+    }
 
-   }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        BlockPos blockpos = pos.up();
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      BlockPos blockpos = p_225542_3_.above();
-      if (p_225542_2_.isEmptyBlock(blockpos)) {
-         int i;
-         for(i = 1; p_225542_2_.getBlockState(p_225542_3_.below(i)).is(this); ++i) {
-         }
+        if (worldIn.isAirBlock(blockpos))
+        {
+            int i;
 
-         if (i < 3) {
-            int j = p_225542_1_.getValue(AGE);
-            if (j == 15) {
-               p_225542_2_.setBlockAndUpdate(blockpos, this.defaultBlockState());
-               BlockState blockstate = p_225542_1_.setValue(AGE, Integer.valueOf(0));
-               p_225542_2_.setBlock(p_225542_3_, blockstate, 4);
-               blockstate.neighborChanged(p_225542_2_, blockpos, this, p_225542_3_, false);
-            } else {
-               p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(AGE, Integer.valueOf(j + 1)), 4);
+            for (i = 1; worldIn.getBlockState(pos.down(i)).isIn(this); ++i)
+            {
             }
 
-         }
-      }
-   }
+            if (i < 3)
+            {
+                int j = state.get(AGE);
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      return COLLISION_SHAPE;
-   }
+                if (j == 15)
+                {
+                    worldIn.setBlockState(blockpos, this.getDefaultState());
+                    BlockState blockstate = state.with(AGE, Integer.valueOf(0));
+                    worldIn.setBlockState(pos, blockstate, 4);
+                    blockstate.neighborChanged(worldIn, blockpos, this, pos, false);
+                }
+                else
+                {
+                    worldIn.setBlockState(pos, state.with(AGE, Integer.valueOf(j + 1)), 4);
+                }
+            }
+        }
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return OUTLINE_SHAPE;
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return COLLISION_SHAPE;
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (!p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 1);
-      }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return OUTLINE_SHAPE;
+    }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (!stateIn.isValidPosition(worldIn, currentPos))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+        }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      for(Direction direction : Direction.Plane.HORIZONTAL) {
-         BlockState blockstate = p_196260_2_.getBlockState(p_196260_3_.relative(direction));
-         Material material = blockstate.getMaterial();
-         if (material.isSolid() || p_196260_2_.getFluidState(p_196260_3_.relative(direction)).is(FluidTags.LAVA)) {
-            return false;
-         }
-      }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-      BlockState blockstate1 = p_196260_2_.getBlockState(p_196260_3_.below());
-      return (blockstate1.is(Blocks.CACTUS) || blockstate1.is(Blocks.SAND) || blockstate1.is(Blocks.RED_SAND)) && !p_196260_2_.getBlockState(p_196260_3_.above()).getMaterial().isLiquid();
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        for (Direction direction : Direction.Plane.HORIZONTAL)
+        {
+            BlockState blockstate = worldIn.getBlockState(pos.offset(direction));
+            Material material = blockstate.getMaterial();
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      p_196262_4_.hurt(DamageSource.CACTUS, 1.0F);
-   }
+            if (material.isSolid() || worldIn.getFluidState(pos.offset(direction)).isTagged(FluidTags.LAVA))
+            {
+                return false;
+            }
+        }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
+        BlockState blockstate1 = worldIn.getBlockState(pos.down());
+        return (blockstate1.isIn(Blocks.CACTUS) || blockstate1.isIn(Blocks.SAND) || blockstate1.isIn(Blocks.RED_SAND)) && !worldIn.getBlockState(pos.up()).getMaterial().isLiquid();
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        entityIn.attackEntityFrom(DamageSource.CACTUS, 1.0F);
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
+
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

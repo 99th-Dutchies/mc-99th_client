@@ -10,107 +10,133 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class EnchantingTableTileEntity extends TileEntity implements INameable, ITickableTileEntity {
-   public int time;
-   public float flip;
-   public float oFlip;
-   public float flipT;
-   public float flipA;
-   public float open;
-   public float oOpen;
-   public float rot;
-   public float oRot;
-   public float tRot;
-   private static final Random RANDOM = new Random();
-   private ITextComponent name;
+public class EnchantingTableTileEntity extends TileEntity implements INameable, ITickableTileEntity
+{
+    public int ticks;
+    public float field_195523_f;
+    public float field_195524_g;
+    public float field_195525_h;
+    public float field_195526_i;
+    public float nextPageTurningSpeed;
+    public float pageTurningSpeed;
+    public float nextPageAngle;
+    public float pageAngle;
+    public float field_195531_n;
+    private static final Random random = new Random();
+    private ITextComponent customname;
 
-   public EnchantingTableTileEntity() {
-      super(TileEntityType.ENCHANTING_TABLE);
-   }
+    public EnchantingTableTileEntity()
+    {
+        super(TileEntityType.ENCHANTING_TABLE);
+    }
 
-   public CompoundNBT save(CompoundNBT p_189515_1_) {
-      super.save(p_189515_1_);
-      if (this.hasCustomName()) {
-         p_189515_1_.putString("CustomName", ITextComponent.Serializer.toJson(this.name));
-      }
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        super.write(compound);
 
-      return p_189515_1_;
-   }
+        if (this.hasCustomName())
+        {
+            compound.putString("CustomName", ITextComponent.Serializer.toJson(this.customname));
+        }
 
-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
-      super.load(p_230337_1_, p_230337_2_);
-      if (p_230337_2_.contains("CustomName", 8)) {
-         this.name = ITextComponent.Serializer.fromJson(p_230337_2_.getString("CustomName"));
-      }
+        return compound;
+    }
 
-   }
+    public void read(BlockState state, CompoundNBT nbt)
+    {
+        super.read(state, nbt);
 
-   public void tick() {
-      this.oOpen = this.open;
-      this.oRot = this.rot;
-      PlayerEntity playerentity = this.level.getNearestPlayer((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double)this.worldPosition.getZ() + 0.5D, 3.0D, false);
-      if (playerentity != null) {
-         double d0 = playerentity.getX() - ((double)this.worldPosition.getX() + 0.5D);
-         double d1 = playerentity.getZ() - ((double)this.worldPosition.getZ() + 0.5D);
-         this.tRot = (float)MathHelper.atan2(d1, d0);
-         this.open += 0.1F;
-         if (this.open < 0.5F || RANDOM.nextInt(40) == 0) {
-            float f1 = this.flipT;
+        if (nbt.contains("CustomName", 8))
+        {
+            this.customname = ITextComponent.Serializer.getComponentFromJson(nbt.getString("CustomName"));
+        }
+    }
 
-            do {
-               this.flipT += (float)(RANDOM.nextInt(4) - RANDOM.nextInt(4));
-            } while(f1 == this.flipT);
-         }
-      } else {
-         this.tRot += 0.02F;
-         this.open -= 0.1F;
-      }
+    public void tick()
+    {
+        this.pageTurningSpeed = this.nextPageTurningSpeed;
+        this.pageAngle = this.nextPageAngle;
+        PlayerEntity playerentity = this.world.getClosestPlayer((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D, 3.0D, false);
 
-      while(this.rot >= (float)Math.PI) {
-         this.rot -= ((float)Math.PI * 2F);
-      }
+        if (playerentity != null)
+        {
+            double d0 = playerentity.getPosX() - ((double)this.pos.getX() + 0.5D);
+            double d1 = playerentity.getPosZ() - ((double)this.pos.getZ() + 0.5D);
+            this.field_195531_n = (float)MathHelper.atan2(d1, d0);
+            this.nextPageTurningSpeed += 0.1F;
 
-      while(this.rot < -(float)Math.PI) {
-         this.rot += ((float)Math.PI * 2F);
-      }
+            if (this.nextPageTurningSpeed < 0.5F || random.nextInt(40) == 0)
+            {
+                float f1 = this.field_195525_h;
 
-      while(this.tRot >= (float)Math.PI) {
-         this.tRot -= ((float)Math.PI * 2F);
-      }
+                do
+                {
+                    this.field_195525_h += (float)(random.nextInt(4) - random.nextInt(4));
+                }
+                while (f1 == this.field_195525_h);
+            }
+        }
+        else
+        {
+            this.field_195531_n += 0.02F;
+            this.nextPageTurningSpeed -= 0.1F;
+        }
 
-      while(this.tRot < -(float)Math.PI) {
-         this.tRot += ((float)Math.PI * 2F);
-      }
+        while (this.nextPageAngle >= (float)Math.PI)
+        {
+            this.nextPageAngle -= ((float)Math.PI * 2F);
+        }
 
-      float f2;
-      for(f2 = this.tRot - this.rot; f2 >= (float)Math.PI; f2 -= ((float)Math.PI * 2F)) {
-      }
+        while (this.nextPageAngle < -(float)Math.PI)
+        {
+            this.nextPageAngle += ((float)Math.PI * 2F);
+        }
 
-      while(f2 < -(float)Math.PI) {
-         f2 += ((float)Math.PI * 2F);
-      }
+        while (this.field_195531_n >= (float)Math.PI)
+        {
+            this.field_195531_n -= ((float)Math.PI * 2F);
+        }
 
-      this.rot += f2 * 0.4F;
-      this.open = MathHelper.clamp(this.open, 0.0F, 1.0F);
-      ++this.time;
-      this.oFlip = this.flip;
-      float f = (this.flipT - this.flip) * 0.4F;
-      float f3 = 0.2F;
-      f = MathHelper.clamp(f, -0.2F, 0.2F);
-      this.flipA += (f - this.flipA) * 0.9F;
-      this.flip += this.flipA;
-   }
+        while (this.field_195531_n < -(float)Math.PI)
+        {
+            this.field_195531_n += ((float)Math.PI * 2F);
+        }
 
-   public ITextComponent getName() {
-      return (ITextComponent)(this.name != null ? this.name : new TranslationTextComponent("container.enchant"));
-   }
+        float f2;
 
-   public void setCustomName(@Nullable ITextComponent p_200229_1_) {
-      this.name = p_200229_1_;
-   }
+        for (f2 = this.field_195531_n - this.nextPageAngle; f2 >= (float)Math.PI; f2 -= ((float)Math.PI * 2F))
+        {
+        }
 
-   @Nullable
-   public ITextComponent getCustomName() {
-      return this.name;
-   }
+        while (f2 < -(float)Math.PI)
+        {
+            f2 += ((float)Math.PI * 2F);
+        }
+
+        this.nextPageAngle += f2 * 0.4F;
+        this.nextPageTurningSpeed = MathHelper.clamp(this.nextPageTurningSpeed, 0.0F, 1.0F);
+        ++this.ticks;
+        this.field_195524_g = this.field_195523_f;
+        float f = (this.field_195525_h - this.field_195523_f) * 0.4F;
+        float f3 = 0.2F;
+        f = MathHelper.clamp(f, -0.2F, 0.2F);
+        this.field_195526_i += (f - this.field_195526_i) * 0.9F;
+        this.field_195523_f += this.field_195526_i;
+    }
+
+    public ITextComponent getName()
+    {
+        return (ITextComponent)(this.customname != null ? this.customname : new TranslationTextComponent("container.enchant"));
+    }
+
+    public void setCustomName(@Nullable ITextComponent name)
+    {
+        this.customname = name;
+    }
+
+    @Nullable
+    public ITextComponent getCustomName()
+    {
+        return this.customname;
+    }
 }

@@ -8,41 +8,58 @@ import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.GameRules;
 
-public class ResetAngerGoal<T extends MobEntity & IAngerable> extends Goal {
-   private final T mob;
-   private final boolean alertOthersOfSameType;
-   private int lastHurtByPlayerTimestamp;
+public class ResetAngerGoal<T extends MobEntity & IAngerable> extends Goal
+{
+    private final T field_241383_a_;
+    private final boolean field_241384_b_;
+    private int revengeTimer;
 
-   public ResetAngerGoal(T p_i241234_1_, boolean p_i241234_2_) {
-      this.mob = p_i241234_1_;
-      this.alertOthersOfSameType = p_i241234_2_;
-   }
+    public ResetAngerGoal(T p_i241234_1_, boolean p_i241234_2_)
+    {
+        this.field_241383_a_ = p_i241234_1_;
+        this.field_241384_b_ = p_i241234_2_;
+    }
 
-   public boolean canUse() {
-      return this.mob.level.getGameRules().getBoolean(GameRules.RULE_UNIVERSAL_ANGER) && this.wasHurtByPlayer();
-   }
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        return this.field_241383_a_.world.getGameRules().getBoolean(GameRules.UNIVERSAL_ANGER) && this.shouldGetRevengeOnPlayer();
+    }
 
-   private boolean wasHurtByPlayer() {
-      return this.mob.getLastHurtByMob() != null && this.mob.getLastHurtByMob().getType() == EntityType.PLAYER && this.mob.getLastHurtByMobTimestamp() > this.lastHurtByPlayerTimestamp;
-   }
+    private boolean shouldGetRevengeOnPlayer()
+    {
+        return this.field_241383_a_.getRevengeTarget() != null && this.field_241383_a_.getRevengeTarget().getType() == EntityType.PLAYER && this.field_241383_a_.getRevengeTimer() > this.revengeTimer;
+    }
 
-   public void start() {
-      this.lastHurtByPlayerTimestamp = this.mob.getLastHurtByMobTimestamp();
-      this.mob.forgetCurrentTargetAndRefreshUniversalAnger();
-      if (this.alertOthersOfSameType) {
-         this.getNearbyMobsOfSameType().stream().filter((p_241387_1_) -> {
-            return p_241387_1_ != this.mob;
-         }).map((p_241386_0_) -> {
-            return (IAngerable)p_241386_0_;
-         }).forEach(IAngerable::forgetCurrentTargetAndRefreshUniversalAnger);
-      }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.revengeTimer = this.field_241383_a_.getRevengeTimer();
+        this.field_241383_a_.func_241355_J__();
 
-      super.start();
-   }
+        if (this.field_241384_b_)
+        {
+            this.func_241389_h_().stream().filter((mob) ->
+            {
+                return mob != this.field_241383_a_;
+            }).map((mob) ->
+            {
+                return (IAngerable)mob;
+            }).forEach(IAngerable::func_241355_J__);
+        }
 
-   private List<MobEntity> getNearbyMobsOfSameType() {
-      double d0 = this.mob.getAttributeValue(Attributes.FOLLOW_RANGE);
-      AxisAlignedBB axisalignedbb = AxisAlignedBB.unitCubeFromLowerCorner(this.mob.position()).inflate(d0, 10.0D, d0);
-      return this.mob.level.getLoadedEntitiesOfClass(this.mob.getClass(), axisalignedbb);
-   }
+        super.startExecuting();
+    }
+
+    private List<MobEntity> func_241389_h_()
+    {
+        double d0 = this.field_241383_a_.getAttributeValue(Attributes.FOLLOW_RANGE);
+        AxisAlignedBB axisalignedbb = AxisAlignedBB.fromVector(this.field_241383_a_.getPositionVec()).grow(d0, 10.0D, d0);
+        return this.field_241383_a_.world.getLoadedEntitiesWithinAABB(this.field_241383_a_.getClass(), axisalignedbb);
+    }
 }

@@ -20,70 +20,109 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.jigsaw.JigsawOrientation;
 import net.minecraft.world.gen.feature.template.Template;
 
-public class JigsawBlock extends Block implements ITileEntityProvider {
-   public static final EnumProperty<JigsawOrientation> ORIENTATION = BlockStateProperties.ORIENTATION;
+public class JigsawBlock extends Block implements ITileEntityProvider
+{
+    public static final EnumProperty<JigsawOrientation> ORIENTATION = BlockStateProperties.ORIENTATION;
 
-   protected JigsawBlock(AbstractBlock.Properties p_i49981_1_) {
-      super(p_i49981_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(ORIENTATION, JigsawOrientation.NORTH_UP));
-   }
+    protected JigsawBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(ORIENTATION, JigsawOrientation.NORTH_UP));
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(ORIENTATION);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(ORIENTATION);
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      return p_185499_1_.setValue(ORIENTATION, p_185499_2_.rotation().rotate(p_185499_1_.getValue(ORIENTATION)));
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        return state.with(ORIENTATION, rot.getOrientation().func_235531_a_(state.get(ORIENTATION)));
+    }
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      return p_185471_1_.setValue(ORIENTATION, p_185471_2_.rotation().rotate(p_185471_1_.getValue(ORIENTATION)));
-   }
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        return state.with(ORIENTATION, mirrorIn.getOrientation().func_235531_a_(state.get(ORIENTATION)));
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      Direction direction = p_196258_1_.getClickedFace();
-      Direction direction1;
-      if (direction.getAxis() == Direction.Axis.Y) {
-         direction1 = p_196258_1_.getHorizontalDirection().getOpposite();
-      } else {
-         direction1 = Direction.UP;
-      }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        Direction direction = context.getFace();
+        Direction direction1;
 
-      return this.defaultBlockState().setValue(ORIENTATION, JigsawOrientation.fromFrontAndTop(direction, direction1));
-   }
+        if (direction.getAxis() == Direction.Axis.Y)
+        {
+            direction1 = context.getPlacementHorizontalFacing().getOpposite();
+        }
+        else
+        {
+            direction1 = Direction.UP;
+        }
 
-   @Nullable
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new JigsawTileEntity();
-   }
+        return this.getDefaultState().with(ORIENTATION, JigsawOrientation.func_239641_a_(direction, direction1));
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      TileEntity tileentity = p_225533_2_.getBlockEntity(p_225533_3_);
-      if (tileentity instanceof JigsawTileEntity && p_225533_4_.canUseGameMasterBlocks()) {
-         p_225533_4_.openJigsawBlock((JigsawTileEntity)tileentity);
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      } else {
-         return ActionResultType.PASS;
-      }
-   }
+    @Nullable
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new JigsawTileEntity();
+    }
 
-   public static boolean canAttach(Template.BlockInfo p_220171_0_, Template.BlockInfo p_220171_1_) {
-      Direction direction = getFrontFacing(p_220171_0_.state);
-      Direction direction1 = getFrontFacing(p_220171_1_.state);
-      Direction direction2 = getTopFacing(p_220171_0_.state);
-      Direction direction3 = getTopFacing(p_220171_1_.state);
-      JigsawTileEntity.OrientationType jigsawtileentity$orientationtype = JigsawTileEntity.OrientationType.byName(p_220171_0_.nbt.getString("joint")).orElseGet(() -> {
-         return direction.getAxis().isHorizontal() ? JigsawTileEntity.OrientationType.ALIGNED : JigsawTileEntity.OrientationType.ROLLABLE;
-      });
-      boolean flag = jigsawtileentity$orientationtype == JigsawTileEntity.OrientationType.ROLLABLE;
-      return direction == direction1.getOpposite() && (flag || direction2 == direction3) && p_220171_0_.nbt.getString("target").equals(p_220171_1_.nbt.getString("name"));
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(pos);
 
-   public static Direction getFrontFacing(BlockState p_235508_0_) {
-      return p_235508_0_.getValue(ORIENTATION).front();
-   }
+        if (tileentity instanceof JigsawTileEntity && player.canUseCommandBlock())
+        {
+            player.openJigsaw((JigsawTileEntity)tileentity);
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+        else
+        {
+            return ActionResultType.PASS;
+        }
+    }
 
-   public static Direction getTopFacing(BlockState p_235509_0_) {
-      return p_235509_0_.getValue(ORIENTATION).top();
-   }
+    public static boolean hasJigsawMatch(Template.BlockInfo info, Template.BlockInfo info2)
+    {
+        Direction direction = getConnectingDirection(info.state);
+        Direction direction1 = getConnectingDirection(info2.state);
+        Direction direction2 = getJigsawAlignmentDirection(info.state);
+        Direction direction3 = getJigsawAlignmentDirection(info2.state);
+        JigsawTileEntity.OrientationType jigsawtileentity$orientationtype = JigsawTileEntity.OrientationType.func_235673_a_(info.nbt.getString("joint")).orElseGet(() ->
+        {
+            return direction.getAxis().isHorizontal() ? JigsawTileEntity.OrientationType.ALIGNED : JigsawTileEntity.OrientationType.ROLLABLE;
+        });
+        boolean flag = jigsawtileentity$orientationtype == JigsawTileEntity.OrientationType.ROLLABLE;
+        return direction == direction1.getOpposite() && (flag || direction2 == direction3) && info.nbt.getString("target").equals(info2.nbt.getString("name"));
+    }
+
+    /**
+     * This represents the face that the puzzle piece is on. To connect: 2 jigsaws must have their puzzle piece face
+     * facing each other.
+     */
+    public static Direction getConnectingDirection(BlockState state)
+    {
+        return state.get(ORIENTATION).func_239642_b_();
+    }
+
+    /**
+     * This represents the face that the line connector is on. To connect, if the OrientationType is ALIGNED, the two
+     * lines must be in the same direction. (Their textures will form one straight line)
+     */
+    public static Direction getJigsawAlignmentDirection(BlockState state)
+    {
+        return state.get(ORIENTATION).func_239644_c_();
+    }
 }

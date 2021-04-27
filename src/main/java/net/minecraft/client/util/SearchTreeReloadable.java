@@ -13,95 +13,126 @@ import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SearchTreeReloadable<T> implements IMutableSearchTree<T> {
-   protected SuffixArray<T> namespaceTree = new SuffixArray<>();
-   protected SuffixArray<T> pathTree = new SuffixArray<>();
-   private final Function<T, Stream<ResourceLocation>> idGetter;
-   private final List<T> contents = Lists.newArrayList();
-   private final Object2IntMap<T> orderT = new Object2IntOpenHashMap<>();
+public class SearchTreeReloadable<T> implements IMutableSearchTree<T>
+{
+    protected SuffixArray<T> namespaceList = new SuffixArray<>();
+    protected SuffixArray<T> pathList = new SuffixArray<>();
+    private final Function<T, Stream<ResourceLocation>> field_217877_c;
+    private final List<T> field_217878_d = Lists.newArrayList();
+    private final Object2IntMap<T> field_217879_e = new Object2IntOpenHashMap<>();
 
-   public SearchTreeReloadable(Function<T, Stream<ResourceLocation>> p_i50896_1_) {
-      this.idGetter = p_i50896_1_;
-   }
+    public SearchTreeReloadable(Function<T, Stream<ResourceLocation>> p_i50896_1_)
+    {
+        this.field_217877_c = p_i50896_1_;
+    }
 
-   public void refresh() {
-      this.namespaceTree = new SuffixArray<>();
-      this.pathTree = new SuffixArray<>();
+    /**
+     * Recalculates the contents of this search tree, reapplying {@link #nameFunc} and {@link #idFunc}. Should be called
+     * whenever resources are reloaded (e.g. language changes).
+     */
+    public void recalculate()
+    {
+        this.namespaceList = new SuffixArray<>();
+        this.pathList = new SuffixArray<>();
 
-      for(T t : this.contents) {
-         this.index(t);
-      }
+        for (T t : this.field_217878_d)
+        {
+            this.index(t);
+        }
 
-      this.namespaceTree.generate();
-      this.pathTree.generate();
-   }
+        this.namespaceList.generate();
+        this.pathList.generate();
+    }
 
-   public void add(T p_217872_1_) {
-      this.orderT.put(p_217872_1_, this.contents.size());
-      this.contents.add(p_217872_1_);
-      this.index(p_217872_1_);
-   }
+    public void func_217872_a(T element)
+    {
+        this.field_217879_e.put(element, this.field_217878_d.size());
+        this.field_217878_d.add(element);
+        this.index(element);
+    }
 
-   public void clear() {
-      this.contents.clear();
-      this.orderT.clear();
-   }
+    public void clear()
+    {
+        this.field_217878_d.clear();
+        this.field_217879_e.clear();
+    }
 
-   protected void index(T p_194042_1_) {
-      this.idGetter.apply(p_194042_1_).forEach((p_217873_2_) -> {
-         this.namespaceTree.add(p_194042_1_, p_217873_2_.getNamespace().toLowerCase(Locale.ROOT));
-         this.pathTree.add(p_194042_1_, p_217873_2_.getPath().toLowerCase(Locale.ROOT));
-      });
-   }
+    /**
+     * Directly puts the given item into {@link #byId} and {@link #byName}, applying {@link #nameFunc} and {@link
+     * idFunc}.
+     */
+    protected void index(T element)
+    {
+        this.field_217877_c.apply(element).forEach((p_217873_2_) ->
+        {
+            this.namespaceList.add(element, p_217873_2_.getNamespace().toLowerCase(Locale.ROOT));
+            this.pathList.add(element, p_217873_2_.getPath().toLowerCase(Locale.ROOT));
+        });
+    }
 
-   protected int comparePosition(T p_217874_1_, T p_217874_2_) {
-      return Integer.compare(this.orderT.getInt(p_217874_1_), this.orderT.getInt(p_217874_2_));
-   }
+    /**
+     * Compares two elements. Returns {@code 1} if the first element has more entries, {@code 0} if they have the same
+     * number of entries, and {@code -1} if the second element has more enties.
+     */
+    protected int compare(T p_217874_1_, T p_217874_2_)
+    {
+        return Integer.compare(this.field_217879_e.getInt(p_217874_1_), this.field_217879_e.getInt(p_217874_2_));
+    }
 
-   public List<T> search(String p_194038_1_) {
-      int i = p_194038_1_.indexOf(58);
-      if (i == -1) {
-         return this.pathTree.search(p_194038_1_);
-      } else {
-         List<T> list = this.namespaceTree.search(p_194038_1_.substring(0, i).trim());
-         String s = p_194038_1_.substring(i + 1).trim();
-         List<T> list1 = this.pathTree.search(s);
-         return Lists.newArrayList(new SearchTreeReloadable.JoinedIterator<>(list.iterator(), list1.iterator(), this::comparePosition));
-      }
-   }
+    public List<T> search(String searchText)
+    {
+        int i = searchText.indexOf(58);
 
-   @OnlyIn(Dist.CLIENT)
-   public static class JoinedIterator<T> extends AbstractIterator<T> {
-      private final PeekingIterator<T> firstIterator;
-      private final PeekingIterator<T> secondIterator;
-      private final Comparator<T> orderT;
+        if (i == -1)
+        {
+            return this.pathList.search(searchText);
+        }
+        else
+        {
+            List<T> list = this.namespaceList.search(searchText.substring(0, i).trim());
+            String s = searchText.substring(i + 1).trim();
+            List<T> list1 = this.pathList.search(s);
+            return Lists.newArrayList(new SearchTreeReloadable.JoinedIterator<>(list.iterator(), list1.iterator(), this::compare));
+        }
+    }
 
-      public JoinedIterator(Iterator<T> p_i50270_1_, Iterator<T> p_i50270_2_, Comparator<T> p_i50270_3_) {
-         this.firstIterator = Iterators.peekingIterator(p_i50270_1_);
-         this.secondIterator = Iterators.peekingIterator(p_i50270_2_);
-         this.orderT = p_i50270_3_;
-      }
+    public static class JoinedIterator<T> extends AbstractIterator<T>
+    {
+        private final PeekingIterator<T> field_217881_a;
+        private final PeekingIterator<T> field_217882_b;
+        private final Comparator<T> field_217883_c;
 
-      protected T computeNext() {
-         while(this.firstIterator.hasNext() && this.secondIterator.hasNext()) {
-            int i = this.orderT.compare(this.firstIterator.peek(), this.secondIterator.peek());
-            if (i == 0) {
-               this.secondIterator.next();
-               return this.firstIterator.next();
+        public JoinedIterator(Iterator<T> p_i50270_1_, Iterator<T> p_i50270_2_, Comparator<T> p_i50270_3_)
+        {
+            this.field_217881_a = Iterators.peekingIterator(p_i50270_1_);
+            this.field_217882_b = Iterators.peekingIterator(p_i50270_2_);
+            this.field_217883_c = p_i50270_3_;
+        }
+
+        protected T computeNext()
+        {
+            while (this.field_217881_a.hasNext() && this.field_217882_b.hasNext())
+            {
+                int i = this.field_217883_c.compare(this.field_217881_a.peek(), this.field_217882_b.peek());
+
+                if (i == 0)
+                {
+                    this.field_217882_b.next();
+                    return this.field_217881_a.next();
+                }
+
+                if (i < 0)
+                {
+                    this.field_217881_a.next();
+                }
+                else
+                {
+                    this.field_217882_b.next();
+                }
             }
 
-            if (i < 0) {
-               this.firstIterator.next();
-            } else {
-               this.secondIterator.next();
-            }
-         }
-
-         return this.endOfData();
-      }
-   }
+            return this.endOfData();
+        }
+    }
 }

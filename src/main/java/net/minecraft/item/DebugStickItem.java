@@ -20,78 +20,111 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
-public class DebugStickItem extends Item {
-   public DebugStickItem(Item.Properties p_i48513_1_) {
-      super(p_i48513_1_);
-   }
+public class DebugStickItem extends Item
+{
+    public DebugStickItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public boolean isFoil(ItemStack p_77636_1_) {
-      return true;
-   }
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
+    public boolean hasEffect(ItemStack stack)
+    {
+        return true;
+    }
 
-   public boolean canAttackBlock(BlockState p_195938_1_, World p_195938_2_, BlockPos p_195938_3_, PlayerEntity p_195938_4_) {
-      if (!p_195938_2_.isClientSide) {
-         this.handleInteraction(p_195938_4_, p_195938_1_, p_195938_2_, p_195938_3_, false, p_195938_4_.getItemInHand(Hand.MAIN_HAND));
-      }
+    public boolean canPlayerBreakBlockWhileHolding(BlockState state, World worldIn, BlockPos pos, PlayerEntity player)
+    {
+        if (!worldIn.isRemote)
+        {
+            this.handleClick(player, state, worldIn, pos, false, player.getHeldItem(Hand.MAIN_HAND));
+        }
 
-      return false;
-   }
+        return false;
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      PlayerEntity playerentity = p_195939_1_.getPlayer();
-      World world = p_195939_1_.getLevel();
-      if (!world.isClientSide && playerentity != null) {
-         BlockPos blockpos = p_195939_1_.getClickedPos();
-         this.handleInteraction(playerentity, world.getBlockState(blockpos), world, blockpos, true, p_195939_1_.getItemInHand());
-      }
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        PlayerEntity playerentity = context.getPlayer();
+        World world = context.getWorld();
 
-      return ActionResultType.sidedSuccess(world.isClientSide);
-   }
+        if (!world.isRemote && playerentity != null)
+        {
+            BlockPos blockpos = context.getPos();
+            this.handleClick(playerentity, world.getBlockState(blockpos), world, blockpos, true, context.getItem());
+        }
 
-   private void handleInteraction(PlayerEntity p_195958_1_, BlockState p_195958_2_, IWorld p_195958_3_, BlockPos p_195958_4_, boolean p_195958_5_, ItemStack p_195958_6_) {
-      if (p_195958_1_.canUseGameMasterBlocks()) {
-         Block block = p_195958_2_.getBlock();
-         StateContainer<Block, BlockState> statecontainer = block.getStateDefinition();
-         Collection<Property<?>> collection = statecontainer.getProperties();
-         String s = Registry.BLOCK.getKey(block).toString();
-         if (collection.isEmpty()) {
-            message(p_195958_1_, new TranslationTextComponent(this.getDescriptionId() + ".empty", s));
-         } else {
-            CompoundNBT compoundnbt = p_195958_6_.getOrCreateTagElement("DebugProperty");
-            String s1 = compoundnbt.getString(s);
-            Property<?> property = statecontainer.getProperty(s1);
-            if (p_195958_5_) {
-               if (property == null) {
-                  property = collection.iterator().next();
-               }
+        return ActionResultType.func_233537_a_(world.isRemote);
+    }
 
-               BlockState blockstate = cycleState(p_195958_2_, property, p_195958_1_.isSecondaryUseActive());
-               p_195958_3_.setBlock(p_195958_4_, blockstate, 18);
-               message(p_195958_1_, new TranslationTextComponent(this.getDescriptionId() + ".update", property.getName(), getNameHelper(blockstate, property)));
-            } else {
-               property = getRelative(collection, property, p_195958_1_.isSecondaryUseActive());
-               String s2 = property.getName();
-               compoundnbt.putString(s, s2);
-               message(p_195958_1_, new TranslationTextComponent(this.getDescriptionId() + ".select", s2, getNameHelper(p_195958_2_, property)));
+    private void handleClick(PlayerEntity player, BlockState state, IWorld worldIn, BlockPos pos, boolean rightClick, ItemStack stack)
+    {
+        if (player.canUseCommandBlock())
+        {
+            Block block = state.getBlock();
+            StateContainer<Block, BlockState> statecontainer = block.getStateContainer();
+            Collection < Property<? >> collection = statecontainer.getProperties();
+            String s = Registry.BLOCK.getKey(block).toString();
+
+            if (collection.isEmpty())
+            {
+                sendMessage(player, new TranslationTextComponent(this.getTranslationKey() + ".empty", s));
             }
+            else
+            {
+                CompoundNBT compoundnbt = stack.getOrCreateChildTag("DebugProperty");
+                String s1 = compoundnbt.getString(s);
+                Property<?> property = statecontainer.getProperty(s1);
 
-         }
-      }
-   }
+                if (rightClick)
+                {
+                    if (property == null)
+                    {
+                        property = collection.iterator().next();
+                    }
 
-   private static <T extends Comparable<T>> BlockState cycleState(BlockState p_195960_0_, Property<T> p_195960_1_, boolean p_195960_2_) {
-      return p_195960_0_.setValue(p_195960_1_, getRelative(p_195960_1_.getPossibleValues(), p_195960_0_.getValue(p_195960_1_), p_195960_2_));
-   }
+                    BlockState blockstate = cycleProperty(state, property, player.isSecondaryUseActive());
+                    worldIn.setBlockState(pos, blockstate, 18);
+                    sendMessage(player, new TranslationTextComponent(this.getTranslationKey() + ".update", property.getName(), func_195957_a(blockstate, property)));
+                }
+                else
+                {
+                    property = getAdjacentValue(collection, property, player.isSecondaryUseActive());
+                    String s2 = property.getName();
+                    compoundnbt.putString(s, s2);
+                    sendMessage(player, new TranslationTextComponent(this.getTranslationKey() + ".select", s2, func_195957_a(state, property)));
+                }
+            }
+        }
+    }
 
-   private static <T> T getRelative(Iterable<T> p_195959_0_, @Nullable T p_195959_1_, boolean p_195959_2_) {
-      return (T)(p_195959_2_ ? Util.findPreviousInIterable(p_195959_0_, p_195959_1_) : Util.findNextInIterable(p_195959_0_, p_195959_1_));
-   }
+    private static <T extends Comparable<T>> BlockState cycleProperty(BlockState state, Property<T> propertyIn, boolean backwards)
+    {
+        return state.with(propertyIn, getAdjacentValue(propertyIn.getAllowedValues(), state.get(propertyIn), backwards));
+    }
 
-   private static void message(PlayerEntity p_195956_0_, ITextComponent p_195956_1_) {
-      ((ServerPlayerEntity)p_195956_0_).sendMessage(p_195956_1_, ChatType.GAME_INFO, Util.NIL_UUID);
-   }
+    private static <T> T getAdjacentValue(Iterable<T> allowedValues, @Nullable T currentValue, boolean backwards)
+    {
+        return (T)(backwards ? Util.getElementBefore(allowedValues, currentValue) : Util.getElementAfter(allowedValues, currentValue));
+    }
 
-   private static <T extends Comparable<T>> String getNameHelper(BlockState p_195957_0_, Property<T> p_195957_1_) {
-      return p_195957_1_.getName(p_195957_0_.getValue(p_195957_1_));
-   }
+    private static void sendMessage(PlayerEntity player, ITextComponent text)
+    {
+        ((ServerPlayerEntity)player).func_241151_a_(text, ChatType.GAME_INFO, Util.DUMMY_UUID);
+    }
+
+    private static <T extends Comparable<T>> String func_195957_a(BlockState state, Property<T> propertyIn)
+    {
+        return propertyIn.getName(state.get(propertyIn));
+    }
 }

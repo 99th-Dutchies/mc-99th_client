@@ -16,132 +16,174 @@ import net.minecraft.util.IItemProvider;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 
-public class InventoryChangeTrigger extends AbstractCriterionTrigger<InventoryChangeTrigger.Instance> {
-   private static final ResourceLocation ID = new ResourceLocation("inventory_changed");
+public class InventoryChangeTrigger extends AbstractCriterionTrigger<InventoryChangeTrigger.Instance>
+{
+    private static final ResourceLocation ID = new ResourceLocation("inventory_changed");
 
-   public ResourceLocation getId() {
-      return ID;
-   }
+    public ResourceLocation getId()
+    {
+        return ID;
+    }
 
-   public InventoryChangeTrigger.Instance createInstance(JsonObject p_230241_1_, EntityPredicate.AndPredicate p_230241_2_, ConditionArrayParser p_230241_3_) {
-      JsonObject jsonobject = JSONUtils.getAsJsonObject(p_230241_1_, "slots", new JsonObject());
-      MinMaxBounds.IntBound minmaxbounds$intbound = MinMaxBounds.IntBound.fromJson(jsonobject.get("occupied"));
-      MinMaxBounds.IntBound minmaxbounds$intbound1 = MinMaxBounds.IntBound.fromJson(jsonobject.get("full"));
-      MinMaxBounds.IntBound minmaxbounds$intbound2 = MinMaxBounds.IntBound.fromJson(jsonobject.get("empty"));
-      ItemPredicate[] aitempredicate = ItemPredicate.fromJsonArray(p_230241_1_.get("items"));
-      return new InventoryChangeTrigger.Instance(p_230241_2_, minmaxbounds$intbound, minmaxbounds$intbound1, minmaxbounds$intbound2, aitempredicate);
-   }
+    public InventoryChangeTrigger.Instance deserializeTrigger(JsonObject json, EntityPredicate.AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+    {
+        JsonObject jsonobject = JSONUtils.getJsonObject(json, "slots", new JsonObject());
+        MinMaxBounds.IntBound minmaxbounds$intbound = MinMaxBounds.IntBound.fromJson(jsonobject.get("occupied"));
+        MinMaxBounds.IntBound minmaxbounds$intbound1 = MinMaxBounds.IntBound.fromJson(jsonobject.get("full"));
+        MinMaxBounds.IntBound minmaxbounds$intbound2 = MinMaxBounds.IntBound.fromJson(jsonobject.get("empty"));
+        ItemPredicate[] aitempredicate = ItemPredicate.deserializeArray(json.get("items"));
+        return new InventoryChangeTrigger.Instance(entityPredicate, minmaxbounds$intbound, minmaxbounds$intbound1, minmaxbounds$intbound2, aitempredicate);
+    }
 
-   public void trigger(ServerPlayerEntity p_234803_1_, PlayerInventory p_234803_2_, ItemStack p_234803_3_) {
-      int i = 0;
-      int j = 0;
-      int k = 0;
+    public void test(ServerPlayerEntity player, PlayerInventory inventory, ItemStack stack)
+    {
+        int i = 0;
+        int j = 0;
+        int k = 0;
 
-      for(int l = 0; l < p_234803_2_.getContainerSize(); ++l) {
-         ItemStack itemstack = p_234803_2_.getItem(l);
-         if (itemstack.isEmpty()) {
-            ++j;
-         } else {
-            ++k;
-            if (itemstack.getCount() >= itemstack.getMaxStackSize()) {
-               ++i;
+        for (int l = 0; l < inventory.getSizeInventory(); ++l)
+        {
+            ItemStack itemstack = inventory.getStackInSlot(l);
+
+            if (itemstack.isEmpty())
+            {
+                ++j;
             }
-         }
-      }
+            else
+            {
+                ++k;
 
-      this.trigger(p_234803_1_, p_234803_2_, p_234803_3_, i, j, k);
-   }
+                if (itemstack.getCount() >= itemstack.getMaxStackSize())
+                {
+                    ++i;
+                }
+            }
+        }
 
-   private void trigger(ServerPlayerEntity p_234804_1_, PlayerInventory p_234804_2_, ItemStack p_234804_3_, int p_234804_4_, int p_234804_5_, int p_234804_6_) {
-      this.trigger(p_234804_1_, (p_234802_5_) -> {
-         return p_234802_5_.matches(p_234804_2_, p_234804_3_, p_234804_4_, p_234804_5_, p_234804_6_);
-      });
-   }
+        this.trigger(player, inventory, stack, i, j, k);
+    }
 
-   public static class Instance extends CriterionInstance {
-      private final MinMaxBounds.IntBound slotsOccupied;
-      private final MinMaxBounds.IntBound slotsFull;
-      private final MinMaxBounds.IntBound slotsEmpty;
-      private final ItemPredicate[] predicates;
+    private void trigger(ServerPlayerEntity player, PlayerInventory inventory, ItemStack stack, int full, int empty, int occupied)
+    {
+        this.triggerListeners(player, (instance) ->
+        {
+            return instance.test(inventory, stack, full, empty, occupied);
+        });
+    }
 
-      public Instance(EntityPredicate.AndPredicate p_i231597_1_, MinMaxBounds.IntBound p_i231597_2_, MinMaxBounds.IntBound p_i231597_3_, MinMaxBounds.IntBound p_i231597_4_, ItemPredicate[] p_i231597_5_) {
-         super(InventoryChangeTrigger.ID, p_i231597_1_);
-         this.slotsOccupied = p_i231597_2_;
-         this.slotsFull = p_i231597_3_;
-         this.slotsEmpty = p_i231597_4_;
-         this.predicates = p_i231597_5_;
-      }
+    public static class Instance extends CriterionInstance
+    {
+        private final MinMaxBounds.IntBound occupied;
+        private final MinMaxBounds.IntBound full;
+        private final MinMaxBounds.IntBound empty;
+        private final ItemPredicate[] items;
 
-      public static InventoryChangeTrigger.Instance hasItems(ItemPredicate... p_203923_0_) {
-         return new InventoryChangeTrigger.Instance(EntityPredicate.AndPredicate.ANY, MinMaxBounds.IntBound.ANY, MinMaxBounds.IntBound.ANY, MinMaxBounds.IntBound.ANY, p_203923_0_);
-      }
+        public Instance(EntityPredicate.AndPredicate player, MinMaxBounds.IntBound occupied, MinMaxBounds.IntBound full, MinMaxBounds.IntBound empty, ItemPredicate[] items)
+        {
+            super(InventoryChangeTrigger.ID, player);
+            this.occupied = occupied;
+            this.full = full;
+            this.empty = empty;
+            this.items = items;
+        }
 
-      public static InventoryChangeTrigger.Instance hasItems(IItemProvider... p_203922_0_) {
-         ItemPredicate[] aitempredicate = new ItemPredicate[p_203922_0_.length];
+        public static InventoryChangeTrigger.Instance forItems(ItemPredicate... itemConditions)
+        {
+            return new InventoryChangeTrigger.Instance(EntityPredicate.AndPredicate.ANY_AND, MinMaxBounds.IntBound.UNBOUNDED, MinMaxBounds.IntBound.UNBOUNDED, MinMaxBounds.IntBound.UNBOUNDED, itemConditions);
+        }
 
-         for(int i = 0; i < p_203922_0_.length; ++i) {
-            aitempredicate[i] = new ItemPredicate((ITag<Item>)null, p_203922_0_[i].asItem(), MinMaxBounds.IntBound.ANY, MinMaxBounds.IntBound.ANY, EnchantmentPredicate.NONE, EnchantmentPredicate.NONE, (Potion)null, NBTPredicate.ANY);
-         }
+        public static InventoryChangeTrigger.Instance forItems(IItemProvider... items)
+        {
+            ItemPredicate[] aitempredicate = new ItemPredicate[items.length];
 
-         return hasItems(aitempredicate);
-      }
-
-      public JsonObject serializeToJson(ConditionArraySerializer p_230240_1_) {
-         JsonObject jsonobject = super.serializeToJson(p_230240_1_);
-         if (!this.slotsOccupied.isAny() || !this.slotsFull.isAny() || !this.slotsEmpty.isAny()) {
-            JsonObject jsonobject1 = new JsonObject();
-            jsonobject1.add("occupied", this.slotsOccupied.serializeToJson());
-            jsonobject1.add("full", this.slotsFull.serializeToJson());
-            jsonobject1.add("empty", this.slotsEmpty.serializeToJson());
-            jsonobject.add("slots", jsonobject1);
-         }
-
-         if (this.predicates.length > 0) {
-            JsonArray jsonarray = new JsonArray();
-
-            for(ItemPredicate itempredicate : this.predicates) {
-               jsonarray.add(itempredicate.serializeToJson());
+            for (int i = 0; i < items.length; ++i)
+            {
+                aitempredicate[i] = new ItemPredicate((ITag<Item>)null, items[i].asItem(), MinMaxBounds.IntBound.UNBOUNDED, MinMaxBounds.IntBound.UNBOUNDED, EnchantmentPredicate.enchantments, EnchantmentPredicate.enchantments, (Potion)null, NBTPredicate.ANY);
             }
 
-            jsonobject.add("items", jsonarray);
-         }
+            return forItems(aitempredicate);
+        }
 
-         return jsonobject;
-      }
+        public JsonObject serialize(ConditionArraySerializer conditions)
+        {
+            JsonObject jsonobject = super.serialize(conditions);
 
-      public boolean matches(PlayerInventory p_234805_1_, ItemStack p_234805_2_, int p_234805_3_, int p_234805_4_, int p_234805_5_) {
-         if (!this.slotsFull.matches(p_234805_3_)) {
-            return false;
-         } else if (!this.slotsEmpty.matches(p_234805_4_)) {
-            return false;
-         } else if (!this.slotsOccupied.matches(p_234805_5_)) {
-            return false;
-         } else {
-            int i = this.predicates.length;
-            if (i == 0) {
-               return true;
-            } else if (i != 1) {
-               List<ItemPredicate> list = new ObjectArrayList<>(this.predicates);
-               int j = p_234805_1_.getContainerSize();
-
-               for(int k = 0; k < j; ++k) {
-                  if (list.isEmpty()) {
-                     return true;
-                  }
-
-                  ItemStack itemstack = p_234805_1_.getItem(k);
-                  if (!itemstack.isEmpty()) {
-                     list.removeIf((p_234806_1_) -> {
-                        return p_234806_1_.matches(itemstack);
-                     });
-                  }
-               }
-
-               return list.isEmpty();
-            } else {
-               return !p_234805_2_.isEmpty() && this.predicates[0].matches(p_234805_2_);
+            if (!this.occupied.isUnbounded() || !this.full.isUnbounded() || !this.empty.isUnbounded())
+            {
+                JsonObject jsonobject1 = new JsonObject();
+                jsonobject1.add("occupied", this.occupied.serialize());
+                jsonobject1.add("full", this.full.serialize());
+                jsonobject1.add("empty", this.empty.serialize());
+                jsonobject.add("slots", jsonobject1);
             }
-         }
-      }
-   }
+
+            if (this.items.length > 0)
+            {
+                JsonArray jsonarray = new JsonArray();
+
+                for (ItemPredicate itempredicate : this.items)
+                {
+                    jsonarray.add(itempredicate.serialize());
+                }
+
+                jsonobject.add("items", jsonarray);
+            }
+
+            return jsonobject;
+        }
+
+        public boolean test(PlayerInventory inventory, ItemStack stack, int full, int empty, int occupied)
+        {
+            if (!this.full.test(full))
+            {
+                return false;
+            }
+            else if (!this.empty.test(empty))
+            {
+                return false;
+            }
+            else if (!this.occupied.test(occupied))
+            {
+                return false;
+            }
+            else
+            {
+                int i = this.items.length;
+
+                if (i == 0)
+                {
+                    return true;
+                }
+                else if (i != 1)
+                {
+                    List<ItemPredicate> list = new ObjectArrayList<>(this.items);
+                    int j = inventory.getSizeInventory();
+
+                    for (int k = 0; k < j; ++k)
+                    {
+                        if (list.isEmpty())
+                        {
+                            return true;
+                        }
+
+                        ItemStack itemstack = inventory.getStackInSlot(k);
+
+                        if (!itemstack.isEmpty())
+                        {
+                            list.removeIf((predicate) ->
+                            {
+                                return predicate.test(itemstack);
+                            });
+                        }
+                    }
+
+                    return list.isEmpty();
+                }
+                else
+                {
+                    return !stack.isEmpty() && this.items[0].test(stack);
+                }
+            }
+        }
+    }
 }

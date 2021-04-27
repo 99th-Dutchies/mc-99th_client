@@ -15,144 +15,222 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class Enchantment {
-   private final EquipmentSlotType[] slots;
-   private final Enchantment.Rarity rarity;
-   public final EnchantmentType category;
-   @Nullable
-   protected String descriptionId;
+public abstract class Enchantment
+{
+    private final EquipmentSlotType[] applicableEquipmentTypes;
+    private final Enchantment.Rarity rarity;
+    public final EnchantmentType type;
+    @Nullable
+    protected String name;
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public static Enchantment byId(int p_185262_0_) {
-      return Registry.ENCHANTMENT.byId(p_185262_0_);
-   }
+    @Nullable
 
-   protected Enchantment(Enchantment.Rarity p_i46731_1_, EnchantmentType p_i46731_2_, EquipmentSlotType[] p_i46731_3_) {
-      this.rarity = p_i46731_1_;
-      this.category = p_i46731_2_;
-      this.slots = p_i46731_3_;
-   }
+    /**
+     * Gets an Enchantment from the registry, based on a numeric ID.
+     */
+    public static Enchantment getEnchantmentByID(int id)
+    {
+        return Registry.ENCHANTMENT.getByValue(id);
+    }
 
-   public Map<EquipmentSlotType, ItemStack> getSlotItems(LivingEntity p_222181_1_) {
-      Map<EquipmentSlotType, ItemStack> map = Maps.newEnumMap(EquipmentSlotType.class);
+    protected Enchantment(Enchantment.Rarity rarityIn, EnchantmentType typeIn, EquipmentSlotType[] slots)
+    {
+        this.rarity = rarityIn;
+        this.type = typeIn;
+        this.applicableEquipmentTypes = slots;
+    }
 
-      for(EquipmentSlotType equipmentslottype : this.slots) {
-         ItemStack itemstack = p_222181_1_.getItemBySlot(equipmentslottype);
-         if (!itemstack.isEmpty()) {
-            map.put(equipmentslottype, itemstack);
-         }
-      }
+    public Map<EquipmentSlotType, ItemStack> getEntityEquipment(LivingEntity livingEntityIn)
+    {
+        Map<EquipmentSlotType, ItemStack> map = Maps.newEnumMap(EquipmentSlotType.class);
 
-      return map;
-   }
+        for (EquipmentSlotType equipmentslottype : this.applicableEquipmentTypes)
+        {
+            ItemStack itemstack = livingEntityIn.getItemStackFromSlot(equipmentslottype);
 
-   public Enchantment.Rarity getRarity() {
-      return this.rarity;
-   }
+            if (!itemstack.isEmpty())
+            {
+                map.put(equipmentslottype, itemstack);
+            }
+        }
 
-   public int getMinLevel() {
-      return 1;
-   }
+        return map;
+    }
 
-   public int getMaxLevel() {
-      return 1;
-   }
+    /**
+     * Retrieves the weight value of an Enchantment. This weight value is used within vanilla to determine how rare an
+     * enchantment is.
+     */
+    public Enchantment.Rarity getRarity()
+    {
+        return this.rarity;
+    }
 
-   public int getMinCost(int p_77321_1_) {
-      return 1 + p_77321_1_ * 10;
-   }
+    /**
+     * Returns the minimum level that the enchantment can have.
+     */
+    public int getMinLevel()
+    {
+        return 1;
+    }
 
-   public int getMaxCost(int p_223551_1_) {
-      return this.getMinCost(p_223551_1_) + 5;
-   }
+    /**
+     * Returns the maximum level that the enchantment can have.
+     */
+    public int getMaxLevel()
+    {
+        return 1;
+    }
 
-   public int getDamageProtection(int p_77318_1_, DamageSource p_77318_2_) {
-      return 0;
-   }
+    /**
+     * Returns the minimal value of enchantability needed on the enchantment level passed.
+     */
+    public int getMinEnchantability(int enchantmentLevel)
+    {
+        return 1 + enchantmentLevel * 10;
+    }
 
-   public float getDamageBonus(int p_152376_1_, CreatureAttribute p_152376_2_) {
-      return 0.0F;
-   }
+    public int getMaxEnchantability(int enchantmentLevel)
+    {
+        return this.getMinEnchantability(enchantmentLevel) + 5;
+    }
 
-   public final boolean isCompatibleWith(Enchantment p_191560_1_) {
-      return this.checkCompatibility(p_191560_1_) && p_191560_1_.checkCompatibility(this);
-   }
+    /**
+     * Calculates the damage protection of the enchantment based on level and damage source passed.
+     */
+    public int calcModifierDamage(int level, DamageSource source)
+    {
+        return 0;
+    }
 
-   protected boolean checkCompatibility(Enchantment p_77326_1_) {
-      return this != p_77326_1_;
-   }
+    /**
+     * Calculates the additional damage that will be dealt by an item with this enchantment. This alternative to
+     * calcModifierDamage is sensitive to the targets EnumCreatureAttribute.
+     */
+    public float calcDamageByCreature(int level, CreatureAttribute creatureType)
+    {
+        return 0.0F;
+    }
 
-   protected String getOrCreateDescriptionId() {
-      if (this.descriptionId == null) {
-         this.descriptionId = Util.makeDescriptionId("enchantment", Registry.ENCHANTMENT.getKey(this));
-      }
+    public final boolean isCompatibleWith(Enchantment enchantmentIn)
+    {
+        return this.canApplyTogether(enchantmentIn) && enchantmentIn.canApplyTogether(this);
+    }
 
-      return this.descriptionId;
-   }
+    /**
+     * Determines if the enchantment passed can be applyied together with this enchantment.
+     */
+    protected boolean canApplyTogether(Enchantment ench)
+    {
+        return this != ench;
+    }
 
-   public String getDescriptionId() {
-      return this.getOrCreateDescriptionId();
-   }
+    protected String getDefaultTranslationKey()
+    {
+        if (this.name == null)
+        {
+            this.name = Util.makeTranslationKey("enchantment", Registry.ENCHANTMENT.getKey(this));
+        }
 
-   public ITextComponent getFullname(int p_200305_1_) {
-      IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(this.getDescriptionId());
-      if (this.isCurse()) {
-         iformattabletextcomponent.withStyle(TextFormatting.RED);
-      } else {
-         iformattabletextcomponent.withStyle(TextFormatting.GRAY);
-      }
+        return this.name;
+    }
 
-      if (p_200305_1_ != 1 || this.getMaxLevel() != 1) {
-         iformattabletextcomponent.append(" ").append(new TranslationTextComponent("enchantment.level." + p_200305_1_));
-      }
+    /**
+     * Return the name of key in translation table of this enchantment.
+     */
+    public String getName()
+    {
+        return this.getDefaultTranslationKey();
+    }
 
-      return iformattabletextcomponent;
-   }
+    public ITextComponent getDisplayName(int level)
+    {
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(this.getName());
 
-   public boolean canEnchant(ItemStack p_92089_1_) {
-      return this.category.canEnchant(p_92089_1_.getItem());
-   }
+        if (this.isCurse())
+        {
+            iformattabletextcomponent.mergeStyle(TextFormatting.RED);
+        }
+        else
+        {
+            iformattabletextcomponent.mergeStyle(TextFormatting.GRAY);
+        }
 
-   public void doPostAttack(LivingEntity p_151368_1_, Entity p_151368_2_, int p_151368_3_) {
-   }
+        if (level != 1 || this.getMaxLevel() != 1)
+        {
+            iformattabletextcomponent.appendString(" ").append(new TranslationTextComponent("enchantment.level." + level));
+        }
 
-   public void doPostHurt(LivingEntity p_151367_1_, Entity p_151367_2_, int p_151367_3_) {
-   }
+        return iformattabletextcomponent;
+    }
 
-   public boolean isTreasureOnly() {
-      return false;
-   }
+    /**
+     * Determines if this enchantment can be applied to a specific ItemStack.
+     */
+    public boolean canApply(ItemStack stack)
+    {
+        return this.type.canEnchantItem(stack.getItem());
+    }
 
-   public boolean isCurse() {
-      return false;
-   }
+    /**
+     * Called whenever a mob is damaged with an item that has this enchantment on it.
+     */
+    public void onEntityDamaged(LivingEntity user, Entity target, int level)
+    {
+    }
 
-   public boolean isTradeable() {
-      return true;
-   }
+    /**
+     * Whenever an entity that has this enchantment on one of its associated items is damaged this method will be
+     * called.
+     */
+    public void onUserHurt(LivingEntity user, Entity attacker, int level)
+    {
+    }
 
-   public boolean isDiscoverable() {
-      return true;
-   }
+    public boolean isTreasureEnchantment()
+    {
+        return false;
+    }
 
-   public static enum Rarity {
-      COMMON(10),
-      UNCOMMON(5),
-      RARE(2),
-      VERY_RARE(1);
+    public boolean isCurse()
+    {
+        return false;
+    }
 
-      private final int weight;
+    /**
+     * Checks if the enchantment can be sold by villagers in their trades.
+     */
+    public boolean canVillagerTrade()
+    {
+        return true;
+    }
 
-      private Rarity(int p_i47026_3_) {
-         this.weight = p_i47026_3_;
-      }
+    /**
+     * Checks if the enchantment can be applied to loot table drops.
+     */
+    public boolean canGenerateInLoot()
+    {
+        return true;
+    }
 
-      public int getWeight() {
-         return this.weight;
-      }
-   }
+    public static enum Rarity
+    {
+        COMMON(10),
+        UNCOMMON(5),
+        RARE(2),
+        VERY_RARE(1);
+
+        private final int weight;
+
+        private Rarity(int rarityWeight)
+        {
+            this.weight = rarityWeight;
+        }
+
+        public int getWeight()
+        {
+            return this.weight;
+        }
+    }
 }

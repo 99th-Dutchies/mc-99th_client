@@ -15,49 +15,66 @@ import net.minecraft.village.PointOfInterestManager;
 import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.server.ServerWorld;
 
-public class NearestBedSensor extends Sensor<MobEntity> {
-   private final Long2LongMap batchCache = new Long2LongOpenHashMap();
-   private int triedCount;
-   private long lastUpdate;
+public class NearestBedSensor extends Sensor<MobEntity>
+{
+    private final Long2LongMap bedPositionToTimeMap = new Long2LongOpenHashMap();
+    private int bedsFound;
+    private long persistTime;
 
-   public NearestBedSensor() {
-      super(20);
-   }
+    public NearestBedSensor()
+    {
+        super(20);
+    }
 
-   public Set<MemoryModuleType<?>> requires() {
-      return ImmutableSet.of(MemoryModuleType.NEAREST_BED);
-   }
+    public Set < MemoryModuleType<? >> getUsedMemories()
+    {
+        return ImmutableSet.of(MemoryModuleType.NEAREST_BED);
+    }
 
-   protected void doTick(ServerWorld p_212872_1_, MobEntity p_212872_2_) {
-      if (p_212872_2_.isBaby()) {
-         this.triedCount = 0;
-         this.lastUpdate = p_212872_1_.getGameTime() + (long)p_212872_1_.getRandom().nextInt(20);
-         PointOfInterestManager pointofinterestmanager = p_212872_1_.getPoiManager();
-         Predicate<BlockPos> predicate = (p_225469_1_) -> {
-            long i = p_225469_1_.asLong();
-            if (this.batchCache.containsKey(i)) {
-               return false;
-            } else if (++this.triedCount >= 5) {
-               return false;
-            } else {
-               this.batchCache.put(i, this.lastUpdate + 40L);
-               return true;
+    protected void update(ServerWorld worldIn, MobEntity entityIn)
+    {
+        if (entityIn.isChild())
+        {
+            this.bedsFound = 0;
+            this.persistTime = worldIn.getGameTime() + (long)worldIn.getRandom().nextInt(20);
+            PointOfInterestManager pointofinterestmanager = worldIn.getPointOfInterestManager();
+            Predicate<BlockPos> predicate = (pos) ->
+            {
+                long i = pos.toLong();
+
+                if (this.bedPositionToTimeMap.containsKey(i))
+                {
+                    return false;
+                }
+                else if (++this.bedsFound >= 5)
+                {
+                    return false;
+                }
+                else {
+                    this.bedPositionToTimeMap.put(i, this.persistTime + 40L);
+                    return true;
+                }
+            };
+            Stream<BlockPos> stream = pointofinterestmanager.findAll(PointOfInterestType.HOME.getPredicate(), predicate, entityIn.getPosition(), 48, PointOfInterestManager.Status.ANY);
+            Path path = entityIn.getNavigator().pathfind(stream, PointOfInterestType.HOME.getValidRange());
+
+            if (path != null && path.reachesTarget())
+            {
+                BlockPos blockpos = path.getTarget();
+                Optional<PointOfInterestType> optional = pointofinterestmanager.getType(blockpos);
+
+                if (optional.isPresent())
+                {
+                    entityIn.getBrain().setMemory(MemoryModuleType.NEAREST_BED, blockpos);
+                }
             }
-         };
-         Stream<BlockPos> stream = pointofinterestmanager.findAll(PointOfInterestType.HOME.getPredicate(), predicate, p_212872_2_.blockPosition(), 48, PointOfInterestManager.Status.ANY);
-         Path path = p_212872_2_.getNavigation().createPath(stream, PointOfInterestType.HOME.getValidRange());
-         if (path != null && path.canReach()) {
-            BlockPos blockpos = path.getTarget();
-            Optional<PointOfInterestType> optional = pointofinterestmanager.getType(blockpos);
-            if (optional.isPresent()) {
-               p_212872_2_.getBrain().setMemory(MemoryModuleType.NEAREST_BED, blockpos);
+            else if (this.bedsFound < 5)
+            {
+                this.bedPositionToTimeMap.long2LongEntrySet().removeIf((bedLocatedTime) ->
+                {
+                    return bedLocatedTime.getLongValue() < this.persistTime;
+                });
             }
-         } else if (this.triedCount < 5) {
-            this.batchCache.long2LongEntrySet().removeIf((p_225470_1_) -> {
-               return p_225470_1_.getLongValue() < this.lastUpdate;
-            });
-         }
-
-      }
-   }
+        }
+    }
 }

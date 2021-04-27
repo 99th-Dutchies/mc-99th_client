@@ -24,153 +24,204 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public abstract class AbstractButtonBlock extends HorizontalFaceBlock {
-   public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-   protected static final VoxelShape CEILING_AABB_X = Block.box(6.0D, 14.0D, 5.0D, 10.0D, 16.0D, 11.0D);
-   protected static final VoxelShape CEILING_AABB_Z = Block.box(5.0D, 14.0D, 6.0D, 11.0D, 16.0D, 10.0D);
-   protected static final VoxelShape FLOOR_AABB_X = Block.box(6.0D, 0.0D, 5.0D, 10.0D, 2.0D, 11.0D);
-   protected static final VoxelShape FLOOR_AABB_Z = Block.box(5.0D, 0.0D, 6.0D, 11.0D, 2.0D, 10.0D);
-   protected static final VoxelShape NORTH_AABB = Block.box(5.0D, 6.0D, 14.0D, 11.0D, 10.0D, 16.0D);
-   protected static final VoxelShape SOUTH_AABB = Block.box(5.0D, 6.0D, 0.0D, 11.0D, 10.0D, 2.0D);
-   protected static final VoxelShape WEST_AABB = Block.box(14.0D, 6.0D, 5.0D, 16.0D, 10.0D, 11.0D);
-   protected static final VoxelShape EAST_AABB = Block.box(0.0D, 6.0D, 5.0D, 2.0D, 10.0D, 11.0D);
-   protected static final VoxelShape PRESSED_CEILING_AABB_X = Block.box(6.0D, 15.0D, 5.0D, 10.0D, 16.0D, 11.0D);
-   protected static final VoxelShape PRESSED_CEILING_AABB_Z = Block.box(5.0D, 15.0D, 6.0D, 11.0D, 16.0D, 10.0D);
-   protected static final VoxelShape PRESSED_FLOOR_AABB_X = Block.box(6.0D, 0.0D, 5.0D, 10.0D, 1.0D, 11.0D);
-   protected static final VoxelShape PRESSED_FLOOR_AABB_Z = Block.box(5.0D, 0.0D, 6.0D, 11.0D, 1.0D, 10.0D);
-   protected static final VoxelShape PRESSED_NORTH_AABB = Block.box(5.0D, 6.0D, 15.0D, 11.0D, 10.0D, 16.0D);
-   protected static final VoxelShape PRESSED_SOUTH_AABB = Block.box(5.0D, 6.0D, 0.0D, 11.0D, 10.0D, 1.0D);
-   protected static final VoxelShape PRESSED_WEST_AABB = Block.box(15.0D, 6.0D, 5.0D, 16.0D, 10.0D, 11.0D);
-   protected static final VoxelShape PRESSED_EAST_AABB = Block.box(0.0D, 6.0D, 5.0D, 1.0D, 10.0D, 11.0D);
-   private final boolean sensitive;
+public abstract class AbstractButtonBlock extends HorizontalFaceBlock
+{
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    protected static final VoxelShape AABB_CEILING_X_OFF = Block.makeCuboidShape(6.0D, 14.0D, 5.0D, 10.0D, 16.0D, 11.0D);
+    protected static final VoxelShape AABB_CEILING_Z_OFF = Block.makeCuboidShape(5.0D, 14.0D, 6.0D, 11.0D, 16.0D, 10.0D);
+    protected static final VoxelShape AABB_FLOOR_X_OFF = Block.makeCuboidShape(6.0D, 0.0D, 5.0D, 10.0D, 2.0D, 11.0D);
+    protected static final VoxelShape AABB_FLOOR_Z_OFF = Block.makeCuboidShape(5.0D, 0.0D, 6.0D, 11.0D, 2.0D, 10.0D);
+    protected static final VoxelShape AABB_NORTH_OFF = Block.makeCuboidShape(5.0D, 6.0D, 14.0D, 11.0D, 10.0D, 16.0D);
+    protected static final VoxelShape AABB_SOUTH_OFF = Block.makeCuboidShape(5.0D, 6.0D, 0.0D, 11.0D, 10.0D, 2.0D);
+    protected static final VoxelShape AABB_WEST_OFF = Block.makeCuboidShape(14.0D, 6.0D, 5.0D, 16.0D, 10.0D, 11.0D);
+    protected static final VoxelShape AABB_EAST_OFF = Block.makeCuboidShape(0.0D, 6.0D, 5.0D, 2.0D, 10.0D, 11.0D);
+    protected static final VoxelShape AABB_CEILING_X_ON = Block.makeCuboidShape(6.0D, 15.0D, 5.0D, 10.0D, 16.0D, 11.0D);
+    protected static final VoxelShape AABB_CEILING_Z_ON = Block.makeCuboidShape(5.0D, 15.0D, 6.0D, 11.0D, 16.0D, 10.0D);
+    protected static final VoxelShape AABB_FLOOR_X_ON = Block.makeCuboidShape(6.0D, 0.0D, 5.0D, 10.0D, 1.0D, 11.0D);
+    protected static final VoxelShape AABB_FLOOR_Z_ON = Block.makeCuboidShape(5.0D, 0.0D, 6.0D, 11.0D, 1.0D, 10.0D);
+    protected static final VoxelShape AABB_NORTH_ON = Block.makeCuboidShape(5.0D, 6.0D, 15.0D, 11.0D, 10.0D, 16.0D);
+    protected static final VoxelShape AABB_SOUTH_ON = Block.makeCuboidShape(5.0D, 6.0D, 0.0D, 11.0D, 10.0D, 1.0D);
+    protected static final VoxelShape AABB_WEST_ON = Block.makeCuboidShape(15.0D, 6.0D, 5.0D, 16.0D, 10.0D, 11.0D);
+    protected static final VoxelShape AABB_EAST_ON = Block.makeCuboidShape(0.0D, 6.0D, 5.0D, 1.0D, 10.0D, 11.0D);
+    private final boolean wooden;
 
-   protected AbstractButtonBlock(boolean p_i48436_1_, AbstractBlock.Properties p_i48436_2_) {
-      super(p_i48436_2_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, Boolean.valueOf(false)).setValue(FACE, AttachFace.WALL));
-      this.sensitive = p_i48436_1_;
-   }
+    protected AbstractButtonBlock(boolean isWooden, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(HORIZONTAL_FACING, Direction.NORTH).with(POWERED, Boolean.valueOf(false)).with(FACE, AttachFace.WALL));
+        this.wooden = isWooden;
+    }
 
-   private int getPressDuration() {
-      return this.sensitive ? 30 : 20;
-   }
+    private int getActiveDuration()
+    {
+        return this.wooden ? 30 : 20;
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      Direction direction = p_220053_1_.getValue(FACING);
-      boolean flag = p_220053_1_.getValue(POWERED);
-      switch((AttachFace)p_220053_1_.getValue(FACE)) {
-      case FLOOR:
-         if (direction.getAxis() == Direction.Axis.X) {
-            return flag ? PRESSED_FLOOR_AABB_X : FLOOR_AABB_X;
-         }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        Direction direction = state.get(HORIZONTAL_FACING);
+        boolean flag = state.get(POWERED);
 
-         return flag ? PRESSED_FLOOR_AABB_Z : FLOOR_AABB_Z;
-      case WALL:
-         switch(direction) {
-         case EAST:
-            return flag ? PRESSED_EAST_AABB : EAST_AABB;
-         case WEST:
-            return flag ? PRESSED_WEST_AABB : WEST_AABB;
-         case SOUTH:
-            return flag ? PRESSED_SOUTH_AABB : SOUTH_AABB;
-         case NORTH:
-         default:
-            return flag ? PRESSED_NORTH_AABB : NORTH_AABB;
-         }
-      case CEILING:
-      default:
-         if (direction.getAxis() == Direction.Axis.X) {
-            return flag ? PRESSED_CEILING_AABB_X : CEILING_AABB_X;
-         } else {
-            return flag ? PRESSED_CEILING_AABB_Z : CEILING_AABB_Z;
-         }
-      }
-   }
+        switch ((AttachFace)state.get(FACE))
+        {
+            case FLOOR:
+                if (direction.getAxis() == Direction.Axis.X)
+                {
+                    return flag ? AABB_FLOOR_X_ON : AABB_FLOOR_X_OFF;
+                }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_1_.getValue(POWERED)) {
-         return ActionResultType.CONSUME;
-      } else {
-         this.press(p_225533_1_, p_225533_2_, p_225533_3_);
-         this.playSound(p_225533_4_, p_225533_2_, p_225533_3_, true);
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      }
-   }
+                return flag ? AABB_FLOOR_Z_ON : AABB_FLOOR_Z_OFF;
 
-   public void press(BlockState p_226910_1_, World p_226910_2_, BlockPos p_226910_3_) {
-      p_226910_2_.setBlock(p_226910_3_, p_226910_1_.setValue(POWERED, Boolean.valueOf(true)), 3);
-      this.updateNeighbours(p_226910_1_, p_226910_2_, p_226910_3_);
-      p_226910_2_.getBlockTicks().scheduleTick(p_226910_3_, this, this.getPressDuration());
-   }
+            case WALL:
+                switch (direction)
+                {
+                    case EAST:
+                        return flag ? AABB_EAST_ON : AABB_EAST_OFF;
 
-   protected void playSound(@Nullable PlayerEntity p_196367_1_, IWorld p_196367_2_, BlockPos p_196367_3_, boolean p_196367_4_) {
-      p_196367_2_.playSound(p_196367_4_ ? p_196367_1_ : null, p_196367_3_, this.getSound(p_196367_4_), SoundCategory.BLOCKS, 0.3F, p_196367_4_ ? 0.6F : 0.5F);
-   }
+                    case WEST:
+                        return flag ? AABB_WEST_ON : AABB_WEST_OFF;
 
-   protected abstract SoundEvent getSound(boolean p_196369_1_);
+                    case SOUTH:
+                        return flag ? AABB_SOUTH_ON : AABB_SOUTH_OFF;
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_5_ && !p_196243_1_.is(p_196243_4_.getBlock())) {
-         if (p_196243_1_.getValue(POWERED)) {
-            this.updateNeighbours(p_196243_1_, p_196243_2_, p_196243_3_);
-         }
+                    case NORTH:
+                    default:
+                        return flag ? AABB_NORTH_ON : AABB_NORTH_OFF;
+                }
 
-         super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
-      }
-   }
+            case CEILING:
+            default:
+                if (direction.getAxis() == Direction.Axis.X)
+                {
+                    return flag ? AABB_CEILING_X_ON : AABB_CEILING_X_OFF;
+                }
+                else
+                {
+                    return flag ? AABB_CEILING_Z_ON : AABB_CEILING_Z_OFF;
+                }
+        }
+    }
 
-   public int getSignal(BlockState p_180656_1_, IBlockReader p_180656_2_, BlockPos p_180656_3_, Direction p_180656_4_) {
-      return p_180656_1_.getValue(POWERED) ? 15 : 0;
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (state.get(POWERED))
+        {
+            return ActionResultType.CONSUME;
+        }
+        else
+        {
+            this.powerBlock(state, worldIn, pos);
+            this.playSound(player, worldIn, pos, true);
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+    }
 
-   public int getDirectSignal(BlockState p_176211_1_, IBlockReader p_176211_2_, BlockPos p_176211_3_, Direction p_176211_4_) {
-      return p_176211_1_.getValue(POWERED) && getConnectedDirection(p_176211_1_) == p_176211_4_ ? 15 : 0;
-   }
+    public void powerBlock(BlockState state, World world, BlockPos pos)
+    {
+        world.setBlockState(pos, state.with(POWERED, Boolean.valueOf(true)), 3);
+        this.updateNeighbors(state, world, pos);
+        world.getPendingBlockTicks().scheduleTick(pos, this, this.getActiveDuration());
+    }
 
-   public boolean isSignalSource(BlockState p_149744_1_) {
-      return true;
-   }
+    protected void playSound(@Nullable PlayerEntity playerIn, IWorld worldIn, BlockPos pos, boolean hitByArrow)
+    {
+        worldIn.playSound(hitByArrow ? playerIn : null, pos, this.getSoundEvent(hitByArrow), SoundCategory.BLOCKS, 0.3F, hitByArrow ? 0.6F : 0.5F);
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (p_225534_1_.getValue(POWERED)) {
-         if (this.sensitive) {
-            this.checkPressed(p_225534_1_, p_225534_2_, p_225534_3_);
-         } else {
-            p_225534_2_.setBlock(p_225534_3_, p_225534_1_.setValue(POWERED, Boolean.valueOf(false)), 3);
-            this.updateNeighbours(p_225534_1_, p_225534_2_, p_225534_3_);
-            this.playSound((PlayerEntity)null, p_225534_2_, p_225534_3_, false);
-         }
+    protected abstract SoundEvent getSoundEvent(boolean isOn);
 
-      }
-   }
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!isMoving && !state.isIn(newState.getBlock()))
+        {
+            if (state.get(POWERED))
+            {
+                this.updateNeighbors(state, worldIn, pos);
+            }
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      if (!p_196262_2_.isClientSide && this.sensitive && !p_196262_1_.getValue(POWERED)) {
-         this.checkPressed(p_196262_1_, p_196262_2_, p_196262_3_);
-      }
-   }
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+        }
+    }
 
-   private void checkPressed(BlockState p_185616_1_, World p_185616_2_, BlockPos p_185616_3_) {
-      List<? extends Entity> list = p_185616_2_.getEntitiesOfClass(AbstractArrowEntity.class, p_185616_1_.getShape(p_185616_2_, p_185616_3_).bounds().move(p_185616_3_));
-      boolean flag = !list.isEmpty();
-      boolean flag1 = p_185616_1_.getValue(POWERED);
-      if (flag != flag1) {
-         p_185616_2_.setBlock(p_185616_3_, p_185616_1_.setValue(POWERED, Boolean.valueOf(flag)), 3);
-         this.updateNeighbours(p_185616_1_, p_185616_2_, p_185616_3_);
-         this.playSound((PlayerEntity)null, p_185616_2_, p_185616_3_, flag);
-      }
+    /**
+     * @deprecated call via {@link IBlockState#getWeakPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return blockState.get(POWERED) ? 15 : 0;
+    }
 
-      if (flag) {
-         p_185616_2_.getBlockTicks().scheduleTick(new BlockPos(p_185616_3_), this, this.getPressDuration());
-      }
+    /**
+     * @deprecated call via {@link IBlockState#getStrongPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getStrongPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return blockState.get(POWERED) && getFacing(blockState) == side ? 15 : 0;
+    }
 
-   }
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     * @deprecated call via {@link IBlockState#canProvidePower()} whenever possible. Implementing/overriding is fine.
+     */
+    public boolean canProvidePower(BlockState state)
+    {
+        return true;
+    }
 
-   private void updateNeighbours(BlockState p_196368_1_, World p_196368_2_, BlockPos p_196368_3_) {
-      p_196368_2_.updateNeighborsAt(p_196368_3_, this);
-      p_196368_2_.updateNeighborsAt(p_196368_3_.relative(getConnectedDirection(p_196368_1_).getOpposite()), this);
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (state.get(POWERED))
+        {
+            if (this.wooden)
+            {
+                this.checkPressed(state, worldIn, pos);
+            }
+            else
+            {
+                worldIn.setBlockState(pos, state.with(POWERED, Boolean.valueOf(false)), 3);
+                this.updateNeighbors(state, worldIn, pos);
+                this.playSound((PlayerEntity)null, worldIn, pos, false);
+            }
+        }
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, POWERED, FACE);
-   }
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        if (!worldIn.isRemote && this.wooden && !state.get(POWERED))
+        {
+            this.checkPressed(state, worldIn, pos);
+        }
+    }
+
+    private void checkPressed(BlockState state, World worldIn, BlockPos pos)
+    {
+        List <? extends Entity > list = worldIn.getEntitiesWithinAABB(AbstractArrowEntity.class, state.getShape(worldIn, pos).getBoundingBox().offset(pos));
+        boolean flag = !list.isEmpty();
+        boolean flag1 = state.get(POWERED);
+
+        if (flag != flag1)
+        {
+            worldIn.setBlockState(pos, state.with(POWERED, Boolean.valueOf(flag)), 3);
+            this.updateNeighbors(state, worldIn, pos);
+            this.playSound((PlayerEntity)null, worldIn, pos, flag);
+        }
+
+        if (flag)
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(new BlockPos(pos), this, this.getActiveDuration());
+        }
+    }
+
+    private void updateNeighbors(BlockState state, World worldIn, BlockPos pos)
+    {
+        worldIn.notifyNeighborsOfStateChange(pos, this);
+        worldIn.notifyNeighborsOfStateChange(pos.offset(getFacing(state).getOpposite()), this);
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(HORIZONTAL_FACING, POWERED, FACE);
+    }
 }

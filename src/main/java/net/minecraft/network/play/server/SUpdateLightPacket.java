@@ -11,182 +11,223 @@ import net.minecraft.util.math.SectionPos;
 import net.minecraft.world.LightType;
 import net.minecraft.world.chunk.NibbleArray;
 import net.minecraft.world.lighting.WorldLightManager;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SUpdateLightPacket implements IPacket<IClientPlayNetHandler> {
-   private int x;
-   private int z;
-   private int skyYMask;
-   private int blockYMask;
-   private int emptySkyYMask;
-   private int emptyBlockYMask;
-   private List<byte[]> skyUpdates;
-   private List<byte[]> blockUpdates;
-   private boolean trustEdges;
+public class SUpdateLightPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int chunkX;
+    private int chunkZ;
+    private int skyLightUpdateMask;
+    private int blockLightUpdateMask;
+    private int skyLightResetMask;
+    private int blockLightResetMask;
+    private List<byte[]> skyLightData;
+    private List<byte[]> blockLightData;
+    private boolean field_241783_i_;
 
-   public SUpdateLightPacket() {
-   }
+    public SUpdateLightPacket()
+    {
+    }
 
-   public SUpdateLightPacket(ChunkPos p_i50774_1_, WorldLightManager p_i50774_2_, boolean p_i50774_3_) {
-      this.x = p_i50774_1_.x;
-      this.z = p_i50774_1_.z;
-      this.trustEdges = p_i50774_3_;
-      this.skyUpdates = Lists.newArrayList();
-      this.blockUpdates = Lists.newArrayList();
+    public SUpdateLightPacket(ChunkPos pos, WorldLightManager lightManager, boolean p_i50774_3_)
+    {
+        this.chunkX = pos.x;
+        this.chunkZ = pos.z;
+        this.field_241783_i_ = p_i50774_3_;
+        this.skyLightData = Lists.newArrayList();
+        this.blockLightData = Lists.newArrayList();
 
-      for(int i = 0; i < 18; ++i) {
-         NibbleArray nibblearray = p_i50774_2_.getLayerListener(LightType.SKY).getDataLayerData(SectionPos.of(p_i50774_1_, -1 + i));
-         NibbleArray nibblearray1 = p_i50774_2_.getLayerListener(LightType.BLOCK).getDataLayerData(SectionPos.of(p_i50774_1_, -1 + i));
-         if (nibblearray != null) {
-            if (nibblearray.isEmpty()) {
-               this.emptySkyYMask |= 1 << i;
-            } else {
-               this.skyYMask |= 1 << i;
-               this.skyUpdates.add((byte[])nibblearray.getData().clone());
+        for (int i = 0; i < 18; ++i)
+        {
+            NibbleArray nibblearray = lightManager.getLightEngine(LightType.SKY).getData(SectionPos.from(pos, -1 + i));
+            NibbleArray nibblearray1 = lightManager.getLightEngine(LightType.BLOCK).getData(SectionPos.from(pos, -1 + i));
+
+            if (nibblearray != null)
+            {
+                if (nibblearray.isEmpty())
+                {
+                    this.skyLightResetMask |= 1 << i;
+                }
+                else
+                {
+                    this.skyLightUpdateMask |= 1 << i;
+                    this.skyLightData.add((byte[])nibblearray.getData().clone());
+                }
             }
-         }
 
-         if (nibblearray1 != null) {
-            if (nibblearray1.isEmpty()) {
-               this.emptyBlockYMask |= 1 << i;
-            } else {
-               this.blockYMask |= 1 << i;
-               this.blockUpdates.add((byte[])nibblearray1.getData().clone());
+            if (nibblearray1 != null)
+            {
+                if (nibblearray1.isEmpty())
+                {
+                    this.blockLightResetMask |= 1 << i;
+                }
+                else
+                {
+                    this.blockLightUpdateMask |= 1 << i;
+                    this.blockLightData.add((byte[])nibblearray1.getData().clone());
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
+    public SUpdateLightPacket(ChunkPos pos, WorldLightManager lightManager, int skyLightUpdateMaskIn, int blockLightUpdateMaskIn, boolean p_i50775_5_)
+    {
+        this.chunkX = pos.x;
+        this.chunkZ = pos.z;
+        this.field_241783_i_ = p_i50775_5_;
+        this.skyLightUpdateMask = skyLightUpdateMaskIn;
+        this.blockLightUpdateMask = blockLightUpdateMaskIn;
+        this.skyLightData = Lists.newArrayList();
+        this.blockLightData = Lists.newArrayList();
 
-   public SUpdateLightPacket(ChunkPos p_i50775_1_, WorldLightManager p_i50775_2_, int p_i50775_3_, int p_i50775_4_, boolean p_i50775_5_) {
-      this.x = p_i50775_1_.x;
-      this.z = p_i50775_1_.z;
-      this.trustEdges = p_i50775_5_;
-      this.skyYMask = p_i50775_3_;
-      this.blockYMask = p_i50775_4_;
-      this.skyUpdates = Lists.newArrayList();
-      this.blockUpdates = Lists.newArrayList();
+        for (int i = 0; i < 18; ++i)
+        {
+            if ((this.skyLightUpdateMask & 1 << i) != 0)
+            {
+                NibbleArray nibblearray = lightManager.getLightEngine(LightType.SKY).getData(SectionPos.from(pos, -1 + i));
 
-      for(int i = 0; i < 18; ++i) {
-         if ((this.skyYMask & 1 << i) != 0) {
-            NibbleArray nibblearray = p_i50775_2_.getLayerListener(LightType.SKY).getDataLayerData(SectionPos.of(p_i50775_1_, -1 + i));
-            if (nibblearray != null && !nibblearray.isEmpty()) {
-               this.skyUpdates.add((byte[])nibblearray.getData().clone());
-            } else {
-               this.skyYMask &= ~(1 << i);
-               if (nibblearray != null) {
-                  this.emptySkyYMask |= 1 << i;
-               }
+                if (nibblearray != null && !nibblearray.isEmpty())
+                {
+                    this.skyLightData.add((byte[])nibblearray.getData().clone());
+                }
+                else
+                {
+                    this.skyLightUpdateMask &= ~(1 << i);
+
+                    if (nibblearray != null)
+                    {
+                        this.skyLightResetMask |= 1 << i;
+                    }
+                }
             }
-         }
 
-         if ((this.blockYMask & 1 << i) != 0) {
-            NibbleArray nibblearray1 = p_i50775_2_.getLayerListener(LightType.BLOCK).getDataLayerData(SectionPos.of(p_i50775_1_, -1 + i));
-            if (nibblearray1 != null && !nibblearray1.isEmpty()) {
-               this.blockUpdates.add((byte[])nibblearray1.getData().clone());
-            } else {
-               this.blockYMask &= ~(1 << i);
-               if (nibblearray1 != null) {
-                  this.emptyBlockYMask |= 1 << i;
-               }
+            if ((this.blockLightUpdateMask & 1 << i) != 0)
+            {
+                NibbleArray nibblearray1 = lightManager.getLightEngine(LightType.BLOCK).getData(SectionPos.from(pos, -1 + i));
+
+                if (nibblearray1 != null && !nibblearray1.isEmpty())
+                {
+                    this.blockLightData.add((byte[])nibblearray1.getData().clone());
+                }
+                else
+                {
+                    this.blockLightUpdateMask &= ~(1 << i);
+
+                    if (nibblearray1 != null)
+                    {
+                        this.blockLightResetMask |= 1 << i;
+                    }
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.chunkX = buf.readVarInt();
+        this.chunkZ = buf.readVarInt();
+        this.field_241783_i_ = buf.readBoolean();
+        this.skyLightUpdateMask = buf.readVarInt();
+        this.blockLightUpdateMask = buf.readVarInt();
+        this.skyLightResetMask = buf.readVarInt();
+        this.blockLightResetMask = buf.readVarInt();
+        this.skyLightData = Lists.newArrayList();
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.x = p_148837_1_.readVarInt();
-      this.z = p_148837_1_.readVarInt();
-      this.trustEdges = p_148837_1_.readBoolean();
-      this.skyYMask = p_148837_1_.readVarInt();
-      this.blockYMask = p_148837_1_.readVarInt();
-      this.emptySkyYMask = p_148837_1_.readVarInt();
-      this.emptyBlockYMask = p_148837_1_.readVarInt();
-      this.skyUpdates = Lists.newArrayList();
+        for (int i = 0; i < 18; ++i)
+        {
+            if ((this.skyLightUpdateMask & 1 << i) != 0)
+            {
+                this.skyLightData.add(buf.readByteArray(2048));
+            }
+        }
 
-      for(int i = 0; i < 18; ++i) {
-         if ((this.skyYMask & 1 << i) != 0) {
-            this.skyUpdates.add(p_148837_1_.readByteArray(2048));
-         }
-      }
+        this.blockLightData = Lists.newArrayList();
 
-      this.blockUpdates = Lists.newArrayList();
+        for (int j = 0; j < 18; ++j)
+        {
+            if ((this.blockLightUpdateMask & 1 << j) != 0)
+            {
+                this.blockLightData.add(buf.readByteArray(2048));
+            }
+        }
+    }
 
-      for(int j = 0; j < 18; ++j) {
-         if ((this.blockYMask & 1 << j) != 0) {
-            this.blockUpdates.add(p_148837_1_.readByteArray(2048));
-         }
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.chunkX);
+        buf.writeVarInt(this.chunkZ);
+        buf.writeBoolean(this.field_241783_i_);
+        buf.writeVarInt(this.skyLightUpdateMask);
+        buf.writeVarInt(this.blockLightUpdateMask);
+        buf.writeVarInt(this.skyLightResetMask);
+        buf.writeVarInt(this.blockLightResetMask);
 
-   }
+        for (byte[] abyte : this.skyLightData)
+        {
+            buf.writeByteArray(abyte);
+        }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.x);
-      p_148840_1_.writeVarInt(this.z);
-      p_148840_1_.writeBoolean(this.trustEdges);
-      p_148840_1_.writeVarInt(this.skyYMask);
-      p_148840_1_.writeVarInt(this.blockYMask);
-      p_148840_1_.writeVarInt(this.emptySkyYMask);
-      p_148840_1_.writeVarInt(this.emptyBlockYMask);
+        for (byte[] abyte1 : this.blockLightData)
+        {
+            buf.writeByteArray(abyte1);
+        }
+    }
 
-      for(byte[] abyte : this.skyUpdates) {
-         p_148840_1_.writeByteArray(abyte);
-      }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleUpdateLight(this);
+    }
 
-      for(byte[] abyte1 : this.blockUpdates) {
-         p_148840_1_.writeByteArray(abyte1);
-      }
+    public int getChunkX()
+    {
+        return this.chunkX;
+    }
 
-   }
+    public int getChunkZ()
+    {
+        return this.chunkZ;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleLightUpdatePacked(this);
-   }
+    public int getSkyLightUpdateMask()
+    {
+        return this.skyLightUpdateMask;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getX() {
-      return this.x;
-   }
+    public int getSkyLightResetMask()
+    {
+        return this.skyLightResetMask;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getZ() {
-      return this.z;
-   }
+    public List<byte[]> getSkyLightData()
+    {
+        return this.skyLightData;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getSkyYMask() {
-      return this.skyYMask;
-   }
+    public int getBlockLightUpdateMask()
+    {
+        return this.blockLightUpdateMask;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getEmptySkyYMask() {
-      return this.emptySkyYMask;
-   }
+    public int getBlockLightResetMask()
+    {
+        return this.blockLightResetMask;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public List<byte[]> getSkyUpdates() {
-      return this.skyUpdates;
-   }
+    public List<byte[]> getBlockLightData()
+    {
+        return this.blockLightData;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getBlockYMask() {
-      return this.blockYMask;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public int getEmptyBlockYMask() {
-      return this.emptyBlockYMask;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public List<byte[]> getBlockUpdates() {
-      return this.blockUpdates;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean getTrustEdges() {
-      return this.trustEdges;
-   }
+    public boolean func_241784_j_()
+    {
+        return this.field_241783_i_;
+    }
 }

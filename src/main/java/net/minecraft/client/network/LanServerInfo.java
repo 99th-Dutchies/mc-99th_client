@@ -1,30 +1,35 @@
 package net.minecraft.client.network;
 
 import net.minecraft.util.Util;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class LanServerInfo {
-   private final String motd;
-   private final String address;
-   private long pingTime;
+public class LanServerInfo
+{
+    private final String lanServerMotd;
+    private final String lanServerIpPort;
+    private long timeLastSeen;
 
-   public LanServerInfo(String p_i47130_1_, String p_i47130_2_) {
-      this.motd = p_i47130_1_;
-      this.address = p_i47130_2_;
-      this.pingTime = Util.getMillis();
-   }
+    public LanServerInfo(String p_i47130_1_, String p_i47130_2_)
+    {
+        this.lanServerMotd = p_i47130_1_;
+        this.lanServerIpPort = p_i47130_2_;
+        this.timeLastSeen = Util.milliTime();
+    }
 
-   public String getMotd() {
-      return this.motd;
-   }
+    public String getServerMotd()
+    {
+        return this.lanServerMotd;
+    }
 
-   public String getAddress() {
-      return this.address;
-   }
+    public String getServerIpPort()
+    {
+        return this.lanServerIpPort;
+    }
 
-   public void updatePingTime() {
-      this.pingTime = Util.getMillis();
-   }
+    /**
+     * Updates the time this LanServer was last seen.
+     */
+    public void updateLastSeen()
+    {
+        this.timeLastSeen = Util.milliTime();
+    }
 }

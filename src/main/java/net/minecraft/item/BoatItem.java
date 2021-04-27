@@ -15,55 +15,77 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 
-public class BoatItem extends Item {
-   private static final Predicate<Entity> ENTITY_PREDICATE = EntityPredicates.NO_SPECTATORS.and(Entity::isPickable);
-   private final BoatEntity.Type type;
+public class BoatItem extends Item
+{
+    private static final Predicate<Entity> field_219989_a = EntityPredicates.NOT_SPECTATING.and(Entity::canBeCollidedWith);
+    private final BoatEntity.Type type;
 
-   public BoatItem(BoatEntity.Type p_i48526_1_, Item.Properties p_i48526_2_) {
-      super(p_i48526_2_);
-      this.type = p_i48526_1_;
-   }
+    public BoatItem(BoatEntity.Type typeIn, Item.Properties properties)
+    {
+        super(properties);
+        this.type = typeIn;
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      RayTraceResult raytraceresult = getPlayerPOVHitResult(p_77659_1_, p_77659_2_, RayTraceContext.FluidMode.ANY);
-      if (raytraceresult.getType() == RayTraceResult.Type.MISS) {
-         return ActionResult.pass(itemstack);
-      } else {
-         Vector3d vector3d = p_77659_2_.getViewVector(1.0F);
-         double d0 = 5.0D;
-         List<Entity> list = p_77659_1_.getEntities(p_77659_2_, p_77659_2_.getBoundingBox().expandTowards(vector3d.scale(5.0D)).inflate(1.0D), ENTITY_PREDICATE);
-         if (!list.isEmpty()) {
-            Vector3d vector3d1 = p_77659_2_.getEyePosition(1.0F);
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        RayTraceResult raytraceresult = rayTrace(worldIn, playerIn, RayTraceContext.FluidMode.ANY);
 
-            for(Entity entity : list) {
-               AxisAlignedBB axisalignedbb = entity.getBoundingBox().inflate((double)entity.getPickRadius());
-               if (axisalignedbb.contains(vector3d1)) {
-                  return ActionResult.pass(itemstack);
-               }
+        if (raytraceresult.getType() == RayTraceResult.Type.MISS)
+        {
+            return ActionResult.resultPass(itemstack);
+        }
+        else
+        {
+            Vector3d vector3d = playerIn.getLook(1.0F);
+            double d0 = 5.0D;
+            List<Entity> list = worldIn.getEntitiesInAABBexcluding(playerIn, playerIn.getBoundingBox().expand(vector3d.scale(5.0D)).grow(1.0D), field_219989_a);
+
+            if (!list.isEmpty())
+            {
+                Vector3d vector3d1 = playerIn.getEyePosition(1.0F);
+
+                for (Entity entity : list)
+                {
+                    AxisAlignedBB axisalignedbb = entity.getBoundingBox().grow((double)entity.getCollisionBorderSize());
+
+                    if (axisalignedbb.contains(vector3d1))
+                    {
+                        return ActionResult.resultPass(itemstack);
+                    }
+                }
             }
-         }
 
-         if (raytraceresult.getType() == RayTraceResult.Type.BLOCK) {
-            BoatEntity boatentity = new BoatEntity(p_77659_1_, raytraceresult.getLocation().x, raytraceresult.getLocation().y, raytraceresult.getLocation().z);
-            boatentity.setType(this.type);
-            boatentity.yRot = p_77659_2_.yRot;
-            if (!p_77659_1_.noCollision(boatentity, boatentity.getBoundingBox().inflate(-0.1D))) {
-               return ActionResult.fail(itemstack);
-            } else {
-               if (!p_77659_1_.isClientSide) {
-                  p_77659_1_.addFreshEntity(boatentity);
-                  if (!p_77659_2_.abilities.instabuild) {
-                     itemstack.shrink(1);
-                  }
-               }
+            if (raytraceresult.getType() == RayTraceResult.Type.BLOCK)
+            {
+                BoatEntity boatentity = new BoatEntity(worldIn, raytraceresult.getHitVec().x, raytraceresult.getHitVec().y, raytraceresult.getHitVec().z);
+                boatentity.setBoatType(this.type);
+                boatentity.rotationYaw = playerIn.rotationYaw;
 
-               p_77659_2_.awardStat(Stats.ITEM_USED.get(this));
-               return ActionResult.sidedSuccess(itemstack, p_77659_1_.isClientSide());
+                if (!worldIn.hasNoCollisions(boatentity, boatentity.getBoundingBox().grow(-0.1D)))
+                {
+                    return ActionResult.resultFail(itemstack);
+                }
+                else
+                {
+                    if (!worldIn.isRemote)
+                    {
+                        worldIn.addEntity(boatentity);
+
+                        if (!playerIn.abilities.isCreativeMode)
+                        {
+                            itemstack.shrink(1);
+                        }
+                    }
+
+                    playerIn.addStat(Stats.ITEM_USED.get(this));
+                    return ActionResult.func_233538_a_(itemstack, worldIn.isRemote());
+                }
             }
-         } else {
-            return ActionResult.pass(itemstack);
-         }
-      }
-   }
+            else
+            {
+                return ActionResult.resultPass(itemstack);
+            }
+        }
+    }
 }

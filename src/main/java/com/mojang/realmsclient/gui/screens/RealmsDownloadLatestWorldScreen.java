@@ -25,277 +25,329 @@ import net.minecraft.util.Util;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class RealmsDownloadLatestWorldScreen extends RealmsScreen {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final ReentrantLock DOWNLOAD_LOCK = new ReentrantLock();
-   private final Screen lastScreen;
-   private final WorldDownload worldDownload;
-   private final ITextComponent downloadTitle;
-   private final RateLimiter narrationRateLimiter;
-   private Button cancelButton;
-   private final String worldName;
-   private final RealmsDownloadLatestWorldScreen.DownloadStatus downloadStatus;
-   private volatile ITextComponent errorMessage;
-   private volatile ITextComponent status = new TranslationTextComponent("mco.download.preparing");
-   private volatile String progress;
-   private volatile boolean cancelled;
-   private volatile boolean showDots = true;
-   private volatile boolean finished;
-   private volatile boolean extracting;
-   private Long previousWrittenBytes;
-   private Long previousTimeSnapshot;
-   private long bytesPersSecond;
-   private int animTick;
-   private static final String[] DOTS = new String[]{"", ".", ". .", ". . ."};
-   private int dotIndex;
-   private boolean checked;
-   private final BooleanConsumer callback;
+public class RealmsDownloadLatestWorldScreen extends RealmsScreen
+{
+    private static final Logger field_224175_a = LogManager.getLogger();
+    private static final ReentrantLock field_237832_b_ = new ReentrantLock();
+    private final Screen field_224176_b;
+    private final WorldDownload field_224177_c;
+    private final ITextComponent field_224178_d;
+    private final RateLimiter field_224179_e;
+    private Button field_224180_f;
+    private final String field_224181_g;
+    private final RealmsDownloadLatestWorldScreen.DownloadStatus field_224182_h;
+    private volatile ITextComponent field_224183_i;
+    private volatile ITextComponent field_224184_j = new TranslationTextComponent("mco.download.preparing");
+    private volatile String field_224185_k;
+    private volatile boolean field_224186_l;
+    private volatile boolean field_224187_m = true;
+    private volatile boolean field_224188_n;
+    private volatile boolean field_224189_o;
+    private Long field_224190_p;
+    private Long field_224191_q;
+    private long field_224192_r;
+    private int field_224193_s;
+    private static final String[] field_224194_t = new String[] {"", ".", ". .", ". . ."};
+    private int field_224195_u;
+    private boolean field_224198_x;
+    private final BooleanConsumer field_237831_J_;
 
-   public RealmsDownloadLatestWorldScreen(Screen p_i232203_1_, WorldDownload p_i232203_2_, String p_i232203_3_, BooleanConsumer p_i232203_4_) {
-      this.callback = p_i232203_4_;
-      this.lastScreen = p_i232203_1_;
-      this.worldName = p_i232203_3_;
-      this.worldDownload = p_i232203_2_;
-      this.downloadStatus = new RealmsDownloadLatestWorldScreen.DownloadStatus();
-      this.downloadTitle = new TranslationTextComponent("mco.download.title");
-      this.narrationRateLimiter = RateLimiter.create((double)0.1F);
-   }
+    public RealmsDownloadLatestWorldScreen(Screen p_i232203_1_, WorldDownload p_i232203_2_, String p_i232203_3_, BooleanConsumer p_i232203_4_)
+    {
+        this.field_237831_J_ = p_i232203_4_;
+        this.field_224176_b = p_i232203_1_;
+        this.field_224181_g = p_i232203_3_;
+        this.field_224177_c = p_i232203_2_;
+        this.field_224182_h = new RealmsDownloadLatestWorldScreen.DownloadStatus();
+        this.field_224178_d = new TranslationTextComponent("mco.download.title");
+        this.field_224179_e = RateLimiter.create((double)0.1F);
+    }
 
-   public void init() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      this.cancelButton = this.addButton(new Button(this.width / 2 - 100, this.height - 42, 200, 20, DialogTexts.GUI_CANCEL, (p_237834_1_) -> {
-         this.cancelled = true;
-         this.backButtonClicked();
-      }));
-      this.checkDownloadSize();
-   }
+    public void init()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
+        this.field_224180_f = this.addButton(new Button(this.width / 2 - 100, this.height - 42, 200, 20, DialogTexts.GUI_CANCEL, (p_237834_1_) ->
+        {
+            this.field_224186_l = true;
+            this.func_224174_d();
+        }));
+        this.func_224162_c();
+    }
 
-   private void checkDownloadSize() {
-      if (!this.finished) {
-         if (!this.checked && this.getContentLength(this.worldDownload.downloadLink) >= 5368709120L) {
-            ITextComponent itextcomponent = new TranslationTextComponent("mco.download.confirmation.line1", UploadSpeed.humanReadable(5368709120L));
-            ITextComponent itextcomponent1 = new TranslationTextComponent("mco.download.confirmation.line2");
-            this.minecraft.setScreen(new RealmsLongConfirmationScreen((p_237837_1_) -> {
-               this.checked = true;
-               this.minecraft.setScreen(this);
-               this.downloadSave();
-            }, RealmsLongConfirmationScreen.Type.Warning, itextcomponent, itextcomponent1, false));
-         } else {
-            this.downloadSave();
-         }
+    private void func_224162_c()
+    {
+        if (!this.field_224188_n)
+        {
+            if (!this.field_224198_x && this.func_224152_a(this.field_224177_c.field_230643_a_) >= 5368709120L)
+            {
+                ITextComponent itextcomponent = new TranslationTextComponent("mco.download.confirmation.line1", UploadSpeed.func_237684_b_(5368709120L));
+                ITextComponent itextcomponent1 = new TranslationTextComponent("mco.download.confirmation.line2");
+                this.minecraft.displayGuiScreen(new RealmsLongConfirmationScreen((p_237837_1_) ->
+                {
+                    this.field_224198_x = true;
+                    this.minecraft.displayGuiScreen(this);
+                    this.func_224165_h();
+                }, RealmsLongConfirmationScreen.Type.Warning, itextcomponent, itextcomponent1, false));
+            }
+            else
+            {
+                this.func_224165_h();
+            }
+        }
+    }
 
-      }
-   }
+    private long func_224152_a(String p_224152_1_)
+    {
+        FileDownload filedownload = new FileDownload();
+        return filedownload.func_224827_a(p_224152_1_);
+    }
 
-   private long getContentLength(String p_224152_1_) {
-      FileDownload filedownload = new FileDownload();
-      return filedownload.contentLength(p_224152_1_);
-   }
+    public void tick()
+    {
+        super.tick();
+        ++this.field_224193_s;
 
-   public void tick() {
-      super.tick();
-      ++this.animTick;
-      if (this.status != null && this.narrationRateLimiter.tryAcquire(1)) {
-         List<ITextComponent> list = Lists.newArrayList();
-         list.add(this.downloadTitle);
-         list.add(this.status);
-         if (this.progress != null) {
-            list.add(new StringTextComponent(this.progress + "%"));
-            list.add(new StringTextComponent(UploadSpeed.humanReadable(this.bytesPersSecond) + "/s"));
-         }
+        if (this.field_224184_j != null && this.field_224179_e.tryAcquire(1))
+        {
+            List<ITextComponent> list = Lists.newArrayList();
+            list.add(this.field_224178_d);
+            list.add(this.field_224184_j);
 
-         if (this.errorMessage != null) {
-            list.add(this.errorMessage);
-         }
-
-         String s = list.stream().map(ITextComponent::getString).collect(Collectors.joining("\n"));
-         RealmsNarratorHelper.now(s);
-      }
-
-   }
-
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (p_231046_1_ == 256) {
-         this.cancelled = true;
-         this.backButtonClicked();
-         return true;
-      } else {
-         return super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-      }
-   }
-
-   private void backButtonClicked() {
-      if (this.finished && this.callback != null && this.errorMessage == null) {
-         this.callback.accept(true);
-      }
-
-      this.minecraft.setScreen(this.lastScreen);
-   }
-
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.renderBackground(p_230430_1_);
-      drawCenteredString(p_230430_1_, this.font, this.downloadTitle, this.width / 2, 20, 16777215);
-      drawCenteredString(p_230430_1_, this.font, this.status, this.width / 2, 50, 16777215);
-      if (this.showDots) {
-         this.drawDots(p_230430_1_);
-      }
-
-      if (this.downloadStatus.bytesWritten != 0L && !this.cancelled) {
-         this.drawProgressBar(p_230430_1_);
-         this.drawDownloadSpeed(p_230430_1_);
-      }
-
-      if (this.errorMessage != null) {
-         drawCenteredString(p_230430_1_, this.font, this.errorMessage, this.width / 2, 110, 16711680);
-      }
-
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-   }
-
-   private void drawDots(MatrixStack p_237835_1_) {
-      int i = this.font.width(this.status);
-      if (this.animTick % 10 == 0) {
-         ++this.dotIndex;
-      }
-
-      this.font.draw(p_237835_1_, DOTS[this.dotIndex % DOTS.length], (float)(this.width / 2 + i / 2 + 5), 50.0F, 16777215);
-   }
-
-   private void drawProgressBar(MatrixStack p_237836_1_) {
-      double d0 = Math.min((double)this.downloadStatus.bytesWritten / (double)this.downloadStatus.totalBytes, 1.0D);
-      this.progress = String.format(Locale.ROOT, "%.1f", d0 * 100.0D);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      RenderSystem.disableTexture();
-      Tessellator tessellator = Tessellator.getInstance();
-      BufferBuilder bufferbuilder = tessellator.getBuilder();
-      bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-      double d1 = (double)(this.width / 2 - 100);
-      double d2 = 0.5D;
-      bufferbuilder.vertex(d1 - 0.5D, 95.5D, 0.0D).color(217, 210, 210, 255).endVertex();
-      bufferbuilder.vertex(d1 + 200.0D * d0 + 0.5D, 95.5D, 0.0D).color(217, 210, 210, 255).endVertex();
-      bufferbuilder.vertex(d1 + 200.0D * d0 + 0.5D, 79.5D, 0.0D).color(217, 210, 210, 255).endVertex();
-      bufferbuilder.vertex(d1 - 0.5D, 79.5D, 0.0D).color(217, 210, 210, 255).endVertex();
-      bufferbuilder.vertex(d1, 95.0D, 0.0D).color(128, 128, 128, 255).endVertex();
-      bufferbuilder.vertex(d1 + 200.0D * d0, 95.0D, 0.0D).color(128, 128, 128, 255).endVertex();
-      bufferbuilder.vertex(d1 + 200.0D * d0, 80.0D, 0.0D).color(128, 128, 128, 255).endVertex();
-      bufferbuilder.vertex(d1, 80.0D, 0.0D).color(128, 128, 128, 255).endVertex();
-      tessellator.end();
-      RenderSystem.enableTexture();
-      drawCenteredString(p_237836_1_, this.font, this.progress + " %", this.width / 2, 84, 16777215);
-   }
-
-   private void drawDownloadSpeed(MatrixStack p_237838_1_) {
-      if (this.animTick % 20 == 0) {
-         if (this.previousWrittenBytes != null) {
-            long i = Util.getMillis() - this.previousTimeSnapshot;
-            if (i == 0L) {
-               i = 1L;
+            if (this.field_224185_k != null)
+            {
+                list.add(new StringTextComponent(this.field_224185_k + "%"));
+                list.add(new StringTextComponent(UploadSpeed.func_237684_b_(this.field_224192_r) + "/s"));
             }
 
-            this.bytesPersSecond = 1000L * (this.downloadStatus.bytesWritten - this.previousWrittenBytes) / i;
-            this.drawDownloadSpeed0(p_237838_1_, this.bytesPersSecond);
-         }
-
-         this.previousWrittenBytes = this.downloadStatus.bytesWritten;
-         this.previousTimeSnapshot = Util.getMillis();
-      } else {
-         this.drawDownloadSpeed0(p_237838_1_, this.bytesPersSecond);
-      }
-
-   }
-
-   private void drawDownloadSpeed0(MatrixStack p_237833_1_, long p_237833_2_) {
-      if (p_237833_2_ > 0L) {
-         int i = this.font.width(this.progress);
-         String s = "(" + UploadSpeed.humanReadable(p_237833_2_) + "/s)";
-         this.font.draw(p_237833_1_, s, (float)(this.width / 2 + i / 2 + 15), 84.0F, 16777215);
-      }
-
-   }
-
-   private void downloadSave() {
-      (new Thread(() -> {
-         try {
-            if (DOWNLOAD_LOCK.tryLock(1L, TimeUnit.SECONDS)) {
-               if (this.cancelled) {
-                  this.downloadCancelled();
-                  return;
-               }
-
-               this.status = new TranslationTextComponent("mco.download.downloading", this.worldName);
-               FileDownload filedownload = new FileDownload();
-               filedownload.contentLength(this.worldDownload.downloadLink);
-               filedownload.download(this.worldDownload, this.worldName, this.downloadStatus, this.minecraft.getLevelSource());
-
-               while(!filedownload.isFinished()) {
-                  if (filedownload.isError()) {
-                     filedownload.cancel();
-                     this.errorMessage = new TranslationTextComponent("mco.download.failed");
-                     this.cancelButton.setMessage(DialogTexts.GUI_DONE);
-                     return;
-                  }
-
-                  if (filedownload.isExtracting()) {
-                     if (!this.extracting) {
-                        this.status = new TranslationTextComponent("mco.download.extracting");
-                     }
-
-                     this.extracting = true;
-                  }
-
-                  if (this.cancelled) {
-                     filedownload.cancel();
-                     this.downloadCancelled();
-                     return;
-                  }
-
-                  try {
-                     Thread.sleep(500L);
-                  } catch (InterruptedException interruptedexception) {
-                     LOGGER.error("Failed to check Realms backup download status");
-                  }
-               }
-
-               this.finished = true;
-               this.status = new TranslationTextComponent("mco.download.done");
-               this.cancelButton.setMessage(DialogTexts.GUI_DONE);
-               return;
+            if (this.field_224183_i != null)
+            {
+                list.add(this.field_224183_i);
             }
 
-            this.status = new TranslationTextComponent("mco.download.failed");
-         } catch (InterruptedException interruptedexception1) {
-            LOGGER.error("Could not acquire upload lock");
-            return;
-         } catch (Exception exception) {
-            this.errorMessage = new TranslationTextComponent("mco.download.failed");
-            exception.printStackTrace();
-            return;
-         } finally {
-            if (!DOWNLOAD_LOCK.isHeldByCurrentThread()) {
-               return;
+            String s = list.stream().map(ITextComponent::getString).collect(Collectors.joining("\n"));
+            RealmsNarratorHelper.func_239550_a_(s);
+        }
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (keyCode == 256)
+        {
+            this.field_224186_l = true;
+            this.func_224174_d();
+            return true;
+        }
+        else
+        {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+    }
+
+    private void func_224174_d()
+    {
+        if (this.field_224188_n && this.field_237831_J_ != null && this.field_224183_i == null)
+        {
+            this.field_237831_J_.accept(true);
+        }
+
+        this.minecraft.displayGuiScreen(this.field_224176_b);
+    }
+
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.renderBackground(matrixStack);
+        drawCenteredString(matrixStack, this.font, this.field_224178_d, this.width / 2, 20, 16777215);
+        drawCenteredString(matrixStack, this.font, this.field_224184_j, this.width / 2, 50, 16777215);
+
+        if (this.field_224187_m)
+        {
+            this.func_237835_b_(matrixStack);
+        }
+
+        if (this.field_224182_h.field_225139_a != 0L && !this.field_224186_l)
+        {
+            this.func_237836_c_(matrixStack);
+            this.func_237838_d_(matrixStack);
+        }
+
+        if (this.field_224183_i != null)
+        {
+            drawCenteredString(matrixStack, this.font, this.field_224183_i, this.width / 2, 110, 16711680);
+        }
+
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
+
+    private void func_237835_b_(MatrixStack p_237835_1_)
+    {
+        int i = this.font.getStringPropertyWidth(this.field_224184_j);
+
+        if (this.field_224193_s % 10 == 0)
+        {
+            ++this.field_224195_u;
+        }
+
+        this.font.drawString(p_237835_1_, field_224194_t[this.field_224195_u % field_224194_t.length], (float)(this.width / 2 + i / 2 + 5), 50.0F, 16777215);
+    }
+
+    private void func_237836_c_(MatrixStack p_237836_1_)
+    {
+        double d0 = Math.min((double)this.field_224182_h.field_225139_a / (double)this.field_224182_h.field_225140_b, 1.0D);
+        this.field_224185_k = String.format(Locale.ROOT, "%.1f", d0 * 100.0D);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.disableTexture();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        double d1 = (double)(this.width / 2 - 100);
+        double d2 = 0.5D;
+        bufferbuilder.pos(d1 - 0.5D, 95.5D, 0.0D).color(217, 210, 210, 255).endVertex();
+        bufferbuilder.pos(d1 + 200.0D * d0 + 0.5D, 95.5D, 0.0D).color(217, 210, 210, 255).endVertex();
+        bufferbuilder.pos(d1 + 200.0D * d0 + 0.5D, 79.5D, 0.0D).color(217, 210, 210, 255).endVertex();
+        bufferbuilder.pos(d1 - 0.5D, 79.5D, 0.0D).color(217, 210, 210, 255).endVertex();
+        bufferbuilder.pos(d1, 95.0D, 0.0D).color(128, 128, 128, 255).endVertex();
+        bufferbuilder.pos(d1 + 200.0D * d0, 95.0D, 0.0D).color(128, 128, 128, 255).endVertex();
+        bufferbuilder.pos(d1 + 200.0D * d0, 80.0D, 0.0D).color(128, 128, 128, 255).endVertex();
+        bufferbuilder.pos(d1, 80.0D, 0.0D).color(128, 128, 128, 255).endVertex();
+        tessellator.draw();
+        RenderSystem.enableTexture();
+        drawCenteredString(p_237836_1_, this.font, this.field_224185_k + " %", this.width / 2, 84, 16777215);
+    }
+
+    private void func_237838_d_(MatrixStack p_237838_1_)
+    {
+        if (this.field_224193_s % 20 == 0)
+        {
+            if (this.field_224190_p != null)
+            {
+                long i = Util.milliTime() - this.field_224191_q;
+
+                if (i == 0L)
+                {
+                    i = 1L;
+                }
+
+                this.field_224192_r = 1000L * (this.field_224182_h.field_225139_a - this.field_224190_p) / i;
+                this.func_237833_a_(p_237838_1_, this.field_224192_r);
             }
 
-            DOWNLOAD_LOCK.unlock();
-            this.showDots = false;
-            this.finished = true;
-         }
+            this.field_224190_p = this.field_224182_h.field_225139_a;
+            this.field_224191_q = Util.milliTime();
+        }
+        else
+        {
+            this.func_237833_a_(p_237838_1_, this.field_224192_r);
+        }
+    }
 
-      })).start();
-   }
+    private void func_237833_a_(MatrixStack p_237833_1_, long p_237833_2_)
+    {
+        if (p_237833_2_ > 0L)
+        {
+            int i = this.font.getStringWidth(this.field_224185_k);
+            String s = "(" + UploadSpeed.func_237684_b_(p_237833_2_) + "/s)";
+            this.font.drawString(p_237833_1_, s, (float)(this.width / 2 + i / 2 + 15), 84.0F, 16777215);
+        }
+    }
 
-   private void downloadCancelled() {
-      this.status = new TranslationTextComponent("mco.download.cancelled");
-   }
+    private void func_224165_h()
+    {
+        (new Thread(() ->
+        {
+            try {
+                if (field_237832_b_.tryLock(1L, TimeUnit.SECONDS))
+                {
+                    if (this.field_224186_l)
+                    {
+                        this.func_224159_i();
+                        return;
+                    }
 
-   @OnlyIn(Dist.CLIENT)
-   public class DownloadStatus {
-      public volatile long bytesWritten;
-      public volatile long totalBytes;
-   }
+                    this.field_224184_j = new TranslationTextComponent("mco.download.downloading", this.field_224181_g);
+                    FileDownload filedownload = new FileDownload();
+                    filedownload.func_224827_a(this.field_224177_c.field_230643_a_);
+                    filedownload.func_237688_a_(this.field_224177_c, this.field_224181_g, this.field_224182_h, this.minecraft.getSaveLoader());
+
+                    while (!filedownload.func_224835_b())
+                    {
+                        if (filedownload.func_224836_c())
+                        {
+                            filedownload.func_224834_a();
+                            this.field_224183_i = new TranslationTextComponent("mco.download.failed");
+                            this.field_224180_f.setMessage(DialogTexts.GUI_DONE);
+                            return;
+                        }
+
+                        if (filedownload.func_224837_d())
+                        {
+                            if (!this.field_224189_o)
+                            {
+                                this.field_224184_j = new TranslationTextComponent("mco.download.extracting");
+                            }
+
+                            this.field_224189_o = true;
+                        }
+
+                        if (this.field_224186_l)
+                        {
+                            filedownload.func_224834_a();
+                            this.func_224159_i();
+                            return;
+                        }
+
+                        try
+                        {
+                            Thread.sleep(500L);
+                        }
+                        catch (InterruptedException interruptedexception)
+                        {
+                            field_224175_a.error("Failed to check Realms backup download status");
+                        }
+                    }
+
+                    this.field_224188_n = true;
+                    this.field_224184_j = new TranslationTextComponent("mco.download.done");
+                    this.field_224180_f.setMessage(DialogTexts.GUI_DONE);
+                    return;
+                }
+
+                this.field_224184_j = new TranslationTextComponent("mco.download.failed");
+            }
+            catch (InterruptedException interruptedexception1)
+            {
+                field_224175_a.error("Could not acquire upload lock");
+                return;
+            }
+            catch (Exception exception)
+            {
+                this.field_224183_i = new TranslationTextComponent("mco.download.failed");
+                exception.printStackTrace();
+                return;
+            }
+            finally {
+                if (!field_237832_b_.isHeldByCurrentThread())
+                {
+                    return;
+                }
+
+                field_237832_b_.unlock();
+                this.field_224187_m = false;
+                this.field_224188_n = true;
+            }
+        })).start();
+    }
+
+    private void func_224159_i()
+    {
+        this.field_224184_j = new TranslationTextComponent("mco.download.cancelled");
+    }
+
+    public class DownloadStatus
+    {
+        public volatile long field_225139_a;
+        public volatile long field_225140_b;
+    }
 }

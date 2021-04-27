@@ -9,41 +9,55 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.login.IServerLoginNetHandler;
 import net.minecraft.util.CryptException;
 import net.minecraft.util.CryptManager;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CEncryptionResponsePacket implements IPacket<IServerLoginNetHandler> {
-   private byte[] keybytes = new byte[0];
-   private byte[] nonce = new byte[0];
+public class CEncryptionResponsePacket implements IPacket<IServerLoginNetHandler>
+{
+    private byte[] secretKeyEncrypted = new byte[0];
+    private byte[] verifyTokenEncrypted = new byte[0];
 
-   public CEncryptionResponsePacket() {
-   }
+    public CEncryptionResponsePacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CEncryptionResponsePacket(SecretKey p_i46851_1_, PublicKey p_i46851_2_, byte[] p_i46851_3_) throws CryptException {
-      this.keybytes = CryptManager.encryptUsingKey(p_i46851_2_, p_i46851_1_.getEncoded());
-      this.nonce = CryptManager.encryptUsingKey(p_i46851_2_, p_i46851_3_);
-   }
+    public CEncryptionResponsePacket(SecretKey secret, PublicKey key, byte[] verifyToken) throws CryptException
+    {
+        this.secretKeyEncrypted = CryptManager.encryptData(key, secret.getEncoded());
+        this.verifyTokenEncrypted = CryptManager.encryptData(key, verifyToken);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.keybytes = p_148837_1_.readByteArray();
-      this.nonce = p_148837_1_.readByteArray();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.secretKeyEncrypted = buf.readByteArray();
+        this.verifyTokenEncrypted = buf.readByteArray();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByteArray(this.keybytes);
-      p_148840_1_.writeByteArray(this.nonce);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByteArray(this.secretKeyEncrypted);
+        buf.writeByteArray(this.verifyTokenEncrypted);
+    }
 
-   public void handle(IServerLoginNetHandler p_148833_1_) {
-      p_148833_1_.handleKey(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerLoginNetHandler handler)
+    {
+        handler.processEncryptionResponse(this);
+    }
 
-   public SecretKey getSecretKey(PrivateKey p_149300_1_) throws CryptException {
-      return CryptManager.decryptByteToSecretKey(p_149300_1_, this.keybytes);
-   }
+    public SecretKey getSecretKey(PrivateKey key) throws CryptException
+    {
+        return CryptManager.decryptSharedKey(key, this.secretKeyEncrypted);
+    }
 
-   public byte[] getNonce(PrivateKey p_149299_1_) throws CryptException {
-      return CryptManager.decryptUsingKey(p_149299_1_, this.nonce);
-   }
+    public byte[] getVerifyToken(PrivateKey key) throws CryptException
+    {
+        return CryptManager.decryptData(key, this.verifyTokenEncrypted);
+    }
 }

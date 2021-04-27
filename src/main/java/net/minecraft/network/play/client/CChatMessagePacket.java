@@ -5,33 +5,50 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 
-public class CChatMessagePacket implements IPacket<IServerPlayNetHandler> {
-   private String message;
+public class CChatMessagePacket implements IPacket<IServerPlayNetHandler>
+{
+    private String message;
 
-   public CChatMessagePacket() {
-   }
+    public CChatMessagePacket()
+    {
+    }
 
-   public CChatMessagePacket(String p_i46887_1_) {
-      if (p_i46887_1_.length() > 256) {
-         p_i46887_1_ = p_i46887_1_.substring(0, 256);
-      }
+    public CChatMessagePacket(String messageIn)
+    {
+        if (messageIn.length() > 256)
+        {
+            messageIn = messageIn.substring(0, 256);
+        }
 
-      this.message = p_i46887_1_;
-   }
+        this.message = messageIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.message = p_148837_1_.readUtf(256);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.message = buf.readString(256);
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeUtf(this.message);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeString(this.message);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleChat(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processChatMessage(this);
+    }
 
-   public String getMessage() {
-      return this.message;
-   }
+    public String getMessage()
+    {
+        return this.message;
+    }
 }

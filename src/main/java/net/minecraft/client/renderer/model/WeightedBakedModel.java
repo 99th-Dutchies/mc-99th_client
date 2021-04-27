@@ -8,82 +8,96 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
 import net.minecraft.util.WeightedRandom;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class WeightedBakedModel implements IBakedModel {
-   private final int totalWeight;
-   private final List<WeightedBakedModel.WeightedModel> list;
-   private final IBakedModel wrapped;
+public class WeightedBakedModel implements IBakedModel
+{
+    private final int totalWeight;
+    private final List<WeightedBakedModel.WeightedModel> models;
+    private final IBakedModel baseModel;
 
-   public WeightedBakedModel(List<WeightedBakedModel.WeightedModel> p_i46073_1_) {
-      this.list = p_i46073_1_;
-      this.totalWeight = WeightedRandom.getTotalWeight(p_i46073_1_);
-      this.wrapped = (p_i46073_1_.get(0)).model;
-   }
+    public WeightedBakedModel(List<WeightedBakedModel.WeightedModel> modelsIn)
+    {
+        this.models = modelsIn;
+        this.totalWeight = WeightedRandom.getTotalWeight(modelsIn);
+        this.baseModel = (modelsIn.get(0)).model;
+    }
 
-   public List<BakedQuad> getQuads(@Nullable BlockState p_200117_1_, @Nullable Direction p_200117_2_, Random p_200117_3_) {
-      return (WeightedRandom.getWeightedItem(this.list, Math.abs((int)p_200117_3_.nextLong()) % this.totalWeight)).model.getQuads(p_200117_1_, p_200117_2_, p_200117_3_);
-   }
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand)
+    {
+        return (WeightedRandom.getRandomItem(this.models, Math.abs((int)rand.nextLong()) % this.totalWeight)).model.getQuads(state, side, rand);
+    }
 
-   public boolean useAmbientOcclusion() {
-      return this.wrapped.useAmbientOcclusion();
-   }
+    public boolean isAmbientOcclusion()
+    {
+        return this.baseModel.isAmbientOcclusion();
+    }
 
-   public boolean isGui3d() {
-      return this.wrapped.isGui3d();
-   }
+    public boolean isGui3d()
+    {
+        return this.baseModel.isGui3d();
+    }
 
-   public boolean usesBlockLight() {
-      return this.wrapped.usesBlockLight();
-   }
+    public boolean isSideLit()
+    {
+        return this.baseModel.isSideLit();
+    }
 
-   public boolean isCustomRenderer() {
-      return this.wrapped.isCustomRenderer();
-   }
+    public boolean isBuiltInRenderer()
+    {
+        return this.baseModel.isBuiltInRenderer();
+    }
 
-   public TextureAtlasSprite getParticleIcon() {
-      return this.wrapped.getParticleIcon();
-   }
+    public TextureAtlasSprite getParticleTexture()
+    {
+        return this.baseModel.getParticleTexture();
+    }
 
-   public ItemCameraTransforms getTransforms() {
-      return this.wrapped.getTransforms();
-   }
+    public ItemCameraTransforms getItemCameraTransforms()
+    {
+        return this.baseModel.getItemCameraTransforms();
+    }
 
-   public ItemOverrideList getOverrides() {
-      return this.wrapped.getOverrides();
-   }
+    public ItemOverrideList getOverrides()
+    {
+        return this.baseModel.getOverrides();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Builder {
-      private final List<WeightedBakedModel.WeightedModel> list = Lists.newArrayList();
+    public static class Builder
+    {
+        private final List<WeightedBakedModel.WeightedModel> listItems = Lists.newArrayList();
 
-      public WeightedBakedModel.Builder add(@Nullable IBakedModel p_177677_1_, int p_177677_2_) {
-         if (p_177677_1_ != null) {
-            this.list.add(new WeightedBakedModel.WeightedModel(p_177677_1_, p_177677_2_));
-         }
+        public WeightedBakedModel.Builder add(@Nullable IBakedModel model, int weight)
+        {
+            if (model != null)
+            {
+                this.listItems.add(new WeightedBakedModel.WeightedModel(model, weight));
+            }
 
-         return this;
-      }
+            return this;
+        }
 
-      @Nullable
-      public IBakedModel build() {
-         if (this.list.isEmpty()) {
-            return null;
-         } else {
-            return (IBakedModel)(this.list.size() == 1 ? (this.list.get(0)).model : new WeightedBakedModel(this.list));
-         }
-      }
-   }
+        @Nullable
+        public IBakedModel build()
+        {
+            if (this.listItems.isEmpty())
+            {
+                return null;
+            }
+            else
+            {
+                return (IBakedModel)(this.listItems.size() == 1 ? (this.listItems.get(0)).model : new WeightedBakedModel(this.listItems));
+            }
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   static class WeightedModel extends WeightedRandom.Item {
-      protected final IBakedModel model;
+    static class WeightedModel extends WeightedRandom.Item
+    {
+        protected final IBakedModel model;
 
-      public WeightedModel(IBakedModel p_i46763_1_, int p_i46763_2_) {
-         super(p_i46763_2_);
-         this.model = p_i46763_1_;
-      }
-   }
+        public WeightedModel(IBakedModel modelIn, int itemWeightIn)
+        {
+            super(itemWeightIn);
+            this.model = modelIn;
+        }
+    }
 }

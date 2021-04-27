@@ -1,16 +1,16 @@
 package net.minecraft.block;
 
 import net.minecraft.util.Direction;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class BreakableBlock extends Block {
-   protected BreakableBlock(AbstractBlock.Properties p_i48382_1_) {
-      super(p_i48382_1_);
-   }
+public class BreakableBlock extends Block
+{
+    protected BreakableBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean skipRendering(BlockState p_200122_1_, BlockState p_200122_2_, Direction p_200122_3_) {
-      return p_200122_2_.is(this) ? true : super.skipRendering(p_200122_1_, p_200122_2_, p_200122_3_);
-   }
+    public boolean isSideInvisible(BlockState state, BlockState adjacentBlockState, Direction side)
+    {
+        return adjacentBlockState.isIn(this) ? true : super.isSideInvisible(state, adjacentBlockState, side);
+    }
 }

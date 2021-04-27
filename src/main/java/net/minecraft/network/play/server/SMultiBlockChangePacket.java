@@ -11,79 +11,94 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.SectionPos;
 import net.minecraft.world.chunk.ChunkSection;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SMultiBlockChangePacket implements IPacket<IClientPlayNetHandler> {
-   private SectionPos sectionPos;
-   private short[] positions;
-   private BlockState[] states;
-   private boolean suppressLightUpdates;
+public class SMultiBlockChangePacket implements IPacket<IClientPlayNetHandler>
+{
+    private SectionPos field_244305_a;
+    private short[] field_244306_b;
+    private BlockState[] field_244307_c;
+    private boolean field_244308_d;
 
-   public SMultiBlockChangePacket() {
-   }
+    public SMultiBlockChangePacket()
+    {
+    }
 
-   public SMultiBlockChangePacket(SectionPos p_i242085_1_, ShortSet p_i242085_2_, ChunkSection p_i242085_3_, boolean p_i242085_4_) {
-      this.sectionPos = p_i242085_1_;
-      this.suppressLightUpdates = p_i242085_4_;
-      this.initFields(p_i242085_2_.size());
-      int i = 0;
+    public SMultiBlockChangePacket(SectionPos p_i242085_1_, ShortSet p_i242085_2_, ChunkSection p_i242085_3_, boolean p_i242085_4_)
+    {
+        this.field_244305_a = p_i242085_1_;
+        this.field_244308_d = p_i242085_4_;
+        this.func_244309_a(p_i242085_2_.size());
+        int i = 0;
 
-      for(short short1 : p_i242085_2_) {
-         this.positions[i] = short1;
-         this.states[i] = p_i242085_3_.getBlockState(SectionPos.sectionRelativeX(short1), SectionPos.sectionRelativeY(short1), SectionPos.sectionRelativeZ(short1));
-         ++i;
-      }
+        for (short short1 : p_i242085_2_)
+        {
+            this.field_244306_b[i] = short1;
+            this.field_244307_c[i] = p_i242085_3_.getBlockState(SectionPos.func_243641_a(short1), SectionPos.func_243642_b(short1), SectionPos.func_243643_c(short1));
+            ++i;
+        }
+    }
 
-   }
+    private void func_244309_a(int p_244309_1_)
+    {
+        this.field_244306_b = new short[p_244309_1_];
+        this.field_244307_c = new BlockState[p_244309_1_];
+    }
 
-   private void initFields(int p_244309_1_) {
-      this.positions = new short[p_244309_1_];
-      this.states = new BlockState[p_244309_1_];
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.field_244305_a = SectionPos.from(buf.readLong());
+        this.field_244308_d = buf.readBoolean();
+        int i = buf.readVarInt();
+        this.func_244309_a(i);
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.sectionPos = SectionPos.of(p_148837_1_.readLong());
-      this.suppressLightUpdates = p_148837_1_.readBoolean();
-      int i = p_148837_1_.readVarInt();
-      this.initFields(i);
+        for (int j = 0; j < this.field_244306_b.length; ++j)
+        {
+            long k = buf.readVarLong();
+            this.field_244306_b[j] = (short)((int)(k & 4095L));
+            this.field_244307_c[j] = Block.BLOCK_STATE_IDS.getByValue((int)(k >>> 12));
+        }
+    }
 
-      for(int j = 0; j < this.positions.length; ++j) {
-         long k = p_148837_1_.readVarLong();
-         this.positions[j] = (short)((int)(k & 4095L));
-         this.states[j] = Block.BLOCK_STATE_REGISTRY.byId((int)(k >>> 12));
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeLong(this.field_244305_a.asLong());
+        buf.writeBoolean(this.field_244308_d);
+        buf.writeVarInt(this.field_244306_b.length);
 
-   }
+        for (int i = 0; i < this.field_244306_b.length; ++i)
+        {
+            buf.writeVarLong((long)(Block.getStateId(this.field_244307_c[i]) << 12 | this.field_244306_b[i]));
+        }
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeLong(this.sectionPos.asLong());
-      p_148840_1_.writeBoolean(this.suppressLightUpdates);
-      p_148840_1_.writeVarInt(this.positions.length);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleMultiBlockChange(this);
+    }
 
-      for(int i = 0; i < this.positions.length; ++i) {
-         p_148840_1_.writeVarLong((long)(Block.getId(this.states[i]) << 12 | this.positions[i]));
-      }
+    public void func_244310_a(BiConsumer<BlockPos, BlockState> p_244310_1_)
+    {
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
-   }
+        for (int i = 0; i < this.field_244306_b.length; ++i)
+        {
+            short short1 = this.field_244306_b[i];
+            blockpos$mutable.setPos(this.field_244305_a.func_243644_d(short1), this.field_244305_a.func_243645_e(short1), this.field_244305_a.func_243646_f(short1));
+            p_244310_1_.accept(blockpos$mutable, this.field_244307_c[i]);
+        }
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleChunkBlocksUpdate(this);
-   }
-
-   public void runUpdates(BiConsumer<BlockPos, BlockState> p_244310_1_) {
-      BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
-
-      for(int i = 0; i < this.positions.length; ++i) {
-         short short1 = this.positions[i];
-         blockpos$mutable.set(this.sectionPos.relativeToBlockX(short1), this.sectionPos.relativeToBlockY(short1), this.sectionPos.relativeToBlockZ(short1));
-         p_244310_1_.accept(blockpos$mutable, this.states[i]);
-      }
-
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean shouldSuppressLightUpdates() {
-      return this.suppressLightUpdates;
-   }
+    public boolean func_244311_b()
+    {
+        return this.field_244308_d;
+    }
 }

@@ -44,534 +44,697 @@ import net.minecraft.world.WorldSettings;
 import net.minecraft.world.gen.settings.DimensionGeneratorSettings;
 import net.minecraft.world.storage.FolderName;
 import net.minecraft.world.storage.SaveFormat;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class CreateWorldScreen extends Screen {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final ITextComponent GAME_MODEL_LABEL = new TranslationTextComponent("selectWorld.gameMode");
-   private static final ITextComponent SEED_LABEL = new TranslationTextComponent("selectWorld.enterSeed");
-   private static final ITextComponent SEED_INFO = new TranslationTextComponent("selectWorld.seedInfo");
-   private static final ITextComponent NAME_LABEL = new TranslationTextComponent("selectWorld.enterName");
-   private static final ITextComponent OUTPUT_DIR_INFO = new TranslationTextComponent("selectWorld.resultFolder");
-   private static final ITextComponent COMMANDS_INFO = new TranslationTextComponent("selectWorld.allowCommands.info");
-   private final Screen lastScreen;
-   private TextFieldWidget nameEdit;
-   private String resultFolder;
-   private CreateWorldScreen.GameMode gameMode = CreateWorldScreen.GameMode.SURVIVAL;
-   @Nullable
-   private CreateWorldScreen.GameMode oldGameMode;
-   private Difficulty selectedDifficulty = Difficulty.NORMAL;
-   private Difficulty effectiveDifficulty = Difficulty.NORMAL;
-   private boolean commands;
-   private boolean commandsChanged;
-   public boolean hardCore;
-   protected DatapackCodec dataPacks;
-   @Nullable
-   private Path tempDataPackDir;
-   @Nullable
-   private ResourcePackList tempDataPackRepository;
-   private boolean displayOptions;
-   private Button createButton;
-   private Button modeButton;
-   private Button difficultyButton;
-   private Button moreOptionsButton;
-   private Button gameRulesButton;
-   private Button dataPacksButton;
-   private Button commandsButton;
-   private ITextComponent gameModeHelp1;
-   private ITextComponent gameModeHelp2;
-   private String initName;
-   private GameRules gameRules = new GameRules();
-   public final WorldOptionsScreen worldGenSettingsComponent;
+public class CreateWorldScreen extends Screen
+{
+    private static final Logger field_238935_p_ = LogManager.getLogger();
+    private static final ITextComponent field_243417_q = new TranslationTextComponent("selectWorld.gameMode");
+    private static final ITextComponent field_243418_r = new TranslationTextComponent("selectWorld.enterSeed");
+    private static final ITextComponent field_243419_s = new TranslationTextComponent("selectWorld.seedInfo");
+    private static final ITextComponent field_243420_t = new TranslationTextComponent("selectWorld.enterName");
+    private static final ITextComponent field_243421_u = new TranslationTextComponent("selectWorld.resultFolder");
+    private static final ITextComponent field_243422_v = new TranslationTextComponent("selectWorld.allowCommands.info");
+    private final Screen parentScreen;
+    private TextFieldWidget worldNameField;
+    private String saveDirName;
+    private CreateWorldScreen.GameMode field_228197_f_ = CreateWorldScreen.GameMode.SURVIVAL;
+    @Nullable
+    private CreateWorldScreen.GameMode field_228198_g_;
+    private Difficulty field_238936_v_ = Difficulty.NORMAL;
+    private Difficulty field_238937_w_ = Difficulty.NORMAL;
 
-   public CreateWorldScreen(@Nullable Screen p_i242064_1_, WorldSettings p_i242064_2_, DimensionGeneratorSettings p_i242064_3_, @Nullable Path p_i242064_4_, DatapackCodec p_i242064_5_, DynamicRegistries.Impl p_i242064_6_) {
-      this(p_i242064_1_, p_i242064_5_, new WorldOptionsScreen(p_i242064_6_, p_i242064_3_, BiomeGeneratorTypeScreens.of(p_i242064_3_), OptionalLong.of(p_i242064_3_.seed())));
-      this.initName = p_i242064_2_.levelName();
-      this.commands = p_i242064_2_.allowCommands();
-      this.commandsChanged = true;
-      this.selectedDifficulty = p_i242064_2_.difficulty();
-      this.effectiveDifficulty = this.selectedDifficulty;
-      this.gameRules.assignFrom(p_i242064_2_.gameRules(), (MinecraftServer)null);
-      if (p_i242064_2_.hardcore()) {
-         this.gameMode = CreateWorldScreen.GameMode.HARDCORE;
-      } else if (p_i242064_2_.gameType().isSurvival()) {
-         this.gameMode = CreateWorldScreen.GameMode.SURVIVAL;
-      } else if (p_i242064_2_.gameType().isCreative()) {
-         this.gameMode = CreateWorldScreen.GameMode.CREATIVE;
-      }
+    /** If cheats are allowed */
+    private boolean allowCheats;
 
-      this.tempDataPackDir = p_i242064_4_;
-   }
+    /**
+     * User explicitly clicked "Allow Cheats" at some point
+     * Prevents value changes due to changing game mode
+     */
+    private boolean allowCheatsWasSetByUser;
 
-   public static CreateWorldScreen create(@Nullable Screen p_243425_0_) {
-      DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.builtin();
-      return new CreateWorldScreen(p_243425_0_, DatapackCodec.DEFAULT, new WorldOptionsScreen(dynamicregistries$impl, DimensionGeneratorSettings.makeDefault(dynamicregistries$impl.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY), dynamicregistries$impl.registryOrThrow(Registry.BIOME_REGISTRY), dynamicregistries$impl.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY)), Optional.of(BiomeGeneratorTypeScreens.NORMAL), OptionalLong.empty()));
-   }
+    /** Set to true when "hardcore" is the currently-selected gamemode */
+    public boolean hardCoreMode;
+    protected DatapackCodec field_238933_b_;
+    @Nullable
+    private Path field_238928_A_;
+    @Nullable
+    private ResourcePackList field_243416_G;
+    private boolean inMoreWorldOptionsDisplay;
+    private Button btnCreateWorld;
+    private Button btnGameMode;
+    private Button field_238929_E_;
+    private Button btnMoreOptions;
+    private Button field_238930_G_;
+    private Button field_238931_H_;
+    private Button btnAllowCommands;
+    private ITextComponent gameModeDesc1;
+    private ITextComponent gameModeDesc2;
+    private String worldName;
+    private GameRules field_238932_M_ = new GameRules();
+    public final WorldOptionsScreen field_238934_c_;
 
-   private CreateWorldScreen(@Nullable Screen p_i242063_1_, DatapackCodec p_i242063_2_, WorldOptionsScreen p_i242063_3_) {
-      super(new TranslationTextComponent("selectWorld.create"));
-      this.lastScreen = p_i242063_1_;
-      this.initName = I18n.get("selectWorld.newWorld");
-      this.dataPacks = p_i242063_2_;
-      this.worldGenSettingsComponent = p_i242063_3_;
-   }
+    public CreateWorldScreen(@Nullable Screen p_i242064_1_, WorldSettings p_i242064_2_, DimensionGeneratorSettings p_i242064_3_, @Nullable Path p_i242064_4_, DatapackCodec p_i242064_5_, DynamicRegistries.Impl p_i242064_6_)
+    {
+        this(p_i242064_1_, p_i242064_5_, new WorldOptionsScreen(p_i242064_6_, p_i242064_3_, BiomeGeneratorTypeScreens.func_239079_a_(p_i242064_3_), OptionalLong.of(p_i242064_3_.getSeed())));
+        this.worldName = p_i242064_2_.getWorldName();
+        this.allowCheats = p_i242064_2_.isCommandsAllowed();
+        this.allowCheatsWasSetByUser = true;
+        this.field_238936_v_ = p_i242064_2_.getDifficulty();
+        this.field_238937_w_ = this.field_238936_v_;
+        this.field_238932_M_.func_234899_a_(p_i242064_2_.getGameRules(), (MinecraftServer)null);
 
-   public void tick() {
-      this.nameEdit.tick();
-      this.worldGenSettingsComponent.tick();
-   }
+        if (p_i242064_2_.isHardcoreEnabled())
+        {
+            this.field_228197_f_ = CreateWorldScreen.GameMode.HARDCORE;
+        }
+        else if (p_i242064_2_.getGameType().isSurvivalOrAdventure())
+        {
+            this.field_228197_f_ = CreateWorldScreen.GameMode.SURVIVAL;
+        }
+        else if (p_i242064_2_.getGameType().isCreative())
+        {
+            this.field_228197_f_ = CreateWorldScreen.GameMode.CREATIVE;
+        }
 
-   protected void init() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      this.nameEdit = new TextFieldWidget(this.font, this.width / 2 - 100, 60, 200, 20, new TranslationTextComponent("selectWorld.enterName")) {
-         protected IFormattableTextComponent createNarrationMessage() {
-            return super.createNarrationMessage().append(". ").append(new TranslationTextComponent("selectWorld.resultFolder")).append(" ").append(CreateWorldScreen.this.resultFolder);
-         }
-      };
-      this.nameEdit.setValue(this.initName);
-      this.nameEdit.setResponder((p_214319_1_) -> {
-         this.initName = p_214319_1_;
-         this.createButton.active = !this.nameEdit.getValue().isEmpty();
-         this.updateResultFolder();
-      });
-      this.children.add(this.nameEdit);
-      int i = this.width / 2 - 155;
-      int j = this.width / 2 + 5;
-      this.modeButton = this.addButton(new Button(i, 100, 150, 20, StringTextComponent.EMPTY, (p_214316_1_) -> {
-         switch(this.gameMode) {
-         case SURVIVAL:
-            this.setGameMode(CreateWorldScreen.GameMode.HARDCORE);
-            break;
-         case HARDCORE:
-            this.setGameMode(CreateWorldScreen.GameMode.CREATIVE);
-            break;
-         case CREATIVE:
-            this.setGameMode(CreateWorldScreen.GameMode.SURVIVAL);
-         }
+        this.field_238928_A_ = p_i242064_4_;
+    }
 
-         p_214316_1_.queueNarration(250);
-      }) {
-         public ITextComponent getMessage() {
-            return new TranslationTextComponent("options.generic_value", CreateWorldScreen.GAME_MODEL_LABEL, new TranslationTextComponent("selectWorld.gameMode." + CreateWorldScreen.this.gameMode.name));
-         }
+    public static CreateWorldScreen func_243425_a(@Nullable Screen p_243425_0_)
+    {
+        DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.func_239770_b_();
+        return new CreateWorldScreen(p_243425_0_, DatapackCodec.VANILLA_CODEC, new WorldOptionsScreen(dynamicregistries$impl, DimensionGeneratorSettings.func_242751_a(dynamicregistries$impl.getRegistry(Registry.DIMENSION_TYPE_KEY), dynamicregistries$impl.getRegistry(Registry.BIOME_KEY), dynamicregistries$impl.getRegistry(Registry.NOISE_SETTINGS_KEY)), Optional.of(BiomeGeneratorTypeScreens.field_239066_a_), OptionalLong.empty()));
+    }
 
-         protected IFormattableTextComponent createNarrationMessage() {
-            return super.createNarrationMessage().append(". ").append(CreateWorldScreen.this.gameModeHelp1).append(" ").append(CreateWorldScreen.this.gameModeHelp2);
-         }
-      });
-      this.difficultyButton = this.addButton(new Button(j, 100, 150, 20, new TranslationTextComponent("options.difficulty"), (p_238956_1_) -> {
-         this.selectedDifficulty = this.selectedDifficulty.nextById();
-         this.effectiveDifficulty = this.selectedDifficulty;
-         p_238956_1_.queueNarration(250);
-      }) {
-         public ITextComponent getMessage() {
-            return (new TranslationTextComponent("options.difficulty")).append(": ").append(CreateWorldScreen.this.effectiveDifficulty.getDisplayName());
-         }
-      });
-      this.commandsButton = this.addButton(new Button(i, 151, 150, 20, new TranslationTextComponent("selectWorld.allowCommands"), (p_214322_1_) -> {
-         this.commandsChanged = true;
-         this.commands = !this.commands;
-         p_214322_1_.queueNarration(250);
-      }) {
-         public ITextComponent getMessage() {
-            return DialogTexts.optionStatus(super.getMessage(), CreateWorldScreen.this.commands && !CreateWorldScreen.this.hardCore);
-         }
+    private CreateWorldScreen(@Nullable Screen p_i242063_1_, DatapackCodec p_i242063_2_, WorldOptionsScreen p_i242063_3_)
+    {
+        super(new TranslationTextComponent("selectWorld.create"));
+        this.parentScreen = p_i242063_1_;
+        this.worldName = I18n.format("selectWorld.newWorld");
+        this.field_238933_b_ = p_i242063_2_;
+        this.field_238934_c_ = p_i242063_3_;
+    }
 
-         protected IFormattableTextComponent createNarrationMessage() {
-            return super.createNarrationMessage().append(". ").append(new TranslationTextComponent("selectWorld.allowCommands.info"));
-         }
-      });
-      this.dataPacksButton = this.addButton(new Button(j, 151, 150, 20, new TranslationTextComponent("selectWorld.dataPacks"), (p_214320_1_) -> {
-         this.openDataPackSelectionScreen();
-      }));
-      this.gameRulesButton = this.addButton(new Button(i, 185, 150, 20, new TranslationTextComponent("selectWorld.gameRules"), (p_214312_1_) -> {
-         this.minecraft.setScreen(new EditGamerulesScreen(this.gameRules.copy(), (p_238946_1_) -> {
-            this.minecraft.setScreen(this);
-            p_238946_1_.ifPresent((p_238941_1_) -> {
-               this.gameRules = p_238941_1_;
-            });
-         }));
-      }));
-      this.worldGenSettingsComponent.init(this, this.minecraft, this.font);
-      this.moreOptionsButton = this.addButton(new Button(j, 185, 150, 20, new TranslationTextComponent("selectWorld.moreWorldOptions"), (p_214321_1_) -> {
-         this.toggleDisplayOptions();
-      }));
-      this.createButton = this.addButton(new Button(i, this.height - 28, 150, 20, new TranslationTextComponent("selectWorld.create"), (p_214318_1_) -> {
-         this.onCreate();
-      }));
-      this.createButton.active = !this.initName.isEmpty();
-      this.addButton(new Button(j, this.height - 28, 150, 20, DialogTexts.GUI_CANCEL, (p_214317_1_) -> {
-         this.popScreen();
-      }));
-      this.updateDisplayOptions();
-      this.setInitialFocus(this.nameEdit);
-      this.setGameMode(this.gameMode);
-      this.updateResultFolder();
-   }
+    public void tick()
+    {
+        this.worldNameField.tick();
+        this.field_238934_c_.tick();
+    }
 
-   private void updateGameModeHelp() {
-      this.gameModeHelp1 = new TranslationTextComponent("selectWorld.gameMode." + this.gameMode.name + ".line1");
-      this.gameModeHelp2 = new TranslationTextComponent("selectWorld.gameMode." + this.gameMode.name + ".line2");
-   }
+    protected void init()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
+        this.worldNameField = new TextFieldWidget(this.font, this.width / 2 - 100, 60, 200, 20, new TranslationTextComponent("selectWorld.enterName"))
+        {
+            protected IFormattableTextComponent getNarrationMessage()
+            {
+                return super.getNarrationMessage().appendString(". ").append(new TranslationTextComponent("selectWorld.resultFolder")).appendString(" ").appendString(CreateWorldScreen.this.saveDirName);
+            }
+        };
+        this.worldNameField.setText(this.worldName);
+        this.worldNameField.setResponder((p_214319_1_) ->
+        {
+            this.worldName = p_214319_1_;
+            this.btnCreateWorld.active = !this.worldNameField.getText().isEmpty();
+            this.calcSaveDirName();
+        });
+        this.children.add(this.worldNameField);
+        int i = this.width / 2 - 155;
+        int j = this.width / 2 + 5;
+        this.btnGameMode = this.addButton(new Button(i, 100, 150, 20, StringTextComponent.EMPTY, (p_214316_1_) ->
+        {
+            switch (this.field_228197_f_)
+            {
+                case SURVIVAL:
+                    this.func_228200_a_(CreateWorldScreen.GameMode.HARDCORE);
+                    break;
 
-   private void updateResultFolder() {
-      this.resultFolder = this.nameEdit.getValue().trim();
-      if (this.resultFolder.isEmpty()) {
-         this.resultFolder = "World";
-      }
+                case HARDCORE:
+                    this.func_228200_a_(CreateWorldScreen.GameMode.CREATIVE);
+                    break;
 
-      try {
-         this.resultFolder = FileUtil.findAvailableName(this.minecraft.getLevelSource().getBaseDir(), this.resultFolder, "");
-      } catch (Exception exception1) {
-         this.resultFolder = "World";
-
-         try {
-            this.resultFolder = FileUtil.findAvailableName(this.minecraft.getLevelSource().getBaseDir(), this.resultFolder, "");
-         } catch (Exception exception) {
-            throw new RuntimeException("Could not create save folder", exception);
-         }
-      }
-
-   }
-
-   public void removed() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-   }
-
-   private void onCreate() {
-      this.minecraft.forceSetScreen(new DirtMessageScreen(new TranslationTextComponent("createWorld.preparing")));
-      if (this.copyTempDataPackDirToNewWorld()) {
-         this.cleanupTempResources();
-         DimensionGeneratorSettings dimensiongeneratorsettings = this.worldGenSettingsComponent.makeSettings(this.hardCore);
-         WorldSettings worldsettings;
-         if (dimensiongeneratorsettings.isDebug()) {
-            GameRules gamerules = new GameRules();
-            gamerules.getRule(GameRules.RULE_DAYLIGHT).set(false, (MinecraftServer)null);
-            worldsettings = new WorldSettings(this.nameEdit.getValue().trim(), GameType.SPECTATOR, false, Difficulty.PEACEFUL, true, gamerules, DatapackCodec.DEFAULT);
-         } else {
-            worldsettings = new WorldSettings(this.nameEdit.getValue().trim(), this.gameMode.gameType, this.hardCore, this.effectiveDifficulty, this.commands && !this.hardCore, this.gameRules, this.dataPacks);
-         }
-
-         this.minecraft.createLevel(this.resultFolder, worldsettings, this.worldGenSettingsComponent.registryHolder(), dimensiongeneratorsettings);
-      }
-   }
-
-   private void toggleDisplayOptions() {
-      this.setDisplayOptions(!this.displayOptions);
-   }
-
-   private void setGameMode(CreateWorldScreen.GameMode p_228200_1_) {
-      if (!this.commandsChanged) {
-         this.commands = p_228200_1_ == CreateWorldScreen.GameMode.CREATIVE;
-      }
-
-      if (p_228200_1_ == CreateWorldScreen.GameMode.HARDCORE) {
-         this.hardCore = true;
-         this.commandsButton.active = false;
-         this.worldGenSettingsComponent.bonusItemsButton.active = false;
-         this.effectiveDifficulty = Difficulty.HARD;
-         this.difficultyButton.active = false;
-      } else {
-         this.hardCore = false;
-         this.commandsButton.active = true;
-         this.worldGenSettingsComponent.bonusItemsButton.active = true;
-         this.effectiveDifficulty = this.selectedDifficulty;
-         this.difficultyButton.active = true;
-      }
-
-      this.gameMode = p_228200_1_;
-      this.updateGameModeHelp();
-   }
-
-   public void updateDisplayOptions() {
-      this.setDisplayOptions(this.displayOptions);
-   }
-
-   private void setDisplayOptions(boolean p_146316_1_) {
-      this.displayOptions = p_146316_1_;
-      this.modeButton.visible = !this.displayOptions;
-      this.difficultyButton.visible = !this.displayOptions;
-      if (this.worldGenSettingsComponent.isDebug()) {
-         this.dataPacksButton.visible = false;
-         this.modeButton.active = false;
-         if (this.oldGameMode == null) {
-            this.oldGameMode = this.gameMode;
-         }
-
-         this.setGameMode(CreateWorldScreen.GameMode.DEBUG);
-         this.commandsButton.visible = false;
-      } else {
-         this.modeButton.active = true;
-         if (this.oldGameMode != null) {
-            this.setGameMode(this.oldGameMode);
-         }
-
-         this.commandsButton.visible = !this.displayOptions;
-         this.dataPacksButton.visible = !this.displayOptions;
-      }
-
-      this.worldGenSettingsComponent.setDisplayOptions(this.displayOptions);
-      this.nameEdit.setVisible(!this.displayOptions);
-      if (this.displayOptions) {
-         this.moreOptionsButton.setMessage(DialogTexts.GUI_DONE);
-      } else {
-         this.moreOptionsButton.setMessage(new TranslationTextComponent("selectWorld.moreWorldOptions"));
-      }
-
-      this.gameRulesButton.visible = !this.displayOptions;
-   }
-
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_)) {
-         return true;
-      } else if (p_231046_1_ != 257 && p_231046_1_ != 335) {
-         return false;
-      } else {
-         this.onCreate();
-         return true;
-      }
-   }
-
-   public void onClose() {
-      if (this.displayOptions) {
-         this.setDisplayOptions(false);
-      } else {
-         this.popScreen();
-      }
-
-   }
-
-   public void popScreen() {
-      this.minecraft.setScreen(this.lastScreen);
-      this.cleanupTempResources();
-   }
-
-   private void cleanupTempResources() {
-      if (this.tempDataPackRepository != null) {
-         this.tempDataPackRepository.close();
-      }
-
-      this.removeTempDataPackDir();
-   }
-
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.renderBackground(p_230430_1_);
-      drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 20, -1);
-      if (this.displayOptions) {
-         drawString(p_230430_1_, this.font, SEED_LABEL, this.width / 2 - 100, 47, -6250336);
-         drawString(p_230430_1_, this.font, SEED_INFO, this.width / 2 - 100, 85, -6250336);
-         this.worldGenSettingsComponent.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      } else {
-         drawString(p_230430_1_, this.font, NAME_LABEL, this.width / 2 - 100, 47, -6250336);
-         drawString(p_230430_1_, this.font, (new StringTextComponent("")).append(OUTPUT_DIR_INFO).append(" ").append(this.resultFolder), this.width / 2 - 100, 85, -6250336);
-         this.nameEdit.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-         drawString(p_230430_1_, this.font, this.gameModeHelp1, this.width / 2 - 150, 122, -6250336);
-         drawString(p_230430_1_, this.font, this.gameModeHelp2, this.width / 2 - 150, 134, -6250336);
-         if (this.commandsButton.visible) {
-            drawString(p_230430_1_, this.font, COMMANDS_INFO, this.width / 2 - 150, 172, -6250336);
-         }
-      }
-
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-   }
-
-   protected <T extends IGuiEventListener> T addWidget(T p_230481_1_) {
-      return super.addWidget(p_230481_1_);
-   }
-
-   protected <T extends Widget> T addButton(T p_230480_1_) {
-      return super.addButton(p_230480_1_);
-   }
-
-   @Nullable
-   protected Path getTempDataPackDir() {
-      if (this.tempDataPackDir == null) {
-         try {
-            this.tempDataPackDir = Files.createTempDirectory("mcworld-");
-         } catch (IOException ioexception) {
-            LOGGER.warn("Failed to create temporary dir", (Throwable)ioexception);
-            SystemToast.onPackCopyFailure(this.minecraft, this.resultFolder);
-            this.popScreen();
-         }
-      }
-
-      return this.tempDataPackDir;
-   }
-
-   private void openDataPackSelectionScreen() {
-      Pair<File, ResourcePackList> pair = this.getDataPackSelectionSettings();
-      if (pair != null) {
-         this.minecraft.setScreen(new PackScreen(this, pair.getSecond(), this::tryApplyNewDataPacks, pair.getFirst(), new TranslationTextComponent("dataPack.title")));
-      }
-
-   }
-
-   private void tryApplyNewDataPacks(ResourcePackList p_241621_1_) {
-      List<String> list = ImmutableList.copyOf(p_241621_1_.getSelectedIds());
-      List<String> list1 = p_241621_1_.getAvailableIds().stream().filter((p_241626_1_) -> {
-         return !list.contains(p_241626_1_);
-      }).collect(ImmutableList.toImmutableList());
-      DatapackCodec datapackcodec = new DatapackCodec(list, list1);
-      if (list.equals(this.dataPacks.getEnabled())) {
-         this.dataPacks = datapackcodec;
-      } else {
-         this.minecraft.tell(() -> {
-            this.minecraft.setScreen(new DirtMessageScreen(new TranslationTextComponent("dataPack.validation.working")));
-         });
-         DataPackRegistries.loadResources(p_241621_1_.openAllSelected(), Commands.EnvironmentType.INTEGRATED, 2, Util.backgroundExecutor(), this.minecraft).handle((p_241623_2_, p_241623_3_) -> {
-            if (p_241623_3_ != null) {
-               LOGGER.warn("Failed to validate datapack", p_241623_3_);
-               this.minecraft.tell(() -> {
-                  this.minecraft.setScreen(new ConfirmScreen((p_241630_1_) -> {
-                     if (p_241630_1_) {
-                        this.openDataPackSelectionScreen();
-                     } else {
-                        this.dataPacks = DatapackCodec.DEFAULT;
-                        this.minecraft.setScreen(this);
-                     }
-
-                  }, new TranslationTextComponent("dataPack.validation.failed"), StringTextComponent.EMPTY, new TranslationTextComponent("dataPack.validation.back"), new TranslationTextComponent("dataPack.validation.reset")));
-               });
-            } else {
-               this.minecraft.tell(() -> {
-                  this.dataPacks = datapackcodec;
-                  this.worldGenSettingsComponent.updateDataPacks(p_241623_2_);
-                  p_241623_2_.close();
-                  this.minecraft.setScreen(this);
-               });
+                case CREATIVE:
+                    this.func_228200_a_(CreateWorldScreen.GameMode.SURVIVAL);
             }
 
-            return null;
-         });
-      }
-   }
+            p_214316_1_.queueNarration(250);
+        })
+        {
+            public ITextComponent getMessage()
+            {
+                return new TranslationTextComponent("options.generic_value", CreateWorldScreen.field_243417_q, new TranslationTextComponent("selectWorld.gameMode." + CreateWorldScreen.this.field_228197_f_.field_228217_e_));
+            }
+            protected IFormattableTextComponent getNarrationMessage()
+            {
+                return super.getNarrationMessage().appendString(". ").append(CreateWorldScreen.this.gameModeDesc1).appendString(" ").append(CreateWorldScreen.this.gameModeDesc2);
+            }
+        });
+        this.field_238929_E_ = this.addButton(new Button(j, 100, 150, 20, new TranslationTextComponent("options.difficulty"), (p_238956_1_) ->
+        {
+            this.field_238936_v_ = this.field_238936_v_.getNextDifficulty();
+            this.field_238937_w_ = this.field_238936_v_;
+            p_238956_1_.queueNarration(250);
+        })
+        {
+            public ITextComponent getMessage()
+            {
+                return (new TranslationTextComponent("options.difficulty")).appendString(": ").append(CreateWorldScreen.this.field_238937_w_.getDisplayName());
+            }
+        });
+        this.btnAllowCommands = this.addButton(new Button(i, 151, 150, 20, new TranslationTextComponent("selectWorld.allowCommands"), (p_214322_1_) ->
+        {
+            this.allowCheatsWasSetByUser = true;
+            this.allowCheats = !this.allowCheats;
+            p_214322_1_.queueNarration(250);
+        })
+        {
+            public ITextComponent getMessage()
+            {
+                return DialogTexts.getComposedOptionMessage(super.getMessage(), CreateWorldScreen.this.allowCheats && !CreateWorldScreen.this.hardCoreMode);
+            }
+            protected IFormattableTextComponent getNarrationMessage()
+            {
+                return super.getNarrationMessage().appendString(". ").append(new TranslationTextComponent("selectWorld.allowCommands.info"));
+            }
+        });
+        this.field_238931_H_ = this.addButton(new Button(j, 151, 150, 20, new TranslationTextComponent("selectWorld.dataPacks"), (p_214320_1_) ->
+        {
+            this.func_238958_v_();
+        }));
+        this.field_238930_G_ = this.addButton(new Button(i, 185, 150, 20, new TranslationTextComponent("selectWorld.gameRules"), (p_214312_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new EditGamerulesScreen(this.field_238932_M_.clone(), (p_238946_1_) -> {
+                this.minecraft.displayGuiScreen(this);
+                p_238946_1_.ifPresent((p_238941_1_) -> {
+                    this.field_238932_M_ = p_238941_1_;
+                });
+            }));
+        }));
+        this.field_238934_c_.func_239048_a_(this, this.minecraft, this.font);
+        this.btnMoreOptions = this.addButton(new Button(j, 185, 150, 20, new TranslationTextComponent("selectWorld.moreWorldOptions"), (p_214321_1_) ->
+        {
+            this.toggleMoreWorldOptions();
+        }));
+        this.btnCreateWorld = this.addButton(new Button(i, this.height - 28, 150, 20, new TranslationTextComponent("selectWorld.create"), (p_214318_1_) ->
+        {
+            this.createWorld();
+        }));
+        this.btnCreateWorld.active = !this.worldName.isEmpty();
+        this.addButton(new Button(j, this.height - 28, 150, 20, DialogTexts.GUI_CANCEL, (p_214317_1_) ->
+        {
+            this.func_243430_k();
+        }));
+        this.func_238955_g_();
+        this.setFocusedDefault(this.worldNameField);
+        this.func_228200_a_(this.field_228197_f_);
+        this.calcSaveDirName();
+    }
 
-   private void removeTempDataPackDir() {
-      if (this.tempDataPackDir != null) {
-         try (Stream<Path> stream = Files.walk(this.tempDataPackDir)) {
-            stream.sorted(Comparator.reverseOrder()).forEach((p_238948_0_) -> {
-               try {
-                  Files.delete(p_238948_0_);
-               } catch (IOException ioexception1) {
-                  LOGGER.warn("Failed to remove temporary file {}", p_238948_0_, ioexception1);
-               }
+    private void func_228199_a_()
+    {
+        this.gameModeDesc1 = new TranslationTextComponent("selectWorld.gameMode." + this.field_228197_f_.field_228217_e_ + ".line1");
+        this.gameModeDesc2 = new TranslationTextComponent("selectWorld.gameMode." + this.field_228197_f_.field_228217_e_ + ".line2");
+    }
 
-            });
-         } catch (IOException ioexception) {
-            LOGGER.warn("Failed to list temporary dir {}", (Object)this.tempDataPackDir);
-         }
+    /**
+     * Determine a save-directory name from the world name
+     */
+    private void calcSaveDirName()
+    {
+        this.saveDirName = this.worldNameField.getText().trim();
 
-         this.tempDataPackDir = null;
-      }
+        if (this.saveDirName.isEmpty())
+        {
+            this.saveDirName = "World";
+        }
 
-   }
+        try
+        {
+            this.saveDirName = FileUtil.findAvailableName(this.minecraft.getSaveLoader().getSavesDir(), this.saveDirName, "");
+        }
+        catch (Exception exception1)
+        {
+            this.saveDirName = "World";
 
-   private static void copyBetweenDirs(Path p_238945_0_, Path p_238945_1_, Path p_238945_2_) {
-      try {
-         Util.copyBetweenDirs(p_238945_0_, p_238945_1_, p_238945_2_);
-      } catch (IOException ioexception) {
-         LOGGER.warn("Failed to copy datapack file from {} to {}", p_238945_2_, p_238945_1_);
-         throw new CreateWorldScreen.DatapackException(ioexception);
-      }
-   }
+            try
+            {
+                this.saveDirName = FileUtil.findAvailableName(this.minecraft.getSaveLoader().getSavesDir(), this.saveDirName, "");
+            }
+            catch (Exception exception)
+            {
+                throw new RuntimeException("Could not create save folder", exception);
+            }
+        }
+    }
 
-   private boolean copyTempDataPackDirToNewWorld() {
-      if (this.tempDataPackDir != null) {
-         try (
-            SaveFormat.LevelSave saveformat$levelsave = this.minecraft.getLevelSource().createAccess(this.resultFolder);
-            Stream<Path> stream = Files.walk(this.tempDataPackDir);
-         ) {
-            Path path = saveformat$levelsave.getLevelPath(FolderName.DATAPACK_DIR);
-            Files.createDirectories(path);
-            stream.filter((p_238942_1_) -> {
-               return !p_238942_1_.equals(this.tempDataPackDir);
-            }).forEach((p_238949_2_) -> {
-               copyBetweenDirs(this.tempDataPackDir, path, p_238949_2_);
-            });
-         } catch (CreateWorldScreen.DatapackException | IOException ioexception) {
-            LOGGER.warn("Failed to copy datapacks to world {}", this.resultFolder, ioexception);
-            SystemToast.onPackCopyFailure(this.minecraft, this.resultFolder);
-            this.popScreen();
+    public void onClose()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+    }
+
+    private void createWorld()
+    {
+        this.minecraft.forcedScreenTick(new DirtMessageScreen(new TranslationTextComponent("createWorld.preparing")));
+
+        if (this.func_238960_x_())
+        {
+            this.func_243432_s();
+            DimensionGeneratorSettings dimensiongeneratorsettings = this.field_238934_c_.func_239054_a_(this.hardCoreMode);
+            WorldSettings worldsettings;
+
+            if (dimensiongeneratorsettings.func_236227_h_())
+            {
+                GameRules gamerules = new GameRules();
+                gamerules.get(GameRules.DO_DAYLIGHT_CYCLE).set(false, (MinecraftServer)null);
+                worldsettings = new WorldSettings(this.worldNameField.getText().trim(), GameType.SPECTATOR, false, Difficulty.PEACEFUL, true, gamerules, DatapackCodec.VANILLA_CODEC);
+            }
+            else
+            {
+                worldsettings = new WorldSettings(this.worldNameField.getText().trim(), this.field_228197_f_.field_228218_f_, this.hardCoreMode, this.field_238937_w_, this.allowCheats && !this.hardCoreMode, this.field_238932_M_, this.field_238933_b_);
+            }
+
+            this.minecraft.createWorld(this.saveDirName, worldsettings, this.field_238934_c_.func_239055_b_(), dimensiongeneratorsettings);
+        }
+    }
+
+    /**
+     * Toggles between initial world-creation display, and "more options" display.
+     * Called when user clicks "More World Options..." or "Done" (same button, different labels depending on current
+     * display).
+     */
+    private void toggleMoreWorldOptions()
+    {
+        this.showMoreWorldOptions(!this.inMoreWorldOptionsDisplay);
+    }
+
+    private void func_228200_a_(CreateWorldScreen.GameMode p_228200_1_)
+    {
+        if (!this.allowCheatsWasSetByUser)
+        {
+            this.allowCheats = p_228200_1_ == CreateWorldScreen.GameMode.CREATIVE;
+        }
+
+        if (p_228200_1_ == CreateWorldScreen.GameMode.HARDCORE)
+        {
+            this.hardCoreMode = true;
+            this.btnAllowCommands.active = false;
+            this.field_238934_c_.field_239027_a_.active = false;
+            this.field_238937_w_ = Difficulty.HARD;
+            this.field_238929_E_.active = false;
+        }
+        else
+        {
+            this.hardCoreMode = false;
+            this.btnAllowCommands.active = true;
+            this.field_238934_c_.field_239027_a_.active = true;
+            this.field_238937_w_ = this.field_238936_v_;
+            this.field_238929_E_.active = true;
+        }
+
+        this.field_228197_f_ = p_228200_1_;
+        this.func_228199_a_();
+    }
+
+    public void func_238955_g_()
+    {
+        this.showMoreWorldOptions(this.inMoreWorldOptionsDisplay);
+    }
+
+    /**
+     * Shows additional world-creation options if toggle is true, otherwise shows main world-creation elements
+     */
+    private void showMoreWorldOptions(boolean toggle)
+    {
+        this.inMoreWorldOptionsDisplay = toggle;
+        this.btnGameMode.visible = !this.inMoreWorldOptionsDisplay;
+        this.field_238929_E_.visible = !this.inMoreWorldOptionsDisplay;
+
+        if (this.field_238934_c_.func_239042_a_())
+        {
+            this.field_238931_H_.visible = false;
+            this.btnGameMode.active = false;
+
+            if (this.field_228198_g_ == null)
+            {
+                this.field_228198_g_ = this.field_228197_f_;
+            }
+
+            this.func_228200_a_(CreateWorldScreen.GameMode.DEBUG);
+            this.btnAllowCommands.visible = false;
+        }
+        else
+        {
+            this.btnGameMode.active = true;
+
+            if (this.field_228198_g_ != null)
+            {
+                this.func_228200_a_(this.field_228198_g_);
+            }
+
+            this.btnAllowCommands.visible = !this.inMoreWorldOptionsDisplay;
+            this.field_238931_H_.visible = !this.inMoreWorldOptionsDisplay;
+        }
+
+        this.field_238934_c_.func_239059_b_(this.inMoreWorldOptionsDisplay);
+        this.worldNameField.setVisible(!this.inMoreWorldOptionsDisplay);
+
+        if (this.inMoreWorldOptionsDisplay)
+        {
+            this.btnMoreOptions.setMessage(DialogTexts.GUI_DONE);
+        }
+        else
+        {
+            this.btnMoreOptions.setMessage(new TranslationTextComponent("selectWorld.moreWorldOptions"));
+        }
+
+        this.field_238930_G_.visible = !this.inMoreWorldOptionsDisplay;
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (super.keyPressed(keyCode, scanCode, modifiers))
+        {
+            return true;
+        }
+        else if (keyCode != 257 && keyCode != 335)
+        {
             return false;
-         }
-      }
+        }
+        else
+        {
+            this.createWorld();
+            return true;
+        }
+    }
 
-      return true;
-   }
+    public void closeScreen()
+    {
+        if (this.inMoreWorldOptionsDisplay)
+        {
+            this.showMoreWorldOptions(false);
+        }
+        else
+        {
+            this.func_243430_k();
+        }
+    }
 
-   @Nullable
-   public static Path createTempDataPackDirFromExistingWorld(Path p_238943_0_, Minecraft p_238943_1_) {
-      MutableObject<Path> mutableobject = new MutableObject<>();
+    public void func_243430_k()
+    {
+        this.minecraft.displayGuiScreen(this.parentScreen);
+        this.func_243432_s();
+    }
 
-      try (Stream<Path> stream = Files.walk(p_238943_0_)) {
-         stream.filter((p_238944_1_) -> {
-            return !p_238944_1_.equals(p_238943_0_);
-         }).forEach((p_238947_2_) -> {
-            Path path = mutableobject.getValue();
-            if (path == null) {
-               try {
-                  path = Files.createTempDirectory("mcworld-");
-               } catch (IOException ioexception1) {
-                  LOGGER.warn("Failed to create temporary dir");
-                  throw new CreateWorldScreen.DatapackException(ioexception1);
-               }
+    private void func_243432_s()
+    {
+        if (this.field_243416_G != null)
+        {
+            this.field_243416_G.close();
+        }
 
-               mutableobject.setValue(path);
+        this.func_238959_w_();
+    }
+
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.renderBackground(matrixStack);
+        drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 20, -1);
+
+        if (this.inMoreWorldOptionsDisplay)
+        {
+            drawString(matrixStack, this.font, field_243418_r, this.width / 2 - 100, 47, -6250336);
+            drawString(matrixStack, this.font, field_243419_s, this.width / 2 - 100, 85, -6250336);
+            this.field_238934_c_.render(matrixStack, mouseX, mouseY, partialTicks);
+        }
+        else
+        {
+            drawString(matrixStack, this.font, field_243420_t, this.width / 2 - 100, 47, -6250336);
+            drawString(matrixStack, this.font, (new StringTextComponent("")).append(field_243421_u).appendString(" ").appendString(this.saveDirName), this.width / 2 - 100, 85, -6250336);
+            this.worldNameField.render(matrixStack, mouseX, mouseY, partialTicks);
+            drawString(matrixStack, this.font, this.gameModeDesc1, this.width / 2 - 150, 122, -6250336);
+            drawString(matrixStack, this.font, this.gameModeDesc2, this.width / 2 - 150, 134, -6250336);
+
+            if (this.btnAllowCommands.visible)
+            {
+                drawString(matrixStack, this.font, field_243422_v, this.width / 2 - 150, 172, -6250336);
+            }
+        }
+
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
+
+    protected <T extends IGuiEventListener> T addListener(T listener)
+    {
+        return super.addListener(listener);
+    }
+
+    protected <T extends Widget> T addButton(T button)
+    {
+        return super.addButton(button);
+    }
+
+    @Nullable
+    protected Path func_238957_j_()
+    {
+        if (this.field_238928_A_ == null)
+        {
+            try
+            {
+                this.field_238928_A_ = Files.createTempDirectory("mcworld-");
+            }
+            catch (IOException ioexception)
+            {
+                field_238935_p_.warn("Failed to create temporary dir", (Throwable)ioexception);
+                SystemToast.func_238539_c_(this.minecraft, this.saveDirName);
+                this.func_243430_k();
+            }
+        }
+
+        return this.field_238928_A_;
+    }
+
+    private void func_238958_v_()
+    {
+        Pair<File, ResourcePackList> pair = this.func_243423_B();
+
+        if (pair != null)
+        {
+            this.minecraft.displayGuiScreen(new PackScreen(this, pair.getSecond(), this::func_241621_a_, pair.getFirst(), new TranslationTextComponent("dataPack.title")));
+        }
+    }
+
+    private void func_241621_a_(ResourcePackList p_241621_1_)
+    {
+        List<String> list = ImmutableList.copyOf(p_241621_1_.func_232621_d_());
+        List<String> list1 = p_241621_1_.func_232616_b_().stream().filter((p_241626_1_) ->
+        {
+            return !list.contains(p_241626_1_);
+        }).collect(ImmutableList.toImmutableList());
+        DatapackCodec datapackcodec = new DatapackCodec(list, list1);
+
+        if (list.equals(this.field_238933_b_.getEnabled()))
+        {
+            this.field_238933_b_ = datapackcodec;
+        }
+        else
+        {
+            this.minecraft.enqueue(() ->
+            {
+                this.minecraft.displayGuiScreen(new DirtMessageScreen(new TranslationTextComponent("dataPack.validation.working")));
+            });
+            DataPackRegistries.func_240961_a_(p_241621_1_.func_232623_f_(), Commands.EnvironmentType.INTEGRATED, 2, Util.getServerExecutor(), this.minecraft).handle((p_241623_2_, p_241623_3_) ->
+            {
+                if (p_241623_3_ != null)
+                {
+                    field_238935_p_.warn("Failed to validate datapack", p_241623_3_);
+                    this.minecraft.enqueue(() ->
+                    {
+                        this.minecraft.displayGuiScreen(new ConfirmScreen((p_241630_1_) -> {
+                            if (p_241630_1_)
+                            {
+                                this.func_238958_v_();
+                            }
+                            else {
+                                this.field_238933_b_ = DatapackCodec.VANILLA_CODEC;
+                                this.minecraft.displayGuiScreen(this);
+                            }
+                        }, new TranslationTextComponent("dataPack.validation.failed"), StringTextComponent.EMPTY, new TranslationTextComponent("dataPack.validation.back"), new TranslationTextComponent("dataPack.validation.reset")));
+                    });
+                }
+                else {
+                    this.minecraft.enqueue(() -> {
+                        this.field_238933_b_ = datapackcodec;
+                        this.field_238934_c_.func_243447_a(p_241623_2_);
+                        p_241623_2_.close();
+                        this.minecraft.displayGuiScreen(this);
+                    });
+                }
+
+                return null;
+            });
+        }
+    }
+
+    private void func_238959_w_()
+    {
+        if (this.field_238928_A_ != null)
+        {
+            try (Stream<Path> stream = Files.walk(this.field_238928_A_))
+            {
+                stream.sorted(Comparator.reverseOrder()).forEach((p_238948_0_) ->
+                {
+                    try {
+                        Files.delete(p_238948_0_);
+                    }
+                    catch (IOException ioexception1)
+                    {
+                        field_238935_p_.warn("Failed to remove temporary file {}", p_238948_0_, ioexception1);
+                    }
+                });
+            }
+            catch (IOException ioexception)
+            {
+                field_238935_p_.warn("Failed to list temporary dir {}", (Object)this.field_238928_A_);
             }
 
-            copyBetweenDirs(p_238943_0_, path, p_238947_2_);
-         });
-      } catch (CreateWorldScreen.DatapackException | IOException ioexception) {
-         LOGGER.warn("Failed to copy datapacks from world {}", p_238943_0_, ioexception);
-         SystemToast.onPackCopyFailure(p_238943_1_, p_238943_0_.toString());
-         return null;
-      }
+            this.field_238928_A_ = null;
+        }
+    }
 
-      return mutableobject.getValue();
-   }
+    private static void func_238945_a_(Path p_238945_0_, Path p_238945_1_, Path p_238945_2_)
+    {
+        try
+        {
+            Util.func_240984_a_(p_238945_0_, p_238945_1_, p_238945_2_);
+        }
+        catch (IOException ioexception)
+        {
+            field_238935_p_.warn("Failed to copy datapack file from {} to {}", p_238945_2_, p_238945_1_);
+            throw new CreateWorldScreen.DatapackException(ioexception);
+        }
+    }
 
-   @Nullable
-   private Pair<File, ResourcePackList> getDataPackSelectionSettings() {
-      Path path = this.getTempDataPackDir();
-      if (path != null) {
-         File file1 = path.toFile();
-         if (this.tempDataPackRepository == null) {
-            this.tempDataPackRepository = new ResourcePackList(new ServerPackFinder(), new FolderPackFinder(file1, IPackNameDecorator.DEFAULT));
-            this.tempDataPackRepository.reload();
-         }
+    private boolean func_238960_x_()
+    {
+        if (this.field_238928_A_ != null)
+        {
+            try (
+                    SaveFormat.LevelSave saveformat$levelsave = this.minecraft.getSaveLoader().getLevelSave(this.saveDirName);
+                    Stream<Path> stream = Files.walk(this.field_238928_A_);
+                )
+            {
+                Path path = saveformat$levelsave.resolveFilePath(FolderName.DATAPACKS);
+                Files.createDirectories(path);
+                stream.filter((p_238942_1_) ->
+                {
+                    return !p_238942_1_.equals(this.field_238928_A_);
+                }).forEach((p_238949_2_) ->
+                {
+                    func_238945_a_(this.field_238928_A_, path, p_238949_2_);
+                });
+            }
+            catch (CreateWorldScreen.DatapackException | IOException ioexception)
+            {
+                field_238935_p_.warn("Failed to copy datapacks to world {}", this.saveDirName, ioexception);
+                SystemToast.func_238539_c_(this.minecraft, this.saveDirName);
+                this.func_243430_k();
+                return false;
+            }
+        }
 
-         this.tempDataPackRepository.setSelected(this.dataPacks.getEnabled());
-         return Pair.of(file1, this.tempDataPackRepository);
-      } else {
-         return null;
-      }
-   }
+        return true;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   static class DatapackException extends RuntimeException {
-      public DatapackException(Throwable p_i232309_1_) {
-         super(p_i232309_1_);
-      }
-   }
+    @Nullable
+    public static Path func_238943_a_(Path p_238943_0_, Minecraft p_238943_1_)
+    {
+        MutableObject<Path> mutableobject = new MutableObject<>();
 
-   @OnlyIn(Dist.CLIENT)
-   static enum GameMode {
-      SURVIVAL("survival", GameType.SURVIVAL),
-      HARDCORE("hardcore", GameType.SURVIVAL),
-      CREATIVE("creative", GameType.CREATIVE),
-      DEBUG("spectator", GameType.SPECTATOR);
+        try (Stream<Path> stream = Files.walk(p_238943_0_))
+        {
+            stream.filter((p_238944_1_) ->
+            {
+                return !p_238944_1_.equals(p_238943_0_);
+            }).forEach((p_238947_2_) ->
+            {
+                Path path = mutableobject.getValue();
 
-      private final String name;
-      private final GameType gameType;
+                if (path == null)
+                {
+                    try
+                    {
+                        path = Files.createTempDirectory("mcworld-");
+                    }
+                    catch (IOException ioexception1)
+                    {
+                        field_238935_p_.warn("Failed to create temporary dir");
+                        throw new CreateWorldScreen.DatapackException(ioexception1);
+                    }
 
-      private GameMode(String p_i225940_3_, GameType p_i225940_4_) {
-         this.name = p_i225940_3_;
-         this.gameType = p_i225940_4_;
-      }
-   }
+                    mutableobject.setValue(path);
+                }
+
+                func_238945_a_(p_238943_0_, path, p_238947_2_);
+            });
+        }
+        catch (CreateWorldScreen.DatapackException | IOException ioexception)
+        {
+            field_238935_p_.warn("Failed to copy datapacks from world {}", p_238943_0_, ioexception);
+            SystemToast.func_238539_c_(p_238943_1_, p_238943_0_.toString());
+            return null;
+        }
+
+        return mutableobject.getValue();
+    }
+
+    @Nullable
+    private Pair<File, ResourcePackList> func_243423_B()
+    {
+        Path path = this.func_238957_j_();
+
+        if (path != null)
+        {
+            File file1 = path.toFile();
+
+            if (this.field_243416_G == null)
+            {
+                this.field_243416_G = new ResourcePackList(new ServerPackFinder(), new FolderPackFinder(file1, IPackNameDecorator.PLAIN));
+                this.field_243416_G.reloadPacksFromFinders();
+            }
+
+            this.field_243416_G.setEnabledPacks(this.field_238933_b_.getEnabled());
+            return Pair.of(file1, this.field_243416_G);
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    static class DatapackException extends RuntimeException
+    {
+        public DatapackException(Throwable p_i232309_1_)
+        {
+            super(p_i232309_1_);
+        }
+    }
+
+    static enum GameMode
+    {
+        SURVIVAL("survival", GameType.SURVIVAL),
+        HARDCORE("hardcore", GameType.SURVIVAL),
+        CREATIVE("creative", GameType.CREATIVE),
+        DEBUG("spectator", GameType.SPECTATOR);
+
+        private final String field_228217_e_;
+        private final GameType field_228218_f_;
+
+        private GameMode(String p_i225940_3_, GameType p_i225940_4_)
+        {
+            this.field_228217_e_ = p_i225940_3_;
+            this.field_228218_f_ = p_i225940_4_;
+        }
+    }
 }

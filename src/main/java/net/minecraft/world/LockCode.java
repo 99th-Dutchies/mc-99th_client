@@ -5,26 +5,31 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 
 @Immutable
-public class LockCode {
-   public static final LockCode NO_LOCK = new LockCode("");
-   private final String key;
+public class LockCode
+{
+    public static final LockCode EMPTY_CODE = new LockCode("");
+    private final String lock;
 
-   public LockCode(String p_i45903_1_) {
-      this.key = p_i45903_1_;
-   }
+    public LockCode(String code)
+    {
+        this.lock = code;
+    }
 
-   public boolean unlocksWith(ItemStack p_219964_1_) {
-      return this.key.isEmpty() || !p_219964_1_.isEmpty() && p_219964_1_.hasCustomHoverName() && this.key.equals(p_219964_1_.getHoverName().getString());
-   }
+    public boolean func_219964_a(ItemStack p_219964_1_)
+    {
+        return this.lock.isEmpty() || !p_219964_1_.isEmpty() && p_219964_1_.hasDisplayName() && this.lock.equals(p_219964_1_.getDisplayName().getString());
+    }
 
-   public void addToTag(CompoundNBT p_180157_1_) {
-      if (!this.key.isEmpty()) {
-         p_180157_1_.putString("Lock", this.key);
-      }
+    public void write(CompoundNBT nbt)
+    {
+        if (!this.lock.isEmpty())
+        {
+            nbt.putString("Lock", this.lock);
+        }
+    }
 
-   }
-
-   public static LockCode fromTag(CompoundNBT p_180158_0_) {
-      return p_180158_0_.contains("Lock", 8) ? new LockCode(p_180158_0_.getString("Lock")) : NO_LOCK;
-   }
+    public static LockCode read(CompoundNBT nbt)
+    {
+        return nbt.contains("Lock", 8) ? new LockCode(nbt.getString("Lock")) : EMPTY_CODE;
+    }
 }

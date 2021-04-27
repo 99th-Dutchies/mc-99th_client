@@ -7,33 +7,35 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.realms.RealmsConnect;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class ConnectedToRealmsAction extends LongRunningTask {
-   private final RealmsConnect realmsConnect;
-   private final RealmsServer server;
-   private final RealmsServerAddress address;
+public class ConnectedToRealmsAction extends LongRunningTask
+{
+    private final RealmsConnect field_238109_c_;
+    private final RealmsServer field_244784_d;
+    private final RealmsServerAddress field_238110_d_;
 
-   public ConnectedToRealmsAction(Screen p_i244788_1_, RealmsServer p_i244788_2_, RealmsServerAddress p_i244788_3_) {
-      this.server = p_i244788_2_;
-      this.address = p_i244788_3_;
-      this.realmsConnect = new RealmsConnect(p_i244788_1_);
-   }
+    public ConnectedToRealmsAction(Screen p_i242127_1_, RealmsServer p_i242127_2_, RealmsServerAddress p_i242127_3_)
+    {
+        this.field_244784_d = p_i242127_2_;
+        this.field_238110_d_ = p_i242127_3_;
+        this.field_238109_c_ = new RealmsConnect(p_i242127_1_);
+    }
 
-   public void run() {
-      this.setTitle(new TranslationTextComponent("mco.connect.connecting"));
-      net.minecraft.realms.RealmsServerAddress realmsserveraddress = net.minecraft.realms.RealmsServerAddress.parseString(this.address.address);
-      this.realmsConnect.connect(this.server, realmsserveraddress.getHost(), realmsserveraddress.getPort());
-   }
+    public void run()
+    {
+        this.func_224989_b(new TranslationTextComponent("mco.connect.connecting"));
+        net.minecraft.realms.RealmsServerAddress realmsserveraddress = net.minecraft.realms.RealmsServerAddress.func_231413_a_(this.field_238110_d_.field_230601_a_);
+        this.field_238109_c_.func_244798_a(this.field_244784_d, realmsserveraddress.func_231412_a_(), realmsserveraddress.func_231414_b_());
+    }
 
-   public void abortTask() {
-      this.realmsConnect.abort();
-      Minecraft.getInstance().getClientPackSource().clearServerPack();
-   }
+    public void func_224992_d()
+    {
+        this.field_238109_c_.func_231396_a_();
+        Minecraft.getInstance().getPackFinder().clearResourcePack();
+    }
 
-   public void tick() {
-      this.realmsConnect.tick();
-   }
+    public void func_224990_b()
+    {
+        this.field_238109_c_.func_231398_b_();
+    }
 }

@@ -8,132 +8,195 @@ import net.minecraft.pathfinding.Path;
 import net.minecraft.util.EntityPredicates;
 import net.minecraft.util.Hand;
 
-public class MeleeAttackGoal extends Goal {
-   protected final CreatureEntity mob;
-   private final double speedModifier;
-   private final boolean followingTargetEvenIfNotSeen;
-   private Path path;
-   private double pathedTargetX;
-   private double pathedTargetY;
-   private double pathedTargetZ;
-   private int ticksUntilNextPathRecalculation;
-   private int ticksUntilNextAttack;
-   private final int attackInterval = 20;
-   private long lastCanUseCheck;
+public class MeleeAttackGoal extends Goal
+{
+    protected final CreatureEntity attacker;
+    private final double speedTowardsTarget;
+    private final boolean longMemory;
+    private Path path;
+    private double targetX;
+    private double targetY;
+    private double targetZ;
+    private int delayCounter;
+    private int field_234037_i_;
+    private final int attackInterval = 20;
+    private long field_220720_k;
 
-   public MeleeAttackGoal(CreatureEntity p_i1636_1_, double p_i1636_2_, boolean p_i1636_4_) {
-      this.mob = p_i1636_1_;
-      this.speedModifier = p_i1636_2_;
-      this.followingTargetEvenIfNotSeen = p_i1636_4_;
-      this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-   }
+    public MeleeAttackGoal(CreatureEntity creature, double speedIn, boolean useLongMemory)
+    {
+        this.attacker = creature;
+        this.speedTowardsTarget = speedIn;
+        this.longMemory = useLongMemory;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+    }
 
-   public boolean canUse() {
-      long i = this.mob.level.getGameTime();
-      if (i - this.lastCanUseCheck < 20L) {
-         return false;
-      } else {
-         this.lastCanUseCheck = i;
-         LivingEntity livingentity = this.mob.getTarget();
-         if (livingentity == null) {
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        long i = this.attacker.world.getGameTime();
+
+        if (i - this.field_220720_k < 20L)
+        {
             return false;
-         } else if (!livingentity.isAlive()) {
-            return false;
-         } else {
-            this.path = this.mob.getNavigation().createPath(livingentity, 0);
-            if (this.path != null) {
-               return true;
-            } else {
-               return this.getAttackReachSqr(livingentity) >= this.mob.distanceToSqr(livingentity.getX(), livingentity.getY(), livingentity.getZ());
+        }
+        else
+        {
+            this.field_220720_k = i;
+            LivingEntity livingentity = this.attacker.getAttackTarget();
+
+            if (livingentity == null)
+            {
+                return false;
             }
-         }
-      }
-   }
+            else if (!livingentity.isAlive())
+            {
+                return false;
+            }
+            else
+            {
+                this.path = this.attacker.getNavigator().getPathToEntity(livingentity, 0);
 
-   public boolean canContinueToUse() {
-      LivingEntity livingentity = this.mob.getTarget();
-      if (livingentity == null) {
-         return false;
-      } else if (!livingentity.isAlive()) {
-         return false;
-      } else if (!this.followingTargetEvenIfNotSeen) {
-         return !this.mob.getNavigation().isDone();
-      } else if (!this.mob.isWithinRestriction(livingentity.blockPosition())) {
-         return false;
-      } else {
-         return !(livingentity instanceof PlayerEntity) || !livingentity.isSpectator() && !((PlayerEntity)livingentity).isCreative();
-      }
-   }
+                if (this.path != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    return this.getAttackReachSqr(livingentity) >= this.attacker.getDistanceSq(livingentity.getPosX(), livingentity.getPosY(), livingentity.getPosZ());
+                }
+            }
+        }
+    }
 
-   public void start() {
-      this.mob.getNavigation().moveTo(this.path, this.speedModifier);
-      this.mob.setAggressive(true);
-      this.ticksUntilNextPathRecalculation = 0;
-      this.ticksUntilNextAttack = 0;
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        LivingEntity livingentity = this.attacker.getAttackTarget();
 
-   public void stop() {
-      LivingEntity livingentity = this.mob.getTarget();
-      if (!EntityPredicates.NO_CREATIVE_OR_SPECTATOR.test(livingentity)) {
-         this.mob.setTarget((LivingEntity)null);
-      }
+        if (livingentity == null)
+        {
+            return false;
+        }
+        else if (!livingentity.isAlive())
+        {
+            return false;
+        }
+        else if (!this.longMemory)
+        {
+            return !this.attacker.getNavigator().noPath();
+        }
+        else if (!this.attacker.isWithinHomeDistanceFromPosition(livingentity.getPosition()))
+        {
+            return false;
+        }
+        else
+        {
+            return !(livingentity instanceof PlayerEntity) || !livingentity.isSpectator() && !((PlayerEntity)livingentity).isCreative();
+        }
+    }
 
-      this.mob.setAggressive(false);
-      this.mob.getNavigation().stop();
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.attacker.getNavigator().setPath(this.path, this.speedTowardsTarget);
+        this.attacker.setAggroed(true);
+        this.delayCounter = 0;
+        this.field_234037_i_ = 0;
+    }
 
-   public void tick() {
-      LivingEntity livingentity = this.mob.getTarget();
-      this.mob.getLookControl().setLookAt(livingentity, 30.0F, 30.0F);
-      double d0 = this.mob.distanceToSqr(livingentity.getX(), livingentity.getY(), livingentity.getZ());
-      this.ticksUntilNextPathRecalculation = Math.max(this.ticksUntilNextPathRecalculation - 1, 0);
-      if ((this.followingTargetEvenIfNotSeen || this.mob.getSensing().canSee(livingentity)) && this.ticksUntilNextPathRecalculation <= 0 && (this.pathedTargetX == 0.0D && this.pathedTargetY == 0.0D && this.pathedTargetZ == 0.0D || livingentity.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) >= 1.0D || this.mob.getRandom().nextFloat() < 0.05F)) {
-         this.pathedTargetX = livingentity.getX();
-         this.pathedTargetY = livingentity.getY();
-         this.pathedTargetZ = livingentity.getZ();
-         this.ticksUntilNextPathRecalculation = 4 + this.mob.getRandom().nextInt(7);
-         if (d0 > 1024.0D) {
-            this.ticksUntilNextPathRecalculation += 10;
-         } else if (d0 > 256.0D) {
-            this.ticksUntilNextPathRecalculation += 5;
-         }
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        LivingEntity livingentity = this.attacker.getAttackTarget();
 
-         if (!this.mob.getNavigation().moveTo(livingentity, this.speedModifier)) {
-            this.ticksUntilNextPathRecalculation += 15;
-         }
-      }
+        if (!EntityPredicates.CAN_AI_TARGET.test(livingentity))
+        {
+            this.attacker.setAttackTarget((LivingEntity)null);
+        }
 
-      this.ticksUntilNextAttack = Math.max(this.ticksUntilNextAttack - 1, 0);
-      this.checkAndPerformAttack(livingentity, d0);
-   }
+        this.attacker.setAggroed(false);
+        this.attacker.getNavigator().clearPath();
+    }
 
-   protected void checkAndPerformAttack(LivingEntity p_190102_1_, double p_190102_2_) {
-      double d0 = this.getAttackReachSqr(p_190102_1_);
-      if (p_190102_2_ <= d0 && this.ticksUntilNextAttack <= 0) {
-         this.resetAttackCooldown();
-         this.mob.swing(Hand.MAIN_HAND);
-         this.mob.doHurtTarget(p_190102_1_);
-      }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        LivingEntity livingentity = this.attacker.getAttackTarget();
+        this.attacker.getLookController().setLookPositionWithEntity(livingentity, 30.0F, 30.0F);
+        double d0 = this.attacker.getDistanceSq(livingentity.getPosX(), livingentity.getPosY(), livingentity.getPosZ());
+        this.delayCounter = Math.max(this.delayCounter - 1, 0);
 
-   }
+        if ((this.longMemory || this.attacker.getEntitySenses().canSee(livingentity)) && this.delayCounter <= 0 && (this.targetX == 0.0D && this.targetY == 0.0D && this.targetZ == 0.0D || livingentity.getDistanceSq(this.targetX, this.targetY, this.targetZ) >= 1.0D || this.attacker.getRNG().nextFloat() < 0.05F))
+        {
+            this.targetX = livingentity.getPosX();
+            this.targetY = livingentity.getPosY();
+            this.targetZ = livingentity.getPosZ();
+            this.delayCounter = 4 + this.attacker.getRNG().nextInt(7);
 
-   protected void resetAttackCooldown() {
-      this.ticksUntilNextAttack = 20;
-   }
+            if (d0 > 1024.0D)
+            {
+                this.delayCounter += 10;
+            }
+            else if (d0 > 256.0D)
+            {
+                this.delayCounter += 5;
+            }
 
-   protected boolean isTimeToAttack() {
-      return this.ticksUntilNextAttack <= 0;
-   }
+            if (!this.attacker.getNavigator().tryMoveToEntityLiving(livingentity, this.speedTowardsTarget))
+            {
+                this.delayCounter += 15;
+            }
+        }
 
-   protected int getTicksUntilNextAttack() {
-      return this.ticksUntilNextAttack;
-   }
+        this.field_234037_i_ = Math.max(this.field_234037_i_ - 1, 0);
+        this.checkAndPerformAttack(livingentity, d0);
+    }
 
-   protected int getAttackInterval() {
-      return 20;
-   }
+    protected void checkAndPerformAttack(LivingEntity enemy, double distToEnemySqr)
+    {
+        double d0 = this.getAttackReachSqr(enemy);
 
-   protected double getAttackReachSqr(LivingEntity p_179512_1_) {
-      return (double)(this.mob.getBbWidth() * 2.0F * this.mob.getBbWidth() * 2.0F + p_179512_1_.getBbWidth());
-   }
+        if (distToEnemySqr <= d0 && this.field_234037_i_ <= 0)
+        {
+            this.func_234039_g_();
+            this.attacker.swingArm(Hand.MAIN_HAND);
+            this.attacker.attackEntityAsMob(enemy);
+        }
+    }
+
+    protected void func_234039_g_()
+    {
+        this.field_234037_i_ = 20;
+    }
+
+    protected boolean func_234040_h_()
+    {
+        return this.field_234037_i_ <= 0;
+    }
+
+    protected int func_234041_j_()
+    {
+        return this.field_234037_i_;
+    }
+
+    protected int func_234042_k_()
+    {
+        return 20;
+    }
+
+    protected double getAttackReachSqr(LivingEntity attackTarget)
+    {
+        return (double)(this.attacker.getWidth() * 2.0F * this.attacker.getWidth() * 2.0F + attackTarget.getWidth());
+    }
 }

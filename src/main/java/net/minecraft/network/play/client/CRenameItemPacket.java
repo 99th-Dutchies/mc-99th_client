@@ -5,29 +5,45 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 
-public class CRenameItemPacket implements IPacket<IServerPlayNetHandler> {
-   private String name;
+public class CRenameItemPacket implements IPacket<IServerPlayNetHandler>
+{
+    private String name;
 
-   public CRenameItemPacket() {
-   }
+    public CRenameItemPacket()
+    {
+    }
 
-   public CRenameItemPacket(String p_i49546_1_) {
-      this.name = p_i49546_1_;
-   }
+    public CRenameItemPacket(String p_i49546_1_)
+    {
+        this.name = p_i49546_1_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.name = p_148837_1_.readUtf(32767);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.name = buf.readString(32767);
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeUtf(this.name);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeString(this.name);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleRenameItem(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processRenameItem(this);
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 }

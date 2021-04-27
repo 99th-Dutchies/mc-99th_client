@@ -8,32 +8,39 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class ReuseableStream<T> {
-   private final List<T> cache = Lists.newArrayList();
-   private final Spliterator<T> source;
+public class ReuseableStream<T>
+{
+    private final List<T> cachedValues = Lists.newArrayList();
+    private final Spliterator<T> spliterator;
 
-   public ReuseableStream(Stream<T> p_i49816_1_) {
-      this.source = p_i49816_1_.spliterator();
-   }
+    public ReuseableStream(Stream<T> stream)
+    {
+        this.spliterator = stream.spliterator();
+    }
 
-   public Stream<T> getStream() {
-      return StreamSupport.stream(new AbstractSpliterator<T>(Long.MAX_VALUE, 0) {
-         private int index;
+    public Stream<T> createStream()
+    {
+        return StreamSupport.stream(new AbstractSpliterator<T>(Long.MAX_VALUE, 0)
+        {
+            private int nextIdx;
+            public boolean tryAdvance(Consumer <? super T > p_tryAdvance_1_)
+            {
+                while (true)
+                {
+                    if (this.nextIdx >= ReuseableStream.this.cachedValues.size())
+                    {
+                        if (ReuseableStream.this.spliterator.tryAdvance(ReuseableStream.this.cachedValues::add))
+                        {
+                            continue;
+                        }
 
-         public boolean tryAdvance(Consumer<? super T> p_tryAdvance_1_) {
-            while(true) {
-               if (this.index >= ReuseableStream.this.cache.size()) {
-                  if (ReuseableStream.this.source.tryAdvance(ReuseableStream.this.cache::add)) {
-                     continue;
-                  }
+                        return false;
+                    }
 
-                  return false;
-               }
-
-               p_tryAdvance_1_.accept(ReuseableStream.this.cache.get(this.index++));
-               return true;
+                    p_tryAdvance_1_.accept(ReuseableStream.this.cachedValues.get(this.nextIdx++));
+                    return true;
+                }
             }
-         }
-      }, false);
-   }
+        }, false);
+    }
 }

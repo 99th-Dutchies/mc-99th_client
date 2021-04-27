@@ -10,24 +10,30 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.world.server.ServerWorld;
 
-public class VillagerBabiesSensor extends Sensor<LivingEntity> {
-   public Set<MemoryModuleType<?>> requires() {
-      return ImmutableSet.of(MemoryModuleType.VISIBLE_VILLAGER_BABIES);
-   }
+public class VillagerBabiesSensor extends Sensor<LivingEntity>
+{
+    public Set < MemoryModuleType<? >> getUsedMemories()
+    {
+        return ImmutableSet.of(MemoryModuleType.VISIBLE_VILLAGER_BABIES);
+    }
 
-   protected void doTick(ServerWorld p_212872_1_, LivingEntity p_212872_2_) {
-      p_212872_2_.getBrain().setMemory(MemoryModuleType.VISIBLE_VILLAGER_BABIES, this.getNearestVillagerBabies(p_212872_2_));
-   }
+    protected void update(ServerWorld worldIn, LivingEntity entityIn)
+    {
+        entityIn.getBrain().setMemory(MemoryModuleType.VISIBLE_VILLAGER_BABIES, this.getVisibleVillagerChildren(entityIn));
+    }
 
-   private List<LivingEntity> getNearestVillagerBabies(LivingEntity p_220994_1_) {
-      return this.getVisibleEntities(p_220994_1_).stream().filter(this::isVillagerBaby).collect(Collectors.toList());
-   }
+    private List<LivingEntity> getVisibleVillagerChildren(LivingEntity livingEntity)
+    {
+        return this.getVisibleEntities(livingEntity).stream().filter(this::isVillagerChild).collect(Collectors.toList());
+    }
 
-   private boolean isVillagerBaby(LivingEntity p_220993_1_) {
-      return p_220993_1_.getType() == EntityType.VILLAGER && p_220993_1_.isBaby();
-   }
+    private boolean isVillagerChild(LivingEntity livingEntity)
+    {
+        return livingEntity.getType() == EntityType.VILLAGER && livingEntity.isChild();
+    }
 
-   private List<LivingEntity> getVisibleEntities(LivingEntity p_220992_1_) {
-      return p_220992_1_.getBrain().getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(Lists.newArrayList());
-   }
+    private List<LivingEntity> getVisibleEntities(LivingEntity livingEntity)
+    {
+        return livingEntity.getBrain().getMemory(MemoryModuleType.VISIBLE_MOBS).orElse(Lists.newArrayList());
+    }
 }

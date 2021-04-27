@@ -9,42 +9,60 @@ import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 
-public class DefendVillageTargetGoal extends TargetGoal {
-   private final IronGolemEntity golem;
-   private LivingEntity potentialTarget;
-   private final EntityPredicate attackTargeting = (new EntityPredicate()).range(64.0D);
+public class DefendVillageTargetGoal extends TargetGoal
+{
+    private final IronGolemEntity irongolem;
+    private LivingEntity villageAgressorTarget;
+    private final EntityPredicate distancePredicate = (new EntityPredicate()).setDistance(64.0D);
 
-   public DefendVillageTargetGoal(IronGolemEntity p_i1659_1_) {
-      super(p_i1659_1_, false, true);
-      this.golem = p_i1659_1_;
-      this.setFlags(EnumSet.of(Goal.Flag.TARGET));
-   }
+    public DefendVillageTargetGoal(IronGolemEntity ironGolemIn)
+    {
+        super(ironGolemIn, false, true);
+        this.irongolem = ironGolemIn;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.TARGET));
+    }
 
-   public boolean canUse() {
-      AxisAlignedBB axisalignedbb = this.golem.getBoundingBox().inflate(10.0D, 8.0D, 10.0D);
-      List<LivingEntity> list = this.golem.level.getNearbyEntities(VillagerEntity.class, this.attackTargeting, this.golem, axisalignedbb);
-      List<PlayerEntity> list1 = this.golem.level.getNearbyPlayers(this.attackTargeting, this.golem, axisalignedbb);
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        AxisAlignedBB axisalignedbb = this.irongolem.getBoundingBox().grow(10.0D, 8.0D, 10.0D);
+        List<LivingEntity> list = this.irongolem.world.getTargettableEntitiesWithinAABB(VillagerEntity.class, this.distancePredicate, this.irongolem, axisalignedbb);
+        List<PlayerEntity> list1 = this.irongolem.world.getTargettablePlayersWithinAABB(this.distancePredicate, this.irongolem, axisalignedbb);
 
-      for(LivingEntity livingentity : list) {
-         VillagerEntity villagerentity = (VillagerEntity)livingentity;
+        for (LivingEntity livingentity : list)
+        {
+            VillagerEntity villagerentity = (VillagerEntity)livingentity;
 
-         for(PlayerEntity playerentity : list1) {
-            int i = villagerentity.getPlayerReputation(playerentity);
-            if (i <= -100) {
-               this.potentialTarget = playerentity;
+            for (PlayerEntity playerentity : list1)
+            {
+                int i = villagerentity.getPlayerReputation(playerentity);
+
+                if (i <= -100)
+                {
+                    this.villageAgressorTarget = playerentity;
+                }
             }
-         }
-      }
+        }
 
-      if (this.potentialTarget == null) {
-         return false;
-      } else {
-         return !(this.potentialTarget instanceof PlayerEntity) || !this.potentialTarget.isSpectator() && !((PlayerEntity)this.potentialTarget).isCreative();
-      }
-   }
+        if (this.villageAgressorTarget == null)
+        {
+            return false;
+        }
+        else
+        {
+            return !(this.villageAgressorTarget instanceof PlayerEntity) || !this.villageAgressorTarget.isSpectator() && !((PlayerEntity)this.villageAgressorTarget).isCreative();
+        }
+    }
 
-   public void start() {
-      this.golem.setTarget(this.potentialTarget);
-      super.start();
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.irongolem.setAttackTarget(this.villageAgressorTarget);
+        super.startExecuting();
+    }
 }

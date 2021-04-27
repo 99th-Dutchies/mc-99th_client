@@ -10,45 +10,46 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class WorldGenAttemptsDebugRenderer implements DebugRenderer.IDebugRenderer {
-   private final List<BlockPos> toRender = Lists.newArrayList();
-   private final List<Float> scales = Lists.newArrayList();
-   private final List<Float> alphas = Lists.newArrayList();
-   private final List<Float> reds = Lists.newArrayList();
-   private final List<Float> greens = Lists.newArrayList();
-   private final List<Float> blues = Lists.newArrayList();
+public class WorldGenAttemptsDebugRenderer implements DebugRenderer.IDebugRenderer
+{
+    private final List<BlockPos> locations = Lists.newArrayList();
+    private final List<Float> sizes = Lists.newArrayList();
+    private final List<Float> alphas = Lists.newArrayList();
+    private final List<Float> reds = Lists.newArrayList();
+    private final List<Float> greens = Lists.newArrayList();
+    private final List<Float> blues = Lists.newArrayList();
 
-   public void addPos(BlockPos p_201734_1_, float p_201734_2_, float p_201734_3_, float p_201734_4_, float p_201734_5_, float p_201734_6_) {
-      this.toRender.add(p_201734_1_);
-      this.scales.add(p_201734_2_);
-      this.alphas.add(p_201734_6_);
-      this.reds.add(p_201734_3_);
-      this.greens.add(p_201734_4_);
-      this.blues.add(p_201734_5_);
-   }
+    public void addAttempt(BlockPos pos, float size, float red, float green, float blue, float alpha)
+    {
+        this.locations.add(pos);
+        this.sizes.add(size);
+        this.alphas.add(alpha);
+        this.reds.add(red);
+        this.greens.add(green);
+        this.blues.add(blue);
+    }
 
-   public void render(MatrixStack p_225619_1_, IRenderTypeBuffer p_225619_2_, double p_225619_3_, double p_225619_5_, double p_225619_7_) {
-      RenderSystem.pushMatrix();
-      RenderSystem.enableBlend();
-      RenderSystem.defaultBlendFunc();
-      RenderSystem.disableTexture();
-      Tessellator tessellator = Tessellator.getInstance();
-      BufferBuilder bufferbuilder = tessellator.getBuilder();
-      bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
+    public void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, double camX, double camY, double camZ)
+    {
+        RenderSystem.pushMatrix();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableTexture();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
 
-      for(int i = 0; i < this.toRender.size(); ++i) {
-         BlockPos blockpos = this.toRender.get(i);
-         Float f = this.scales.get(i);
-         float f1 = f / 2.0F;
-         WorldRenderer.addChainedFilledBoxVertices(bufferbuilder, (double)((float)blockpos.getX() + 0.5F - f1) - p_225619_3_, (double)((float)blockpos.getY() + 0.5F - f1) - p_225619_5_, (double)((float)blockpos.getZ() + 0.5F - f1) - p_225619_7_, (double)((float)blockpos.getX() + 0.5F + f1) - p_225619_3_, (double)((float)blockpos.getY() + 0.5F + f1) - p_225619_5_, (double)((float)blockpos.getZ() + 0.5F + f1) - p_225619_7_, this.reds.get(i), this.greens.get(i), this.blues.get(i), this.alphas.get(i));
-      }
+        for (int i = 0; i < this.locations.size(); ++i)
+        {
+            BlockPos blockpos = this.locations.get(i);
+            Float f = this.sizes.get(i);
+            float f1 = f / 2.0F;
+            WorldRenderer.addChainedFilledBoxVertices(bufferbuilder, (double)((float)blockpos.getX() + 0.5F - f1) - camX, (double)((float)blockpos.getY() + 0.5F - f1) - camY, (double)((float)blockpos.getZ() + 0.5F - f1) - camZ, (double)((float)blockpos.getX() + 0.5F + f1) - camX, (double)((float)blockpos.getY() + 0.5F + f1) - camY, (double)((float)blockpos.getZ() + 0.5F + f1) - camZ, this.reds.get(i), this.greens.get(i), this.blues.get(i), this.alphas.get(i));
+        }
 
-      tessellator.end();
-      RenderSystem.enableTexture();
-      RenderSystem.popMatrix();
-   }
+        tessellator.draw();
+        RenderSystem.enableTexture();
+        RenderSystem.popMatrix();
+    }
 }

@@ -42,478 +42,604 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentUtils;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class CommandSuggestionHelper {
-   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(\\s+)");
-   private static final Style UNPARSED_STYLE = Style.EMPTY.withColor(TextFormatting.RED);
-   private static final Style LITERAL_STYLE = Style.EMPTY.withColor(TextFormatting.GRAY);
-   private static final List<Style> ARGUMENT_STYLES = Stream.of(TextFormatting.AQUA, TextFormatting.YELLOW, TextFormatting.GREEN, TextFormatting.LIGHT_PURPLE, TextFormatting.GOLD).map(Style.EMPTY::withColor).collect(ImmutableList.toImmutableList());
-   private final Minecraft minecraft;
-   private final Screen screen;
-   private final TextFieldWidget input;
-   private final FontRenderer font;
-   private final boolean commandsOnly;
-   private final boolean onlyShowIfCursorPastError;
-   private final int lineStartOffset;
-   private final int suggestionLineLimit;
-   private final boolean anchorToBottom;
-   private final int fillColor;
-   private final List<IReorderingProcessor> commandUsage = Lists.newArrayList();
-   private int commandUsagePosition;
-   private int commandUsageWidth;
-   private ParseResults<ISuggestionProvider> currentParse;
-   private CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> pendingSuggestions;
-   private CommandSuggestionHelper.Suggestions suggestions;
-   private boolean allowSuggestions;
-   private boolean keepSuggestions;
+public class CommandSuggestionHelper
+{
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(\\s+)");
+    private static final Style EMPTY_ERROR_STYLE = Style.EMPTY.setFormatting(TextFormatting.RED);
+    private static final Style EMPTY_PASS_STYLE = Style.EMPTY.setFormatting(TextFormatting.GRAY);
+    private static final List<Style> COMMAND_COLOR_STYLES = Stream.of(TextFormatting.AQUA, TextFormatting.YELLOW, TextFormatting.GREEN, TextFormatting.LIGHT_PURPLE, TextFormatting.GOLD).map(Style.EMPTY::setFormatting).collect(ImmutableList.toImmutableList());
+    private final Minecraft mc;
+    private final Screen screen;
+    private final TextFieldWidget inputField;
+    private final FontRenderer font;
+    private final boolean commandsOnly;
+    private final boolean hasCursor;
+    private final int minAmountRendered;
+    private final int maxAmountRendered;
+    private final boolean isChat;
+    private final int color;
+    private final List<IReorderingProcessor> exceptionList = Lists.newArrayList();
+    private int x;
+    private int width;
+    private ParseResults<ISuggestionProvider> parseResults;
+    private CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestionsFuture;
+    private CommandSuggestionHelper.Suggestions suggestions;
+    private boolean autoSuggest;
+    private boolean isApplyingSuggestion;
 
-   public CommandSuggestionHelper(Minecraft p_i225919_1_, Screen p_i225919_2_, TextFieldWidget p_i225919_3_, FontRenderer p_i225919_4_, boolean p_i225919_5_, boolean p_i225919_6_, int p_i225919_7_, int p_i225919_8_, boolean p_i225919_9_, int p_i225919_10_) {
-      this.minecraft = p_i225919_1_;
-      this.screen = p_i225919_2_;
-      this.input = p_i225919_3_;
-      this.font = p_i225919_4_;
-      this.commandsOnly = p_i225919_5_;
-      this.onlyShowIfCursorPastError = p_i225919_6_;
-      this.lineStartOffset = p_i225919_7_;
-      this.suggestionLineLimit = p_i225919_8_;
-      this.anchorToBottom = p_i225919_9_;
-      this.fillColor = p_i225919_10_;
-      p_i225919_3_.setFormatter(this::formatChat);
-   }
+    public CommandSuggestionHelper(Minecraft mc, Screen screen, TextFieldWidget inputField, FontRenderer font, boolean commandsOnly, boolean hasCursor, int minAmountRendered, int maxAmountRendered, boolean isChat, int color)
+    {
+        this.mc = mc;
+        this.screen = screen;
+        this.inputField = inputField;
+        this.font = font;
+        this.commandsOnly = commandsOnly;
+        this.hasCursor = hasCursor;
+        this.minAmountRendered = minAmountRendered;
+        this.maxAmountRendered = maxAmountRendered;
+        this.isChat = isChat;
+        this.color = color;
+        inputField.setTextFormatter(this::getParsedSuggestion);
+    }
 
-   public void setAllowSuggestions(boolean p_228124_1_) {
-      this.allowSuggestions = p_228124_1_;
-      if (!p_228124_1_) {
-         this.suggestions = null;
-      }
+    public void shouldAutoSuggest(boolean autoSuggest)
+    {
+        this.autoSuggest = autoSuggest;
 
-   }
+        if (!autoSuggest)
+        {
+            this.suggestions = null;
+        }
+    }
 
-   public boolean keyPressed(int p_228115_1_, int p_228115_2_, int p_228115_3_) {
-      if (this.suggestions != null && this.suggestions.keyPressed(p_228115_1_, p_228115_2_, p_228115_3_)) {
-         return true;
-      } else if (this.screen.getFocused() == this.input && p_228115_1_ == 258) {
-         this.showSuggestions(true);
-         return true;
-      } else {
-         return false;
-      }
-   }
+    public boolean onKeyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (this.suggestions != null && this.suggestions.onKeyPressed(keyCode, scanCode, modifiers))
+        {
+            return true;
+        }
+        else if (this.screen.getListener() == this.inputField && keyCode == 258)
+        {
+            this.updateSuggestions(true);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public boolean mouseScrolled(double p_228112_1_) {
-      return this.suggestions != null && this.suggestions.mouseScrolled(MathHelper.clamp(p_228112_1_, -1.0D, 1.0D));
-   }
+    public boolean onScroll(double delta)
+    {
+        return this.suggestions != null && this.suggestions.onScroll(MathHelper.clamp(delta, -1.0D, 1.0D));
+    }
 
-   public boolean mouseClicked(double p_228113_1_, double p_228113_3_, int p_228113_5_) {
-      return this.suggestions != null && this.suggestions.mouseClicked((int)p_228113_1_, (int)p_228113_3_, p_228113_5_);
-   }
+    public boolean onClick(double mouseX, double mouseY, int mouseButton)
+    {
+        return this.suggestions != null && this.suggestions.onClick((int)mouseX, (int)mouseY, mouseButton);
+    }
 
-   public void showSuggestions(boolean p_228128_1_) {
-      if (this.pendingSuggestions != null && this.pendingSuggestions.isDone()) {
-         com.mojang.brigadier.suggestion.Suggestions suggestions = this.pendingSuggestions.join();
-         if (!suggestions.isEmpty()) {
+    public void updateSuggestions(boolean narrateFirstSuggestion)
+    {
+        if (this.suggestionsFuture != null && this.suggestionsFuture.isDone())
+        {
+            com.mojang.brigadier.suggestion.Suggestions suggestions = this.suggestionsFuture.join();
+
+            if (!suggestions.isEmpty())
+            {
+                int i = 0;
+
+                for (Suggestion suggestion : suggestions.getList())
+                {
+                    i = Math.max(i, this.font.getStringWidth(suggestion.getText()));
+                }
+
+                int j = MathHelper.clamp(this.inputField.func_195611_j(suggestions.getRange().getStart()), 0, this.inputField.func_195611_j(0) + this.inputField.getAdjustedWidth() - i);
+                int k = this.isChat ? this.screen.height - 12 : 72;
+                this.suggestions = new CommandSuggestionHelper.Suggestions(j, k, i, this.getSuggestions(suggestions), narrateFirstSuggestion);
+            }
+        }
+    }
+
+    private List<Suggestion> getSuggestions(com.mojang.brigadier.suggestion.Suggestions suggestions)
+    {
+        String s = this.inputField.getText().substring(0, this.inputField.getCursorPosition());
+        int i = getLastWhitespace(s);
+        String s1 = s.substring(i).toLowerCase(Locale.ROOT);
+        List<Suggestion> list = Lists.newArrayList();
+        List<Suggestion> list1 = Lists.newArrayList();
+
+        for (Suggestion suggestion : suggestions.getList())
+        {
+            if (!suggestion.getText().startsWith(s1) && !suggestion.getText().startsWith("minecraft:" + s1))
+            {
+                list1.add(suggestion);
+            }
+            else
+            {
+                list.add(suggestion);
+            }
+        }
+
+        list.addAll(list1);
+        return list;
+    }
+
+    public void init()
+    {
+        String s = this.inputField.getText();
+
+        if (this.parseResults != null && !this.parseResults.getReader().getString().equals(s))
+        {
+            this.parseResults = null;
+        }
+
+        if (!this.isApplyingSuggestion)
+        {
+            this.inputField.setSuggestion((String)null);
+            this.suggestions = null;
+        }
+
+        this.exceptionList.clear();
+        StringReader stringreader = new StringReader(s);
+        boolean flag = stringreader.canRead() && stringreader.peek() == '/';
+
+        if (flag)
+        {
+            stringreader.skip();
+        }
+
+        boolean flag1 = this.commandsOnly || flag;
+        int i = this.inputField.getCursorPosition();
+
+        if (flag1)
+        {
+            CommandDispatcher<ISuggestionProvider> commanddispatcher = this.mc.player.connection.getCommandDispatcher();
+
+            if (this.parseResults == null)
+            {
+                this.parseResults = commanddispatcher.parse(stringreader, this.mc.player.connection.getSuggestionProvider());
+            }
+
+            int j = this.hasCursor ? stringreader.getCursor() : 1;
+
+            if (i >= j && (this.suggestions == null || !this.isApplyingSuggestion))
+            {
+                this.suggestionsFuture = commanddispatcher.getCompletionSuggestions(this.parseResults, i);
+                this.suggestionsFuture.thenRun(() ->
+                {
+                    if (this.suggestionsFuture.isDone())
+                    {
+                        this.recompileSuggestions();
+                    }
+                });
+            }
+        }
+        else
+        {
+            String s1 = s.substring(0, i);
+            int k = getLastWhitespace(s1);
+            Collection<String> collection = this.mc.player.connection.getSuggestionProvider().getPlayerNames();
+            this.suggestionsFuture = ISuggestionProvider.suggest(collection, new SuggestionsBuilder(s1, k));
+        }
+    }
+
+    private static int getLastWhitespace(String text)
+    {
+        if (Strings.isNullOrEmpty(text))
+        {
+            return 0;
+        }
+        else
+        {
             int i = 0;
 
-            for(Suggestion suggestion : suggestions.getList()) {
-               i = Math.max(i, this.font.width(suggestion.getText()));
+            for (Matcher matcher = WHITESPACE_PATTERN.matcher(text); matcher.find(); i = matcher.end())
+            {
             }
 
-            int j = MathHelper.clamp(this.input.getScreenX(suggestions.getRange().getStart()), 0, this.input.getScreenX(0) + this.input.getInnerWidth() - i);
-            int k = this.anchorToBottom ? this.screen.height - 12 : 72;
-            this.suggestions = new CommandSuggestionHelper.Suggestions(j, k, i, this.sortSuggestions(suggestions), p_228128_1_);
-         }
-      }
+            return i;
+        }
+    }
 
-   }
+    private static IReorderingProcessor func_243255_a(CommandSyntaxException exception)
+    {
+        ITextComponent itextcomponent = TextComponentUtils.toTextComponent(exception.getRawMessage());
+        String s = exception.getContext();
+        return s == null ? itextcomponent.func_241878_f() : (new TranslationTextComponent("command.context.parse_error", itextcomponent, exception.getCursor(), s)).func_241878_f();
+    }
 
-   private List<Suggestion> sortSuggestions(com.mojang.brigadier.suggestion.Suggestions p_241575_1_) {
-      String s = this.input.getValue().substring(0, this.input.getCursorPosition());
-      int i = getLastWordIndex(s);
-      String s1 = s.substring(i).toLowerCase(Locale.ROOT);
-      List<Suggestion> list = Lists.newArrayList();
-      List<Suggestion> list1 = Lists.newArrayList();
+    private void recompileSuggestions()
+    {
+        if (this.inputField.getCursorPosition() == this.inputField.getText().length())
+        {
+            if (this.suggestionsFuture.join().isEmpty() && !this.parseResults.getExceptions().isEmpty())
+            {
+                int i = 0;
 
-      for(Suggestion suggestion : p_241575_1_.getList()) {
-         if (!suggestion.getText().startsWith(s1) && !suggestion.getText().startsWith("minecraft:" + s1)) {
-            list1.add(suggestion);
-         } else {
-            list.add(suggestion);
-         }
-      }
+                for (Entry<CommandNode<ISuggestionProvider>, CommandSyntaxException> entry : this.parseResults.getExceptions().entrySet())
+                {
+                    CommandSyntaxException commandsyntaxexception = entry.getValue();
 
-      list.addAll(list1);
-      return list;
-   }
+                    if (commandsyntaxexception.getType() == CommandSyntaxException.BUILT_IN_EXCEPTIONS.literalIncorrect())
+                    {
+                        ++i;
+                    }
+                    else
+                    {
+                        this.exceptionList.add(func_243255_a(commandsyntaxexception));
+                    }
+                }
 
-   public void updateCommandInfo() {
-      String s = this.input.getValue();
-      if (this.currentParse != null && !this.currentParse.getReader().getString().equals(s)) {
-         this.currentParse = null;
-      }
+                if (i > 0)
+                {
+                    this.exceptionList.add(func_243255_a(CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().create()));
+                }
+            }
+            else if (this.parseResults.getReader().canRead())
+            {
+                this.exceptionList.add(func_243255_a(Commands.func_227481_a_(this.parseResults)));
+            }
+        }
 
-      if (!this.keepSuggestions) {
-         this.input.setSuggestion((String)null);
-         this.suggestions = null;
-      }
+        this.x = 0;
+        this.width = this.screen.width;
 
-      this.commandUsage.clear();
-      StringReader stringreader = new StringReader(s);
-      boolean flag = stringreader.canRead() && stringreader.peek() == '/';
-      if (flag) {
-         stringreader.skip();
-      }
+        if (this.exceptionList.isEmpty())
+        {
+            this.applyFormattingToCommand(TextFormatting.GRAY);
+        }
 
-      boolean flag1 = this.commandsOnly || flag;
-      int i = this.input.getCursorPosition();
-      if (flag1) {
-         CommandDispatcher<ISuggestionProvider> commanddispatcher = this.minecraft.player.connection.getCommands();
-         if (this.currentParse == null) {
-            this.currentParse = commanddispatcher.parse(stringreader, this.minecraft.player.connection.getSuggestionsProvider());
-         }
+        this.suggestions = null;
 
-         int j = this.onlyShowIfCursorPastError ? stringreader.getCursor() : 1;
-         if (i >= j && (this.suggestions == null || !this.keepSuggestions)) {
-            this.pendingSuggestions = commanddispatcher.getCompletionSuggestions(this.currentParse, i);
-            this.pendingSuggestions.thenRun(() -> {
-               if (this.pendingSuggestions.isDone()) {
-                  this.updateUsageInfo();
-               }
-            });
-         }
-      } else {
-         String s1 = s.substring(0, i);
-         int k = getLastWordIndex(s1);
-         Collection<String> collection = this.minecraft.player.connection.getSuggestionsProvider().getOnlinePlayerNames();
-         this.pendingSuggestions = ISuggestionProvider.suggest(collection, new SuggestionsBuilder(s1, k));
-      }
+        if (this.autoSuggest && this.mc.gameSettings.autoSuggestCommands)
+        {
+            this.updateSuggestions(false);
+        }
+    }
 
-   }
+    private void applyFormattingToCommand(TextFormatting formatting)
+    {
+        CommandContextBuilder<ISuggestionProvider> commandcontextbuilder = this.parseResults.getContext();
+        SuggestionContext<ISuggestionProvider> suggestioncontext = commandcontextbuilder.findSuggestionContext(this.inputField.getCursorPosition());
+        Map<CommandNode<ISuggestionProvider>, String> map = this.mc.player.connection.getCommandDispatcher().getSmartUsage(suggestioncontext.parent, this.mc.player.connection.getSuggestionProvider());
+        List<IReorderingProcessor> list = Lists.newArrayList();
+        int i = 0;
+        Style style = Style.EMPTY.setFormatting(formatting);
 
-   private static int getLastWordIndex(String p_228121_0_) {
-      if (Strings.isNullOrEmpty(p_228121_0_)) {
-         return 0;
-      } else {
-         int i = 0;
+        for (Entry<CommandNode<ISuggestionProvider>, String> entry : map.entrySet())
+        {
+            if (!(entry.getKey() instanceof LiteralCommandNode))
+            {
+                list.add(IReorderingProcessor.fromString(entry.getValue(), style));
+                i = Math.max(i, this.font.getStringWidth(entry.getValue()));
+            }
+        }
 
-         for(Matcher matcher = WHITESPACE_PATTERN.matcher(p_228121_0_); matcher.find(); i = matcher.end()) {
-         }
+        if (!list.isEmpty())
+        {
+            this.exceptionList.addAll(list);
+            this.x = MathHelper.clamp(this.inputField.func_195611_j(suggestioncontext.startPos), 0, this.inputField.func_195611_j(0) + this.inputField.getAdjustedWidth() - i);
+            this.width = i;
+        }
+    }
 
-         return i;
-      }
-   }
+    private IReorderingProcessor getParsedSuggestion(String command, int maxLength)
+    {
+        return this.parseResults != null ? getFinalSuggestion(this.parseResults, command, maxLength) : IReorderingProcessor.fromString(command, Style.EMPTY);
+    }
 
-   private static IReorderingProcessor getExceptionMessage(CommandSyntaxException p_243255_0_) {
-      ITextComponent itextcomponent = TextComponentUtils.fromMessage(p_243255_0_.getRawMessage());
-      String s = p_243255_0_.getContext();
-      return s == null ? itextcomponent.getVisualOrderText() : (new TranslationTextComponent("command.context.parse_error", itextcomponent, p_243255_0_.getCursor(), s)).getVisualOrderText();
-   }
+    @Nullable
+    private static String getMatchedSuggestionText(String inputText, String suggestionText)
+    {
+        return suggestionText.startsWith(inputText) ? suggestionText.substring(inputText.length()) : null;
+    }
 
-   private void updateUsageInfo() {
-      if (this.input.getCursorPosition() == this.input.getValue().length()) {
-         if (this.pendingSuggestions.join().isEmpty() && !this.currentParse.getExceptions().isEmpty()) {
+    private static IReorderingProcessor getFinalSuggestion(ParseResults<ISuggestionProvider> provider, String command, int maxLength)
+    {
+        List<IReorderingProcessor> list = Lists.newArrayList();
+        int i = 0;
+        int j = -1;
+        CommandContextBuilder<ISuggestionProvider> commandcontextbuilder = provider.getContext().getLastChild();
+
+        for (ParsedArgument < ISuggestionProvider, ? > parsedargument : commandcontextbuilder.getArguments().values())
+        {
+            ++j;
+
+            if (j >= COMMAND_COLOR_STYLES.size())
+            {
+                j = 0;
+            }
+
+            int k = Math.max(parsedargument.getRange().getStart() - maxLength, 0);
+
+            if (k >= command.length())
+            {
+                break;
+            }
+
+            int l = Math.min(parsedargument.getRange().getEnd() - maxLength, command.length());
+
+            if (l > 0)
+            {
+                list.add(IReorderingProcessor.fromString(command.substring(i, k), EMPTY_PASS_STYLE));
+                list.add(IReorderingProcessor.fromString(command.substring(k, l), COMMAND_COLOR_STYLES.get(j)));
+                i = l;
+            }
+        }
+
+        if (provider.getReader().canRead())
+        {
+            int i1 = Math.max(provider.getReader().getCursor() - maxLength, 0);
+
+            if (i1 < command.length())
+            {
+                int j1 = Math.min(i1 + provider.getReader().getRemainingLength(), command.length());
+                list.add(IReorderingProcessor.fromString(command.substring(i, i1), EMPTY_PASS_STYLE));
+                list.add(IReorderingProcessor.fromString(command.substring(i1, j1), EMPTY_ERROR_STYLE));
+                i = j1;
+            }
+        }
+
+        list.add(IReorderingProcessor.fromString(command.substring(i), EMPTY_PASS_STYLE));
+        return IReorderingProcessor.func_242241_a(list);
+    }
+
+    public void drawSuggestionList(MatrixStack matrixStack, int mouseX, int mouseY)
+    {
+        if (this.suggestions != null)
+        {
+            this.suggestions.drawSuggestions(matrixStack, mouseX, mouseY);
+        }
+        else
+        {
             int i = 0;
 
-            for(Entry<CommandNode<ISuggestionProvider>, CommandSyntaxException> entry : this.currentParse.getExceptions().entrySet()) {
-               CommandSyntaxException commandsyntaxexception = entry.getValue();
-               if (commandsyntaxexception.getType() == CommandSyntaxException.BUILT_IN_EXCEPTIONS.literalIncorrect()) {
-                  ++i;
-               } else {
-                  this.commandUsage.add(getExceptionMessage(commandsyntaxexception));
-               }
+            for (IReorderingProcessor ireorderingprocessor : this.exceptionList)
+            {
+                int j = this.isChat ? this.screen.height - 14 - 13 - 12 * i : 72 + 12 * i;
+                AbstractGui.fill(matrixStack, this.x - 1, j, this.x + this.width + 1, j + 12, this.color);
+                this.font.func_238407_a_(matrixStack, ireorderingprocessor, (float)this.x, (float)(j + 2), -1);
+                ++i;
+            }
+        }
+    }
+
+    public String getSuggestionMessage()
+    {
+        return this.suggestions != null ? "\n" + this.suggestions.getCurrentSuggestionMessage() : "";
+    }
+
+    public class Suggestions
+    {
+        private final Rectangle2d suggestionRenderBox;
+        private final String originalInputText;
+        private final List<Suggestion> suggestions;
+        private int lowestDisplayedSuggestionIndex;
+        private int selectedIndex;
+        private Vector2f lastMousePosition = Vector2f.ZERO;
+        private boolean changeSelectionOnNextTabInput;
+        private int lastObtainedSuggestionMessageIndex;
+
+        private Suggestions(int x, int y, int width, List<Suggestion> suggestions, boolean narrateFirstSuggestion)
+        {
+            int i = x - 1;
+            int j = CommandSuggestionHelper.this.isChat ? y - 3 - Math.min(suggestions.size(), CommandSuggestionHelper.this.maxAmountRendered) * 12 : y;
+            this.suggestionRenderBox = new Rectangle2d(i, j, width + 1, Math.min(suggestions.size(), CommandSuggestionHelper.this.maxAmountRendered) * 12);
+            this.originalInputText = CommandSuggestionHelper.this.inputField.getText();
+            this.lastObtainedSuggestionMessageIndex = narrateFirstSuggestion ? -1 : 0;
+            this.suggestions = suggestions;
+            this.selectSuggestion(0);
+        }
+
+        public void drawSuggestions(MatrixStack matrixStack, int mouseX, int mouseY)
+        {
+            int i = Math.min(this.suggestions.size(), CommandSuggestionHelper.this.maxAmountRendered);
+            int j = -5592406;
+            boolean flag = this.lowestDisplayedSuggestionIndex > 0;
+            boolean flag1 = this.suggestions.size() > this.lowestDisplayedSuggestionIndex + i;
+            boolean flag2 = flag || flag1;
+            boolean flag3 = this.lastMousePosition.x != (float)mouseX || this.lastMousePosition.y != (float)mouseY;
+
+            if (flag3)
+            {
+                this.lastMousePosition = new Vector2f((float)mouseX, (float)mouseY);
             }
 
-            if (i > 0) {
-               this.commandUsage.add(getExceptionMessage(CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().create()));
-            }
-         } else if (this.currentParse.getReader().canRead()) {
-            this.commandUsage.add(getExceptionMessage(Commands.getParseException(this.currentParse)));
-         }
-      }
+            if (flag2)
+            {
+                AbstractGui.fill(matrixStack, this.suggestionRenderBox.getX(), this.suggestionRenderBox.getY() - 1, this.suggestionRenderBox.getX() + this.suggestionRenderBox.getWidth(), this.suggestionRenderBox.getY(), CommandSuggestionHelper.this.color);
+                AbstractGui.fill(matrixStack, this.suggestionRenderBox.getX(), this.suggestionRenderBox.getY() + this.suggestionRenderBox.getHeight(), this.suggestionRenderBox.getX() + this.suggestionRenderBox.getWidth(), this.suggestionRenderBox.getY() + this.suggestionRenderBox.getHeight() + 1, CommandSuggestionHelper.this.color);
 
-      this.commandUsagePosition = 0;
-      this.commandUsageWidth = this.screen.width;
-      if (this.commandUsage.isEmpty()) {
-         this.fillNodeUsage(TextFormatting.GRAY);
-      }
+                if (flag)
+                {
+                    for (int k = 0; k < this.suggestionRenderBox.getWidth(); ++k)
+                    {
+                        if (k % 2 == 0)
+                        {
+                            AbstractGui.fill(matrixStack, this.suggestionRenderBox.getX() + k, this.suggestionRenderBox.getY() - 1, this.suggestionRenderBox.getX() + k + 1, this.suggestionRenderBox.getY(), -1);
+                        }
+                    }
+                }
 
-      this.suggestions = null;
-      if (this.allowSuggestions && this.minecraft.options.autoSuggestions) {
-         this.showSuggestions(false);
-      }
-
-   }
-
-   private void fillNodeUsage(TextFormatting p_228120_1_) {
-      CommandContextBuilder<ISuggestionProvider> commandcontextbuilder = this.currentParse.getContext();
-      SuggestionContext<ISuggestionProvider> suggestioncontext = commandcontextbuilder.findSuggestionContext(this.input.getCursorPosition());
-      Map<CommandNode<ISuggestionProvider>, String> map = this.minecraft.player.connection.getCommands().getSmartUsage(suggestioncontext.parent, this.minecraft.player.connection.getSuggestionsProvider());
-      List<IReorderingProcessor> list = Lists.newArrayList();
-      int i = 0;
-      Style style = Style.EMPTY.withColor(p_228120_1_);
-
-      for(Entry<CommandNode<ISuggestionProvider>, String> entry : map.entrySet()) {
-         if (!(entry.getKey() instanceof LiteralCommandNode)) {
-            list.add(IReorderingProcessor.forward(entry.getValue(), style));
-            i = Math.max(i, this.font.width(entry.getValue()));
-         }
-      }
-
-      if (!list.isEmpty()) {
-         this.commandUsage.addAll(list);
-         this.commandUsagePosition = MathHelper.clamp(this.input.getScreenX(suggestioncontext.startPos), 0, this.input.getScreenX(0) + this.input.getInnerWidth() - i);
-         this.commandUsageWidth = i;
-      }
-
-   }
-
-   private IReorderingProcessor formatChat(String p_228122_1_, int p_228122_2_) {
-      return this.currentParse != null ? formatText(this.currentParse, p_228122_1_, p_228122_2_) : IReorderingProcessor.forward(p_228122_1_, Style.EMPTY);
-   }
-
-   @Nullable
-   private static String calculateSuggestionSuffix(String p_228127_0_, String p_228127_1_) {
-      return p_228127_1_.startsWith(p_228127_0_) ? p_228127_1_.substring(p_228127_0_.length()) : null;
-   }
-
-   private static IReorderingProcessor formatText(ParseResults<ISuggestionProvider> p_228116_0_, String p_228116_1_, int p_228116_2_) {
-      List<IReorderingProcessor> list = Lists.newArrayList();
-      int i = 0;
-      int j = -1;
-      CommandContextBuilder<ISuggestionProvider> commandcontextbuilder = p_228116_0_.getContext().getLastChild();
-
-      for(ParsedArgument<ISuggestionProvider, ?> parsedargument : commandcontextbuilder.getArguments().values()) {
-         ++j;
-         if (j >= ARGUMENT_STYLES.size()) {
-            j = 0;
-         }
-
-         int k = Math.max(parsedargument.getRange().getStart() - p_228116_2_, 0);
-         if (k >= p_228116_1_.length()) {
-            break;
-         }
-
-         int l = Math.min(parsedargument.getRange().getEnd() - p_228116_2_, p_228116_1_.length());
-         if (l > 0) {
-            list.add(IReorderingProcessor.forward(p_228116_1_.substring(i, k), LITERAL_STYLE));
-            list.add(IReorderingProcessor.forward(p_228116_1_.substring(k, l), ARGUMENT_STYLES.get(j)));
-            i = l;
-         }
-      }
-
-      if (p_228116_0_.getReader().canRead()) {
-         int i1 = Math.max(p_228116_0_.getReader().getCursor() - p_228116_2_, 0);
-         if (i1 < p_228116_1_.length()) {
-            int j1 = Math.min(i1 + p_228116_0_.getReader().getRemainingLength(), p_228116_1_.length());
-            list.add(IReorderingProcessor.forward(p_228116_1_.substring(i, i1), LITERAL_STYLE));
-            list.add(IReorderingProcessor.forward(p_228116_1_.substring(i1, j1), UNPARSED_STYLE));
-            i = j1;
-         }
-      }
-
-      list.add(IReorderingProcessor.forward(p_228116_1_.substring(i), LITERAL_STYLE));
-      return IReorderingProcessor.composite(list);
-   }
-
-   public void render(MatrixStack p_238500_1_, int p_238500_2_, int p_238500_3_) {
-      if (this.suggestions != null) {
-         this.suggestions.render(p_238500_1_, p_238500_2_, p_238500_3_);
-      } else {
-         int i = 0;
-
-         for(IReorderingProcessor ireorderingprocessor : this.commandUsage) {
-            int j = this.anchorToBottom ? this.screen.height - 14 - 13 - 12 * i : 72 + 12 * i;
-            AbstractGui.fill(p_238500_1_, this.commandUsagePosition - 1, j, this.commandUsagePosition + this.commandUsageWidth + 1, j + 12, this.fillColor);
-            this.font.drawShadow(p_238500_1_, ireorderingprocessor, (float)this.commandUsagePosition, (float)(j + 2), -1);
-            ++i;
-         }
-      }
-
-   }
-
-   public String getNarrationMessage() {
-      return this.suggestions != null ? "\n" + this.suggestions.getNarrationMessage() : "";
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public class Suggestions {
-      private final Rectangle2d rect;
-      private final String originalContents;
-      private final List<Suggestion> suggestionList;
-      private int offset;
-      private int current;
-      private Vector2f lastMouse = Vector2f.ZERO;
-      private boolean tabCycles;
-      private int lastNarratedEntry;
-
-      private Suggestions(int p_i241247_2_, int p_i241247_3_, int p_i241247_4_, List<Suggestion> p_i241247_5_, boolean p_i241247_6_) {
-         int i = p_i241247_2_ - 1;
-         int j = CommandSuggestionHelper.this.anchorToBottom ? p_i241247_3_ - 3 - Math.min(p_i241247_5_.size(), CommandSuggestionHelper.this.suggestionLineLimit) * 12 : p_i241247_3_;
-         this.rect = new Rectangle2d(i, j, p_i241247_4_ + 1, Math.min(p_i241247_5_.size(), CommandSuggestionHelper.this.suggestionLineLimit) * 12);
-         this.originalContents = CommandSuggestionHelper.this.input.getValue();
-         this.lastNarratedEntry = p_i241247_6_ ? -1 : 0;
-         this.suggestionList = p_i241247_5_;
-         this.select(0);
-      }
-
-      public void render(MatrixStack p_238501_1_, int p_238501_2_, int p_238501_3_) {
-         int i = Math.min(this.suggestionList.size(), CommandSuggestionHelper.this.suggestionLineLimit);
-         int j = -5592406;
-         boolean flag = this.offset > 0;
-         boolean flag1 = this.suggestionList.size() > this.offset + i;
-         boolean flag2 = flag || flag1;
-         boolean flag3 = this.lastMouse.x != (float)p_238501_2_ || this.lastMouse.y != (float)p_238501_3_;
-         if (flag3) {
-            this.lastMouse = new Vector2f((float)p_238501_2_, (float)p_238501_3_);
-         }
-
-         if (flag2) {
-            AbstractGui.fill(p_238501_1_, this.rect.getX(), this.rect.getY() - 1, this.rect.getX() + this.rect.getWidth(), this.rect.getY(), CommandSuggestionHelper.this.fillColor);
-            AbstractGui.fill(p_238501_1_, this.rect.getX(), this.rect.getY() + this.rect.getHeight(), this.rect.getX() + this.rect.getWidth(), this.rect.getY() + this.rect.getHeight() + 1, CommandSuggestionHelper.this.fillColor);
-            if (flag) {
-               for(int k = 0; k < this.rect.getWidth(); ++k) {
-                  if (k % 2 == 0) {
-                     AbstractGui.fill(p_238501_1_, this.rect.getX() + k, this.rect.getY() - 1, this.rect.getX() + k + 1, this.rect.getY(), -1);
-                  }
-               }
+                if (flag1)
+                {
+                    for (int i1 = 0; i1 < this.suggestionRenderBox.getWidth(); ++i1)
+                    {
+                        if (i1 % 2 == 0)
+                        {
+                            AbstractGui.fill(matrixStack, this.suggestionRenderBox.getX() + i1, this.suggestionRenderBox.getY() + this.suggestionRenderBox.getHeight(), this.suggestionRenderBox.getX() + i1 + 1, this.suggestionRenderBox.getY() + this.suggestionRenderBox.getHeight() + 1, -1);
+                        }
+                    }
+                }
             }
 
-            if (flag1) {
-               for(int i1 = 0; i1 < this.rect.getWidth(); ++i1) {
-                  if (i1 % 2 == 0) {
-                     AbstractGui.fill(p_238501_1_, this.rect.getX() + i1, this.rect.getY() + this.rect.getHeight(), this.rect.getX() + i1 + 1, this.rect.getY() + this.rect.getHeight() + 1, -1);
-                  }
-               }
-            }
-         }
+            boolean flag4 = false;
 
-         boolean flag4 = false;
+            for (int l = 0; l < i; ++l)
+            {
+                Suggestion suggestion = this.suggestions.get(l + this.lowestDisplayedSuggestionIndex);
+                AbstractGui.fill(matrixStack, this.suggestionRenderBox.getX(), this.suggestionRenderBox.getY() + 12 * l, this.suggestionRenderBox.getX() + this.suggestionRenderBox.getWidth(), this.suggestionRenderBox.getY() + 12 * l + 12, CommandSuggestionHelper.this.color);
 
-         for(int l = 0; l < i; ++l) {
-            Suggestion suggestion = this.suggestionList.get(l + this.offset);
-            AbstractGui.fill(p_238501_1_, this.rect.getX(), this.rect.getY() + 12 * l, this.rect.getX() + this.rect.getWidth(), this.rect.getY() + 12 * l + 12, CommandSuggestionHelper.this.fillColor);
-            if (p_238501_2_ > this.rect.getX() && p_238501_2_ < this.rect.getX() + this.rect.getWidth() && p_238501_3_ > this.rect.getY() + 12 * l && p_238501_3_ < this.rect.getY() + 12 * l + 12) {
-               if (flag3) {
-                  this.select(l + this.offset);
-               }
+                if (mouseX > this.suggestionRenderBox.getX() && mouseX < this.suggestionRenderBox.getX() + this.suggestionRenderBox.getWidth() && mouseY > this.suggestionRenderBox.getY() + 12 * l && mouseY < this.suggestionRenderBox.getY() + 12 * l + 12)
+                {
+                    if (flag3)
+                    {
+                        this.selectSuggestion(l + this.lowestDisplayedSuggestionIndex);
+                    }
 
-               flag4 = true;
+                    flag4 = true;
+                }
+
+                CommandSuggestionHelper.this.font.drawStringWithShadow(matrixStack, suggestion.getText(), (float)(this.suggestionRenderBox.getX() + 1), (float)(this.suggestionRenderBox.getY() + 2 + 12 * l), l + this.lowestDisplayedSuggestionIndex == this.selectedIndex ? -256 : -5592406);
             }
 
-            CommandSuggestionHelper.this.font.drawShadow(p_238501_1_, suggestion.getText(), (float)(this.rect.getX() + 1), (float)(this.rect.getY() + 2 + 12 * l), l + this.offset == this.current ? -256 : -5592406);
-         }
+            if (flag4)
+            {
+                Message message = this.suggestions.get(this.selectedIndex).getTooltip();
 
-         if (flag4) {
-            Message message = this.suggestionList.get(this.current).getTooltip();
-            if (message != null) {
-               CommandSuggestionHelper.this.screen.renderTooltip(p_238501_1_, TextComponentUtils.fromMessage(message), p_238501_2_, p_238501_3_);
+                if (message != null)
+                {
+                    CommandSuggestionHelper.this.screen.renderTooltip(matrixStack, TextComponentUtils.toTextComponent(message), mouseX, mouseY);
+                }
             }
-         }
+        }
 
-      }
+        public boolean onClick(int mouseX, int mouseY, int mouseButton)
+        {
+            if (!this.suggestionRenderBox.contains(mouseX, mouseY))
+            {
+                return false;
+            }
+            else
+            {
+                int i = (mouseY - this.suggestionRenderBox.getY()) / 12 + this.lowestDisplayedSuggestionIndex;
 
-      public boolean mouseClicked(int p_228150_1_, int p_228150_2_, int p_228150_3_) {
-         if (!this.rect.contains(p_228150_1_, p_228150_2_)) {
-            return false;
-         } else {
-            int i = (p_228150_2_ - this.rect.getY()) / 12 + this.offset;
-            if (i >= 0 && i < this.suggestionList.size()) {
-               this.select(i);
-               this.useSuggestion();
+                if (i >= 0 && i < this.suggestions.size())
+                {
+                    this.selectSuggestion(i);
+                    this.applySuggestionToInput();
+                }
+
+                return true;
+            }
+        }
+
+        public boolean onScroll(double delta)
+        {
+            int i = (int)(CommandSuggestionHelper.this.mc.mouseHelper.getMouseX() * (double)CommandSuggestionHelper.this.mc.getMainWindow().getScaledWidth() / (double)CommandSuggestionHelper.this.mc.getMainWindow().getWidth());
+            int j = (int)(CommandSuggestionHelper.this.mc.mouseHelper.getMouseY() * (double)CommandSuggestionHelper.this.mc.getMainWindow().getScaledHeight() / (double)CommandSuggestionHelper.this.mc.getMainWindow().getHeight());
+
+            if (this.suggestionRenderBox.contains(i, j))
+            {
+                this.lowestDisplayedSuggestionIndex = MathHelper.clamp((int)((double)this.lowestDisplayedSuggestionIndex - delta), 0, Math.max(this.suggestions.size() - CommandSuggestionHelper.this.maxAmountRendered, 0));
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public boolean onKeyPressed(int keyCode, int scanCode, int modifiers)
+        {
+            if (keyCode == 265)
+            {
+                this.changeSelection(-1);
+                this.changeSelectionOnNextTabInput = false;
+                return true;
+            }
+            else if (keyCode == 264)
+            {
+                this.changeSelection(1);
+                this.changeSelectionOnNextTabInput = false;
+                return true;
+            }
+            else if (keyCode == 258)
+            {
+                if (this.changeSelectionOnNextTabInput)
+                {
+                    this.changeSelection(Screen.hasShiftDown() ? -1 : 1);
+                }
+
+                this.applySuggestionToInput();
+                return true;
+            }
+            else if (keyCode == 256)
+            {
+                this.clearSuggestions();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public void changeSelection(int change)
+        {
+            this.selectSuggestion(this.selectedIndex + change);
+            int i = this.lowestDisplayedSuggestionIndex;
+            int j = this.lowestDisplayedSuggestionIndex + CommandSuggestionHelper.this.maxAmountRendered - 1;
+
+            if (this.selectedIndex < i)
+            {
+                this.lowestDisplayedSuggestionIndex = MathHelper.clamp(this.selectedIndex, 0, Math.max(this.suggestions.size() - CommandSuggestionHelper.this.maxAmountRendered, 0));
+            }
+            else if (this.selectedIndex > j)
+            {
+                this.lowestDisplayedSuggestionIndex = MathHelper.clamp(this.selectedIndex + CommandSuggestionHelper.this.minAmountRendered - CommandSuggestionHelper.this.maxAmountRendered, 0, Math.max(this.suggestions.size() - CommandSuggestionHelper.this.maxAmountRendered, 0));
+            }
+        }
+
+        public void selectSuggestion(int index)
+        {
+            this.selectedIndex = index;
+
+            if (this.selectedIndex < 0)
+            {
+                this.selectedIndex += this.suggestions.size();
             }
 
-            return true;
-         }
-      }
-
-      public boolean mouseScrolled(double p_228147_1_) {
-         int i = (int)(CommandSuggestionHelper.this.minecraft.mouseHandler.xpos() * (double)CommandSuggestionHelper.this.minecraft.getWindow().getGuiScaledWidth() / (double)CommandSuggestionHelper.this.minecraft.getWindow().getScreenWidth());
-         int j = (int)(CommandSuggestionHelper.this.minecraft.mouseHandler.ypos() * (double)CommandSuggestionHelper.this.minecraft.getWindow().getGuiScaledHeight() / (double)CommandSuggestionHelper.this.minecraft.getWindow().getScreenHeight());
-         if (this.rect.contains(i, j)) {
-            this.offset = MathHelper.clamp((int)((double)this.offset - p_228147_1_), 0, Math.max(this.suggestionList.size() - CommandSuggestionHelper.this.suggestionLineLimit, 0));
-            return true;
-         } else {
-            return false;
-         }
-      }
-
-      public boolean keyPressed(int p_228154_1_, int p_228154_2_, int p_228154_3_) {
-         if (p_228154_1_ == 265) {
-            this.cycle(-1);
-            this.tabCycles = false;
-            return true;
-         } else if (p_228154_1_ == 264) {
-            this.cycle(1);
-            this.tabCycles = false;
-            return true;
-         } else if (p_228154_1_ == 258) {
-            if (this.tabCycles) {
-               this.cycle(Screen.hasShiftDown() ? -1 : 1);
+            if (this.selectedIndex >= this.suggestions.size())
+            {
+                this.selectedIndex -= this.suggestions.size();
             }
 
-            this.useSuggestion();
-            return true;
-         } else if (p_228154_1_ == 256) {
-            this.hide();
-            return true;
-         } else {
-            return false;
-         }
-      }
+            Suggestion suggestion = this.suggestions.get(this.selectedIndex);
+            CommandSuggestionHelper.this.inputField.setSuggestion(CommandSuggestionHelper.getMatchedSuggestionText(CommandSuggestionHelper.this.inputField.getText(), suggestion.apply(this.originalInputText)));
 
-      public void cycle(int p_228148_1_) {
-         this.select(this.current + p_228148_1_);
-         int i = this.offset;
-         int j = this.offset + CommandSuggestionHelper.this.suggestionLineLimit - 1;
-         if (this.current < i) {
-            this.offset = MathHelper.clamp(this.current, 0, Math.max(this.suggestionList.size() - CommandSuggestionHelper.this.suggestionLineLimit, 0));
-         } else if (this.current > j) {
-            this.offset = MathHelper.clamp(this.current + CommandSuggestionHelper.this.lineStartOffset - CommandSuggestionHelper.this.suggestionLineLimit, 0, Math.max(this.suggestionList.size() - CommandSuggestionHelper.this.suggestionLineLimit, 0));
-         }
+            if (NarratorChatListener.INSTANCE.isActive() && this.lastObtainedSuggestionMessageIndex != this.selectedIndex)
+            {
+                NarratorChatListener.INSTANCE.say(this.getCurrentSuggestionMessage());
+            }
+        }
 
-      }
+        public void applySuggestionToInput()
+        {
+            Suggestion suggestion = this.suggestions.get(this.selectedIndex);
+            CommandSuggestionHelper.this.isApplyingSuggestion = true;
+            CommandSuggestionHelper.this.inputField.setText(suggestion.apply(this.originalInputText));
+            int i = suggestion.getRange().getStart() + suggestion.getText().length();
+            CommandSuggestionHelper.this.inputField.clampCursorPosition(i);
+            CommandSuggestionHelper.this.inputField.setSelectionPos(i);
+            this.selectSuggestion(this.selectedIndex);
+            CommandSuggestionHelper.this.isApplyingSuggestion = false;
+            this.changeSelectionOnNextTabInput = true;
+        }
 
-      public void select(int p_228153_1_) {
-         this.current = p_228153_1_;
-         if (this.current < 0) {
-            this.current += this.suggestionList.size();
-         }
+        private String getCurrentSuggestionMessage()
+        {
+            this.lastObtainedSuggestionMessageIndex = this.selectedIndex;
+            Suggestion suggestion = this.suggestions.get(this.selectedIndex);
+            Message message = suggestion.getTooltip();
+            return message != null ? I18n.format("narration.suggestion.tooltip", this.selectedIndex + 1, this.suggestions.size(), suggestion.getText(), message.getString()) : I18n.format("narration.suggestion", this.selectedIndex + 1, this.suggestions.size(), suggestion.getText());
+        }
 
-         if (this.current >= this.suggestionList.size()) {
-            this.current -= this.suggestionList.size();
-         }
-
-         Suggestion suggestion = this.suggestionList.get(this.current);
-         CommandSuggestionHelper.this.input.setSuggestion(CommandSuggestionHelper.calculateSuggestionSuffix(CommandSuggestionHelper.this.input.getValue(), suggestion.apply(this.originalContents)));
-         if (NarratorChatListener.INSTANCE.isActive() && this.lastNarratedEntry != this.current) {
-            NarratorChatListener.INSTANCE.sayNow(this.getNarrationMessage());
-         }
-
-      }
-
-      public void useSuggestion() {
-         Suggestion suggestion = this.suggestionList.get(this.current);
-         CommandSuggestionHelper.this.keepSuggestions = true;
-         CommandSuggestionHelper.this.input.setValue(suggestion.apply(this.originalContents));
-         int i = suggestion.getRange().getStart() + suggestion.getText().length();
-         CommandSuggestionHelper.this.input.setCursorPosition(i);
-         CommandSuggestionHelper.this.input.setHighlightPos(i);
-         this.select(this.current);
-         CommandSuggestionHelper.this.keepSuggestions = false;
-         this.tabCycles = true;
-      }
-
-      private String getNarrationMessage() {
-         this.lastNarratedEntry = this.current;
-         Suggestion suggestion = this.suggestionList.get(this.current);
-         Message message = suggestion.getTooltip();
-         return message != null ? I18n.get("narration.suggestion.tooltip", this.current + 1, this.suggestionList.size(), suggestion.getText(), message.getString()) : I18n.get("narration.suggestion", this.current + 1, this.suggestionList.size(), suggestion.getText());
-      }
-
-      public void hide() {
-         CommandSuggestionHelper.this.suggestions = null;
-      }
-   }
+        public void clearSuggestions()
+        {
+            CommandSuggestionHelper.this.suggestions = null;
+        }
+    }
 }

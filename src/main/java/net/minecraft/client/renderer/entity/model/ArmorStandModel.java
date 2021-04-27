@@ -7,91 +7,98 @@ import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.item.ArmorStandEntity;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class ArmorStandModel extends ArmorStandArmorModel {
-   private final ModelRenderer bodyStick1;
-   private final ModelRenderer bodyStick2;
-   private final ModelRenderer shoulderStick;
-   private final ModelRenderer basePlate;
+public class ArmorStandModel extends ArmorStandArmorModel
+{
+    private final ModelRenderer standRightSide;
+    private final ModelRenderer standLeftSide;
+    private final ModelRenderer standWaist;
+    private final ModelRenderer standBase;
 
-   public ArmorStandModel() {
-      this(0.0F);
-   }
+    public ArmorStandModel()
+    {
+        this(0.0F);
+    }
 
-   public ArmorStandModel(float p_i46306_1_) {
-      super(p_i46306_1_, 64, 64);
-      this.head = new ModelRenderer(this, 0, 0);
-      this.head.addBox(-1.0F, -7.0F, -1.0F, 2.0F, 7.0F, 2.0F, p_i46306_1_);
-      this.head.setPos(0.0F, 0.0F, 0.0F);
-      this.body = new ModelRenderer(this, 0, 26);
-      this.body.addBox(-6.0F, 0.0F, -1.5F, 12.0F, 3.0F, 3.0F, p_i46306_1_);
-      this.body.setPos(0.0F, 0.0F, 0.0F);
-      this.rightArm = new ModelRenderer(this, 24, 0);
-      this.rightArm.addBox(-2.0F, -2.0F, -1.0F, 2.0F, 12.0F, 2.0F, p_i46306_1_);
-      this.rightArm.setPos(-5.0F, 2.0F, 0.0F);
-      this.leftArm = new ModelRenderer(this, 32, 16);
-      this.leftArm.mirror = true;
-      this.leftArm.addBox(0.0F, -2.0F, -1.0F, 2.0F, 12.0F, 2.0F, p_i46306_1_);
-      this.leftArm.setPos(5.0F, 2.0F, 0.0F);
-      this.rightLeg = new ModelRenderer(this, 8, 0);
-      this.rightLeg.addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, p_i46306_1_);
-      this.rightLeg.setPos(-1.9F, 12.0F, 0.0F);
-      this.leftLeg = new ModelRenderer(this, 40, 16);
-      this.leftLeg.mirror = true;
-      this.leftLeg.addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, p_i46306_1_);
-      this.leftLeg.setPos(1.9F, 12.0F, 0.0F);
-      this.bodyStick1 = new ModelRenderer(this, 16, 0);
-      this.bodyStick1.addBox(-3.0F, 3.0F, -1.0F, 2.0F, 7.0F, 2.0F, p_i46306_1_);
-      this.bodyStick1.setPos(0.0F, 0.0F, 0.0F);
-      this.bodyStick1.visible = true;
-      this.bodyStick2 = new ModelRenderer(this, 48, 16);
-      this.bodyStick2.addBox(1.0F, 3.0F, -1.0F, 2.0F, 7.0F, 2.0F, p_i46306_1_);
-      this.bodyStick2.setPos(0.0F, 0.0F, 0.0F);
-      this.shoulderStick = new ModelRenderer(this, 0, 48);
-      this.shoulderStick.addBox(-4.0F, 10.0F, -1.0F, 8.0F, 2.0F, 2.0F, p_i46306_1_);
-      this.shoulderStick.setPos(0.0F, 0.0F, 0.0F);
-      this.basePlate = new ModelRenderer(this, 0, 32);
-      this.basePlate.addBox(-6.0F, 11.0F, -6.0F, 12.0F, 1.0F, 12.0F, p_i46306_1_);
-      this.basePlate.setPos(0.0F, 12.0F, 0.0F);
-      this.hat.visible = false;
-   }
+    public ArmorStandModel(float modelSize)
+    {
+        super(modelSize, 64, 64);
+        this.bipedHead = new ModelRenderer(this, 0, 0);
+        this.bipedHead.addBox(-1.0F, -7.0F, -1.0F, 2.0F, 7.0F, 2.0F, modelSize);
+        this.bipedHead.setRotationPoint(0.0F, 0.0F, 0.0F);
+        this.bipedBody = new ModelRenderer(this, 0, 26);
+        this.bipedBody.addBox(-6.0F, 0.0F, -1.5F, 12.0F, 3.0F, 3.0F, modelSize);
+        this.bipedBody.setRotationPoint(0.0F, 0.0F, 0.0F);
+        this.bipedRightArm = new ModelRenderer(this, 24, 0);
+        this.bipedRightArm.addBox(-2.0F, -2.0F, -1.0F, 2.0F, 12.0F, 2.0F, modelSize);
+        this.bipedRightArm.setRotationPoint(-5.0F, 2.0F, 0.0F);
+        this.bipedLeftArm = new ModelRenderer(this, 32, 16);
+        this.bipedLeftArm.mirror = true;
+        this.bipedLeftArm.addBox(0.0F, -2.0F, -1.0F, 2.0F, 12.0F, 2.0F, modelSize);
+        this.bipedLeftArm.setRotationPoint(5.0F, 2.0F, 0.0F);
+        this.bipedRightLeg = new ModelRenderer(this, 8, 0);
+        this.bipedRightLeg.addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, modelSize);
+        this.bipedRightLeg.setRotationPoint(-1.9F, 12.0F, 0.0F);
+        this.bipedLeftLeg = new ModelRenderer(this, 40, 16);
+        this.bipedLeftLeg.mirror = true;
+        this.bipedLeftLeg.addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, modelSize);
+        this.bipedLeftLeg.setRotationPoint(1.9F, 12.0F, 0.0F);
+        this.standRightSide = new ModelRenderer(this, 16, 0);
+        this.standRightSide.addBox(-3.0F, 3.0F, -1.0F, 2.0F, 7.0F, 2.0F, modelSize);
+        this.standRightSide.setRotationPoint(0.0F, 0.0F, 0.0F);
+        this.standRightSide.showModel = true;
+        this.standLeftSide = new ModelRenderer(this, 48, 16);
+        this.standLeftSide.addBox(1.0F, 3.0F, -1.0F, 2.0F, 7.0F, 2.0F, modelSize);
+        this.standLeftSide.setRotationPoint(0.0F, 0.0F, 0.0F);
+        this.standWaist = new ModelRenderer(this, 0, 48);
+        this.standWaist.addBox(-4.0F, 10.0F, -1.0F, 8.0F, 2.0F, 2.0F, modelSize);
+        this.standWaist.setRotationPoint(0.0F, 0.0F, 0.0F);
+        this.standBase = new ModelRenderer(this, 0, 32);
+        this.standBase.addBox(-6.0F, 11.0F, -6.0F, 12.0F, 1.0F, 12.0F, modelSize);
+        this.standBase.setRotationPoint(0.0F, 12.0F, 0.0F);
+        this.bipedHeadwear.showModel = false;
+    }
 
-   public void prepareMobModel(ArmorStandEntity p_212843_1_, float p_212843_2_, float p_212843_3_, float p_212843_4_) {
-      this.basePlate.xRot = 0.0F;
-      this.basePlate.yRot = ((float)Math.PI / 180F) * -MathHelper.rotLerp(p_212843_4_, p_212843_1_.yRotO, p_212843_1_.yRot);
-      this.basePlate.zRot = 0.0F;
-   }
+    public void setLivingAnimations(ArmorStandEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+    {
+        this.standBase.rotateAngleX = 0.0F;
+        this.standBase.rotateAngleY = ((float)Math.PI / 180F) * -MathHelper.interpolateAngle(partialTick, entityIn.prevRotationYaw, entityIn.rotationYaw);
+        this.standBase.rotateAngleZ = 0.0F;
+    }
 
-   public void setupAnim(ArmorStandEntity p_225597_1_, float p_225597_2_, float p_225597_3_, float p_225597_4_, float p_225597_5_, float p_225597_6_) {
-      super.setupAnim(p_225597_1_, p_225597_2_, p_225597_3_, p_225597_4_, p_225597_5_, p_225597_6_);
-      this.leftArm.visible = p_225597_1_.isShowArms();
-      this.rightArm.visible = p_225597_1_.isShowArms();
-      this.basePlate.visible = !p_225597_1_.isNoBasePlate();
-      this.leftLeg.setPos(1.9F, 12.0F, 0.0F);
-      this.rightLeg.setPos(-1.9F, 12.0F, 0.0F);
-      this.bodyStick1.xRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getX();
-      this.bodyStick1.yRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getY();
-      this.bodyStick1.zRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getZ();
-      this.bodyStick2.xRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getX();
-      this.bodyStick2.yRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getY();
-      this.bodyStick2.zRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getZ();
-      this.shoulderStick.xRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getX();
-      this.shoulderStick.yRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getY();
-      this.shoulderStick.zRot = ((float)Math.PI / 180F) * p_225597_1_.getBodyPose().getZ();
-   }
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setRotationAngles(ArmorStandEntity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        super.setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        this.bipedLeftArm.showModel = entityIn.getShowArms();
+        this.bipedRightArm.showModel = entityIn.getShowArms();
+        this.standBase.showModel = !entityIn.hasNoBasePlate();
+        this.bipedLeftLeg.setRotationPoint(1.9F, 12.0F, 0.0F);
+        this.bipedRightLeg.setRotationPoint(-1.9F, 12.0F, 0.0F);
+        this.standRightSide.rotateAngleX = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getX();
+        this.standRightSide.rotateAngleY = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getY();
+        this.standRightSide.rotateAngleZ = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getZ();
+        this.standLeftSide.rotateAngleX = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getX();
+        this.standLeftSide.rotateAngleY = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getY();
+        this.standLeftSide.rotateAngleZ = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getZ();
+        this.standWaist.rotateAngleX = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getX();
+        this.standWaist.rotateAngleY = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getY();
+        this.standWaist.rotateAngleZ = ((float)Math.PI / 180F) * entityIn.getBodyRotation().getZ();
+    }
 
-   protected Iterable<ModelRenderer> bodyParts() {
-      return Iterables.concat(super.bodyParts(), ImmutableList.of(this.bodyStick1, this.bodyStick2, this.shoulderStick, this.basePlate));
-   }
+    protected Iterable<ModelRenderer> getBodyParts()
+    {
+        return Iterables.concat(super.getBodyParts(), ImmutableList.of(this.standRightSide, this.standLeftSide, this.standWaist, this.standBase));
+    }
 
-   public void translateToHand(HandSide p_225599_1_, MatrixStack p_225599_2_) {
-      ModelRenderer modelrenderer = this.getArm(p_225599_1_);
-      boolean flag = modelrenderer.visible;
-      modelrenderer.visible = true;
-      super.translateToHand(p_225599_1_, p_225599_2_);
-      modelrenderer.visible = flag;
-   }
+    public void translateHand(HandSide sideIn, MatrixStack matrixStackIn)
+    {
+        ModelRenderer modelrenderer = this.getArmForSide(sideIn);
+        boolean flag = modelrenderer.showModel;
+        modelrenderer.showModel = true;
+        super.translateHand(sideIn, matrixStackIn);
+        modelrenderer.showModel = flag;
+    }
 }

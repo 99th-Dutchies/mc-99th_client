@@ -6,46 +6,57 @@ import java.util.List;
 import java.util.stream.Collectors;
 import net.minecraft.state.Property;
 
-public final class VariantPropertyBuilder {
-   private static final VariantPropertyBuilder EMPTY = new VariantPropertyBuilder(ImmutableList.of());
-   private static final Comparator<Property.ValuePair<?>> COMPARE_BY_NAME = Comparator.comparing((p_240192_0_) -> {
-      return p_240192_0_.getProperty().getName();
-   });
-   private final List<Property.ValuePair<?>> values;
+public final class VariantPropertyBuilder
+{
+    private static final VariantPropertyBuilder field_240184_a_ = new VariantPropertyBuilder(ImmutableList.of());
+    private static final Comparator < Property.ValuePair<? >> field_240185_b_ = Comparator.comparing((p_240192_0_) ->
+    {
+        return p_240192_0_.func_240181_a_().getName();
+    });
+    private final List < Property.ValuePair<? >> field_240186_c_;
 
-   public VariantPropertyBuilder extend(Property.ValuePair<?> p_240188_1_) {
-      return new VariantPropertyBuilder(ImmutableList.<Property.ValuePair<?>>builder().addAll(this.values).add(p_240188_1_).build());
-   }
+    public VariantPropertyBuilder func_240188_a_(Property.ValuePair<?> p_240188_1_)
+    {
+        return new VariantPropertyBuilder(ImmutableList. < Property.ValuePair<? >> builder().addAll(this.field_240186_c_).add(p_240188_1_).build());
+    }
 
-   public VariantPropertyBuilder extend(VariantPropertyBuilder p_240189_1_) {
-      return new VariantPropertyBuilder(ImmutableList.<Property.ValuePair<?>>builder().addAll(this.values).addAll(p_240189_1_.values).build());
-   }
+    public VariantPropertyBuilder func_240189_a_(VariantPropertyBuilder p_240189_1_)
+    {
+        return new VariantPropertyBuilder(ImmutableList. < Property.ValuePair<? >> builder().addAll(this.field_240186_c_).addAll(p_240189_1_.field_240186_c_).build());
+    }
 
-   private VariantPropertyBuilder(List<Property.ValuePair<?>> p_i232541_1_) {
-      this.values = p_i232541_1_;
-   }
+    private VariantPropertyBuilder(List < Property.ValuePair<? >> p_i232541_1_)
+    {
+        this.field_240186_c_ = p_i232541_1_;
+    }
 
-   public static VariantPropertyBuilder empty() {
-      return EMPTY;
-   }
+    public static VariantPropertyBuilder func_240187_a_()
+    {
+        return field_240184_a_;
+    }
 
-   public static VariantPropertyBuilder of(Property.ValuePair<?>... p_240190_0_) {
-      return new VariantPropertyBuilder(ImmutableList.copyOf(p_240190_0_));
-   }
+    public static VariantPropertyBuilder func_240190_a_(Property.ValuePair<?>... p_240190_0_)
+    {
+        return new VariantPropertyBuilder(ImmutableList.copyOf(p_240190_0_));
+    }
 
-   public boolean equals(Object p_equals_1_) {
-      return this == p_equals_1_ || p_equals_1_ instanceof VariantPropertyBuilder && this.values.equals(((VariantPropertyBuilder)p_equals_1_).values);
-   }
+    public boolean equals(Object p_equals_1_)
+    {
+        return this == p_equals_1_ || p_equals_1_ instanceof VariantPropertyBuilder && this.field_240186_c_.equals(((VariantPropertyBuilder)p_equals_1_).field_240186_c_);
+    }
 
-   public int hashCode() {
-      return this.values.hashCode();
-   }
+    public int hashCode()
+    {
+        return this.field_240186_c_.hashCode();
+    }
 
-   public String getKey() {
-      return this.values.stream().sorted(COMPARE_BY_NAME).map(Property.ValuePair::toString).collect(Collectors.joining(","));
-   }
+    public String func_240191_b_()
+    {
+        return this.field_240186_c_.stream().sorted(field_240185_b_).map(Property.ValuePair::toString).collect(Collectors.joining(","));
+    }
 
-   public String toString() {
-      return this.getKey();
-   }
+    public String toString()
+    {
+        return this.func_240191_b_();
+    }
 }

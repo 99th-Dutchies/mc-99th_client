@@ -1,61 +1,84 @@
 package net.minecraft.client.renderer;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class DestroyBlockProgress implements Comparable<DestroyBlockProgress> {
-   private final int id;
-   private final BlockPos pos;
-   private int progress;
-   private int updatedRenderTick;
+public class DestroyBlockProgress implements Comparable<DestroyBlockProgress>
+{
+    private final int miningPlayerEntId;
+    private final BlockPos position;
+    private int partialBlockProgress;
+    private int createdAtCloudUpdateTick;
 
-   public DestroyBlockProgress(int p_i45925_1_, BlockPos p_i45925_2_) {
-      this.id = p_i45925_1_;
-      this.pos = p_i45925_2_;
-   }
+    public DestroyBlockProgress(int miningPlayerEntIdIn, BlockPos positionIn)
+    {
+        this.miningPlayerEntId = miningPlayerEntIdIn;
+        this.position = positionIn;
+    }
 
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    public BlockPos getPosition()
+    {
+        return this.position;
+    }
 
-   public void setProgress(int p_73107_1_) {
-      if (p_73107_1_ > 10) {
-         p_73107_1_ = 10;
-      }
+    /**
+     * inserts damage value into this partially destroyed Block. -1 causes client renderer to delete it, otherwise
+     * ranges from 1 to 10
+     */
+    public void setPartialBlockDamage(int damage)
+    {
+        if (damage > 10)
+        {
+            damage = 10;
+        }
 
-      this.progress = p_73107_1_;
-   }
+        this.partialBlockProgress = damage;
+    }
 
-   public int getProgress() {
-      return this.progress;
-   }
+    public int getPartialBlockDamage()
+    {
+        return this.partialBlockProgress;
+    }
 
-   public void updateTick(int p_82744_1_) {
-      this.updatedRenderTick = p_82744_1_;
-   }
+    /**
+     * saves the current Cloud update tick into the PartiallyDestroyedBlock
+     */
+    public void setCloudUpdateTick(int createdAtCloudUpdateTickIn)
+    {
+        this.createdAtCloudUpdateTick = createdAtCloudUpdateTickIn;
+    }
 
-   public int getUpdatedRenderTick() {
-      return this.updatedRenderTick;
-   }
+    /**
+     * retrieves the 'date' at which the PartiallyDestroyedBlock was created
+     */
+    public int getCreationCloudUpdateTick()
+    {
+        return this.createdAtCloudUpdateTick;
+    }
 
-   public boolean equals(Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else if (p_equals_1_ != null && this.getClass() == p_equals_1_.getClass()) {
-         DestroyBlockProgress destroyblockprogress = (DestroyBlockProgress)p_equals_1_;
-         return this.id == destroyblockprogress.id;
-      } else {
-         return false;
-      }
-   }
+    public boolean equals(Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else if (p_equals_1_ != null && this.getClass() == p_equals_1_.getClass())
+        {
+            DestroyBlockProgress destroyblockprogress = (DestroyBlockProgress)p_equals_1_;
+            return this.miningPlayerEntId == destroyblockprogress.miningPlayerEntId;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public int hashCode() {
-      return Integer.hashCode(this.id);
-   }
+    public int hashCode()
+    {
+        return Integer.hashCode(this.miningPlayerEntId);
+    }
 
-   public int compareTo(DestroyBlockProgress p_compareTo_1_) {
-      return this.progress != p_compareTo_1_.progress ? Integer.compare(this.progress, p_compareTo_1_.progress) : Integer.compare(this.id, p_compareTo_1_.id);
-   }
+    public int compareTo(DestroyBlockProgress p_compareTo_1_)
+    {
+        return this.partialBlockProgress != p_compareTo_1_.partialBlockProgress ? Integer.compare(this.partialBlockProgress, p_compareTo_1_.partialBlockProgress) : Integer.compare(this.miningPlayerEntId, p_compareTo_1_.miningPlayerEntId);
+    }
 }

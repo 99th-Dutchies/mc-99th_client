@@ -7,27 +7,46 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 
-public interface IPhase {
-   boolean isSitting();
+public interface IPhase
+{
+    boolean getIsStationary();
 
-   void doClientTick();
+    /**
+     * Generates particle effects appropriate to the phase (or sometimes sounds).
+     * Called by dragon's onLivingUpdate. Only used when worldObj.isRemote.
+     */
+    void clientTick();
 
-   void doServerTick();
+    /**
+     * Gives the phase a chance to update its status.
+     * Called by dragon's onLivingUpdate. Only used when !worldObj.isRemote.
+     */
+    void serverTick();
 
-   void onCrystalDestroyed(EnderCrystalEntity p_188655_1_, BlockPos p_188655_2_, DamageSource p_188655_3_, @Nullable PlayerEntity p_188655_4_);
+    void onCrystalDestroyed(EnderCrystalEntity crystal, BlockPos pos, DamageSource dmgSrc, @Nullable PlayerEntity plyr);
 
-   void begin();
+    /**
+     * Called when this phase is set to active
+     */
+    void initPhase();
 
-   void end();
+    void removeAreaEffect();
 
-   float getFlySpeed();
+    /**
+     * Returns the maximum amount dragon may rise or fall during this phase
+     */
+    float getMaxRiseOrFall();
 
-   float getTurnSpeed();
+    float getYawFactor();
 
-   PhaseType<? extends IPhase> getPhase();
+    PhaseType <? extends IPhase > getType();
 
-   @Nullable
-   Vector3d getFlyTargetLocation();
+    @Nullable
 
-   float onHurt(DamageSource p_221113_1_, float p_221113_2_);
+    /**
+     * Returns the location the dragon is flying toward
+     */
+    Vector3d getTargetLocation();
+
+    float func_221113_a(DamageSource p_221113_1_, float p_221113_2_);
 }

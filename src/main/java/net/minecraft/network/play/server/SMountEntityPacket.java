@@ -6,42 +6,57 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SMountEntityPacket implements IPacket<IClientPlayNetHandler> {
-   private int sourceId;
-   private int destId;
+public class SMountEntityPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
 
-   public SMountEntityPacket() {
-   }
+    /** The entity that is holding the leash, or -1 to clear the holder. */
+    private int vehicleEntityId;
 
-   public SMountEntityPacket(Entity p_i46916_1_, @Nullable Entity p_i46916_2_) {
-      this.sourceId = p_i46916_1_.getId();
-      this.destId = p_i46916_2_ != null ? p_i46916_2_.getId() : 0;
-   }
+    public SMountEntityPacket()
+    {
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.sourceId = p_148837_1_.readInt();
-      this.destId = p_148837_1_.readInt();
-   }
+    public SMountEntityPacket(Entity entityIn, @Nullable Entity vehicleIn)
+    {
+        this.entityId = entityIn.getEntityId();
+        this.vehicleEntityId = vehicleIn != null ? vehicleIn.getEntityId() : 0;
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeInt(this.sourceId);
-      p_148840_1_.writeInt(this.destId);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readInt();
+        this.vehicleEntityId = buf.readInt();
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleEntityLinkPacket(this);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeInt(this.entityId);
+        buf.writeInt(this.vehicleEntityId);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getSourceId() {
-      return this.sourceId;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleEntityAttach(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getDestId() {
-      return this.destId;
-   }
+    public int getEntityId()
+    {
+        return this.entityId;
+    }
+
+    public int getVehicleEntityId()
+    {
+        return this.vehicleEntityId;
+    }
 }

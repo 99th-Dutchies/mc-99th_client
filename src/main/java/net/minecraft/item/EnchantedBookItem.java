@@ -12,83 +12,124 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class EnchantedBookItem extends Item {
-   public EnchantedBookItem(Item.Properties p_i48505_1_) {
-      super(p_i48505_1_);
-   }
+public class EnchantedBookItem extends Item
+{
+    public EnchantedBookItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public boolean isFoil(ItemStack p_77636_1_) {
-      return true;
-   }
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
+    public boolean hasEffect(ItemStack stack)
+    {
+        return true;
+    }
 
-   public boolean isEnchantable(ItemStack p_77616_1_) {
-      return false;
-   }
+    /**
+     * Checks isDamagable and if it cannot be stacked
+     */
+    public boolean isEnchantable(ItemStack stack)
+    {
+        return false;
+    }
 
-   public static ListNBT getEnchantments(ItemStack p_92110_0_) {
-      CompoundNBT compoundnbt = p_92110_0_.getTag();
-      return compoundnbt != null ? compoundnbt.getList("StoredEnchantments", 10) : new ListNBT();
-   }
+    public static ListNBT getEnchantments(ItemStack stack)
+    {
+        CompoundNBT compoundnbt = stack.getTag();
+        return compoundnbt != null ? compoundnbt.getList("StoredEnchantments", 10) : new ListNBT();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(ItemStack p_77624_1_, @Nullable World p_77624_2_, List<ITextComponent> p_77624_3_, ITooltipFlag p_77624_4_) {
-      super.appendHoverText(p_77624_1_, p_77624_2_, p_77624_3_, p_77624_4_);
-      ItemStack.appendEnchantmentNames(p_77624_3_, getEnchantments(p_77624_1_));
-   }
+    /**
+     * allows items to add custom lines of information to the mouseover description
+     */
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+    {
+        super.addInformation(stack, worldIn, tooltip, flagIn);
+        ItemStack.addEnchantmentTooltips(tooltip, getEnchantments(stack));
+    }
 
-   public static void addEnchantment(ItemStack p_92115_0_, EnchantmentData p_92115_1_) {
-      ListNBT listnbt = getEnchantments(p_92115_0_);
-      boolean flag = true;
-      ResourceLocation resourcelocation = Registry.ENCHANTMENT.getKey(p_92115_1_.enchantment);
+    /**
+     * Adds an stored enchantment to an enchanted book ItemStack
+     */
+    public static void addEnchantment(ItemStack p_92115_0_, EnchantmentData stack)
+    {
+        ListNBT listnbt = getEnchantments(p_92115_0_);
+        boolean flag = true;
+        ResourceLocation resourcelocation = Registry.ENCHANTMENT.getKey(stack.enchantment);
 
-      for(int i = 0; i < listnbt.size(); ++i) {
-         CompoundNBT compoundnbt = listnbt.getCompound(i);
-         ResourceLocation resourcelocation1 = ResourceLocation.tryParse(compoundnbt.getString("id"));
-         if (resourcelocation1 != null && resourcelocation1.equals(resourcelocation)) {
-            if (compoundnbt.getInt("lvl") < p_92115_1_.level) {
-               compoundnbt.putShort("lvl", (short)p_92115_1_.level);
+        for (int i = 0; i < listnbt.size(); ++i)
+        {
+            CompoundNBT compoundnbt = listnbt.getCompound(i);
+            ResourceLocation resourcelocation1 = ResourceLocation.tryCreate(compoundnbt.getString("id"));
+
+            if (resourcelocation1 != null && resourcelocation1.equals(resourcelocation))
+            {
+                if (compoundnbt.getInt("lvl") < stack.enchantmentLevel)
+                {
+                    compoundnbt.putShort("lvl", (short)stack.enchantmentLevel);
+                }
+
+                flag = false;
+                break;
             }
+        }
 
-            flag = false;
-            break;
-         }
-      }
+        if (flag)
+        {
+            CompoundNBT compoundnbt1 = new CompoundNBT();
+            compoundnbt1.putString("id", String.valueOf((Object)resourcelocation));
+            compoundnbt1.putShort("lvl", (short)stack.enchantmentLevel);
+            listnbt.add(compoundnbt1);
+        }
 
-      if (flag) {
-         CompoundNBT compoundnbt1 = new CompoundNBT();
-         compoundnbt1.putString("id", String.valueOf((Object)resourcelocation));
-         compoundnbt1.putShort("lvl", (short)p_92115_1_.level);
-         listnbt.add(compoundnbt1);
-      }
+        p_92115_0_.getOrCreateTag().put("StoredEnchantments", listnbt);
+    }
 
-      p_92115_0_.getOrCreateTag().put("StoredEnchantments", listnbt);
-   }
+    /**
+     * Returns the ItemStack of an enchanted version of this item.
+     */
+    public static ItemStack getEnchantedItemStack(EnchantmentData enchantData)
+    {
+        ItemStack itemstack = new ItemStack(Items.ENCHANTED_BOOK);
+        addEnchantment(itemstack, enchantData);
+        return itemstack;
+    }
 
-   public static ItemStack createForEnchantment(EnchantmentData p_92111_0_) {
-      ItemStack itemstack = new ItemStack(Items.ENCHANTED_BOOK);
-      addEnchantment(itemstack, p_92111_0_);
-      return itemstack;
-   }
-
-   public void fillItemCategory(ItemGroup p_150895_1_, NonNullList<ItemStack> p_150895_2_) {
-      if (p_150895_1_ == ItemGroup.TAB_SEARCH) {
-         for(Enchantment enchantment : Registry.ENCHANTMENT) {
-            if (enchantment.category != null) {
-               for(int i = enchantment.getMinLevel(); i <= enchantment.getMaxLevel(); ++i) {
-                  p_150895_2_.add(createForEnchantment(new EnchantmentData(enchantment, i)));
-               }
+    /**
+     * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
+     */
+    public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items)
+    {
+        if (group == ItemGroup.SEARCH)
+        {
+            for (Enchantment enchantment : Registry.ENCHANTMENT)
+            {
+                if (enchantment.type != null)
+                {
+                    for (int i = enchantment.getMinLevel(); i <= enchantment.getMaxLevel(); ++i)
+                    {
+                        items.add(getEnchantedItemStack(new EnchantmentData(enchantment, i)));
+                    }
+                }
             }
-         }
-      } else if (p_150895_1_.getEnchantmentCategories().length != 0) {
-         for(Enchantment enchantment1 : Registry.ENCHANTMENT) {
-            if (p_150895_1_.hasEnchantmentCategory(enchantment1.category)) {
-               p_150895_2_.add(createForEnchantment(new EnchantmentData(enchantment1, enchantment1.getMaxLevel())));
+        }
+        else if (group.getRelevantEnchantmentTypes().length != 0)
+        {
+            for (Enchantment enchantment1 : Registry.ENCHANTMENT)
+            {
+                if (group.hasRelevantEnchantmentType(enchantment1.type))
+                {
+                    items.add(getEnchantedItemStack(new EnchantmentData(enchantment1, enchantment1.getMaxLevel())));
+                }
             }
-         }
-      }
-
-   }
+        }
+    }
 }

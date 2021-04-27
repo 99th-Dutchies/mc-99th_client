@@ -4,56 +4,60 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import java.util.SortedMap;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.util.Util;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class RenderTypeBuffers {
-   private final RegionRenderCacheBuilder fixedBufferPack = new RegionRenderCacheBuilder();
-   private final SortedMap<RenderType, BufferBuilder> fixedBuffers = Util.make(new Object2ObjectLinkedOpenHashMap<>(), (p_228485_1_) -> {
-      p_228485_1_.put(Atlases.solidBlockSheet(), this.fixedBufferPack.builder(RenderType.solid()));
-      p_228485_1_.put(Atlases.cutoutBlockSheet(), this.fixedBufferPack.builder(RenderType.cutout()));
-      p_228485_1_.put(Atlases.bannerSheet(), this.fixedBufferPack.builder(RenderType.cutoutMipped()));
-      p_228485_1_.put(Atlases.translucentCullBlockSheet(), this.fixedBufferPack.builder(RenderType.translucent()));
-      put(p_228485_1_, Atlases.shieldSheet());
-      put(p_228485_1_, Atlases.bedSheet());
-      put(p_228485_1_, Atlases.shulkerBoxSheet());
-      put(p_228485_1_, Atlases.signSheet());
-      put(p_228485_1_, Atlases.chestSheet());
-      put(p_228485_1_, RenderType.translucentNoCrumbling());
-      put(p_228485_1_, RenderType.armorGlint());
-      put(p_228485_1_, RenderType.armorEntityGlint());
-      put(p_228485_1_, RenderType.glint());
-      put(p_228485_1_, RenderType.glintDirect());
-      put(p_228485_1_, RenderType.glintTranslucent());
-      put(p_228485_1_, RenderType.entityGlint());
-      put(p_228485_1_, RenderType.entityGlintDirect());
-      put(p_228485_1_, RenderType.waterMask());
-      ModelBakery.DESTROY_TYPES.forEach((p_228488_1_) -> {
-         put(p_228485_1_, p_228488_1_);
-      });
-   });
-   private final IRenderTypeBuffer.Impl bufferSource = IRenderTypeBuffer.immediateWithBuffers(this.fixedBuffers, new BufferBuilder(256));
-   private final IRenderTypeBuffer.Impl crumblingBufferSource = IRenderTypeBuffer.immediate(new BufferBuilder(256));
-   private final OutlineLayerBuffer outlineBufferSource = new OutlineLayerBuffer(this.bufferSource);
+public class RenderTypeBuffers
+{
+    private final RegionRenderCacheBuilder fixedBuilder = new RegionRenderCacheBuilder();
+    private final SortedMap<RenderType, BufferBuilder> fixedBuffers = Util.make(new Object2ObjectLinkedOpenHashMap<>(), (p_228485_1_) ->
+    {
+        p_228485_1_.put(Atlases.getSolidBlockType(), this.fixedBuilder.getBuilder(RenderType.getSolid()));
+        p_228485_1_.put(Atlases.getCutoutBlockType(), this.fixedBuilder.getBuilder(RenderType.getCutout()));
+        p_228485_1_.put(Atlases.getBannerType(), this.fixedBuilder.getBuilder(RenderType.getCutoutMipped()));
+        p_228485_1_.put(Atlases.getTranslucentCullBlockType(), this.fixedBuilder.getBuilder(RenderType.getTranslucent()));
+        put(p_228485_1_, Atlases.getShieldType());
+        put(p_228485_1_, Atlases.getBedType());
+        put(p_228485_1_, Atlases.getShulkerBoxType());
+        put(p_228485_1_, Atlases.getSignType());
+        put(p_228485_1_, Atlases.getChestType());
+        put(p_228485_1_, RenderType.getTranslucentNoCrumbling());
+        put(p_228485_1_, RenderType.getArmorGlint());
+        put(p_228485_1_, RenderType.getArmorEntityGlint());
+        put(p_228485_1_, RenderType.getGlint());
+        put(p_228485_1_, RenderType.getGlintDirect());
+        put(p_228485_1_, RenderType.getGlintTranslucent());
+        put(p_228485_1_, RenderType.getEntityGlint());
+        put(p_228485_1_, RenderType.getEntityGlintDirect());
+        put(p_228485_1_, RenderType.getWaterMask());
+        ModelBakery.DESTROY_RENDER_TYPES.forEach((p_228488_1_) -> {
+            put(p_228485_1_, p_228488_1_);
+        });
+    });
+    private final IRenderTypeBuffer.Impl bufferSource = IRenderTypeBuffer.getImpl(this.fixedBuffers, new BufferBuilder(256));
+    private final IRenderTypeBuffer.Impl crumblingBufferSource = IRenderTypeBuffer.getImpl(new BufferBuilder(256));
+    private final OutlineLayerBuffer outlineBufferSource = new OutlineLayerBuffer(this.bufferSource);
 
-   private static void put(Object2ObjectLinkedOpenHashMap<RenderType, BufferBuilder> p_228486_0_, RenderType p_228486_1_) {
-      p_228486_0_.put(p_228486_1_, new BufferBuilder(p_228486_1_.bufferSize()));
-   }
+    private static void put(Object2ObjectLinkedOpenHashMap<RenderType, BufferBuilder> mapBuildersIn, RenderType renderTypeIn)
+    {
+        mapBuildersIn.put(renderTypeIn, new BufferBuilder(renderTypeIn.getBufferSize()));
+    }
 
-   public RegionRenderCacheBuilder fixedBufferPack() {
-      return this.fixedBufferPack;
-   }
+    public RegionRenderCacheBuilder getFixedBuilder()
+    {
+        return this.fixedBuilder;
+    }
 
-   public IRenderTypeBuffer.Impl bufferSource() {
-      return this.bufferSource;
-   }
+    public IRenderTypeBuffer.Impl getBufferSource()
+    {
+        return this.bufferSource;
+    }
 
-   public IRenderTypeBuffer.Impl crumblingBufferSource() {
-      return this.crumblingBufferSource;
-   }
+    public IRenderTypeBuffer.Impl getCrumblingBufferSource()
+    {
+        return this.crumblingBufferSource;
+    }
 
-   public OutlineLayerBuffer outlineBufferSource() {
-      return this.outlineBufferSource;
-   }
+    public OutlineLayerBuffer getOutlineBufferSource()
+    {
+        return this.outlineBufferSource;
+    }
 }

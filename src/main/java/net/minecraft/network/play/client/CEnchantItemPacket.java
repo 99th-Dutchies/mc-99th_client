@@ -4,41 +4,55 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CEnchantItemPacket implements IPacket<IServerPlayNetHandler> {
-   private int containerId;
-   private int buttonId;
+public class CEnchantItemPacket implements IPacket<IServerPlayNetHandler>
+{
+    private int windowId;
+    private int button;
 
-   public CEnchantItemPacket() {
-   }
+    public CEnchantItemPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CEnchantItemPacket(int p_i46883_1_, int p_i46883_2_) {
-      this.containerId = p_i46883_1_;
-      this.buttonId = p_i46883_2_;
-   }
+    public CEnchantItemPacket(int windowIdIn, int buttonIn)
+    {
+        this.windowId = windowIdIn;
+        this.button = buttonIn;
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleContainerButtonClick(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processEnchantItem(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.containerId = p_148837_1_.readByte();
-      this.buttonId = p_148837_1_.readByte();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.windowId = buf.readByte();
+        this.button = buf.readByte();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.containerId);
-      p_148840_1_.writeByte(this.buttonId);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.windowId);
+        buf.writeByte(this.button);
+    }
 
-   public int getContainerId() {
-      return this.containerId;
-   }
+    public int getWindowId()
+    {
+        return this.windowId;
+    }
 
-   public int getButtonId() {
-      return this.buttonId;
-   }
+    public int getButton()
+    {
+        return this.button;
+    }
 }

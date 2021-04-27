@@ -7,57 +7,83 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.MerchantOffer;
 import net.minecraft.stats.Stats;
 
-public class MerchantResultSlot extends Slot {
-   private final MerchantInventory slots;
-   private final PlayerEntity player;
-   private int removeCount;
-   private final IMerchant merchant;
+public class MerchantResultSlot extends Slot
+{
+    private final MerchantInventory merchantInventory;
+    private final PlayerEntity player;
+    private int removeCount;
+    private final IMerchant merchant;
 
-   public MerchantResultSlot(PlayerEntity p_i1822_1_, IMerchant p_i1822_2_, MerchantInventory p_i1822_3_, int p_i1822_4_, int p_i1822_5_, int p_i1822_6_) {
-      super(p_i1822_3_, p_i1822_4_, p_i1822_5_, p_i1822_6_);
-      this.player = p_i1822_1_;
-      this.merchant = p_i1822_2_;
-      this.slots = p_i1822_3_;
-   }
+    public MerchantResultSlot(PlayerEntity player, IMerchant merchant, MerchantInventory merchantInventory, int slotIndex, int xPosition, int yPosition)
+    {
+        super(merchantInventory, slotIndex, xPosition, yPosition);
+        this.player = player;
+        this.merchant = merchant;
+        this.merchantInventory = merchantInventory;
+    }
 
-   public boolean mayPlace(ItemStack p_75214_1_) {
-      return false;
-   }
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
+    public boolean isItemValid(ItemStack stack)
+    {
+        return false;
+    }
 
-   public ItemStack remove(int p_75209_1_) {
-      if (this.hasItem()) {
-         this.removeCount += Math.min(p_75209_1_, this.getItem().getCount());
-      }
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new
+     * stack.
+     */
+    public ItemStack decrStackSize(int amount)
+    {
+        if (this.getHasStack())
+        {
+            this.removeCount += Math.min(amount, this.getStack().getCount());
+        }
 
-      return super.remove(p_75209_1_);
-   }
+        return super.decrStackSize(amount);
+    }
 
-   protected void onQuickCraft(ItemStack p_75210_1_, int p_75210_2_) {
-      this.removeCount += p_75210_2_;
-      this.checkTakeAchievements(p_75210_1_);
-   }
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood. Typically increases an
+     * internal count then calls onCrafting(item).
+     */
+    protected void onCrafting(ItemStack stack, int amount)
+    {
+        this.removeCount += amount;
+        this.onCrafting(stack);
+    }
 
-   protected void checkTakeAchievements(ItemStack p_75208_1_) {
-      p_75208_1_.onCraftedBy(this.player.level, this.player, this.removeCount);
-      this.removeCount = 0;
-   }
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void onCrafting(ItemStack stack)
+    {
+        stack.onCrafting(this.player.world, this.player, this.removeCount);
+        this.removeCount = 0;
+    }
 
-   public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
-      this.checkTakeAchievements(p_190901_2_);
-      MerchantOffer merchantoffer = this.slots.getActiveOffer();
-      if (merchantoffer != null) {
-         ItemStack itemstack = this.slots.getItem(0);
-         ItemStack itemstack1 = this.slots.getItem(1);
-         if (merchantoffer.take(itemstack, itemstack1) || merchantoffer.take(itemstack1, itemstack)) {
-            this.merchant.notifyTrade(merchantoffer);
-            p_190901_1_.awardStat(Stats.TRADED_WITH_VILLAGER);
-            this.slots.setItem(0, itemstack);
-            this.slots.setItem(1, itemstack1);
-         }
+    public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+    {
+        this.onCrafting(stack);
+        MerchantOffer merchantoffer = this.merchantInventory.func_214025_g();
 
-         this.merchant.overrideXp(this.merchant.getVillagerXp() + merchantoffer.getXp());
-      }
+        if (merchantoffer != null)
+        {
+            ItemStack itemstack = this.merchantInventory.getStackInSlot(0);
+            ItemStack itemstack1 = this.merchantInventory.getStackInSlot(1);
 
-      return p_190901_2_;
-   }
+            if (merchantoffer.doTransaction(itemstack, itemstack1) || merchantoffer.doTransaction(itemstack1, itemstack))
+            {
+                this.merchant.onTrade(merchantoffer);
+                thePlayer.addStat(Stats.TRADED_WITH_VILLAGER);
+                this.merchantInventory.setInventorySlotContents(0, itemstack);
+                this.merchantInventory.setInventorySlotContents(1, itemstack1);
+            }
+
+            this.merchant.setXP(this.merchant.getXp() + merchantoffer.getGivenExp());
+        }
+
+        return stack;
+    }
 }

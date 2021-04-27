@@ -11,14 +11,19 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 
-public class PiglinBarteringAddition implements Consumer<BiConsumer<ResourceLocation, LootTable.Builder>> {
-   public void accept(BiConsumer<ResourceLocation, LootTable.Builder> p_accept_1_) {
-      p_accept_1_.accept(LootTables.PIGLIN_BARTERING, LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantRange.exactly(1)).add(ItemLootEntry.lootTableItem(Items.BOOK).setWeight(5).apply((new EnchantRandomly.Builder()).withEnchantment(Enchantments.SOUL_SPEED))).add(ItemLootEntry.lootTableItem(Items.IRON_BOOTS).setWeight(8).apply((new EnchantRandomly.Builder()).withEnchantment(Enchantments.SOUL_SPEED))).add(ItemLootEntry.lootTableItem(Items.POTION).setWeight(8).apply(SetNBT.setTag(Util.make(new CompoundNBT(), (p_239833_0_) -> {
-         p_239833_0_.putString("Potion", "minecraft:fire_resistance");
-      })))).add(ItemLootEntry.lootTableItem(Items.SPLASH_POTION).setWeight(8).apply(SetNBT.setTag(Util.make(new CompoundNBT(), (p_239832_0_) -> {
-         p_239832_0_.putString("Potion", "minecraft:fire_resistance");
-      })))).add(ItemLootEntry.lootTableItem(Items.POTION).setWeight(10).apply(SetNBT.setTag(Util.make(new CompoundNBT(), (p_243684_0_) -> {
-         p_243684_0_.putString("Potion", "minecraft:water");
-      })))).add(ItemLootEntry.lootTableItem(Items.IRON_NUGGET).setWeight(10).apply(SetCount.setCount(RandomValueRange.between(10.0F, 36.0F)))).add(ItemLootEntry.lootTableItem(Items.ENDER_PEARL).setWeight(10).apply(SetCount.setCount(RandomValueRange.between(2.0F, 4.0F)))).add(ItemLootEntry.lootTableItem(Items.STRING).setWeight(20).apply(SetCount.setCount(RandomValueRange.between(3.0F, 9.0F)))).add(ItemLootEntry.lootTableItem(Items.QUARTZ).setWeight(20).apply(SetCount.setCount(RandomValueRange.between(5.0F, 12.0F)))).add(ItemLootEntry.lootTableItem(Items.OBSIDIAN).setWeight(40)).add(ItemLootEntry.lootTableItem(Items.CRYING_OBSIDIAN).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(1.0F, 3.0F)))).add(ItemLootEntry.lootTableItem(Items.FIRE_CHARGE).setWeight(40)).add(ItemLootEntry.lootTableItem(Items.LEATHER).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(2.0F, 4.0F)))).add(ItemLootEntry.lootTableItem(Items.SOUL_SAND).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(2.0F, 8.0F)))).add(ItemLootEntry.lootTableItem(Items.NETHER_BRICK).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(2.0F, 8.0F)))).add(ItemLootEntry.lootTableItem(Items.SPECTRAL_ARROW).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(6.0F, 12.0F)))).add(ItemLootEntry.lootTableItem(Items.GRAVEL).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(8.0F, 16.0F)))).add(ItemLootEntry.lootTableItem(Items.BLACKSTONE).setWeight(40).apply(SetCount.setCount(RandomValueRange.between(8.0F, 16.0F))))));
-   }
+public class PiglinBarteringAddition implements Consumer<BiConsumer<ResourceLocation, LootTable.Builder>>
+{
+    public void accept(BiConsumer<ResourceLocation, LootTable.Builder> p_accept_1_)
+    {
+        p_accept_1_.accept(LootTables.PIGLIN_BARTERING, LootTable.builder().addLootPool(LootPool.builder().rolls(ConstantRange.of(1)).addEntry(ItemLootEntry.builder(Items.BOOK).weight(5).acceptFunction((new EnchantRandomly.Builder()).func_237424_a_(Enchantments.SOUL_SPEED))).addEntry(ItemLootEntry.builder(Items.IRON_BOOTS).weight(8).acceptFunction((new EnchantRandomly.Builder()).func_237424_a_(Enchantments.SOUL_SPEED))).addEntry(ItemLootEntry.builder(Items.POTION).weight(8).acceptFunction(SetNBT.builder(Util.make(new CompoundNBT(), (nbt) ->
+        {
+            nbt.putString("Potion", "minecraft:fire_resistance");
+        })))).addEntry(ItemLootEntry.builder(Items.SPLASH_POTION).weight(8).acceptFunction(SetNBT.builder(Util.make(new CompoundNBT(), (nbt) ->
+        {
+            nbt.putString("Potion", "minecraft:fire_resistance");
+        })))).addEntry(ItemLootEntry.builder(Items.POTION).weight(10).acceptFunction(SetNBT.builder(Util.make(new CompoundNBT(), (nbt) ->
+        {
+            nbt.putString("Potion", "minecraft:water");
+        })))).addEntry(ItemLootEntry.builder(Items.IRON_NUGGET).weight(10).acceptFunction(SetCount.builder(RandomValueRange.of(10.0F, 36.0F)))).addEntry(ItemLootEntry.builder(Items.ENDER_PEARL).weight(10).acceptFunction(SetCount.builder(RandomValueRange.of(2.0F, 4.0F)))).addEntry(ItemLootEntry.builder(Items.STRING).weight(20).acceptFunction(SetCount.builder(RandomValueRange.of(3.0F, 9.0F)))).addEntry(ItemLootEntry.builder(Items.QUARTZ).weight(20).acceptFunction(SetCount.builder(RandomValueRange.of(5.0F, 12.0F)))).addEntry(ItemLootEntry.builder(Items.OBSIDIAN).weight(40)).addEntry(ItemLootEntry.builder(Items.CRYING_OBSIDIAN).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(1.0F, 3.0F)))).addEntry(ItemLootEntry.builder(Items.FIRE_CHARGE).weight(40)).addEntry(ItemLootEntry.builder(Items.LEATHER).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(2.0F, 4.0F)))).addEntry(ItemLootEntry.builder(Items.SOUL_SAND).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(2.0F, 8.0F)))).addEntry(ItemLootEntry.builder(Items.NETHER_BRICK).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(2.0F, 8.0F)))).addEntry(ItemLootEntry.builder(Items.SPECTRAL_ARROW).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(6.0F, 12.0F)))).addEntry(ItemLootEntry.builder(Items.GRAVEL).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(8.0F, 16.0F)))).addEntry(ItemLootEntry.builder(Items.BLACKSTONE).weight(40).acceptFunction(SetCount.builder(RandomValueRange.of(8.0F, 16.0F))))));
+    }
 }

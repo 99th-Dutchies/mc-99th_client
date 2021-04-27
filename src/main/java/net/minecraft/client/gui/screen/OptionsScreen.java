@@ -17,133 +17,166 @@ import net.minecraft.resources.ResourcePackList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Difficulty;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class OptionsScreen extends Screen {
-   private static final AbstractOption[] OPTION_SCREEN_OPTIONS = new AbstractOption[]{AbstractOption.FOV};
-   private final Screen lastScreen;
-   private final GameSettings options;
-   private Button difficultyButton;
-   private LockIconButton lockButton;
-   private Difficulty currentDifficulty;
+public class OptionsScreen extends Screen
+{
+    private static final AbstractOption[] SCREEN_OPTIONS = new AbstractOption[] {AbstractOption.FOV};
+    private final Screen lastScreen;
 
-   public OptionsScreen(Screen p_i1046_1_, GameSettings p_i1046_2_) {
-      super(new TranslationTextComponent("options.title"));
-      this.lastScreen = p_i1046_1_;
-      this.options = p_i1046_2_;
-   }
+    /** Reference to the GameSettings object. */
+    private final GameSettings settings;
+    private Button difficultyButton;
+    private LockIconButton lockButton;
+    private Difficulty worldDifficulty;
 
-   protected void init() {
-      int i = 0;
+    public OptionsScreen(Screen parentScreen, GameSettings gameSettingsObj)
+    {
+        super(new TranslationTextComponent("options.title"));
+        this.lastScreen = parentScreen;
+        this.settings = gameSettingsObj;
+    }
 
-      for(AbstractOption abstractoption : OPTION_SCREEN_OPTIONS) {
-         int j = this.width / 2 - 155 + i % 2 * 160;
-         int k = this.height / 6 - 12 + 24 * (i >> 1);
-         this.addButton(abstractoption.createButton(this.minecraft.options, j, k, 150));
-         ++i;
-      }
+    protected void init()
+    {
+        int i = 0;
 
-      if (this.minecraft.level != null) {
-         this.currentDifficulty = this.minecraft.level.getDifficulty();
-         this.difficultyButton = this.addButton(new Button(this.width / 2 - 155 + i % 2 * 160, this.height / 6 - 12 + 24 * (i >> 1), 150, 20, this.getDifficultyText(this.currentDifficulty), (p_213051_1_) -> {
-            this.currentDifficulty = Difficulty.byId(this.currentDifficulty.getId() + 1);
-            this.minecraft.getConnection().send(new CSetDifficultyPacket(this.currentDifficulty));
-            this.difficultyButton.setMessage(this.getDifficultyText(this.currentDifficulty));
-         }));
-         if (this.minecraft.hasSingleplayerServer() && !this.minecraft.level.getLevelData().isHardcore()) {
-            this.difficultyButton.setWidth(this.difficultyButton.getWidth() - 20);
-            this.lockButton = this.addButton(new LockIconButton(this.difficultyButton.x + this.difficultyButton.getWidth(), this.difficultyButton.y, (p_213054_1_) -> {
-               this.minecraft.setScreen(new ConfirmScreen(this::lockCallback, new TranslationTextComponent("difficulty.lock.title"), new TranslationTextComponent("difficulty.lock.question", new TranslationTextComponent("options.difficulty." + this.minecraft.level.getLevelData().getDifficulty().getKey()))));
+        for (AbstractOption abstractoption : SCREEN_OPTIONS)
+        {
+            int j = this.width / 2 - 155 + i % 2 * 160;
+            int k = this.height / 6 - 12 + 24 * (i >> 1);
+            this.addButton(abstractoption.createWidget(this.minecraft.gameSettings, j, k, 150));
+            ++i;
+        }
+
+        if (this.minecraft.world != null)
+        {
+            this.worldDifficulty = this.minecraft.world.getDifficulty();
+            this.difficultyButton = this.addButton(new Button(this.width / 2 - 155 + i % 2 * 160, this.height / 6 - 12 + 24 * (i >> 1), 150, 20, this.func_238630_a_(this.worldDifficulty), (p_213051_1_) ->
+            {
+                this.worldDifficulty = Difficulty.byId(this.worldDifficulty.getId() + 1);
+                this.minecraft.getConnection().sendPacket(new CSetDifficultyPacket(this.worldDifficulty));
+                this.difficultyButton.setMessage(this.func_238630_a_(this.worldDifficulty));
             }));
-            this.lockButton.setLocked(this.minecraft.level.getLevelData().isDifficultyLocked());
-            this.lockButton.active = !this.lockButton.isLocked();
-            this.difficultyButton.active = !this.lockButton.isLocked();
-         } else {
-            this.difficultyButton.active = false;
-         }
-      } else {
-         this.addButton(new OptionButton(this.width / 2 - 155 + i % 2 * 160, this.height / 6 - 12 + 24 * (i >> 1), 150, 20, AbstractOption.REALMS_NOTIFICATIONS, AbstractOption.REALMS_NOTIFICATIONS.getMessage(this.options), (p_213057_1_) -> {
-            AbstractOption.REALMS_NOTIFICATIONS.toggle(this.options);
-            this.options.save();
-            p_213057_1_.setMessage(AbstractOption.REALMS_NOTIFICATIONS.getMessage(this.options));
-         }));
-      }
 
-      this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 48 - 6, 150, 20, new TranslationTextComponent("options.skinCustomisation"), (p_213055_1_) -> {
-         this.minecraft.setScreen(new CustomizeSkinScreen(this, this.options));
-      }));
-      this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 48 - 6, 150, 20, new TranslationTextComponent("options.sounds"), (p_213061_1_) -> {
-         this.minecraft.setScreen(new OptionsSoundsScreen(this, this.options));
-      }));
-      this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 72 - 6, 150, 20, new TranslationTextComponent("options.video"), (p_213059_1_) -> {
-         this.minecraft.setScreen(new VideoSettingsScreen(this, this.options));
-      }));
-      this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 72 - 6, 150, 20, new TranslationTextComponent("options.controls"), (p_213052_1_) -> {
-         this.minecraft.setScreen(new ControlsScreen(this, this.options));
-      }));
-      this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 96 - 6, 150, 20, new TranslationTextComponent("options.language"), (p_213053_1_) -> {
-         this.minecraft.setScreen(new LanguageScreen(this, this.options, this.minecraft.getLanguageManager()));
-      }));
-      this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 96 - 6, 150, 20, new TranslationTextComponent("options.chat.title"), (p_213049_1_) -> {
-         this.minecraft.setScreen(new ChatOptionsScreen(this, this.options));
-      }));
-      this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 120 - 6, 150, 20, new TranslationTextComponent("options.resourcepack"), (p_213060_1_) -> {
-         this.minecraft.setScreen(new PackScreen(this, this.minecraft.getResourcePackRepository(), this::updatePackList, this.minecraft.getResourcePackDirectory(), new TranslationTextComponent("resourcePack.title")));
-      }));
-      this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 120 - 6, 150, 20, new TranslationTextComponent("options.accessibility.title"), (p_213058_1_) -> {
-         this.minecraft.setScreen(new AccessibilityScreen(this, this.options));
-      }));
-      this.addButton(new Button(this.width / 2 - 100, this.height / 6 + 168, 200, 20, DialogTexts.GUI_DONE, (p_213056_1_) -> {
-         this.minecraft.setScreen(this.lastScreen);
-      }));
-   }
-
-   private void updatePackList(ResourcePackList p_241584_1_) {
-      List<String> list = ImmutableList.copyOf(this.options.resourcePacks);
-      this.options.resourcePacks.clear();
-      this.options.incompatibleResourcePacks.clear();
-
-      for(ResourcePackInfo resourcepackinfo : p_241584_1_.getSelectedPacks()) {
-         if (!resourcepackinfo.isFixedPosition()) {
-            this.options.resourcePacks.add(resourcepackinfo.getId());
-            if (!resourcepackinfo.getCompatibility().isCompatible()) {
-               this.options.incompatibleResourcePacks.add(resourcepackinfo.getId());
+            if (this.minecraft.isSingleplayer() && !this.minecraft.world.getWorldInfo().isHardcore())
+            {
+                this.difficultyButton.setWidth(this.difficultyButton.getWidth() - 20);
+                this.lockButton = this.addButton(new LockIconButton(this.difficultyButton.x + this.difficultyButton.getWidth(), this.difficultyButton.y, (p_213054_1_) ->
+                {
+                    this.minecraft.displayGuiScreen(new ConfirmScreen(this::accept, new TranslationTextComponent("difficulty.lock.title"), new TranslationTextComponent("difficulty.lock.question", new TranslationTextComponent("options.difficulty." + this.minecraft.world.getWorldInfo().getDifficulty().getTranslationKey()))));
+                }));
+                this.lockButton.setLocked(this.minecraft.world.getWorldInfo().isDifficultyLocked());
+                this.lockButton.active = !this.lockButton.isLocked();
+                this.difficultyButton.active = !this.lockButton.isLocked();
             }
-         }
-      }
+            else
+            {
+                this.difficultyButton.active = false;
+            }
+        }
+        else
+        {
+            this.addButton(new OptionButton(this.width / 2 - 155 + i % 2 * 160, this.height / 6 - 12 + 24 * (i >> 1), 150, 20, AbstractOption.REALMS_NOTIFICATIONS, AbstractOption.REALMS_NOTIFICATIONS.func_238152_c_(this.settings), (p_213057_1_) ->
+            {
+                AbstractOption.REALMS_NOTIFICATIONS.nextValue(this.settings);
+                this.settings.saveOptions();
+                p_213057_1_.setMessage(AbstractOption.REALMS_NOTIFICATIONS.func_238152_c_(this.settings));
+            }));
+        }
 
-      this.options.save();
-      List<String> list1 = ImmutableList.copyOf(this.options.resourcePacks);
-      if (!list1.equals(list)) {
-         this.minecraft.reloadResourcePacks();
-      }
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 48 - 6, 150, 20, new TranslationTextComponent("options.skinCustomisation"), (p_213055_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new CustomizeSkinScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 48 - 6, 150, 20, new TranslationTextComponent("options.sounds"), (p_213061_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new OptionsSoundsScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 72 - 6, 150, 20, new TranslationTextComponent("options.video"), (p_213059_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new VideoSettingsScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 72 - 6, 150, 20, new TranslationTextComponent("options.controls"), (p_213052_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new ControlsScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 96 - 6, 150, 20, new TranslationTextComponent("options.language"), (p_213053_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new LanguageScreen(this, this.settings, this.minecraft.getLanguageManager()));
+        }));
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 96 - 6, 150, 20, new TranslationTextComponent("options.chat.title"), (p_213049_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new ChatOptionsScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 120 - 6, 150, 20, new TranslationTextComponent("options.resourcepack"), (p_213060_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new PackScreen(this, this.minecraft.getResourcePackList(), this::func_241584_a_, this.minecraft.getFileResourcePacks(), new TranslationTextComponent("resourcePack.title")));
+        }));
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 120 - 6, 150, 20, new TranslationTextComponent("options.accessibility.title"), (p_213058_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new AccessibilityScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 - 100, this.height / 6 + 168, 200, 20, DialogTexts.GUI_DONE, (p_213056_1_) ->
+        {
+            this.minecraft.displayGuiScreen(this.lastScreen);
+        }));
+    }
 
-   }
+    private void func_241584_a_(ResourcePackList p_241584_1_)
+    {
+        List<String> list = ImmutableList.copyOf(this.settings.resourcePacks);
+        this.settings.resourcePacks.clear();
+        this.settings.incompatibleResourcePacks.clear();
 
-   private ITextComponent getDifficultyText(Difficulty p_238630_1_) {
-      return (new TranslationTextComponent("options.difficulty")).append(": ").append(p_238630_1_.getDisplayName());
-   }
+        for (ResourcePackInfo resourcepackinfo : p_241584_1_.getEnabledPacks())
+        {
+            if (!resourcepackinfo.isOrderLocked())
+            {
+                this.settings.resourcePacks.add(resourcepackinfo.getName());
 
-   private void lockCallback(boolean p_213050_1_) {
-      this.minecraft.setScreen(this);
-      if (p_213050_1_ && this.minecraft.level != null) {
-         this.minecraft.getConnection().send(new CLockDifficultyPacket(true));
-         this.lockButton.setLocked(true);
-         this.lockButton.active = false;
-         this.difficultyButton.active = false;
-      }
+                if (!resourcepackinfo.getCompatibility().isCompatible())
+                {
+                    this.settings.incompatibleResourcePacks.add(resourcepackinfo.getName());
+                }
+            }
+        }
 
-   }
+        this.settings.saveOptions();
+        List<String> list1 = ImmutableList.copyOf(this.settings.resourcePacks);
 
-   public void removed() {
-      this.options.save();
-   }
+        if (!list1.equals(list))
+        {
+            this.minecraft.reloadResources();
+        }
+    }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.renderBackground(p_230430_1_);
-      drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 15, 16777215);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-   }
+    private ITextComponent func_238630_a_(Difficulty p_238630_1_)
+    {
+        return (new TranslationTextComponent("options.difficulty")).appendString(": ").append(p_238630_1_.getDisplayName());
+    }
+
+    private void accept(boolean value)
+    {
+        this.minecraft.displayGuiScreen(this);
+
+        if (value && this.minecraft.world != null)
+        {
+            this.minecraft.getConnection().sendPacket(new CLockDifficultyPacket(true));
+            this.lockButton.setLocked(true);
+            this.lockButton.active = false;
+            this.difficultyButton.active = false;
+        }
+    }
+
+    public void onClose()
+    {
+        this.settings.saveOptions();
+    }
+
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.renderBackground(matrixStack);
+        drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 15, 16777215);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
 }

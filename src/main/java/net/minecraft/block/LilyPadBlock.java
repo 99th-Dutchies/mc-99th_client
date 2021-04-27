@@ -12,28 +12,34 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class LilyPadBlock extends BushBlock {
-   protected static final VoxelShape AABB = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 1.5D, 15.0D);
+public class LilyPadBlock extends BushBlock
+{
+    protected static final VoxelShape LILY_PAD_AABB = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 1.5D, 15.0D);
 
-   protected LilyPadBlock(AbstractBlock.Properties p_i48297_1_) {
-      super(p_i48297_1_);
-   }
+    protected LilyPadBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+    }
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      super.entityInside(p_196262_1_, p_196262_2_, p_196262_3_, p_196262_4_);
-      if (p_196262_2_ instanceof ServerWorld && p_196262_4_ instanceof BoatEntity) {
-         p_196262_2_.destroyBlock(new BlockPos(p_196262_3_), true, p_196262_4_);
-      }
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        super.onEntityCollision(state, worldIn, pos, entityIn);
 
-   }
+        if (worldIn instanceof ServerWorld && entityIn instanceof BoatEntity)
+        {
+            worldIn.destroyBlock(new BlockPos(pos), true, entityIn);
+        }
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return AABB;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return LILY_PAD_AABB;
+    }
 
-   protected boolean mayPlaceOn(BlockState p_200014_1_, IBlockReader p_200014_2_, BlockPos p_200014_3_) {
-      FluidState fluidstate = p_200014_2_.getFluidState(p_200014_3_);
-      FluidState fluidstate1 = p_200014_2_.getFluidState(p_200014_3_.above());
-      return (fluidstate.getType() == Fluids.WATER || p_200014_1_.getMaterial() == Material.ICE) && fluidstate1.getType() == Fluids.EMPTY;
-   }
+    protected boolean isValidGround(BlockState state, IBlockReader worldIn, BlockPos pos)
+    {
+        FluidState fluidstate = worldIn.getFluidState(pos);
+        FluidState fluidstate1 = worldIn.getFluidState(pos.up());
+        return (fluidstate.getFluid() == Fluids.WATER || state.getMaterial() == Material.ICE) && fluidstate1.getFluid() == Fluids.EMPTY;
+    }
 }

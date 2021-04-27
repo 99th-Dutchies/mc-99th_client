@@ -12,61 +12,91 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3f;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
+import net.optifine.CustomColors;
 
-@OnlyIn(Dist.CLIENT)
-public class ExperienceOrbRenderer extends EntityRenderer<ExperienceOrbEntity> {
-   private static final ResourceLocation EXPERIENCE_ORB_LOCATION = new ResourceLocation("textures/entity/experience_orb.png");
-   private static final RenderType RENDER_TYPE = RenderType.itemEntityTranslucentCull(EXPERIENCE_ORB_LOCATION);
+public class ExperienceOrbRenderer extends EntityRenderer<ExperienceOrbEntity>
+{
+    private static final ResourceLocation EXPERIENCE_ORB_TEXTURES = new ResourceLocation("textures/entity/experience_orb.png");
+    private static final RenderType RENDER_TYPE = RenderType.getItemEntityTranslucentCull(EXPERIENCE_ORB_TEXTURES);
 
-   public ExperienceOrbRenderer(EntityRendererManager p_i46178_1_) {
-      super(p_i46178_1_);
-      this.shadowRadius = 0.15F;
-      this.shadowStrength = 0.75F;
-   }
+    public ExperienceOrbRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn);
+        this.shadowSize = 0.15F;
+        this.shadowOpaque = 0.75F;
+    }
 
-   protected int getBlockLightLevel(ExperienceOrbEntity p_225624_1_, BlockPos p_225624_2_) {
-      return MathHelper.clamp(super.getBlockLightLevel(p_225624_1_, p_225624_2_) + 7, 0, 15);
-   }
+    protected int getBlockLight(ExperienceOrbEntity entityIn, BlockPos partialTicks)
+    {
+        return MathHelper.clamp(super.getBlockLight(entityIn, partialTicks) + 7, 0, 15);
+    }
 
-   public void render(ExperienceOrbEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      p_225623_4_.pushPose();
-      int i = p_225623_1_.getIcon();
-      float f = (float)(i % 4 * 16 + 0) / 64.0F;
-      float f1 = (float)(i % 4 * 16 + 16) / 64.0F;
-      float f2 = (float)(i / 4 * 16 + 0) / 64.0F;
-      float f3 = (float)(i / 4 * 16 + 16) / 64.0F;
-      float f4 = 1.0F;
-      float f5 = 0.5F;
-      float f6 = 0.25F;
-      float f7 = 255.0F;
-      float f8 = ((float)p_225623_1_.tickCount + p_225623_3_) / 2.0F;
-      int j = (int)((MathHelper.sin(f8 + 0.0F) + 1.0F) * 0.5F * 255.0F);
-      int k = 255;
-      int l = (int)((MathHelper.sin(f8 + 4.1887903F) + 1.0F) * 0.1F * 255.0F);
-      p_225623_4_.translate(0.0D, (double)0.1F, 0.0D);
-      p_225623_4_.mulPose(this.entityRenderDispatcher.cameraOrientation());
-      p_225623_4_.mulPose(Vector3f.YP.rotationDegrees(180.0F));
-      float f9 = 0.3F;
-      p_225623_4_.scale(0.3F, 0.3F, 0.3F);
-      IVertexBuilder ivertexbuilder = p_225623_5_.getBuffer(RENDER_TYPE);
-      MatrixStack.Entry matrixstack$entry = p_225623_4_.last();
-      Matrix4f matrix4f = matrixstack$entry.pose();
-      Matrix3f matrix3f = matrixstack$entry.normal();
-      vertex(ivertexbuilder, matrix4f, matrix3f, -0.5F, -0.25F, j, 255, l, f, f3, p_225623_6_);
-      vertex(ivertexbuilder, matrix4f, matrix3f, 0.5F, -0.25F, j, 255, l, f1, f3, p_225623_6_);
-      vertex(ivertexbuilder, matrix4f, matrix3f, 0.5F, 0.75F, j, 255, l, f1, f2, p_225623_6_);
-      vertex(ivertexbuilder, matrix4f, matrix3f, -0.5F, 0.75F, j, 255, l, f, f2, p_225623_6_);
-      p_225623_4_.popPose();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+    public void render(ExperienceOrbEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        matrixStackIn.push();
+        int i = entityIn.getTextureByXP();
+        float f = (float)(i % 4 * 16 + 0) / 64.0F;
+        float f1 = (float)(i % 4 * 16 + 16) / 64.0F;
+        float f2 = (float)(i / 4 * 16 + 0) / 64.0F;
+        float f3 = (float)(i / 4 * 16 + 16) / 64.0F;
+        float f4 = 1.0F;
+        float f5 = 0.5F;
+        float f6 = 0.25F;
+        float f7 = 255.0F;
+        float f8 = ((float)entityIn.xpColor + partialTicks) / 2.0F;
 
-   private static void vertex(IVertexBuilder p_229102_0_, Matrix4f p_229102_1_, Matrix3f p_229102_2_, float p_229102_3_, float p_229102_4_, int p_229102_5_, int p_229102_6_, int p_229102_7_, float p_229102_8_, float p_229102_9_, int p_229102_10_) {
-      p_229102_0_.vertex(p_229102_1_, p_229102_3_, p_229102_4_, 0.0F).color(p_229102_5_, p_229102_6_, p_229102_7_, 128).uv(p_229102_8_, p_229102_9_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(p_229102_10_).normal(p_229102_2_, 0.0F, 1.0F, 0.0F).endVertex();
-   }
+        if (Config.isCustomColors())
+        {
+            f8 = CustomColors.getXpOrbTimer(f8);
+        }
 
-   public ResourceLocation getTextureLocation(ExperienceOrbEntity p_110775_1_) {
-      return EXPERIENCE_ORB_LOCATION;
-   }
+        int j = (int)((MathHelper.sin(f8 + 0.0F) + 1.0F) * 0.5F * 255.0F);
+        int k = 255;
+        int l = (int)((MathHelper.sin(f8 + 4.1887903F) + 1.0F) * 0.1F * 255.0F);
+        matrixStackIn.translate(0.0D, (double)0.1F, 0.0D);
+        matrixStackIn.rotate(this.renderManager.getCameraOrientation());
+        matrixStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F));
+        float f9 = 0.3F;
+        matrixStackIn.scale(0.3F, 0.3F, 0.3F);
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RENDER_TYPE);
+        MatrixStack.Entry matrixstack$entry = matrixStackIn.getLast();
+        Matrix4f matrix4f = matrixstack$entry.getMatrix();
+        Matrix3f matrix3f = matrixstack$entry.getNormal();
+        int i1 = j;
+        int j1 = 255;
+        int k1 = l;
+
+        if (Config.isCustomColors())
+        {
+            int l1 = CustomColors.getXpOrbColor(f8);
+
+            if (l1 >= 0)
+            {
+                i1 = l1 >> 16 & 255;
+                j1 = l1 >> 8 & 255;
+                k1 = l1 >> 0 & 255;
+            }
+        }
+
+        vertex(ivertexbuilder, matrix4f, matrix3f, -0.5F, -0.25F, i1, j1, k1, f, f3, packedLightIn);
+        vertex(ivertexbuilder, matrix4f, matrix3f, 0.5F, -0.25F, i1, j1, k1, f1, f3, packedLightIn);
+        vertex(ivertexbuilder, matrix4f, matrix3f, 0.5F, 0.75F, i1, j1, k1, f1, f2, packedLightIn);
+        vertex(ivertexbuilder, matrix4f, matrix3f, -0.5F, 0.75F, i1, j1, k1, f, f2, packedLightIn);
+        matrixStackIn.pop();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
+
+    private static void vertex(IVertexBuilder bufferIn, Matrix4f matrixIn, Matrix3f matrixNormalIn, float x, float y, int red, int green, int blue, float texU, float texV, int packedLight)
+    {
+        bufferIn.pos(matrixIn, x, y, 0.0F).color(red, green, blue, 128).tex(texU, texV).overlay(OverlayTexture.NO_OVERLAY).lightmap(packedLight).normal(matrixNormalIn, 0.0F, 1.0F, 0.0F).endVertex();
+    }
+
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(ExperienceOrbEntity entity)
+    {
+        return EXPERIENCE_ORB_TEXTURES;
+    }
 }

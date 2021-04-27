@@ -1,0 +1,163 @@
+package net.minecraft.client.renderer.tileentity;
+
+import com.google.common.collect.Maps;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import java.util.Map;
+import javax.annotation.Nullable;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.entity.model.ShulkerModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.World;
+import net.optifine.EmissiveTextures;
+
+public class TileEntityRendererDispatcher {
+   public final Map<TileEntityType<?>, TileEntityRenderer<?>> field_147559_m = Maps.newHashMap();
+   public static final TileEntityRendererDispatcher field_147556_a = new TileEntityRendererDispatcher();
+   private final BufferBuilder field_228849_g_ = new BufferBuilder(256);
+   private FontRenderer field_147557_n;
+   public TextureManager field_147553_e;
+   public World field_147550_f;
+   public ActiveRenderInfo field_217666_g;
+   public RayTraceResult field_190057_j;
+   public static TileEntity tileEntityRendered;
+
+   private TileEntityRendererDispatcher() {
+      this.func_228854_a_(TileEntityType.field_200978_i, new SignTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200979_j, new MobSpawnerTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200980_k, new PistonTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200972_c, new ChestTileEntityRenderer<>(this));
+      this.func_228854_a_(TileEntityType.field_200974_e, new ChestTileEntityRenderer<>(this));
+      this.func_228854_a_(TileEntityType.field_200973_d, new ChestTileEntityRenderer<>(this));
+      this.func_228854_a_(TileEntityType.field_200982_m, new EnchantmentTableTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_222485_C, new LecternTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200983_n, new EndPortalTileEntityRenderer<>(this));
+      this.func_228854_a_(TileEntityType.field_200991_v, new EndGatewayTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200984_o, new BeaconTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200985_p, new SkullTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200989_t, new BannerTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200990_u, new StructureTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_200993_x, new ShulkerBoxTileEntityRenderer(new ShulkerModel(), this));
+      this.func_228854_a_(TileEntityType.field_200994_y, new BedTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_205166_z, new ConduitTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_222486_D, new BellTileEntityRenderer(this));
+      this.func_228854_a_(TileEntityType.field_222488_F, new CampfireTileEntityRenderer(this));
+   }
+
+   private <E extends TileEntity> void func_228854_a_(TileEntityType<E> p_228854_1_, TileEntityRenderer<E> p_228854_2_) {
+      this.field_147559_m.put(p_228854_1_, p_228854_2_);
+   }
+
+   @Nullable
+   public <E extends TileEntity> TileEntityRenderer<E> func_147547_b(E p_147547_1_) {
+      return this.field_147559_m.get(p_147547_1_.func_200662_C());
+   }
+
+   public void func_217665_a(World p_217665_1_, TextureManager p_217665_2_, FontRenderer p_217665_3_, ActiveRenderInfo p_217665_4_, RayTraceResult p_217665_5_) {
+      if (this.field_147550_f != p_217665_1_) {
+         this.func_147543_a(p_217665_1_);
+      }
+
+      this.field_147553_e = p_217665_2_;
+      this.field_217666_g = p_217665_4_;
+      this.field_147557_n = p_217665_3_;
+      this.field_190057_j = p_217665_5_;
+   }
+
+   public <E extends TileEntity> void func_228850_a_(E p_228850_1_, float p_228850_2_, MatrixStack p_228850_3_, IRenderTypeBuffer p_228850_4_) {
+      if (Vector3d.func_237489_a_(p_228850_1_.func_174877_v()).func_237488_a_(this.field_217666_g.func_216785_c(), p_228850_1_.func_145833_n())) {
+         TileEntityRenderer<E> tileentityrenderer = this.func_147547_b(p_228850_1_);
+         if (tileentityrenderer != null && p_228850_1_.func_145830_o() && p_228850_1_.func_200662_C().func_223045_a(p_228850_1_.func_195044_w().func_177230_c())) {
+            func_228853_a_(p_228850_1_, () -> {
+               func_228855_a_(tileentityrenderer, p_228850_1_, p_228850_2_, p_228850_3_, p_228850_4_);
+            });
+         }
+      }
+
+   }
+
+   private static <T extends TileEntity> void func_228855_a_(TileEntityRenderer<T> p_228855_0_, T p_228855_1_, float p_228855_2_, MatrixStack p_228855_3_, IRenderTypeBuffer p_228855_4_) {
+      World world = p_228855_1_.func_145831_w();
+      int i;
+      if (world != null) {
+         i = WorldRenderer.func_228421_a_(world, p_228855_1_.func_174877_v());
+      } else {
+         i = 15728880;
+      }
+
+      tileEntityRendered = p_228855_1_;
+      if (EmissiveTextures.isActive()) {
+         EmissiveTextures.beginRender();
+      }
+
+      p_228855_0_.func_225616_a_(p_228855_1_, p_228855_2_, p_228855_3_, p_228855_4_, i, OverlayTexture.field_229196_a_);
+      if (EmissiveTextures.isActive()) {
+         if (EmissiveTextures.hasEmissive()) {
+            EmissiveTextures.beginRenderEmissive();
+            p_228855_0_.func_225616_a_(p_228855_1_, p_228855_2_, p_228855_3_, p_228855_4_, LightTexture.MAX_BRIGHTNESS, OverlayTexture.field_229196_a_);
+            EmissiveTextures.endRenderEmissive();
+         }
+
+         EmissiveTextures.endRender();
+      }
+
+      tileEntityRendered = null;
+   }
+
+   public <E extends TileEntity> boolean func_228852_a_(E p_228852_1_, MatrixStack p_228852_2_, IRenderTypeBuffer p_228852_3_, int p_228852_4_, int p_228852_5_) {
+      TileEntityRenderer<E> tileentityrenderer = this.func_147547_b(p_228852_1_);
+      if (tileentityrenderer == null) {
+         return true;
+      } else {
+         func_228853_a_(p_228852_1_, () -> {
+            tileEntityRendered = p_228852_1_;
+            tileentityrenderer.func_225616_a_(p_228852_1_, 0.0F, p_228852_2_, p_228852_3_, p_228852_4_, p_228852_5_);
+            tileEntityRendered = null;
+         });
+         return false;
+      }
+   }
+
+   private static void func_228853_a_(TileEntity p_228853_0_, Runnable p_228853_1_) {
+      try {
+         p_228853_1_.run();
+      } catch (Throwable throwable) {
+         CrashReport crashreport = CrashReport.func_85055_a(throwable, "Rendering Block Entity");
+         CrashReportCategory crashreportcategory = crashreport.func_85058_a("Block Entity Details");
+         p_228853_0_.func_145828_a(crashreportcategory);
+         throw new ReportedException(crashreport);
+      }
+   }
+
+   public void func_147543_a(@Nullable World p_147543_1_) {
+      this.field_147550_f = p_147543_1_;
+      if (p_147543_1_ == null) {
+         this.field_217666_g = null;
+      }
+
+   }
+
+   public FontRenderer func_147548_a() {
+      return this.field_147557_n;
+   }
+
+   public TileEntityRenderer getRenderer(TileEntityType p_getRenderer_1_) {
+      return this.field_147559_m.get(p_getRenderer_1_);
+   }
+
+   public synchronized <T extends TileEntity> void setSpecialRendererInternal(TileEntityType<T> p_setSpecialRendererInternal_1_, TileEntityRenderer<? super T> p_setSpecialRendererInternal_2_) {
+      this.field_147559_m.put(p_setSpecialRendererInternal_1_, p_setSpecialRendererInternal_2_);
+   }
+}

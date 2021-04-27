@@ -21,99 +21,145 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
-public class JukeboxBlock extends ContainerBlock {
-   public static final BooleanProperty HAS_RECORD = BlockStateProperties.HAS_RECORD;
+public class JukeboxBlock extends ContainerBlock
+{
+    public static final BooleanProperty HAS_RECORD = BlockStateProperties.HAS_RECORD;
 
-   protected JukeboxBlock(AbstractBlock.Properties p_i48372_1_) {
-      super(p_i48372_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(HAS_RECORD, Boolean.valueOf(false)));
-   }
+    protected JukeboxBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(HAS_RECORD, Boolean.valueOf(false)));
+    }
 
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, @Nullable LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      super.setPlacedBy(p_180633_1_, p_180633_2_, p_180633_3_, p_180633_4_, p_180633_5_);
-      CompoundNBT compoundnbt = p_180633_5_.getOrCreateTag();
-      if (compoundnbt.contains("BlockEntityTag")) {
-         CompoundNBT compoundnbt1 = compoundnbt.getCompound("BlockEntityTag");
-         if (compoundnbt1.contains("RecordItem")) {
-            p_180633_1_.setBlock(p_180633_2_, p_180633_3_.setValue(HAS_RECORD, Boolean.valueOf(true)), 2);
-         }
-      }
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack)
+    {
+        super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+        CompoundNBT compoundnbt = stack.getOrCreateTag();
 
-   }
+        if (compoundnbt.contains("BlockEntityTag"))
+        {
+            CompoundNBT compoundnbt1 = compoundnbt.getCompound("BlockEntityTag");
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_1_.getValue(HAS_RECORD)) {
-         this.dropRecording(p_225533_2_, p_225533_3_);
-         p_225533_1_ = p_225533_1_.setValue(HAS_RECORD, Boolean.valueOf(false));
-         p_225533_2_.setBlock(p_225533_3_, p_225533_1_, 2);
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      } else {
-         return ActionResultType.PASS;
-      }
-   }
-
-   public void setRecord(IWorld p_176431_1_, BlockPos p_176431_2_, BlockState p_176431_3_, ItemStack p_176431_4_) {
-      TileEntity tileentity = p_176431_1_.getBlockEntity(p_176431_2_);
-      if (tileentity instanceof JukeboxTileEntity) {
-         ((JukeboxTileEntity)tileentity).setRecord(p_176431_4_.copy());
-         p_176431_1_.setBlock(p_176431_2_, p_176431_3_.setValue(HAS_RECORD, Boolean.valueOf(true)), 2);
-      }
-   }
-
-   private void dropRecording(World p_203419_1_, BlockPos p_203419_2_) {
-      if (!p_203419_1_.isClientSide) {
-         TileEntity tileentity = p_203419_1_.getBlockEntity(p_203419_2_);
-         if (tileentity instanceof JukeboxTileEntity) {
-            JukeboxTileEntity jukeboxtileentity = (JukeboxTileEntity)tileentity;
-            ItemStack itemstack = jukeboxtileentity.getRecord();
-            if (!itemstack.isEmpty()) {
-               p_203419_1_.levelEvent(1010, p_203419_2_, 0);
-               jukeboxtileentity.clearContent();
-               float f = 0.7F;
-               double d0 = (double)(p_203419_1_.random.nextFloat() * 0.7F) + (double)0.15F;
-               double d1 = (double)(p_203419_1_.random.nextFloat() * 0.7F) + (double)0.060000002F + 0.6D;
-               double d2 = (double)(p_203419_1_.random.nextFloat() * 0.7F) + (double)0.15F;
-               ItemStack itemstack1 = itemstack.copy();
-               ItemEntity itementity = new ItemEntity(p_203419_1_, (double)p_203419_2_.getX() + d0, (double)p_203419_2_.getY() + d1, (double)p_203419_2_.getZ() + d2, itemstack1);
-               itementity.setDefaultPickUpDelay();
-               p_203419_1_.addFreshEntity(itementity);
+            if (compoundnbt1.contains("RecordItem"))
+            {
+                worldIn.setBlockState(pos, state.with(HAS_RECORD, Boolean.valueOf(true)), 2);
             }
-         }
-      }
-   }
+        }
+    }
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_1_.is(p_196243_4_.getBlock())) {
-         this.dropRecording(p_196243_2_, p_196243_3_);
-         super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
-      }
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (state.get(HAS_RECORD))
+        {
+            this.dropRecord(worldIn, pos);
+            state = state.with(HAS_RECORD, Boolean.valueOf(false));
+            worldIn.setBlockState(pos, state, 2);
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+        else
+        {
+            return ActionResultType.PASS;
+        }
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new JukeboxTileEntity();
-   }
+    public void insertRecord(IWorld worldIn, BlockPos pos, BlockState state, ItemStack recordStack)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(pos);
 
-   public boolean hasAnalogOutputSignal(BlockState p_149740_1_) {
-      return true;
-   }
+        if (tileentity instanceof JukeboxTileEntity)
+        {
+            ((JukeboxTileEntity)tileentity).setRecord(recordStack.copy());
+            worldIn.setBlockState(pos, state.with(HAS_RECORD, Boolean.valueOf(true)), 2);
+        }
+    }
 
-   public int getAnalogOutputSignal(BlockState p_180641_1_, World p_180641_2_, BlockPos p_180641_3_) {
-      TileEntity tileentity = p_180641_2_.getBlockEntity(p_180641_3_);
-      if (tileentity instanceof JukeboxTileEntity) {
-         Item item = ((JukeboxTileEntity)tileentity).getRecord().getItem();
-         if (item instanceof MusicDiscItem) {
-            return ((MusicDiscItem)item).getAnalogOutput();
-         }
-      }
+    private void dropRecord(World worldIn, BlockPos pos)
+    {
+        if (!worldIn.isRemote)
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-      return 0;
-   }
+            if (tileentity instanceof JukeboxTileEntity)
+            {
+                JukeboxTileEntity jukeboxtileentity = (JukeboxTileEntity)tileentity;
+                ItemStack itemstack = jukeboxtileentity.getRecord();
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.MODEL;
-   }
+                if (!itemstack.isEmpty())
+                {
+                    worldIn.playEvent(1010, pos, 0);
+                    jukeboxtileentity.clear();
+                    float f = 0.7F;
+                    double d0 = (double)(worldIn.rand.nextFloat() * 0.7F) + (double)0.15F;
+                    double d1 = (double)(worldIn.rand.nextFloat() * 0.7F) + (double)0.060000002F + 0.6D;
+                    double d2 = (double)(worldIn.rand.nextFloat() * 0.7F) + (double)0.15F;
+                    ItemStack itemstack1 = itemstack.copy();
+                    ItemEntity itementity = new ItemEntity(worldIn, (double)pos.getX() + d0, (double)pos.getY() + d1, (double)pos.getZ() + d2, itemstack1);
+                    itementity.setDefaultPickupDelay();
+                    worldIn.addEntity(itementity);
+                }
+            }
+        }
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(HAS_RECORD);
-   }
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!state.isIn(newState.getBlock()))
+        {
+            this.dropRecord(worldIn, pos);
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+        }
+    }
+
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new JukeboxTileEntity();
+    }
+
+    /**
+     * @deprecated call via {@link IBlockState#hasComparatorInputOverride()} whenever possible. Implementing/overriding
+     * is fine.
+     */
+    public boolean hasComparatorInputOverride(BlockState state)
+    {
+        return true;
+    }
+
+    /**
+     * @deprecated call via {@link IBlockState#getComparatorInputOverride(World,BlockPos)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getComparatorInputOverride(BlockState blockState, World worldIn, BlockPos pos)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+
+        if (tileentity instanceof JukeboxTileEntity)
+        {
+            Item item = ((JukeboxTileEntity)tileentity).getRecord().getItem();
+
+            if (item instanceof MusicDiscItem)
+            {
+                return ((MusicDiscItem)item).getComparatorValue();
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.MODEL;
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(HAS_RECORD);
+    }
 }

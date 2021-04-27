@@ -37,135 +37,207 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class DispenserBlock extends ContainerBlock {
-   public static final DirectionProperty FACING = DirectionalBlock.FACING;
-   public static final BooleanProperty TRIGGERED = BlockStateProperties.TRIGGERED;
-   private static final Map<Item, IDispenseItemBehavior> DISPENSER_REGISTRY = Util.make(new Object2ObjectOpenHashMap<>(), (p_212564_0_) -> {
-      p_212564_0_.defaultReturnValue(new DefaultDispenseItemBehavior());
-   });
+public class DispenserBlock extends ContainerBlock
+{
+    public static final DirectionProperty FACING = DirectionalBlock.FACING;
+    public static final BooleanProperty TRIGGERED = BlockStateProperties.TRIGGERED;
+    private static final Map<Item, IDispenseItemBehavior> DISPENSE_BEHAVIOR_REGISTRY = Util.make(new Object2ObjectOpenHashMap<>(), (behaviour) ->
+    {
+        behaviour.defaultReturnValue(new DefaultDispenseItemBehavior());
+    });
 
-   public static void registerBehavior(IItemProvider p_199774_0_, IDispenseItemBehavior p_199774_1_) {
-      DISPENSER_REGISTRY.put(p_199774_0_.asItem(), p_199774_1_);
-   }
+    public static void registerDispenseBehavior(IItemProvider itemIn, IDispenseItemBehavior behavior)
+    {
+        DISPENSE_BEHAVIOR_REGISTRY.put(itemIn.asItem(), behavior);
+    }
 
-   protected DispenserBlock(AbstractBlock.Properties p_i48414_1_) {
-      super(p_i48414_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TRIGGERED, Boolean.valueOf(false)));
-   }
+    protected DispenserBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(FACING, Direction.NORTH).with(TRIGGERED, Boolean.valueOf(false)));
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         return ActionResultType.SUCCESS;
-      } else {
-         TileEntity tileentity = p_225533_2_.getBlockEntity(p_225533_3_);
-         if (tileentity instanceof DispenserTileEntity) {
-            p_225533_4_.openMenu((DispenserTileEntity)tileentity);
-            if (tileentity instanceof DropperTileEntity) {
-               p_225533_4_.awardStat(Stats.INSPECT_DROPPER);
-            } else {
-               p_225533_4_.awardStat(Stats.INSPECT_DISPENSER);
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
+
+            if (tileentity instanceof DispenserTileEntity)
+            {
+                player.openContainer((DispenserTileEntity)tileentity);
+
+                if (tileentity instanceof DropperTileEntity)
+                {
+                    player.addStat(Stats.INSPECT_DROPPER);
+                }
+                else
+                {
+                    player.addStat(Stats.INSPECT_DISPENSER);
+                }
             }
-         }
 
-         return ActionResultType.CONSUME;
-      }
-   }
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   protected void dispenseFrom(ServerWorld p_176439_1_, BlockPos p_176439_2_) {
-      ProxyBlockSource proxyblocksource = new ProxyBlockSource(p_176439_1_, p_176439_2_);
-      DispenserTileEntity dispensertileentity = proxyblocksource.getEntity();
-      int i = dispensertileentity.getRandomSlot();
-      if (i < 0) {
-         p_176439_1_.levelEvent(1001, p_176439_2_, 0);
-      } else {
-         ItemStack itemstack = dispensertileentity.getItem(i);
-         IDispenseItemBehavior idispenseitembehavior = this.getDispenseMethod(itemstack);
-         if (idispenseitembehavior != IDispenseItemBehavior.NOOP) {
-            dispensertileentity.setItem(i, idispenseitembehavior.dispense(proxyblocksource, itemstack));
-         }
+    protected void dispense(ServerWorld worldIn, BlockPos pos)
+    {
+        ProxyBlockSource proxyblocksource = new ProxyBlockSource(worldIn, pos);
+        DispenserTileEntity dispensertileentity = proxyblocksource.getBlockTileEntity();
+        int i = dispensertileentity.getDispenseSlot();
 
-      }
-   }
+        if (i < 0)
+        {
+            worldIn.playEvent(1001, pos, 0);
+        }
+        else
+        {
+            ItemStack itemstack = dispensertileentity.getStackInSlot(i);
+            IDispenseItemBehavior idispenseitembehavior = this.getBehavior(itemstack);
 
-   protected IDispenseItemBehavior getDispenseMethod(ItemStack p_149940_1_) {
-      return DISPENSER_REGISTRY.get(p_149940_1_.getItem());
-   }
+            if (idispenseitembehavior != IDispenseItemBehavior.NOOP)
+            {
+                dispensertileentity.setInventorySlotContents(i, idispenseitembehavior.dispense(proxyblocksource, itemstack));
+            }
+        }
+    }
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      boolean flag = p_220069_2_.hasNeighborSignal(p_220069_3_) || p_220069_2_.hasNeighborSignal(p_220069_3_.above());
-      boolean flag1 = p_220069_1_.getValue(TRIGGERED);
-      if (flag && !flag1) {
-         p_220069_2_.getBlockTicks().scheduleTick(p_220069_3_, this, 4);
-         p_220069_2_.setBlock(p_220069_3_, p_220069_1_.setValue(TRIGGERED, Boolean.valueOf(true)), 4);
-      } else if (!flag && flag1) {
-         p_220069_2_.setBlock(p_220069_3_, p_220069_1_.setValue(TRIGGERED, Boolean.valueOf(false)), 4);
-      }
+    protected IDispenseItemBehavior getBehavior(ItemStack stack)
+    {
+        return DISPENSE_BEHAVIOR_REGISTRY.get(stack.getItem());
+    }
 
-   }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        boolean flag = worldIn.isBlockPowered(pos) || worldIn.isBlockPowered(pos.up());
+        boolean flag1 = state.get(TRIGGERED);
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      this.dispenseFrom(p_225534_2_, p_225534_3_);
-   }
+        if (flag && !flag1)
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(pos, this, 4);
+            worldIn.setBlockState(pos, state.with(TRIGGERED, Boolean.valueOf(true)), 4);
+        }
+        else if (!flag && flag1)
+        {
+            worldIn.setBlockState(pos, state.with(TRIGGERED, Boolean.valueOf(false)), 4);
+        }
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new DispenserTileEntity();
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        this.dispense(worldIn, pos);
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      return this.defaultBlockState().setValue(FACING, p_196258_1_.getNearestLookingDirection().getOpposite());
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new DispenserTileEntity();
+    }
 
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      if (p_180633_5_.hasCustomHoverName()) {
-         TileEntity tileentity = p_180633_1_.getBlockEntity(p_180633_2_);
-         if (tileentity instanceof DispenserTileEntity) {
-            ((DispenserTileEntity)tileentity).setCustomName(p_180633_5_.getHoverName());
-         }
-      }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        return this.getDefaultState().with(FACING, context.getNearestLookingDirection().getOpposite());
+    }
 
-   }
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
+    {
+        if (stack.hasDisplayName())
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_1_.is(p_196243_4_.getBlock())) {
-         TileEntity tileentity = p_196243_2_.getBlockEntity(p_196243_3_);
-         if (tileentity instanceof DispenserTileEntity) {
-            InventoryHelper.dropContents(p_196243_2_, p_196243_3_, (DispenserTileEntity)tileentity);
-            p_196243_2_.updateNeighbourForOutputSignal(p_196243_3_, this);
-         }
+            if (tileentity instanceof DispenserTileEntity)
+            {
+                ((DispenserTileEntity)tileentity).setCustomName(stack.getDisplayName());
+            }
+        }
+    }
 
-         super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
-      }
-   }
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!state.isIn(newState.getBlock()))
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-   public static IPosition getDispensePosition(IBlockSource p_149939_0_) {
-      Direction direction = p_149939_0_.getBlockState().getValue(FACING);
-      double d0 = p_149939_0_.x() + 0.7D * (double)direction.getStepX();
-      double d1 = p_149939_0_.y() + 0.7D * (double)direction.getStepY();
-      double d2 = p_149939_0_.z() + 0.7D * (double)direction.getStepZ();
-      return new Position(d0, d1, d2);
-   }
+            if (tileentity instanceof DispenserTileEntity)
+            {
+                InventoryHelper.dropInventoryItems(worldIn, pos, (DispenserTileEntity)tileentity);
+                worldIn.updateComparatorOutputLevel(pos, this);
+            }
 
-   public boolean hasAnalogOutputSignal(BlockState p_149740_1_) {
-      return true;
-   }
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+        }
+    }
 
-   public int getAnalogOutputSignal(BlockState p_180641_1_, World p_180641_2_, BlockPos p_180641_3_) {
-      return Container.getRedstoneSignalFromBlockEntity(p_180641_2_.getBlockEntity(p_180641_3_));
-   }
+    /**
+     * Get the position where the dispenser at the given Coordinates should dispense to.
+     */
+    public static IPosition getDispensePosition(IBlockSource coords)
+    {
+        Direction direction = coords.getBlockState().get(FACING);
+        double d0 = coords.getX() + 0.7D * (double)direction.getXOffset();
+        double d1 = coords.getY() + 0.7D * (double)direction.getYOffset();
+        double d2 = coords.getZ() + 0.7D * (double)direction.getZOffset();
+        return new Position(d0, d1, d2);
+    }
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.MODEL;
-   }
+    /**
+     * @deprecated call via {@link IBlockState#hasComparatorInputOverride()} whenever possible. Implementing/overriding
+     * is fine.
+     */
+    public boolean hasComparatorInputOverride(BlockState state)
+    {
+        return true;
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      return p_185499_1_.setValue(FACING, p_185499_2_.rotate(p_185499_1_.getValue(FACING)));
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getComparatorInputOverride(World,BlockPos)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getComparatorInputOverride(BlockState blockState, World worldIn, BlockPos pos)
+    {
+        return Container.calcRedstone(worldIn.getTileEntity(pos));
+    }
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      return p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
-   }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.MODEL;
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, TRIGGERED);
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        return state.with(FACING, rot.rotate(state.get(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        return state.rotate(mirrorIn.toRotation(state.get(FACING)));
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(FACING, TRIGGERED);
+    }
 }

@@ -16,89 +16,115 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class StemBlock extends BushBlock implements IGrowable {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_7;
-   protected static final VoxelShape[] SHAPE_BY_AGE = new VoxelShape[]{Block.box(7.0D, 0.0D, 7.0D, 9.0D, 2.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 4.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 6.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 8.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 10.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 12.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 14.0D, 9.0D), Block.box(7.0D, 0.0D, 7.0D, 9.0D, 16.0D, 9.0D)};
-   private final StemGrownBlock fruit;
+public class StemBlock extends BushBlock implements IGrowable
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_7;
+    protected static final VoxelShape[] SHAPES = new VoxelShape[] {Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 2.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 4.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 6.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 8.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 10.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 12.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 14.0D, 9.0D), Block.makeCuboidShape(7.0D, 0.0D, 7.0D, 9.0D, 16.0D, 9.0D)};
+    private final StemGrownBlock crop;
 
-   protected StemBlock(StemGrownBlock p_i48318_1_, AbstractBlock.Properties p_i48318_2_) {
-      super(p_i48318_2_);
-      this.fruit = p_i48318_1_;
-      this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
-   }
+    protected StemBlock(StemGrownBlock crop, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.crop = crop;
+        this.setDefaultState(this.stateContainer.getBaseState().with(AGE, Integer.valueOf(0)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE_BY_AGE[p_220053_1_.getValue(AGE)];
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPES[state.get(AGE)];
+    }
 
-   protected boolean mayPlaceOn(BlockState p_200014_1_, IBlockReader p_200014_2_, BlockPos p_200014_3_) {
-      return p_200014_1_.is(Blocks.FARMLAND);
-   }
+    protected boolean isValidGround(BlockState state, IBlockReader worldIn, BlockPos pos)
+    {
+        return state.isIn(Blocks.FARMLAND);
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_2_.getRawBrightness(p_225542_3_, 0) >= 9) {
-         float f = CropsBlock.getGrowthSpeed(this, p_225542_2_, p_225542_3_);
-         if (p_225542_4_.nextInt((int)(25.0F / f) + 1) == 0) {
-            int i = p_225542_1_.getValue(AGE);
-            if (i < 7) {
-               p_225542_1_ = p_225542_1_.setValue(AGE, Integer.valueOf(i + 1));
-               p_225542_2_.setBlock(p_225542_3_, p_225542_1_, 2);
-            } else {
-               Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_225542_4_);
-               BlockPos blockpos = p_225542_3_.relative(direction);
-               BlockState blockstate = p_225542_2_.getBlockState(blockpos.below());
-               if (p_225542_2_.getBlockState(blockpos).isAir() && (blockstate.is(Blocks.FARMLAND) || blockstate.is(Blocks.DIRT) || blockstate.is(Blocks.COARSE_DIRT) || blockstate.is(Blocks.PODZOL) || blockstate.is(Blocks.GRASS_BLOCK))) {
-                  p_225542_2_.setBlockAndUpdate(blockpos, this.fruit.defaultBlockState());
-                  p_225542_2_.setBlockAndUpdate(p_225542_3_, this.fruit.getAttachedStem().defaultBlockState().setValue(HorizontalBlock.FACING, direction));
-               }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (worldIn.getLightSubtracted(pos, 0) >= 9)
+        {
+            float f = CropsBlock.getGrowthChance(this, worldIn, pos);
+
+            if (random.nextInt((int)(25.0F / f) + 1) == 0)
+            {
+                int i = state.get(AGE);
+
+                if (i < 7)
+                {
+                    state = state.with(AGE, Integer.valueOf(i + 1));
+                    worldIn.setBlockState(pos, state, 2);
+                }
+                else
+                {
+                    Direction direction = Direction.Plane.HORIZONTAL.random(random);
+                    BlockPos blockpos = pos.offset(direction);
+                    BlockState blockstate = worldIn.getBlockState(blockpos.down());
+
+                    if (worldIn.getBlockState(blockpos).isAir() && (blockstate.isIn(Blocks.FARMLAND) || blockstate.isIn(Blocks.DIRT) || blockstate.isIn(Blocks.COARSE_DIRT) || blockstate.isIn(Blocks.PODZOL) || blockstate.isIn(Blocks.GRASS_BLOCK)))
+                    {
+                        worldIn.setBlockState(blockpos, this.crop.getDefaultState());
+                        worldIn.setBlockState(pos, this.crop.getAttachedStem().getDefaultState().with(HorizontalBlock.HORIZONTAL_FACING, direction));
+                    }
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
+    @Nullable
+    protected Item getSeedItem()
+    {
+        if (this.crop == Blocks.PUMPKIN)
+        {
+            return Items.PUMPKIN_SEEDS;
+        }
+        else
+        {
+            return this.crop == Blocks.MELON ? Items.MELON_SEEDS : null;
+        }
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   protected Item getSeedItem() {
-      if (this.fruit == Blocks.PUMPKIN) {
-         return Items.PUMPKIN_SEEDS;
-      } else {
-         return this.fruit == Blocks.MELON ? Items.MELON_SEEDS : null;
-      }
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        Item item = this.getSeedItem();
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      Item item = this.getSeedItem();
-      return item == null ? ItemStack.EMPTY : new ItemStack(item);
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return state.get(AGE) != 7;
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return p_176473_3_.getValue(AGE) != 7;
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        int i = Math.min(7, state.get(AGE) + MathHelper.nextInt(worldIn.rand, 2, 5));
+        BlockState blockstate = state.with(AGE, Integer.valueOf(i));
+        worldIn.setBlockState(pos, blockstate, 2);
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      int i = Math.min(7, p_225535_4_.getValue(AGE) + MathHelper.nextInt(p_225535_1_.random, 2, 5));
-      BlockState blockstate = p_225535_4_.setValue(AGE, Integer.valueOf(i));
-      p_225535_1_.setBlock(p_225535_3_, blockstate, 2);
-      if (i == 7) {
-         blockstate.randomTick(p_225535_1_, p_225535_3_, p_225535_1_.random);
-      }
+        if (i == 7)
+        {
+            blockstate.randomTick(worldIn, pos, worldIn.rand);
+        }
+    }
 
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
-
-   public StemGrownBlock getFruit() {
-      return this.fruit;
-   }
+    public StemGrownBlock getCrop()
+    {
+        return this.crop;
+    }
 }

@@ -2,69 +2,76 @@ package net.minecraft.data;
 
 import javax.annotation.Nullable;
 
-public final class StockTextureAliases {
-   public static final StockTextureAliases ALL = create("all");
-   public static final StockTextureAliases TEXTURE = create("texture", ALL);
-   public static final StockTextureAliases PARTICLE = create("particle", TEXTURE);
-   public static final StockTextureAliases END = create("end", ALL);
-   public static final StockTextureAliases BOTTOM = create("bottom", END);
-   public static final StockTextureAliases TOP = create("top", END);
-   public static final StockTextureAliases FRONT = create("front", ALL);
-   public static final StockTextureAliases BACK = create("back", ALL);
-   public static final StockTextureAliases SIDE = create("side", ALL);
-   public static final StockTextureAliases NORTH = create("north", SIDE);
-   public static final StockTextureAliases SOUTH = create("south", SIDE);
-   public static final StockTextureAliases EAST = create("east", SIDE);
-   public static final StockTextureAliases WEST = create("west", SIDE);
-   public static final StockTextureAliases UP = create("up");
-   public static final StockTextureAliases DOWN = create("down");
-   public static final StockTextureAliases CROSS = create("cross");
-   public static final StockTextureAliases PLANT = create("plant");
-   public static final StockTextureAliases WALL = create("wall", ALL);
-   public static final StockTextureAliases RAIL = create("rail");
-   public static final StockTextureAliases WOOL = create("wool");
-   public static final StockTextureAliases PATTERN = create("pattern");
-   public static final StockTextureAliases PANE = create("pane");
-   public static final StockTextureAliases EDGE = create("edge");
-   public static final StockTextureAliases FAN = create("fan");
-   public static final StockTextureAliases STEM = create("stem");
-   public static final StockTextureAliases UPPER_STEM = create("upperstem");
-   public static final StockTextureAliases CROP = create("crop");
-   public static final StockTextureAliases DIRT = create("dirt");
-   public static final StockTextureAliases FIRE = create("fire");
-   public static final StockTextureAliases LANTERN = create("lantern");
-   public static final StockTextureAliases PLATFORM = create("platform");
-   public static final StockTextureAliases UNSTICKY = create("unsticky");
-   public static final StockTextureAliases TORCH = create("torch");
-   public static final StockTextureAliases LAYER0 = create("layer0");
-   public static final StockTextureAliases LIT_LOG = create("lit_log");
-   private final String id;
-   @Nullable
-   private final StockTextureAliases parent;
+public final class StockTextureAliases
+{
+    public static final StockTextureAliases ALL = createTextureAlias("all");
+    public static final StockTextureAliases TEXTURE = createTextureAlias("texture", ALL);
+    public static final StockTextureAliases PARTICLE = createTextureAlias("particle", TEXTURE);
+    public static final StockTextureAliases END = createTextureAlias("end", ALL);
+    public static final StockTextureAliases BOTTOM = createTextureAlias("bottom", END);
+    public static final StockTextureAliases TOP = createTextureAlias("top", END);
+    public static final StockTextureAliases FRONT = createTextureAlias("front", ALL);
+    public static final StockTextureAliases BACK = createTextureAlias("back", ALL);
+    public static final StockTextureAliases SIDE = createTextureAlias("side", ALL);
+    public static final StockTextureAliases NORTH = createTextureAlias("north", SIDE);
+    public static final StockTextureAliases SOUTH = createTextureAlias("south", SIDE);
+    public static final StockTextureAliases EAST = createTextureAlias("east", SIDE);
+    public static final StockTextureAliases WEST = createTextureAlias("west", SIDE);
+    public static final StockTextureAliases UP = createTextureAlias("up");
+    public static final StockTextureAliases DOWN = createTextureAlias("down");
+    public static final StockTextureAliases CROSS = createTextureAlias("cross");
+    public static final StockTextureAliases PLANT = createTextureAlias("plant");
+    public static final StockTextureAliases WALL = createTextureAlias("wall", ALL);
+    public static final StockTextureAliases RAIL = createTextureAlias("rail");
+    public static final StockTextureAliases WOOL = createTextureAlias("wool");
+    public static final StockTextureAliases PATTERN = createTextureAlias("pattern");
+    public static final StockTextureAliases PANE = createTextureAlias("pane");
+    public static final StockTextureAliases EDGE = createTextureAlias("edge");
+    public static final StockTextureAliases FAN = createTextureAlias("fan");
+    public static final StockTextureAliases STEM = createTextureAlias("stem");
+    public static final StockTextureAliases UPPERSTEM = createTextureAlias("upperstem");
+    public static final StockTextureAliases CROP = createTextureAlias("crop");
+    public static final StockTextureAliases DIRT = createTextureAlias("dirt");
+    public static final StockTextureAliases FIRE = createTextureAlias("fire");
+    public static final StockTextureAliases LANTERN = createTextureAlias("lantern");
+    public static final StockTextureAliases PLATFORM = createTextureAlias("platform");
+    public static final StockTextureAliases UNSTICKY = createTextureAlias("unsticky");
+    public static final StockTextureAliases TORCH = createTextureAlias("torch");
+    public static final StockTextureAliases LAYER_ZERO = createTextureAlias("layer0");
+    public static final StockTextureAliases LIT_LOG = createTextureAlias("lit_log");
+    private final String name;
+    @Nullable
+    private final StockTextureAliases textureAlias;
 
-   private static StockTextureAliases create(String p_240431_0_) {
-      return new StockTextureAliases(p_240431_0_, (StockTextureAliases)null);
-   }
+    private static StockTextureAliases createTextureAlias(String name)
+    {
+        return new StockTextureAliases(name, (StockTextureAliases)null);
+    }
 
-   private static StockTextureAliases create(String p_240432_0_, StockTextureAliases p_240432_1_) {
-      return new StockTextureAliases(p_240432_0_, p_240432_1_);
-   }
+    private static StockTextureAliases createTextureAlias(String name, StockTextureAliases textureAlias)
+    {
+        return new StockTextureAliases(name, textureAlias);
+    }
 
-   private StockTextureAliases(String p_i232547_1_, @Nullable StockTextureAliases p_i232547_2_) {
-      this.id = p_i232547_1_;
-      this.parent = p_i232547_2_;
-   }
+    private StockTextureAliases(String name, @Nullable StockTextureAliases textureAlias)
+    {
+        this.name = name;
+        this.textureAlias = textureAlias;
+    }
 
-   public String getId() {
-      return this.id;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   @Nullable
-   public StockTextureAliases getParent() {
-      return this.parent;
-   }
+    @Nullable
+    public StockTextureAliases getAlias()
+    {
+        return this.textureAlias;
+    }
 
-   public String toString() {
-      return "#" + this.id;
-   }
+    public String toString()
+    {
+        return "#" + this.name;
+    }
 }

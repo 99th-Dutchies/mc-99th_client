@@ -47,857 +47,1148 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class CreativeScreen extends DisplayEffectsScreen<CreativeScreen.CreativeContainer> {
-   private static final ResourceLocation CREATIVE_TABS_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
-   private static final Inventory CONTAINER = new Inventory(45);
-   private static final ITextComponent TRASH_SLOT_TOOLTIP = new TranslationTextComponent("inventory.binSlot");
-   private static int selectedTab = ItemGroup.TAB_BUILDING_BLOCKS.getId();
-   private float scrollOffs;
-   private boolean scrolling;
-   private TextFieldWidget searchBox;
-   @Nullable
-   private List<Slot> originalSlots;
-   @Nullable
-   private Slot destroyItemSlot;
-   private CreativeCraftingListener listener;
-   private boolean ignoreTextInput;
-   private boolean hasClickedOutside;
-   private final Map<ResourceLocation, ITag<Item>> visibleTags = Maps.newTreeMap();
+public class CreativeScreen extends DisplayEffectsScreen<CreativeScreen.CreativeContainer>
+{
+    /** The location of the creative inventory tabs texture */
+    private static final ResourceLocation CREATIVE_INVENTORY_TABS = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
+    private static final Inventory TMP_INVENTORY = new Inventory(45);
+    private static final ITextComponent field_243345_D = new TranslationTextComponent("inventory.binSlot");
 
-   public CreativeScreen(PlayerEntity p_i1088_1_) {
-      super(new CreativeScreen.CreativeContainer(p_i1088_1_), p_i1088_1_.inventory, StringTextComponent.EMPTY);
-      p_i1088_1_.containerMenu = this.menu;
-      this.passEvents = true;
-      this.imageHeight = 136;
-      this.imageWidth = 195;
-   }
+    /** Currently selected creative inventory tab index. */
+    private static int selectedTabIndex = ItemGroup.BUILDING_BLOCKS.getIndex();
 
-   public void tick() {
-      if (!this.minecraft.gameMode.hasInfiniteItems()) {
-         this.minecraft.setScreen(new InventoryScreen(this.minecraft.player));
-      } else if (this.searchBox != null) {
-         this.searchBox.tick();
-      }
+    /** Amount scrolled in Creative mode inventory (0 = top, 1 = bottom) */
+    private float currentScroll;
 
-   }
+    /** True if the scrollbar is being dragged */
+    private boolean isScrolling;
+    private TextFieldWidget searchField;
+    @Nullable
+    private List<Slot> originalSlots;
+    @Nullable
+    private Slot destroyItemSlot;
+    private CreativeCraftingListener listener;
+    private boolean field_195377_F;
+    private boolean field_199506_G;
+    private final Map<ResourceLocation, ITag<Item>> tagSearchResults = Maps.newTreeMap();
 
-   protected void slotClicked(@Nullable Slot p_184098_1_, int p_184098_2_, int p_184098_3_, ClickType p_184098_4_) {
-      if (this.isCreativeSlot(p_184098_1_)) {
-         this.searchBox.moveCursorToEnd();
-         this.searchBox.setHighlightPos(0);
-      }
+    public CreativeScreen(PlayerEntity player)
+    {
+        super(new CreativeScreen.CreativeContainer(player), player.inventory, StringTextComponent.EMPTY);
+        player.openContainer = this.container;
+        this.passEvents = true;
+        this.ySize = 136;
+        this.xSize = 195;
+    }
 
-      boolean flag = p_184098_4_ == ClickType.QUICK_MOVE;
-      p_184098_4_ = p_184098_2_ == -999 && p_184098_4_ == ClickType.PICKUP ? ClickType.THROW : p_184098_4_;
-      if (p_184098_1_ == null && selectedTab != ItemGroup.TAB_INVENTORY.getId() && p_184098_4_ != ClickType.QUICK_CRAFT) {
-         PlayerInventory playerinventory1 = this.minecraft.player.inventory;
-         if (!playerinventory1.getCarried().isEmpty() && this.hasClickedOutside) {
-            if (p_184098_3_ == 0) {
-               this.minecraft.player.drop(playerinventory1.getCarried(), true);
-               this.minecraft.gameMode.handleCreativeModeItemDrop(playerinventory1.getCarried());
-               playerinventory1.setCarried(ItemStack.EMPTY);
+    public void tick()
+    {
+        if (!this.minecraft.playerController.isInCreativeMode())
+        {
+            this.minecraft.displayGuiScreen(new InventoryScreen(this.minecraft.player));
+        }
+        else if (this.searchField != null)
+        {
+            this.searchField.tick();
+        }
+    }
+
+    /**
+     * Called when the mouse is clicked over a slot or outside the gui.
+     */
+    protected void handleMouseClick(@Nullable Slot slotIn, int slotId, int mouseButton, ClickType type)
+    {
+        if (this.hasTmpInventory(slotIn))
+        {
+            this.searchField.setCursorPositionEnd();
+            this.searchField.setSelectionPos(0);
+        }
+
+        boolean flag = type == ClickType.QUICK_MOVE;
+        type = slotId == -999 && type == ClickType.PICKUP ? ClickType.THROW : type;
+
+        if (slotIn == null && selectedTabIndex != ItemGroup.INVENTORY.getIndex() && type != ClickType.QUICK_CRAFT)
+        {
+            PlayerInventory playerinventory1 = this.minecraft.player.inventory;
+
+            if (!playerinventory1.getItemStack().isEmpty() && this.field_199506_G)
+            {
+                if (mouseButton == 0)
+                {
+                    this.minecraft.player.dropItem(playerinventory1.getItemStack(), true);
+                    this.minecraft.playerController.sendPacketDropItem(playerinventory1.getItemStack());
+                    playerinventory1.setItemStack(ItemStack.EMPTY);
+                }
+
+                if (mouseButton == 1)
+                {
+                    ItemStack itemstack6 = playerinventory1.getItemStack().split(1);
+                    this.minecraft.player.dropItem(itemstack6, true);
+                    this.minecraft.playerController.sendPacketDropItem(itemstack6);
+                }
+            }
+        }
+        else
+        {
+            if (slotIn != null && !slotIn.canTakeStack(this.minecraft.player))
+            {
+                return;
             }
 
-            if (p_184098_3_ == 1) {
-               ItemStack itemstack6 = playerinventory1.getCarried().split(1);
-               this.minecraft.player.drop(itemstack6, true);
-               this.minecraft.gameMode.handleCreativeModeItemDrop(itemstack6);
+            if (slotIn == this.destroyItemSlot && flag)
+            {
+                for (int j = 0; j < this.minecraft.player.container.getInventory().size(); ++j)
+                {
+                    this.minecraft.playerController.sendSlotPacket(ItemStack.EMPTY, j);
+                }
             }
-         }
-      } else {
-         if (p_184098_1_ != null && !p_184098_1_.mayPickup(this.minecraft.player)) {
-            return;
-         }
-
-         if (p_184098_1_ == this.destroyItemSlot && flag) {
-            for(int j = 0; j < this.minecraft.player.inventoryMenu.getItems().size(); ++j) {
-               this.minecraft.gameMode.handleCreativeModeItemAdd(ItemStack.EMPTY, j);
+            else if (selectedTabIndex == ItemGroup.INVENTORY.getIndex())
+            {
+                if (slotIn == this.destroyItemSlot)
+                {
+                    this.minecraft.player.inventory.setItemStack(ItemStack.EMPTY);
+                }
+                else if (type == ClickType.THROW && slotIn != null && slotIn.getHasStack())
+                {
+                    ItemStack itemstack = slotIn.decrStackSize(mouseButton == 0 ? 1 : slotIn.getStack().getMaxStackSize());
+                    ItemStack itemstack1 = slotIn.getStack();
+                    this.minecraft.player.dropItem(itemstack, true);
+                    this.minecraft.playerController.sendPacketDropItem(itemstack);
+                    this.minecraft.playerController.sendSlotPacket(itemstack1, ((CreativeScreen.CreativeSlot)slotIn).slot.slotNumber);
+                }
+                else if (type == ClickType.THROW && !this.minecraft.player.inventory.getItemStack().isEmpty())
+                {
+                    this.minecraft.player.dropItem(this.minecraft.player.inventory.getItemStack(), true);
+                    this.minecraft.playerController.sendPacketDropItem(this.minecraft.player.inventory.getItemStack());
+                    this.minecraft.player.inventory.setItemStack(ItemStack.EMPTY);
+                }
+                else
+                {
+                    this.minecraft.player.container.slotClick(slotIn == null ? slotId : ((CreativeScreen.CreativeSlot)slotIn).slot.slotNumber, mouseButton, type, this.minecraft.player);
+                    this.minecraft.player.container.detectAndSendChanges();
+                }
             }
-         } else if (selectedTab == ItemGroup.TAB_INVENTORY.getId()) {
-            if (p_184098_1_ == this.destroyItemSlot) {
-               this.minecraft.player.inventory.setCarried(ItemStack.EMPTY);
-            } else if (p_184098_4_ == ClickType.THROW && p_184098_1_ != null && p_184098_1_.hasItem()) {
-               ItemStack itemstack = p_184098_1_.remove(p_184098_3_ == 0 ? 1 : p_184098_1_.getItem().getMaxStackSize());
-               ItemStack itemstack1 = p_184098_1_.getItem();
-               this.minecraft.player.drop(itemstack, true);
-               this.minecraft.gameMode.handleCreativeModeItemDrop(itemstack);
-               this.minecraft.gameMode.handleCreativeModeItemAdd(itemstack1, ((CreativeScreen.CreativeSlot)p_184098_1_).target.index);
-            } else if (p_184098_4_ == ClickType.THROW && !this.minecraft.player.inventory.getCarried().isEmpty()) {
-               this.minecraft.player.drop(this.minecraft.player.inventory.getCarried(), true);
-               this.minecraft.gameMode.handleCreativeModeItemDrop(this.minecraft.player.inventory.getCarried());
-               this.minecraft.player.inventory.setCarried(ItemStack.EMPTY);
-            } else {
-               this.minecraft.player.inventoryMenu.clicked(p_184098_1_ == null ? p_184098_2_ : ((CreativeScreen.CreativeSlot)p_184098_1_).target.index, p_184098_3_, p_184098_4_, this.minecraft.player);
-               this.minecraft.player.inventoryMenu.broadcastChanges();
+            else if (type != ClickType.QUICK_CRAFT && slotIn.inventory == TMP_INVENTORY)
+            {
+                PlayerInventory playerinventory = this.minecraft.player.inventory;
+                ItemStack itemstack5 = playerinventory.getItemStack();
+                ItemStack itemstack7 = slotIn.getStack();
+
+                if (type == ClickType.SWAP)
+                {
+                    if (!itemstack7.isEmpty())
+                    {
+                        ItemStack itemstack10 = itemstack7.copy();
+                        itemstack10.setCount(itemstack10.getMaxStackSize());
+                        this.minecraft.player.inventory.setInventorySlotContents(mouseButton, itemstack10);
+                        this.minecraft.player.container.detectAndSendChanges();
+                    }
+
+                    return;
+                }
+
+                if (type == ClickType.CLONE)
+                {
+                    if (playerinventory.getItemStack().isEmpty() && slotIn.getHasStack())
+                    {
+                        ItemStack itemstack9 = slotIn.getStack().copy();
+                        itemstack9.setCount(itemstack9.getMaxStackSize());
+                        playerinventory.setItemStack(itemstack9);
+                    }
+
+                    return;
+                }
+
+                if (type == ClickType.THROW)
+                {
+                    if (!itemstack7.isEmpty())
+                    {
+                        ItemStack itemstack8 = itemstack7.copy();
+                        itemstack8.setCount(mouseButton == 0 ? 1 : itemstack8.getMaxStackSize());
+                        this.minecraft.player.dropItem(itemstack8, true);
+                        this.minecraft.playerController.sendPacketDropItem(itemstack8);
+                    }
+
+                    return;
+                }
+
+                if (!itemstack5.isEmpty() && !itemstack7.isEmpty() && itemstack5.isItemEqual(itemstack7) && ItemStack.areItemStackTagsEqual(itemstack5, itemstack7))
+                {
+                    if (mouseButton == 0)
+                    {
+                        if (flag)
+                        {
+                            itemstack5.setCount(itemstack5.getMaxStackSize());
+                        }
+                        else if (itemstack5.getCount() < itemstack5.getMaxStackSize())
+                        {
+                            itemstack5.grow(1);
+                        }
+                    }
+                    else
+                    {
+                        itemstack5.shrink(1);
+                    }
+                }
+                else if (!itemstack7.isEmpty() && itemstack5.isEmpty())
+                {
+                    playerinventory.setItemStack(itemstack7.copy());
+                    itemstack5 = playerinventory.getItemStack();
+
+                    if (flag)
+                    {
+                        itemstack5.setCount(itemstack5.getMaxStackSize());
+                    }
+                }
+                else if (mouseButton == 0)
+                {
+                    playerinventory.setItemStack(ItemStack.EMPTY);
+                }
+                else
+                {
+                    playerinventory.getItemStack().shrink(1);
+                }
             }
-         } else if (p_184098_4_ != ClickType.QUICK_CRAFT && p_184098_1_.container == CONTAINER) {
-            PlayerInventory playerinventory = this.minecraft.player.inventory;
-            ItemStack itemstack5 = playerinventory.getCarried();
-            ItemStack itemstack7 = p_184098_1_.getItem();
-            if (p_184098_4_ == ClickType.SWAP) {
-               if (!itemstack7.isEmpty()) {
-                  ItemStack itemstack10 = itemstack7.copy();
-                  itemstack10.setCount(itemstack10.getMaxStackSize());
-                  this.minecraft.player.inventory.setItem(p_184098_3_, itemstack10);
-                  this.minecraft.player.inventoryMenu.broadcastChanges();
-               }
+            else if (this.container != null)
+            {
+                ItemStack itemstack3 = slotIn == null ? ItemStack.EMPTY : this.container.getSlot(slotIn.slotNumber).getStack();
+                this.container.slotClick(slotIn == null ? slotId : slotIn.slotNumber, mouseButton, type, this.minecraft.player);
 
-               return;
+                if (Container.getDragEvent(mouseButton) == 2)
+                {
+                    for (int k = 0; k < 9; ++k)
+                    {
+                        this.minecraft.playerController.sendSlotPacket(this.container.getSlot(45 + k).getStack(), 36 + k);
+                    }
+                }
+                else if (slotIn != null)
+                {
+                    ItemStack itemstack4 = this.container.getSlot(slotIn.slotNumber).getStack();
+                    this.minecraft.playerController.sendSlotPacket(itemstack4, slotIn.slotNumber - (this.container).inventorySlots.size() + 9 + 36);
+                    int i = 45 + mouseButton;
+
+                    if (type == ClickType.SWAP)
+                    {
+                        this.minecraft.playerController.sendSlotPacket(itemstack3, i - (this.container).inventorySlots.size() + 9 + 36);
+                    }
+                    else if (type == ClickType.THROW && !itemstack3.isEmpty())
+                    {
+                        ItemStack itemstack2 = itemstack3.copy();
+                        itemstack2.setCount(mouseButton == 0 ? 1 : itemstack2.getMaxStackSize());
+                        this.minecraft.player.dropItem(itemstack2, true);
+                        this.minecraft.playerController.sendPacketDropItem(itemstack2);
+                    }
+
+                    this.minecraft.player.container.detectAndSendChanges();
+                }
             }
+        }
+    }
 
-            if (p_184098_4_ == ClickType.CLONE) {
-               if (playerinventory.getCarried().isEmpty() && p_184098_1_.hasItem()) {
-                  ItemStack itemstack9 = p_184098_1_.getItem().copy();
-                  itemstack9.setCount(itemstack9.getMaxStackSize());
-                  playerinventory.setCarried(itemstack9);
-               }
+    private boolean hasTmpInventory(@Nullable Slot slotIn)
+    {
+        return slotIn != null && slotIn.inventory == TMP_INVENTORY;
+    }
 
-               return;
-            }
+    protected void updateActivePotionEffects()
+    {
+        int i = this.guiLeft;
+        super.updateActivePotionEffects();
 
-            if (p_184098_4_ == ClickType.THROW) {
-               if (!itemstack7.isEmpty()) {
-                  ItemStack itemstack8 = itemstack7.copy();
-                  itemstack8.setCount(p_184098_3_ == 0 ? 1 : itemstack8.getMaxStackSize());
-                  this.minecraft.player.drop(itemstack8, true);
-                  this.minecraft.gameMode.handleCreativeModeItemDrop(itemstack8);
-               }
+        if (this.searchField != null && this.guiLeft != i)
+        {
+            this.searchField.setX(this.guiLeft + 82);
+        }
+    }
 
-               return;
-            }
+    protected void init()
+    {
+        if (this.minecraft.playerController.isInCreativeMode())
+        {
+            super.init();
+            this.minecraft.keyboardListener.enableRepeatEvents(true);
+            this.searchField = new TextFieldWidget(this.font, this.guiLeft + 82, this.guiTop + 6, 80, 9, new TranslationTextComponent("itemGroup.search"));
+            this.searchField.setMaxStringLength(50);
+            this.searchField.setEnableBackgroundDrawing(false);
+            this.searchField.setVisible(false);
+            this.searchField.setTextColor(16777215);
+            this.children.add(this.searchField);
+            int i = selectedTabIndex;
+            selectedTabIndex = -1;
+            this.setCurrentCreativeTab(ItemGroup.GROUPS[i]);
+            this.minecraft.player.container.removeListener(this.listener);
+            this.listener = new CreativeCraftingListener(this.minecraft);
+            this.minecraft.player.container.addListener(this.listener);
+        }
+        else
+        {
+            this.minecraft.displayGuiScreen(new InventoryScreen(this.minecraft.player));
+        }
+    }
 
-            if (!itemstack5.isEmpty() && !itemstack7.isEmpty() && itemstack5.sameItem(itemstack7) && ItemStack.tagMatches(itemstack5, itemstack7)) {
-               if (p_184098_3_ == 0) {
-                  if (flag) {
-                     itemstack5.setCount(itemstack5.getMaxStackSize());
-                  } else if (itemstack5.getCount() < itemstack5.getMaxStackSize()) {
-                     itemstack5.grow(1);
-                  }
-               } else {
-                  itemstack5.shrink(1);
-               }
-            } else if (!itemstack7.isEmpty() && itemstack5.isEmpty()) {
-               playerinventory.setCarried(itemstack7.copy());
-               itemstack5 = playerinventory.getCarried();
-               if (flag) {
-                  itemstack5.setCount(itemstack5.getMaxStackSize());
-               }
-            } else if (p_184098_3_ == 0) {
-               playerinventory.setCarried(ItemStack.EMPTY);
-            } else {
-               playerinventory.getCarried().shrink(1);
-            }
-         } else if (this.menu != null) {
-            ItemStack itemstack3 = p_184098_1_ == null ? ItemStack.EMPTY : this.menu.getSlot(p_184098_1_.index).getItem();
-            this.menu.clicked(p_184098_1_ == null ? p_184098_2_ : p_184098_1_.index, p_184098_3_, p_184098_4_, this.minecraft.player);
-            if (Container.getQuickcraftHeader(p_184098_3_) == 2) {
-               for(int k = 0; k < 9; ++k) {
-                  this.minecraft.gameMode.handleCreativeModeItemAdd(this.menu.getSlot(45 + k).getItem(), 36 + k);
-               }
-            } else if (p_184098_1_ != null) {
-               ItemStack itemstack4 = this.menu.getSlot(p_184098_1_.index).getItem();
-               this.minecraft.gameMode.handleCreativeModeItemAdd(itemstack4, p_184098_1_.index - (this.menu).slots.size() + 9 + 36);
-               int i = 45 + p_184098_3_;
-               if (p_184098_4_ == ClickType.SWAP) {
-                  this.minecraft.gameMode.handleCreativeModeItemAdd(itemstack3, i - (this.menu).slots.size() + 9 + 36);
-               } else if (p_184098_4_ == ClickType.THROW && !itemstack3.isEmpty()) {
-                  ItemStack itemstack2 = itemstack3.copy();
-                  itemstack2.setCount(p_184098_3_ == 0 ? 1 : itemstack2.getMaxStackSize());
-                  this.minecraft.player.drop(itemstack2, true);
-                  this.minecraft.gameMode.handleCreativeModeItemDrop(itemstack2);
-               }
+    public void resize(Minecraft minecraft, int width, int height)
+    {
+        String s = this.searchField.getText();
+        this.init(minecraft, width, height);
+        this.searchField.setText(s);
 
-               this.minecraft.player.inventoryMenu.broadcastChanges();
-            }
-         }
-      }
+        if (!this.searchField.getText().isEmpty())
+        {
+            this.updateCreativeSearch();
+        }
+    }
 
-   }
+    public void onClose()
+    {
+        super.onClose();
 
-   private boolean isCreativeSlot(@Nullable Slot p_208018_1_) {
-      return p_208018_1_ != null && p_208018_1_.container == CONTAINER;
-   }
+        if (this.minecraft.player != null && this.minecraft.player.inventory != null)
+        {
+            this.minecraft.player.container.removeListener(this.listener);
+        }
 
-   protected void checkEffectRendering() {
-      int i = this.leftPos;
-      super.checkEffectRendering();
-      if (this.searchBox != null && this.leftPos != i) {
-         this.searchBox.setX(this.leftPos + 82);
-      }
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+    }
 
-   }
-
-   protected void init() {
-      if (this.minecraft.gameMode.hasInfiniteItems()) {
-         super.init();
-         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-         this.searchBox = new TextFieldWidget(this.font, this.leftPos + 82, this.topPos + 6, 80, 9, new TranslationTextComponent("itemGroup.search"));
-         this.searchBox.setMaxLength(50);
-         this.searchBox.setBordered(false);
-         this.searchBox.setVisible(false);
-         this.searchBox.setTextColor(16777215);
-         this.children.add(this.searchBox);
-         int i = selectedTab;
-         selectedTab = -1;
-         this.selectTab(ItemGroup.TABS[i]);
-         this.minecraft.player.inventoryMenu.removeSlotListener(this.listener);
-         this.listener = new CreativeCraftingListener(this.minecraft);
-         this.minecraft.player.inventoryMenu.addSlotListener(this.listener);
-      } else {
-         this.minecraft.setScreen(new InventoryScreen(this.minecraft.player));
-      }
-
-   }
-
-   public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
-      String s = this.searchBox.getValue();
-      this.init(p_231152_1_, p_231152_2_, p_231152_3_);
-      this.searchBox.setValue(s);
-      if (!this.searchBox.getValue().isEmpty()) {
-         this.refreshSearchResults();
-      }
-
-   }
-
-   public void removed() {
-      super.removed();
-      if (this.minecraft.player != null && this.minecraft.player.inventory != null) {
-         this.minecraft.player.inventoryMenu.removeSlotListener(this.listener);
-      }
-
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-   }
-
-   public boolean charTyped(char p_231042_1_, int p_231042_2_) {
-      if (this.ignoreTextInput) {
-         return false;
-      } else if (selectedTab != ItemGroup.TAB_SEARCH.getId()) {
-         return false;
-      } else {
-         String s = this.searchBox.getValue();
-         if (this.searchBox.charTyped(p_231042_1_, p_231042_2_)) {
-            if (!Objects.equals(s, this.searchBox.getValue())) {
-               this.refreshSearchResults();
-            }
-
-            return true;
-         } else {
+    public boolean charTyped(char codePoint, int modifiers)
+    {
+        if (this.field_195377_F)
+        {
             return false;
-         }
-      }
-   }
+        }
+        else if (selectedTabIndex != ItemGroup.SEARCH.getIndex())
+        {
+            return false;
+        }
+        else
+        {
+            String s = this.searchField.getText();
 
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      this.ignoreTextInput = false;
-      if (selectedTab != ItemGroup.TAB_SEARCH.getId()) {
-         if (this.minecraft.options.keyChat.matches(p_231046_1_, p_231046_2_)) {
-            this.ignoreTextInput = true;
-            this.selectTab(ItemGroup.TAB_SEARCH);
+            if (this.searchField.charTyped(codePoint, modifiers))
+            {
+                if (!Objects.equals(s, this.searchField.getText()))
+                {
+                    this.updateCreativeSearch();
+                }
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        this.field_195377_F = false;
+
+        if (selectedTabIndex != ItemGroup.SEARCH.getIndex())
+        {
+            if (this.minecraft.gameSettings.keyBindChat.matchesKey(keyCode, scanCode))
+            {
+                this.field_195377_F = true;
+                this.setCurrentCreativeTab(ItemGroup.SEARCH);
+                return true;
+            }
+            else
+            {
+                return super.keyPressed(keyCode, scanCode, modifiers);
+            }
+        }
+        else
+        {
+            boolean flag = !this.hasTmpInventory(this.hoveredSlot) || this.hoveredSlot.getHasStack();
+            boolean flag1 = InputMappings.getInputByCode(keyCode, scanCode).func_241552_e_().isPresent();
+
+            if (flag && flag1 && this.itemStackMoved(keyCode, scanCode))
+            {
+                this.field_195377_F = true;
+                return true;
+            }
+            else
+            {
+                String s = this.searchField.getText();
+
+                if (this.searchField.keyPressed(keyCode, scanCode, modifiers))
+                {
+                    if (!Objects.equals(s, this.searchField.getText()))
+                    {
+                        this.updateCreativeSearch();
+                    }
+
+                    return true;
+                }
+                else
+                {
+                    return this.searchField.isFocused() && this.searchField.getVisible() && keyCode != 256 ? true : super.keyPressed(keyCode, scanCode, modifiers);
+                }
+            }
+        }
+    }
+
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers)
+    {
+        this.field_195377_F = false;
+        return super.keyReleased(keyCode, scanCode, modifiers);
+    }
+
+    private void updateCreativeSearch()
+    {
+        (this.container).itemList.clear();
+        this.tagSearchResults.clear();
+        String s = this.searchField.getText();
+
+        if (s.isEmpty())
+        {
+            for (Item item : Registry.ITEM)
+            {
+                item.fillItemGroup(ItemGroup.SEARCH, (this.container).itemList);
+            }
+        }
+        else
+        {
+            ISearchTree<ItemStack> isearchtree;
+
+            if (s.startsWith("#"))
+            {
+                s = s.substring(1);
+                isearchtree = this.minecraft.getSearchTree(SearchTreeManager.TAGS);
+                this.searchTags(s);
+            }
+            else
+            {
+                isearchtree = this.minecraft.getSearchTree(SearchTreeManager.ITEMS);
+            }
+
+            (this.container).itemList.addAll(isearchtree.search(s.toLowerCase(Locale.ROOT)));
+        }
+
+        this.currentScroll = 0.0F;
+        this.container.scrollTo(0.0F);
+    }
+
+    private void searchTags(String search)
+    {
+        int i = search.indexOf(58);
+        Predicate<ResourceLocation> predicate;
+
+        if (i == -1)
+        {
+            predicate = (p_214084_1_) ->
+            {
+                return p_214084_1_.getPath().contains(search);
+            };
+        }
+        else
+        {
+            String s = search.substring(0, i).trim();
+            String s1 = search.substring(i + 1).trim();
+            predicate = (p_214081_2_) ->
+            {
+                return p_214081_2_.getNamespace().contains(s) && p_214081_2_.getPath().contains(s1);
+            };
+        }
+
+        ITagCollection<Item> itagcollection = ItemTags.getCollection();
+        itagcollection.getRegisteredTags().stream().filter(predicate).forEach((p_214082_2_) ->
+        {
+            ITag itag = this.tagSearchResults.put(p_214082_2_, itagcollection.get(p_214082_2_));
+        });
+    }
+
+    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y)
+    {
+        ItemGroup itemgroup = ItemGroup.GROUPS[selectedTabIndex];
+
+        if (itemgroup.drawInForegroundOfTab())
+        {
+            RenderSystem.disableBlend();
+            this.font.func_243248_b(matrixStack, itemgroup.getGroupName(), 8.0F, 6.0F, 4210752);
+        }
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button)
+    {
+        if (button == 0)
+        {
+            double d0 = mouseX - (double)this.guiLeft;
+            double d1 = mouseY - (double)this.guiTop;
+
+            for (ItemGroup itemgroup : ItemGroup.GROUPS)
+            {
+                if (this.isMouseOverGroup(itemgroup, d0, d1))
+                {
+                    return true;
+                }
+            }
+
+            if (selectedTabIndex != ItemGroup.INVENTORY.getIndex() && this.func_195376_a(mouseX, mouseY))
+            {
+                this.isScrolling = this.needsScrollBars();
+                return true;
+            }
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    public boolean mouseReleased(double mouseX, double mouseY, int button)
+    {
+        if (button == 0)
+        {
+            double d0 = mouseX - (double)this.guiLeft;
+            double d1 = mouseY - (double)this.guiTop;
+            this.isScrolling = false;
+
+            for (ItemGroup itemgroup : ItemGroup.GROUPS)
+            {
+                if (this.isMouseOverGroup(itemgroup, d0, d1))
+                {
+                    this.setCurrentCreativeTab(itemgroup);
+                    return true;
+                }
+            }
+        }
+
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    /**
+     * returns (if you are not on the inventoryTab) and (the flag isn't set) and (you have more than 1 page of items)
+     */
+    private boolean needsScrollBars()
+    {
+        return selectedTabIndex != ItemGroup.INVENTORY.getIndex() && ItemGroup.GROUPS[selectedTabIndex].hasScrollbar() && this.container.canScroll();
+    }
+
+    /**
+     * Sets the current creative tab, restructuring the GUI as needed.
+     */
+    private void setCurrentCreativeTab(ItemGroup tab)
+    {
+        int i = selectedTabIndex;
+        selectedTabIndex = tab.getIndex();
+        this.dragSplittingSlots.clear();
+        (this.container).itemList.clear();
+
+        if (tab == ItemGroup.HOTBAR)
+        {
+            CreativeSettings creativesettings = this.minecraft.getCreativeSettings();
+
+            for (int j = 0; j < 9; ++j)
+            {
+                HotbarSnapshot hotbarsnapshot = creativesettings.getHotbarSnapshot(j);
+
+                if (hotbarsnapshot.isEmpty())
+                {
+                    for (int k = 0; k < 9; ++k)
+                    {
+                        if (k == j)
+                        {
+                            ItemStack itemstack = new ItemStack(Items.PAPER);
+                            itemstack.getOrCreateChildTag("CustomCreativeLock");
+                            ITextComponent itextcomponent = this.minecraft.gameSettings.keyBindsHotbar[j].func_238171_j_();
+                            ITextComponent itextcomponent1 = this.minecraft.gameSettings.keyBindSaveToolbar.func_238171_j_();
+                            itemstack.setDisplayName(new TranslationTextComponent("inventory.hotbarInfo", itextcomponent1, itextcomponent));
+                            (this.container).itemList.add(itemstack);
+                        }
+                        else
+                        {
+                            (this.container).itemList.add(ItemStack.EMPTY);
+                        }
+                    }
+                }
+                else
+                {
+                    (this.container).itemList.addAll(hotbarsnapshot);
+                }
+            }
+        }
+        else if (tab != ItemGroup.SEARCH)
+        {
+            tab.fill((this.container).itemList);
+        }
+
+        if (tab == ItemGroup.INVENTORY)
+        {
+            Container container = this.minecraft.player.container;
+
+            if (this.originalSlots == null)
+            {
+                this.originalSlots = ImmutableList.copyOf((this.container).inventorySlots);
+            }
+
+            (this.container).inventorySlots.clear();
+
+            for (int l = 0; l < container.inventorySlots.size(); ++l)
+            {
+                int i1;
+                int j1;
+
+                if (l >= 5 && l < 9)
+                {
+                    int l1 = l - 5;
+                    int j2 = l1 / 2;
+                    int l2 = l1 % 2;
+                    i1 = 54 + j2 * 54;
+                    j1 = 6 + l2 * 27;
+                }
+                else if (l >= 0 && l < 5)
+                {
+                    i1 = -2000;
+                    j1 = -2000;
+                }
+                else if (l == 45)
+                {
+                    i1 = 35;
+                    j1 = 20;
+                }
+                else
+                {
+                    int k1 = l - 9;
+                    int i2 = k1 % 9;
+                    int k2 = k1 / 9;
+                    i1 = 9 + i2 * 18;
+
+                    if (l >= 36)
+                    {
+                        j1 = 112;
+                    }
+                    else
+                    {
+                        j1 = 54 + k2 * 18;
+                    }
+                }
+
+                Slot slot = new CreativeScreen.CreativeSlot(container.inventorySlots.get(l), l, i1, j1);
+                (this.container).inventorySlots.add(slot);
+            }
+
+            this.destroyItemSlot = new Slot(TMP_INVENTORY, 0, 173, 112);
+            (this.container).inventorySlots.add(this.destroyItemSlot);
+        }
+        else if (i == ItemGroup.INVENTORY.getIndex())
+        {
+            (this.container).inventorySlots.clear();
+            (this.container).inventorySlots.addAll(this.originalSlots);
+            this.originalSlots = null;
+        }
+
+        if (this.searchField != null)
+        {
+            if (tab == ItemGroup.SEARCH)
+            {
+                this.searchField.setVisible(true);
+                this.searchField.setCanLoseFocus(false);
+                this.searchField.setFocused2(true);
+
+                if (i != tab.getIndex())
+                {
+                    this.searchField.setText("");
+                }
+
+                this.updateCreativeSearch();
+            }
+            else
+            {
+                this.searchField.setVisible(false);
+                this.searchField.setCanLoseFocus(true);
+                this.searchField.setFocused2(false);
+                this.searchField.setText("");
+            }
+        }
+
+        this.currentScroll = 0.0F;
+        this.container.scrollTo(0.0F);
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta)
+    {
+        if (!this.needsScrollBars())
+        {
+            return false;
+        }
+        else
+        {
+            int i = ((this.container).itemList.size() + 9 - 1) / 9 - 5;
+            this.currentScroll = (float)((double)this.currentScroll - delta / (double)i);
+            this.currentScroll = MathHelper.clamp(this.currentScroll, 0.0F, 1.0F);
+            this.container.scrollTo(this.currentScroll);
             return true;
-         } else {
-            return super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-         }
-      } else {
-         boolean flag = !this.isCreativeSlot(this.hoveredSlot) || this.hoveredSlot.hasItem();
-         boolean flag1 = InputMappings.getKey(p_231046_1_, p_231046_2_).getNumericKeyValue().isPresent();
-         if (flag && flag1 && this.checkHotbarKeyPressed(p_231046_1_, p_231046_2_)) {
-            this.ignoreTextInput = true;
+        }
+    }
+
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeftIn, int guiTopIn, int mouseButton)
+    {
+        boolean flag = mouseX < (double)guiLeftIn || mouseY < (double)guiTopIn || mouseX >= (double)(guiLeftIn + this.xSize) || mouseY >= (double)(guiTopIn + this.ySize);
+        this.field_199506_G = flag && !this.isMouseOverGroup(ItemGroup.GROUPS[selectedTabIndex], mouseX, mouseY);
+        return this.field_199506_G;
+    }
+
+    protected boolean func_195376_a(double p_195376_1_, double p_195376_3_)
+    {
+        int i = this.guiLeft;
+        int j = this.guiTop;
+        int k = i + 175;
+        int l = j + 18;
+        int i1 = k + 14;
+        int j1 = l + 112;
+        return p_195376_1_ >= (double)k && p_195376_3_ >= (double)l && p_195376_1_ < (double)i1 && p_195376_3_ < (double)j1;
+    }
+
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY)
+    {
+        if (this.isScrolling)
+        {
+            int i = this.guiTop + 18;
+            int j = i + 112;
+            this.currentScroll = ((float)mouseY - (float)i - 7.5F) / ((float)(j - i) - 15.0F);
+            this.currentScroll = MathHelper.clamp(this.currentScroll, 0.0F, 1.0F);
+            this.container.scrollTo(this.currentScroll);
             return true;
-         } else {
-            String s = this.searchBox.getValue();
-            if (this.searchBox.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_)) {
-               if (!Objects.equals(s, this.searchBox.getValue())) {
-                  this.refreshSearchResults();
-               }
+        }
+        else
+        {
+            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        }
+    }
 
-               return true;
-            } else {
-               return this.searchBox.isFocused() && this.searchBox.isVisible() && p_231046_1_ != 256 ? true : super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.renderBackground(matrixStack);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+
+        for (ItemGroup itemgroup : ItemGroup.GROUPS)
+        {
+            if (this.func_238809_a_(matrixStack, itemgroup, mouseX, mouseY))
+            {
+                break;
             }
-         }
-      }
-   }
+        }
 
-   public boolean keyReleased(int p_223281_1_, int p_223281_2_, int p_223281_3_) {
-      this.ignoreTextInput = false;
-      return super.keyReleased(p_223281_1_, p_223281_2_, p_223281_3_);
-   }
+        if (this.destroyItemSlot != null && selectedTabIndex == ItemGroup.INVENTORY.getIndex() && this.isPointInRegion(this.destroyItemSlot.xPos, this.destroyItemSlot.yPos, 16, 16, (double)mouseX, (double)mouseY))
+        {
+            this.renderTooltip(matrixStack, field_243345_D, mouseX, mouseY);
+        }
 
-   private void refreshSearchResults() {
-      (this.menu).items.clear();
-      this.visibleTags.clear();
-      String s = this.searchBox.getValue();
-      if (s.isEmpty()) {
-         for(Item item : Registry.ITEM) {
-            item.fillItemCategory(ItemGroup.TAB_SEARCH, (this.menu).items);
-         }
-      } else {
-         ISearchTree<ItemStack> isearchtree;
-         if (s.startsWith("#")) {
-            s = s.substring(1);
-            isearchtree = this.minecraft.getSearchTree(SearchTreeManager.CREATIVE_TAGS);
-            this.updateVisibleTags(s);
-         } else {
-            isearchtree = this.minecraft.getSearchTree(SearchTreeManager.CREATIVE_NAMES);
-         }
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
+    }
 
-         (this.menu).items.addAll(isearchtree.search(s.toLowerCase(Locale.ROOT)));
-      }
+    protected void renderTooltip(MatrixStack matrixStack, ItemStack itemStack, int mouseX, int mouseY)
+    {
+        if (selectedTabIndex == ItemGroup.SEARCH.getIndex())
+        {
+            List<ITextComponent> list = itemStack.getTooltip(this.minecraft.player, this.minecraft.gameSettings.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL);
+            List<ITextComponent> list1 = Lists.newArrayList(list);
+            Item item = itemStack.getItem();
+            ItemGroup itemgroup = item.getGroup();
 
-      this.scrollOffs = 0.0F;
-      this.menu.scrollTo(0.0F);
-   }
+            if (itemgroup == null && item == Items.ENCHANTED_BOOK)
+            {
+                Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(itemStack);
 
-   private void updateVisibleTags(String p_214080_1_) {
-      int i = p_214080_1_.indexOf(58);
-      Predicate<ResourceLocation> predicate;
-      if (i == -1) {
-         predicate = (p_214084_1_) -> {
-            return p_214084_1_.getPath().contains(p_214080_1_);
-         };
-      } else {
-         String s = p_214080_1_.substring(0, i).trim();
-         String s1 = p_214080_1_.substring(i + 1).trim();
-         predicate = (p_214081_2_) -> {
-            return p_214081_2_.getNamespace().contains(s) && p_214081_2_.getPath().contains(s1);
-         };
-      }
+                if (map.size() == 1)
+                {
+                    Enchantment enchantment = map.keySet().iterator().next();
 
-      ITagCollection<Item> itagcollection = ItemTags.getAllTags();
-      itagcollection.getAvailableTags().stream().filter(predicate).forEach((p_214082_2_) -> {
-         ITag itag = this.visibleTags.put(p_214082_2_, itagcollection.getTag(p_214082_2_));
-      });
-   }
-
-   protected void renderLabels(MatrixStack p_230451_1_, int p_230451_2_, int p_230451_3_) {
-      ItemGroup itemgroup = ItemGroup.TABS[selectedTab];
-      if (itemgroup.showTitle()) {
-         RenderSystem.disableBlend();
-         this.font.draw(p_230451_1_, itemgroup.getDisplayName(), 8.0F, 6.0F, 4210752);
-      }
-
-   }
-
-   public boolean mouseClicked(double p_231044_1_, double p_231044_3_, int p_231044_5_) {
-      if (p_231044_5_ == 0) {
-         double d0 = p_231044_1_ - (double)this.leftPos;
-         double d1 = p_231044_3_ - (double)this.topPos;
-
-         for(ItemGroup itemgroup : ItemGroup.TABS) {
-            if (this.checkTabClicked(itemgroup, d0, d1)) {
-               return true;
+                    for (ItemGroup itemgroup1 : ItemGroup.GROUPS)
+                    {
+                        if (itemgroup1.hasRelevantEnchantmentType(enchantment.type))
+                        {
+                            itemgroup = itemgroup1;
+                            break;
+                        }
+                    }
+                }
             }
-         }
 
-         if (selectedTab != ItemGroup.TAB_INVENTORY.getId() && this.insideScrollbar(p_231044_1_, p_231044_3_)) {
-            this.scrolling = this.canScroll();
+            this.tagSearchResults.forEach((p_214083_2_, p_214083_3_) ->
+            {
+                if (p_214083_3_.contains(item))
+                {
+                    list1.add(1, (new StringTextComponent("#" + p_214083_2_)).mergeStyle(TextFormatting.DARK_PURPLE));
+                }
+            });
+
+            if (itemgroup != null)
+            {
+                list1.add(1, itemgroup.getGroupName().deepCopy().mergeStyle(TextFormatting.BLUE));
+            }
+
+            this.func_243308_b(matrixStack, list1, mouseX, mouseY);
+        }
+        else
+        {
+            super.renderTooltip(matrixStack, itemStack, mouseX, mouseY);
+        }
+    }
+
+    protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y)
+    {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        ItemGroup itemgroup = ItemGroup.GROUPS[selectedTabIndex];
+
+        for (ItemGroup itemgroup1 : ItemGroup.GROUPS)
+        {
+            this.minecraft.getTextureManager().bindTexture(CREATIVE_INVENTORY_TABS);
+
+            if (itemgroup1.getIndex() != selectedTabIndex)
+            {
+                this.func_238808_a_(matrixStack, itemgroup1);
+            }
+        }
+
+        this.minecraft.getTextureManager().bindTexture(new ResourceLocation("textures/gui/container/creative_inventory/tab_" + itemgroup.getBackgroundImageName()));
+        this.blit(matrixStack, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
+        this.searchField.render(matrixStack, x, y, partialTicks);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        int i = this.guiLeft + 175;
+        int j = this.guiTop + 18;
+        int k = j + 112;
+        this.minecraft.getTextureManager().bindTexture(CREATIVE_INVENTORY_TABS);
+
+        if (itemgroup.hasScrollbar())
+        {
+            this.blit(matrixStack, i, j + (int)((float)(k - j - 17) * this.currentScroll), 232 + (this.needsScrollBars() ? 0 : 12), 0, 12, 15);
+        }
+
+        this.func_238808_a_(matrixStack, itemgroup);
+
+        if (itemgroup == ItemGroup.INVENTORY)
+        {
+            InventoryScreen.drawEntityOnScreen(this.guiLeft + 88, this.guiTop + 45, 20, (float)(this.guiLeft + 88 - x), (float)(this.guiTop + 45 - 30 - y), this.minecraft.player);
+        }
+    }
+
+    protected boolean isMouseOverGroup(ItemGroup p_195375_1_, double p_195375_2_, double p_195375_4_)
+    {
+        int i = p_195375_1_.getColumn();
+        int j = 28 * i;
+        int k = 0;
+
+        if (p_195375_1_.isAlignedRight())
+        {
+            j = this.xSize - 28 * (6 - i) + 2;
+        }
+        else if (i > 0)
+        {
+            j += i;
+        }
+
+        if (p_195375_1_.isOnTopRow())
+        {
+            k = k - 32;
+        }
+        else
+        {
+            k = k + this.ySize;
+        }
+
+        return p_195375_2_ >= (double)j && p_195375_2_ <= (double)(j + 28) && p_195375_4_ >= (double)k && p_195375_4_ <= (double)(k + 32);
+    }
+
+    protected boolean func_238809_a_(MatrixStack p_238809_1_, ItemGroup p_238809_2_, int p_238809_3_, int p_238809_4_)
+    {
+        int i = p_238809_2_.getColumn();
+        int j = 28 * i;
+        int k = 0;
+
+        if (p_238809_2_.isAlignedRight())
+        {
+            j = this.xSize - 28 * (6 - i) + 2;
+        }
+        else if (i > 0)
+        {
+            j += i;
+        }
+
+        if (p_238809_2_.isOnTopRow())
+        {
+            k = k - 32;
+        }
+        else
+        {
+            k = k + this.ySize;
+        }
+
+        if (this.isPointInRegion(j + 3, k + 3, 23, 27, (double)p_238809_3_, (double)p_238809_4_))
+        {
+            this.renderTooltip(p_238809_1_, p_238809_2_.getGroupName(), p_238809_3_, p_238809_4_);
             return true;
-         }
-      }
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-      return super.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
-   }
+    protected void func_238808_a_(MatrixStack p_238808_1_, ItemGroup p_238808_2_)
+    {
+        boolean flag = p_238808_2_.getIndex() == selectedTabIndex;
+        boolean flag1 = p_238808_2_.isOnTopRow();
+        int i = p_238808_2_.getColumn();
+        int j = i * 28;
+        int k = 0;
+        int l = this.guiLeft + 28 * i;
+        int i1 = this.guiTop;
+        int j1 = 32;
 
-   public boolean mouseReleased(double p_231048_1_, double p_231048_3_, int p_231048_5_) {
-      if (p_231048_5_ == 0) {
-         double d0 = p_231048_1_ - (double)this.leftPos;
-         double d1 = p_231048_3_ - (double)this.topPos;
-         this.scrolling = false;
+        if (flag)
+        {
+            k += 32;
+        }
 
-         for(ItemGroup itemgroup : ItemGroup.TABS) {
-            if (this.checkTabClicked(itemgroup, d0, d1)) {
-               this.selectTab(itemgroup);
-               return true;
-            }
-         }
-      }
+        if (p_238808_2_.isAlignedRight())
+        {
+            l = this.guiLeft + this.xSize - 28 * (6 - i);
+        }
+        else if (i > 0)
+        {
+            l += i;
+        }
 
-      return super.mouseReleased(p_231048_1_, p_231048_3_, p_231048_5_);
-   }
+        if (flag1)
+        {
+            i1 = i1 - 28;
+        }
+        else
+        {
+            k += 64;
+            i1 = i1 + (this.ySize - 4);
+        }
 
-   private boolean canScroll() {
-      return selectedTab != ItemGroup.TAB_INVENTORY.getId() && ItemGroup.TABS[selectedTab].canScroll() && this.menu.canScroll();
-   }
+        this.blit(p_238808_1_, l, i1, j, k, 28, 32);
+        this.itemRenderer.zLevel = 100.0F;
+        l = l + 6;
+        i1 = i1 + 8 + (flag1 ? 1 : -1);
+        RenderSystem.enableRescaleNormal();
+        ItemStack itemstack = p_238808_2_.getIcon();
+        this.itemRenderer.renderItemAndEffectIntoGUI(itemstack, l, i1);
+        this.itemRenderer.renderItemOverlays(this.font, itemstack, l, i1);
+        this.itemRenderer.zLevel = 0.0F;
+    }
 
-   private void selectTab(ItemGroup p_147050_1_) {
-      int i = selectedTab;
-      selectedTab = p_147050_1_.getId();
-      this.quickCraftSlots.clear();
-      (this.menu).items.clear();
-      if (p_147050_1_ == ItemGroup.TAB_HOTBAR) {
-         CreativeSettings creativesettings = this.minecraft.getHotbarManager();
+    /**
+     * Returns the index of the currently selected tab.
+     */
+    public int getSelectedTabIndex()
+    {
+        return selectedTabIndex;
+    }
 
-         for(int j = 0; j < 9; ++j) {
-            HotbarSnapshot hotbarsnapshot = creativesettings.get(j);
-            if (hotbarsnapshot.isEmpty()) {
-               for(int k = 0; k < 9; ++k) {
-                  if (k == j) {
-                     ItemStack itemstack = new ItemStack(Items.PAPER);
-                     itemstack.getOrCreateTagElement("CustomCreativeLock");
-                     ITextComponent itextcomponent = this.minecraft.options.keyHotbarSlots[j].getTranslatedKeyMessage();
-                     ITextComponent itextcomponent1 = this.minecraft.options.keySaveHotbarActivator.getTranslatedKeyMessage();
-                     itemstack.setHoverName(new TranslationTextComponent("inventory.hotbarInfo", itextcomponent1, itextcomponent));
-                     (this.menu).items.add(itemstack);
-                  } else {
-                     (this.menu).items.add(ItemStack.EMPTY);
-                  }
-               }
-            } else {
-               (this.menu).items.addAll(hotbarsnapshot);
-            }
-         }
-      } else if (p_147050_1_ != ItemGroup.TAB_SEARCH) {
-         p_147050_1_.fillItemList((this.menu).items);
-      }
+    public static void handleHotbarSnapshots(Minecraft client, int index, boolean load, boolean save)
+    {
+        ClientPlayerEntity clientplayerentity = client.player;
+        CreativeSettings creativesettings = client.getCreativeSettings();
+        HotbarSnapshot hotbarsnapshot = creativesettings.getHotbarSnapshot(index);
 
-      if (p_147050_1_ == ItemGroup.TAB_INVENTORY) {
-         Container container = this.minecraft.player.inventoryMenu;
-         if (this.originalSlots == null) {
-            this.originalSlots = ImmutableList.copyOf((this.menu).slots);
-         }
-
-         (this.menu).slots.clear();
-
-         for(int l = 0; l < container.slots.size(); ++l) {
-            int i1;
-            int j1;
-            if (l >= 5 && l < 9) {
-               int l1 = l - 5;
-               int j2 = l1 / 2;
-               int l2 = l1 % 2;
-               i1 = 54 + j2 * 54;
-               j1 = 6 + l2 * 27;
-            } else if (l >= 0 && l < 5) {
-               i1 = -2000;
-               j1 = -2000;
-            } else if (l == 45) {
-               i1 = 35;
-               j1 = 20;
-            } else {
-               int k1 = l - 9;
-               int i2 = k1 % 9;
-               int k2 = k1 / 9;
-               i1 = 9 + i2 * 18;
-               if (l >= 36) {
-                  j1 = 112;
-               } else {
-                  j1 = 54 + k2 * 18;
-               }
+        if (load)
+        {
+            for (int i = 0; i < PlayerInventory.getHotbarSize(); ++i)
+            {
+                ItemStack itemstack = hotbarsnapshot.get(i).copy();
+                clientplayerentity.inventory.setInventorySlotContents(i, itemstack);
+                client.playerController.sendSlotPacket(itemstack, 36 + i);
             }
 
-            Slot slot = new CreativeScreen.CreativeSlot(container.slots.get(l), l, i1, j1);
-            (this.menu).slots.add(slot);
-         }
-
-         this.destroyItemSlot = new Slot(CONTAINER, 0, 173, 112);
-         (this.menu).slots.add(this.destroyItemSlot);
-      } else if (i == ItemGroup.TAB_INVENTORY.getId()) {
-         (this.menu).slots.clear();
-         (this.menu).slots.addAll(this.originalSlots);
-         this.originalSlots = null;
-      }
-
-      if (this.searchBox != null) {
-         if (p_147050_1_ == ItemGroup.TAB_SEARCH) {
-            this.searchBox.setVisible(true);
-            this.searchBox.setCanLoseFocus(false);
-            this.searchBox.setFocus(true);
-            if (i != p_147050_1_.getId()) {
-               this.searchBox.setValue("");
+            clientplayerentity.container.detectAndSendChanges();
+        }
+        else if (save)
+        {
+            for (int j = 0; j < PlayerInventory.getHotbarSize(); ++j)
+            {
+                hotbarsnapshot.set(j, clientplayerentity.inventory.getStackInSlot(j).copy());
             }
 
-            this.refreshSearchResults();
-         } else {
-            this.searchBox.setVisible(false);
-            this.searchBox.setCanLoseFocus(true);
-            this.searchBox.setFocus(false);
-            this.searchBox.setValue("");
-         }
-      }
+            ITextComponent itextcomponent = client.gameSettings.keyBindsHotbar[index].func_238171_j_();
+            ITextComponent itextcomponent1 = client.gameSettings.keyBindLoadToolbar.func_238171_j_();
+            client.ingameGUI.setOverlayMessage(new TranslationTextComponent("inventory.hotbarSaved", itextcomponent1, itextcomponent), false);
+            creativesettings.save();
+        }
+    }
 
-      this.scrollOffs = 0.0F;
-      this.menu.scrollTo(0.0F);
-   }
+    public static class CreativeContainer extends Container
+    {
+        public final NonNullList<ItemStack> itemList = NonNullList.create();
 
-   public boolean mouseScrolled(double p_231043_1_, double p_231043_3_, double p_231043_5_) {
-      if (!this.canScroll()) {
-         return false;
-      } else {
-         int i = ((this.menu).items.size() + 9 - 1) / 9 - 5;
-         this.scrollOffs = (float)((double)this.scrollOffs - p_231043_5_ / (double)i);
-         this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0F, 1.0F);
-         this.menu.scrollTo(this.scrollOffs);
-         return true;
-      }
-   }
+        public CreativeContainer(PlayerEntity player)
+        {
+            super((ContainerType<?>)null, 0);
+            PlayerInventory playerinventory = player.inventory;
 
-   protected boolean hasClickedOutside(double p_195361_1_, double p_195361_3_, int p_195361_5_, int p_195361_6_, int p_195361_7_) {
-      boolean flag = p_195361_1_ < (double)p_195361_5_ || p_195361_3_ < (double)p_195361_6_ || p_195361_1_ >= (double)(p_195361_5_ + this.imageWidth) || p_195361_3_ >= (double)(p_195361_6_ + this.imageHeight);
-      this.hasClickedOutside = flag && !this.checkTabClicked(ItemGroup.TABS[selectedTab], p_195361_1_, p_195361_3_);
-      return this.hasClickedOutside;
-   }
-
-   protected boolean insideScrollbar(double p_195376_1_, double p_195376_3_) {
-      int i = this.leftPos;
-      int j = this.topPos;
-      int k = i + 175;
-      int l = j + 18;
-      int i1 = k + 14;
-      int j1 = l + 112;
-      return p_195376_1_ >= (double)k && p_195376_3_ >= (double)l && p_195376_1_ < (double)i1 && p_195376_3_ < (double)j1;
-   }
-
-   public boolean mouseDragged(double p_231045_1_, double p_231045_3_, int p_231045_5_, double p_231045_6_, double p_231045_8_) {
-      if (this.scrolling) {
-         int i = this.topPos + 18;
-         int j = i + 112;
-         this.scrollOffs = ((float)p_231045_3_ - (float)i - 7.5F) / ((float)(j - i) - 15.0F);
-         this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0F, 1.0F);
-         this.menu.scrollTo(this.scrollOffs);
-         return true;
-      } else {
-         return super.mouseDragged(p_231045_1_, p_231045_3_, p_231045_5_, p_231045_6_, p_231045_8_);
-      }
-   }
-
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.renderBackground(p_230430_1_);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-
-      for(ItemGroup itemgroup : ItemGroup.TABS) {
-         if (this.checkTabHovering(p_230430_1_, itemgroup, p_230430_2_, p_230430_3_)) {
-            break;
-         }
-      }
-
-      if (this.destroyItemSlot != null && selectedTab == ItemGroup.TAB_INVENTORY.getId() && this.isHovering(this.destroyItemSlot.x, this.destroyItemSlot.y, 16, 16, (double)p_230430_2_, (double)p_230430_3_)) {
-         this.renderTooltip(p_230430_1_, TRASH_SLOT_TOOLTIP, p_230430_2_, p_230430_3_);
-      }
-
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      this.renderTooltip(p_230430_1_, p_230430_2_, p_230430_3_);
-   }
-
-   protected void renderTooltip(MatrixStack p_230457_1_, ItemStack p_230457_2_, int p_230457_3_, int p_230457_4_) {
-      if (selectedTab == ItemGroup.TAB_SEARCH.getId()) {
-         List<ITextComponent> list = p_230457_2_.getTooltipLines(this.minecraft.player, this.minecraft.options.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL);
-         List<ITextComponent> list1 = Lists.newArrayList(list);
-         Item item = p_230457_2_.getItem();
-         ItemGroup itemgroup = item.getItemCategory();
-         if (itemgroup == null && item == Items.ENCHANTED_BOOK) {
-            Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(p_230457_2_);
-            if (map.size() == 1) {
-               Enchantment enchantment = map.keySet().iterator().next();
-
-               for(ItemGroup itemgroup1 : ItemGroup.TABS) {
-                  if (itemgroup1.hasEnchantmentCategory(enchantment.category)) {
-                     itemgroup = itemgroup1;
-                     break;
-                  }
-               }
-            }
-         }
-
-         this.visibleTags.forEach((p_214083_2_, p_214083_3_) -> {
-            if (p_214083_3_.contains(item)) {
-               list1.add(1, (new StringTextComponent("#" + p_214083_2_)).withStyle(TextFormatting.DARK_PURPLE));
+            for (int i = 0; i < 5; ++i)
+            {
+                for (int j = 0; j < 9; ++j)
+                {
+                    this.addSlot(new CreativeScreen.LockedSlot(CreativeScreen.TMP_INVENTORY, i * 9 + j, 9 + j * 18, 18 + i * 18));
+                }
             }
 
-         });
-         if (itemgroup != null) {
-            list1.add(1, itemgroup.getDisplayName().copy().withStyle(TextFormatting.BLUE));
-         }
-
-         this.renderComponentTooltip(p_230457_1_, list1, p_230457_3_, p_230457_4_);
-      } else {
-         super.renderTooltip(p_230457_1_, p_230457_2_, p_230457_3_, p_230457_4_);
-      }
-
-   }
-
-   protected void renderBg(MatrixStack p_230450_1_, float p_230450_2_, int p_230450_3_, int p_230450_4_) {
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      ItemGroup itemgroup = ItemGroup.TABS[selectedTab];
-
-      for(ItemGroup itemgroup1 : ItemGroup.TABS) {
-         this.minecraft.getTextureManager().bind(CREATIVE_TABS_LOCATION);
-         if (itemgroup1.getId() != selectedTab) {
-            this.renderTabButton(p_230450_1_, itemgroup1);
-         }
-      }
-
-      this.minecraft.getTextureManager().bind(new ResourceLocation("textures/gui/container/creative_inventory/tab_" + itemgroup.getBackgroundSuffix()));
-      this.blit(p_230450_1_, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
-      this.searchBox.render(p_230450_1_, p_230450_3_, p_230450_4_, p_230450_2_);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      int i = this.leftPos + 175;
-      int j = this.topPos + 18;
-      int k = j + 112;
-      this.minecraft.getTextureManager().bind(CREATIVE_TABS_LOCATION);
-      if (itemgroup.canScroll()) {
-         this.blit(p_230450_1_, i, j + (int)((float)(k - j - 17) * this.scrollOffs), 232 + (this.canScroll() ? 0 : 12), 0, 12, 15);
-      }
-
-      this.renderTabButton(p_230450_1_, itemgroup);
-      if (itemgroup == ItemGroup.TAB_INVENTORY) {
-         InventoryScreen.renderEntityInInventory(this.leftPos + 88, this.topPos + 45, 20, (float)(this.leftPos + 88 - p_230450_3_), (float)(this.topPos + 45 - 30 - p_230450_4_), this.minecraft.player);
-      }
-
-   }
-
-   protected boolean checkTabClicked(ItemGroup p_195375_1_, double p_195375_2_, double p_195375_4_) {
-      int i = p_195375_1_.getColumn();
-      int j = 28 * i;
-      int k = 0;
-      if (p_195375_1_.isAlignedRight()) {
-         j = this.imageWidth - 28 * (6 - i) + 2;
-      } else if (i > 0) {
-         j += i;
-      }
-
-      if (p_195375_1_.isTopRow()) {
-         k = k - 32;
-      } else {
-         k = k + this.imageHeight;
-      }
-
-      return p_195375_2_ >= (double)j && p_195375_2_ <= (double)(j + 28) && p_195375_4_ >= (double)k && p_195375_4_ <= (double)(k + 32);
-   }
-
-   protected boolean checkTabHovering(MatrixStack p_238809_1_, ItemGroup p_238809_2_, int p_238809_3_, int p_238809_4_) {
-      int i = p_238809_2_.getColumn();
-      int j = 28 * i;
-      int k = 0;
-      if (p_238809_2_.isAlignedRight()) {
-         j = this.imageWidth - 28 * (6 - i) + 2;
-      } else if (i > 0) {
-         j += i;
-      }
-
-      if (p_238809_2_.isTopRow()) {
-         k = k - 32;
-      } else {
-         k = k + this.imageHeight;
-      }
-
-      if (this.isHovering(j + 3, k + 3, 23, 27, (double)p_238809_3_, (double)p_238809_4_)) {
-         this.renderTooltip(p_238809_1_, p_238809_2_.getDisplayName(), p_238809_3_, p_238809_4_);
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   protected void renderTabButton(MatrixStack p_238808_1_, ItemGroup p_238808_2_) {
-      boolean flag = p_238808_2_.getId() == selectedTab;
-      boolean flag1 = p_238808_2_.isTopRow();
-      int i = p_238808_2_.getColumn();
-      int j = i * 28;
-      int k = 0;
-      int l = this.leftPos + 28 * i;
-      int i1 = this.topPos;
-      int j1 = 32;
-      if (flag) {
-         k += 32;
-      }
-
-      if (p_238808_2_.isAlignedRight()) {
-         l = this.leftPos + this.imageWidth - 28 * (6 - i);
-      } else if (i > 0) {
-         l += i;
-      }
-
-      if (flag1) {
-         i1 = i1 - 28;
-      } else {
-         k += 64;
-         i1 = i1 + (this.imageHeight - 4);
-      }
-
-      this.blit(p_238808_1_, l, i1, j, k, 28, 32);
-      this.itemRenderer.blitOffset = 100.0F;
-      l = l + 6;
-      i1 = i1 + 8 + (flag1 ? 1 : -1);
-      RenderSystem.enableRescaleNormal();
-      ItemStack itemstack = p_238808_2_.getIconItem();
-      this.itemRenderer.renderAndDecorateItem(itemstack, l, i1);
-      this.itemRenderer.renderGuiItemDecorations(this.font, itemstack, l, i1);
-      this.itemRenderer.blitOffset = 0.0F;
-   }
-
-   public int getSelectedTab() {
-      return selectedTab;
-   }
-
-   public static void handleHotbarLoadOrSave(Minecraft p_192044_0_, int p_192044_1_, boolean p_192044_2_, boolean p_192044_3_) {
-      ClientPlayerEntity clientplayerentity = p_192044_0_.player;
-      CreativeSettings creativesettings = p_192044_0_.getHotbarManager();
-      HotbarSnapshot hotbarsnapshot = creativesettings.get(p_192044_1_);
-      if (p_192044_2_) {
-         for(int i = 0; i < PlayerInventory.getSelectionSize(); ++i) {
-            ItemStack itemstack = hotbarsnapshot.get(i).copy();
-            clientplayerentity.inventory.setItem(i, itemstack);
-            p_192044_0_.gameMode.handleCreativeModeItemAdd(itemstack, 36 + i);
-         }
-
-         clientplayerentity.inventoryMenu.broadcastChanges();
-      } else if (p_192044_3_) {
-         for(int j = 0; j < PlayerInventory.getSelectionSize(); ++j) {
-            hotbarsnapshot.set(j, clientplayerentity.inventory.getItem(j).copy());
-         }
-
-         ITextComponent itextcomponent = p_192044_0_.options.keyHotbarSlots[p_192044_1_].getTranslatedKeyMessage();
-         ITextComponent itextcomponent1 = p_192044_0_.options.keyLoadHotbarActivator.getTranslatedKeyMessage();
-         p_192044_0_.gui.setOverlayMessage(new TranslationTextComponent("inventory.hotbarSaved", itextcomponent1, itextcomponent), false);
-         creativesettings.save();
-      }
-
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public static class CreativeContainer extends Container {
-      public final NonNullList<ItemStack> items = NonNullList.create();
-
-      public CreativeContainer(PlayerEntity p_i1086_1_) {
-         super((ContainerType<?>)null, 0);
-         PlayerInventory playerinventory = p_i1086_1_.inventory;
-
-         for(int i = 0; i < 5; ++i) {
-            for(int j = 0; j < 9; ++j) {
-               this.addSlot(new CreativeScreen.LockedSlot(CreativeScreen.CONTAINER, i * 9 + j, 9 + j * 18, 18 + i * 18));
+            for (int k = 0; k < 9; ++k)
+            {
+                this.addSlot(new Slot(playerinventory, k, 9 + k * 18, 112));
             }
-         }
 
-         for(int k = 0; k < 9; ++k) {
-            this.addSlot(new Slot(playerinventory, k, 9 + k * 18, 112));
-         }
+            this.scrollTo(0.0F);
+        }
 
-         this.scrollTo(0.0F);
-      }
+        public boolean canInteractWith(PlayerEntity playerIn)
+        {
+            return true;
+        }
 
-      public boolean stillValid(PlayerEntity p_75145_1_) {
-         return true;
-      }
+        public void scrollTo(float pos)
+        {
+            int i = (this.itemList.size() + 9 - 1) / 9 - 5;
+            int j = (int)((double)(pos * (float)i) + 0.5D);
 
-      public void scrollTo(float p_148329_1_) {
-         int i = (this.items.size() + 9 - 1) / 9 - 5;
-         int j = (int)((double)(p_148329_1_ * (float)i) + 0.5D);
-         if (j < 0) {
-            j = 0;
-         }
-
-         for(int k = 0; k < 5; ++k) {
-            for(int l = 0; l < 9; ++l) {
-               int i1 = l + (k + j) * 9;
-               if (i1 >= 0 && i1 < this.items.size()) {
-                  CreativeScreen.CONTAINER.setItem(l + k * 9, this.items.get(i1));
-               } else {
-                  CreativeScreen.CONTAINER.setItem(l + k * 9, ItemStack.EMPTY);
-               }
+            if (j < 0)
+            {
+                j = 0;
             }
-         }
 
-      }
+            for (int k = 0; k < 5; ++k)
+            {
+                for (int l = 0; l < 9; ++l)
+                {
+                    int i1 = l + (k + j) * 9;
 
-      public boolean canScroll() {
-         return this.items.size() > 45;
-      }
-
-      public ItemStack quickMoveStack(PlayerEntity p_82846_1_, int p_82846_2_) {
-         if (p_82846_2_ >= this.slots.size() - 9 && p_82846_2_ < this.slots.size()) {
-            Slot slot = this.slots.get(p_82846_2_);
-            if (slot != null && slot.hasItem()) {
-               slot.set(ItemStack.EMPTY);
+                    if (i1 >= 0 && i1 < this.itemList.size())
+                    {
+                        CreativeScreen.TMP_INVENTORY.setInventorySlotContents(l + k * 9, this.itemList.get(i1));
+                    }
+                    else
+                    {
+                        CreativeScreen.TMP_INVENTORY.setInventorySlotContents(l + k * 9, ItemStack.EMPTY);
+                    }
+                }
             }
-         }
+        }
 
-         return ItemStack.EMPTY;
-      }
+        public boolean canScroll()
+        {
+            return this.itemList.size() > 45;
+        }
 
-      public boolean canTakeItemForPickAll(ItemStack p_94530_1_, Slot p_94530_2_) {
-         return p_94530_2_.container != CreativeScreen.CONTAINER;
-      }
+        public ItemStack transferStackInSlot(PlayerEntity playerIn, int index)
+        {
+            if (index >= this.inventorySlots.size() - 9 && index < this.inventorySlots.size())
+            {
+                Slot slot = this.inventorySlots.get(index);
 
-      public boolean canDragTo(Slot p_94531_1_) {
-         return p_94531_1_.container != CreativeScreen.CONTAINER;
-      }
-   }
+                if (slot != null && slot.getHasStack())
+                {
+                    slot.putStack(ItemStack.EMPTY);
+                }
+            }
 
-   @OnlyIn(Dist.CLIENT)
-   static class CreativeSlot extends Slot {
-      private final Slot target;
+            return ItemStack.EMPTY;
+        }
 
-      public CreativeSlot(Slot p_i229959_1_, int p_i229959_2_, int p_i229959_3_, int p_i229959_4_) {
-         super(p_i229959_1_.container, p_i229959_2_, p_i229959_3_, p_i229959_4_);
-         this.target = p_i229959_1_;
-      }
+        public boolean canMergeSlot(ItemStack stack, Slot slotIn)
+        {
+            return slotIn.inventory != CreativeScreen.TMP_INVENTORY;
+        }
 
-      public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
-         return this.target.onTake(p_190901_1_, p_190901_2_);
-      }
+        public boolean canDragIntoSlot(Slot slotIn)
+        {
+            return slotIn.inventory != CreativeScreen.TMP_INVENTORY;
+        }
+    }
 
-      public boolean mayPlace(ItemStack p_75214_1_) {
-         return this.target.mayPlace(p_75214_1_);
-      }
+    static class CreativeSlot extends Slot
+    {
+        private final Slot slot;
 
-      public ItemStack getItem() {
-         return this.target.getItem();
-      }
+        public CreativeSlot(Slot p_i229959_1_, int p_i229959_2_, int p_i229959_3_, int p_i229959_4_)
+        {
+            super(p_i229959_1_.inventory, p_i229959_2_, p_i229959_3_, p_i229959_4_);
+            this.slot = p_i229959_1_;
+        }
 
-      public boolean hasItem() {
-         return this.target.hasItem();
-      }
+        public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+        {
+            return this.slot.onTake(thePlayer, stack);
+        }
 
-      public void set(ItemStack p_75215_1_) {
-         this.target.set(p_75215_1_);
-      }
+        public boolean isItemValid(ItemStack stack)
+        {
+            return this.slot.isItemValid(stack);
+        }
 
-      public void setChanged() {
-         this.target.setChanged();
-      }
+        public ItemStack getStack()
+        {
+            return this.slot.getStack();
+        }
 
-      public int getMaxStackSize() {
-         return this.target.getMaxStackSize();
-      }
+        public boolean getHasStack()
+        {
+            return this.slot.getHasStack();
+        }
 
-      public int getMaxStackSize(ItemStack p_178170_1_) {
-         return this.target.getMaxStackSize(p_178170_1_);
-      }
+        public void putStack(ItemStack stack)
+        {
+            this.slot.putStack(stack);
+        }
 
-      @Nullable
-      public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
-         return this.target.getNoItemIcon();
-      }
+        public void onSlotChanged()
+        {
+            this.slot.onSlotChanged();
+        }
 
-      public ItemStack remove(int p_75209_1_) {
-         return this.target.remove(p_75209_1_);
-      }
+        public int getSlotStackLimit()
+        {
+            return this.slot.getSlotStackLimit();
+        }
 
-      public boolean isActive() {
-         return this.target.isActive();
-      }
+        public int getItemStackLimit(ItemStack stack)
+        {
+            return this.slot.getItemStackLimit(stack);
+        }
 
-      public boolean mayPickup(PlayerEntity p_82869_1_) {
-         return this.target.mayPickup(p_82869_1_);
-      }
-   }
+        @Nullable
+        public Pair<ResourceLocation, ResourceLocation> getBackground()
+        {
+            return this.slot.getBackground();
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   static class LockedSlot extends Slot {
-      public LockedSlot(IInventory p_i47453_1_, int p_i47453_2_, int p_i47453_3_, int p_i47453_4_) {
-         super(p_i47453_1_, p_i47453_2_, p_i47453_3_, p_i47453_4_);
-      }
+        public ItemStack decrStackSize(int amount)
+        {
+            return this.slot.decrStackSize(amount);
+        }
 
-      public boolean mayPickup(PlayerEntity p_82869_1_) {
-         if (super.mayPickup(p_82869_1_) && this.hasItem()) {
-            return this.getItem().getTagElement("CustomCreativeLock") == null;
-         } else {
-            return !this.hasItem();
-         }
-      }
-   }
+        public boolean isEnabled()
+        {
+            return this.slot.isEnabled();
+        }
+
+        public boolean canTakeStack(PlayerEntity playerIn)
+        {
+            return this.slot.canTakeStack(playerIn);
+        }
+    }
+
+    static class LockedSlot extends Slot
+    {
+        public LockedSlot(IInventory inventoryIn, int index, int xPosition, int yPosition)
+        {
+            super(inventoryIn, index, xPosition, yPosition);
+        }
+
+        public boolean canTakeStack(PlayerEntity playerIn)
+        {
+            if (super.canTakeStack(playerIn) && this.getHasStack())
+            {
+                return this.getStack().getChildTag("CustomCreativeLock") == null;
+            }
+            else
+            {
+                return !this.getHasStack();
+            }
+        }
+    }
 }

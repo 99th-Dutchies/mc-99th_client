@@ -1,26 +1,30 @@
 package net.minecraft.world.storage;
 
-public class FolderName {
-   public static final FolderName PLAYER_ADVANCEMENTS_DIR = new FolderName("advancements");
-   public static final FolderName PLAYER_STATS_DIR = new FolderName("stats");
-   public static final FolderName PLAYER_DATA_DIR = new FolderName("playerdata");
-   public static final FolderName PLAYER_OLD_DATA_DIR = new FolderName("players");
-   public static final FolderName LEVEL_DATA_FILE = new FolderName("level.dat");
-   public static final FolderName GENERATED_DIR = new FolderName("generated");
-   public static final FolderName DATAPACK_DIR = new FolderName("datapacks");
-   public static final FolderName MAP_RESOURCE_FILE = new FolderName("resources.zip");
-   public static final FolderName ROOT = new FolderName(".");
-   private final String id;
+public class FolderName
+{
+    public static final FolderName ADVANCEMENTS = new FolderName("advancements");
+    public static final FolderName STATS = new FolderName("stats");
+    public static final FolderName PLAYERDATA = new FolderName("playerdata");
+    public static final FolderName PLAYERS = new FolderName("players");
+    public static final FolderName LEVEL_DAT = new FolderName("level.dat");
+    public static final FolderName GENERATED = new FolderName("generated");
+    public static final FolderName DATAPACKS = new FolderName("datapacks");
+    public static final FolderName RESOURCES_ZIP = new FolderName("resources.zip");
+    public static final FolderName DOT = new FolderName(".");
+    private final String fileName;
 
-   private FolderName(String p_i232151_1_) {
-      this.id = p_i232151_1_;
-   }
+    private FolderName(String fileName)
+    {
+        this.fileName = fileName;
+    }
 
-   public String getId() {
-      return this.id;
-   }
+    public String getFileName()
+    {
+        return this.fileName;
+    }
 
-   public String toString() {
-      return "/" + this.id;
-   }
+    public String toString()
+    {
+        return "/" + this.fileName;
+    }
 }

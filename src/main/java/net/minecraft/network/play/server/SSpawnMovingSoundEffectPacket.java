@@ -8,71 +8,84 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.Validate;
 
-public class SSpawnMovingSoundEffectPacket implements IPacket<IClientPlayNetHandler> {
-   private SoundEvent sound;
-   private SoundCategory source;
-   private int id;
-   private float volume;
-   private float pitch;
+public class SSpawnMovingSoundEffectPacket implements IPacket<IClientPlayNetHandler>
+{
+    private SoundEvent field_218765_a;
+    private SoundCategory field_218766_b;
+    private int field_218767_c;
+    private float field_218768_d;
+    private float field_218769_e;
 
-   public SSpawnMovingSoundEffectPacket() {
-   }
+    public SSpawnMovingSoundEffectPacket()
+    {
+    }
 
-   public SSpawnMovingSoundEffectPacket(SoundEvent p_i50763_1_, SoundCategory p_i50763_2_, Entity p_i50763_3_, float p_i50763_4_, float p_i50763_5_) {
-      Validate.notNull(p_i50763_1_, "sound");
-      this.sound = p_i50763_1_;
-      this.source = p_i50763_2_;
-      this.id = p_i50763_3_.getId();
-      this.volume = p_i50763_4_;
-      this.pitch = p_i50763_5_;
-   }
+    public SSpawnMovingSoundEffectPacket(SoundEvent p_i50763_1_, SoundCategory p_i50763_2_, Entity p_i50763_3_, float p_i50763_4_, float p_i50763_5_)
+    {
+        Validate.notNull(p_i50763_1_, "sound");
+        this.field_218765_a = p_i50763_1_;
+        this.field_218766_b = p_i50763_2_;
+        this.field_218767_c = p_i50763_3_.getEntityId();
+        this.field_218768_d = p_i50763_4_;
+        this.field_218769_e = p_i50763_5_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.sound = Registry.SOUND_EVENT.byId(p_148837_1_.readVarInt());
-      this.source = p_148837_1_.readEnum(SoundCategory.class);
-      this.id = p_148837_1_.readVarInt();
-      this.volume = p_148837_1_.readFloat();
-      this.pitch = p_148837_1_.readFloat();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.field_218765_a = Registry.SOUND_EVENT.getByValue(buf.readVarInt());
+        this.field_218766_b = buf.readEnumValue(SoundCategory.class);
+        this.field_218767_c = buf.readVarInt();
+        this.field_218768_d = buf.readFloat();
+        this.field_218769_e = buf.readFloat();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(Registry.SOUND_EVENT.getId(this.sound));
-      p_148840_1_.writeEnum(this.source);
-      p_148840_1_.writeVarInt(this.id);
-      p_148840_1_.writeFloat(this.volume);
-      p_148840_1_.writeFloat(this.pitch);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(Registry.SOUND_EVENT.getId(this.field_218765_a));
+        buf.writeEnumValue(this.field_218766_b);
+        buf.writeVarInt(this.field_218767_c);
+        buf.writeFloat(this.field_218768_d);
+        buf.writeFloat(this.field_218769_e);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public SoundEvent getSound() {
-      return this.sound;
-   }
+    public SoundEvent func_218763_b()
+    {
+        return this.field_218765_a;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public SoundCategory getSource() {
-      return this.source;
-   }
+    public SoundCategory func_218760_c()
+    {
+        return this.field_218766_b;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int func_218762_d()
+    {
+        return this.field_218767_c;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getVolume() {
-      return this.volume;
-   }
+    public float func_218764_e()
+    {
+        return this.field_218768_d;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getPitch() {
-      return this.pitch;
-   }
+    public float func_218761_f()
+    {
+        return this.field_218769_e;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSoundEntityEvent(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleSpawnMovingSoundEffect(this);
+    }
 }

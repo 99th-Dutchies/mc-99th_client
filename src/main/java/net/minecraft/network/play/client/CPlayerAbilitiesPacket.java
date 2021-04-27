@@ -6,35 +6,53 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 
-public class CPlayerAbilitiesPacket implements IPacket<IServerPlayNetHandler> {
-   private boolean isFlying;
+public class CPlayerAbilitiesPacket implements IPacket<IServerPlayNetHandler>
+{
+    private boolean flying;
 
-   public CPlayerAbilitiesPacket() {
-   }
+    public CPlayerAbilitiesPacket()
+    {
+    }
 
-   public CPlayerAbilitiesPacket(PlayerAbilities p_i46872_1_) {
-      this.isFlying = p_i46872_1_.flying;
-   }
+    public CPlayerAbilitiesPacket(PlayerAbilities capabilities)
+    {
+        this.flying = capabilities.isFlying;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      byte b0 = p_148837_1_.readByte();
-      this.isFlying = (b0 & 2) != 0;
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        byte b0 = buf.readByte();
+        this.flying = (b0 & 2) != 0;
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      byte b0 = 0;
-      if (this.isFlying) {
-         b0 = (byte)(b0 | 2);
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        byte b0 = 0;
 
-      p_148840_1_.writeByte(b0);
-   }
+        if (this.flying)
+        {
+            b0 = (byte)(b0 | 2);
+        }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handlePlayerAbilities(this);
-   }
+        buf.writeByte(b0);
+    }
 
-   public boolean isFlying() {
-      return this.isFlying;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processPlayerAbilities(this);
+    }
+
+    public boolean isFlying()
+    {
+        return this.flying;
+    }
 }

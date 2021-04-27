@@ -3,22 +3,26 @@ package net.minecraft.server.management;
 import com.google.gson.JsonObject;
 import javax.annotation.Nullable;
 
-public abstract class UserListEntry<T> {
-   @Nullable
-   private final T user;
+public abstract class UserListEntry<T>
+{
+    @Nullable
+    private final T value;
 
-   public UserListEntry(@Nullable T p_i1146_1_) {
-      this.user = p_i1146_1_;
-   }
+    public UserListEntry(@Nullable T valueIn)
+    {
+        this.value = valueIn;
+    }
 
-   @Nullable
-   T getUser() {
-      return this.user;
-   }
+    @Nullable
+    T getValue()
+    {
+        return this.value;
+    }
 
-   boolean hasExpired() {
-      return false;
-   }
+    boolean hasBanExpired()
+    {
+        return false;
+    }
 
-   protected abstract void serialize(JsonObject p_152641_1_);
+    protected abstract void onSerialization(JsonObject data);
 }

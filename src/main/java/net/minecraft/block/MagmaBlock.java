@@ -16,41 +16,63 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class MagmaBlock extends Block {
-   public MagmaBlock(AbstractBlock.Properties p_i48366_1_) {
-      super(p_i48366_1_);
-   }
+public class MagmaBlock extends Block
+{
+    public MagmaBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public void stepOn(World p_176199_1_, BlockPos p_176199_2_, Entity p_176199_3_) {
-      if (!p_176199_3_.fireImmune() && p_176199_3_ instanceof LivingEntity && !EnchantmentHelper.hasFrostWalker((LivingEntity)p_176199_3_)) {
-         p_176199_3_.hurt(DamageSource.HOT_FLOOR, 1.0F);
-      }
+    /**
+     * Called when the given entity walks on this Block
+     */
+    public void onEntityWalk(World worldIn, BlockPos pos, Entity entityIn)
+    {
+        if (!entityIn.isImmuneToFire() && entityIn instanceof LivingEntity && !EnchantmentHelper.hasFrostWalker((LivingEntity)entityIn))
+        {
+            entityIn.attackEntityFrom(DamageSource.HOT_FLOOR, 1.0F);
+        }
 
-      super.stepOn(p_176199_1_, p_176199_2_, p_176199_3_);
-   }
+        super.onEntityWalk(worldIn, pos, entityIn);
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      BubbleColumnBlock.growColumn(p_225534_2_, p_225534_3_.above(), true);
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        BubbleColumnBlock.placeBubbleColumn(worldIn, pos.up(), true);
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_2_ == Direction.UP && p_196271_3_.is(Blocks.WATER)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 20);
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (facing == Direction.UP && facingState.isIn(Blocks.WATER))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 20);
+        }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      BlockPos blockpos = p_225542_3_.above();
-      if (p_225542_2_.getFluidState(p_225542_3_).is(FluidTags.WATER)) {
-         p_225542_2_.playSound((PlayerEntity)null, p_225542_3_, SoundEvents.FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.5F, 2.6F + (p_225542_2_.random.nextFloat() - p_225542_2_.random.nextFloat()) * 0.8F);
-         p_225542_2_.sendParticles(ParticleTypes.LARGE_SMOKE, (double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.25D, (double)blockpos.getZ() + 0.5D, 8, 0.5D, 0.25D, 0.5D, 0.0D);
-      }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        BlockPos blockpos = pos.up();
 
-   }
+        if (worldIn.getFluidState(pos).isTagged(FluidTags.WATER))
+        {
+            worldIn.playSound((PlayerEntity)null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.5F, 2.6F + (worldIn.rand.nextFloat() - worldIn.rand.nextFloat()) * 0.8F);
+            worldIn.spawnParticle(ParticleTypes.LARGE_SMOKE, (double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.25D, (double)blockpos.getZ() + 0.5D, 8, 0.5D, 0.25D, 0.5D, 0.0D);
+        }
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      p_220082_2_.getBlockTicks().scheduleTick(p_220082_3_, this, 20);
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        worldIn.getPendingBlockTicks().scheduleTick(pos, this, 20);
+    }
 }

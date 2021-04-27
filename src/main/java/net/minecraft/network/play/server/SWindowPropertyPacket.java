@@ -4,51 +4,64 @@ import java.io.IOException;
 import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SWindowPropertyPacket implements IPacket<IClientPlayNetHandler> {
-   private int containerId;
-   private int id;
-   private int value;
+public class SWindowPropertyPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int windowId;
+    private int property;
+    private int value;
 
-   public SWindowPropertyPacket() {
-   }
+    public SWindowPropertyPacket()
+    {
+    }
 
-   public SWindowPropertyPacket(int p_i46952_1_, int p_i46952_2_, int p_i46952_3_) {
-      this.containerId = p_i46952_1_;
-      this.id = p_i46952_2_;
-      this.value = p_i46952_3_;
-   }
+    public SWindowPropertyPacket(int windowIdIn, int propertyIn, int valueIn)
+    {
+        this.windowId = windowIdIn;
+        this.property = propertyIn;
+        this.value = valueIn;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleContainerSetData(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleWindowProperty(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.containerId = p_148837_1_.readUnsignedByte();
-      this.id = p_148837_1_.readShort();
-      this.value = p_148837_1_.readShort();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.windowId = buf.readUnsignedByte();
+        this.property = buf.readShort();
+        this.value = buf.readShort();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.containerId);
-      p_148840_1_.writeShort(this.id);
-      p_148840_1_.writeShort(this.value);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.windowId);
+        buf.writeShort(this.property);
+        buf.writeShort(this.value);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getContainerId() {
-      return this.containerId;
-   }
+    public int getWindowId()
+    {
+        return this.windowId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int getProperty()
+    {
+        return this.property;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getValue() {
-      return this.value;
-   }
+    public int getValue()
+    {
+        return this.value;
+    }
 }

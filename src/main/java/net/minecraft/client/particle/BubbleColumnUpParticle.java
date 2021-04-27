@@ -4,56 +4,64 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class BubbleColumnUpParticle extends SpriteTexturedParticle {
-   private BubbleColumnUpParticle(ClientWorld p_i232349_1_, double p_i232349_2_, double p_i232349_4_, double p_i232349_6_, double p_i232349_8_, double p_i232349_10_, double p_i232349_12_) {
-      super(p_i232349_1_, p_i232349_2_, p_i232349_4_, p_i232349_6_);
-      this.setSize(0.02F, 0.02F);
-      this.quadSize *= this.random.nextFloat() * 0.6F + 0.2F;
-      this.xd = p_i232349_8_ * (double)0.2F + (Math.random() * 2.0D - 1.0D) * (double)0.02F;
-      this.yd = p_i232349_10_ * (double)0.2F + (Math.random() * 2.0D - 1.0D) * (double)0.02F;
-      this.zd = p_i232349_12_ * (double)0.2F + (Math.random() * 2.0D - 1.0D) * (double)0.02F;
-      this.lifetime = (int)(40.0D / (Math.random() * 0.8D + 0.2D));
-   }
+public class BubbleColumnUpParticle extends SpriteTexturedParticle
+{
+    private BubbleColumnUpParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ)
+    {
+        super(world, x, y, z);
+        this.setSize(0.02F, 0.02F);
+        this.particleScale *= this.rand.nextFloat() * 0.6F + 0.2F;
+        this.motionX = motionX * (double)0.2F + (Math.random() * 2.0D - 1.0D) * (double)0.02F;
+        this.motionY = motionY * (double)0.2F + (Math.random() * 2.0D - 1.0D) * (double)0.02F;
+        this.motionZ = motionZ * (double)0.2F + (Math.random() * 2.0D - 1.0D) * (double)0.02F;
+        this.maxAge = (int)(40.0D / (Math.random() * 0.8D + 0.2D));
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      this.yd += 0.005D;
-      if (this.lifetime-- <= 0) {
-         this.remove();
-      } else {
-         this.move(this.xd, this.yd, this.zd);
-         this.xd *= (double)0.85F;
-         this.yd *= (double)0.85F;
-         this.zd *= (double)0.85F;
-         if (!this.level.getFluidState(new BlockPos(this.x, this.y, this.z)).is(FluidTags.WATER)) {
-            this.remove();
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+        this.motionY += 0.005D;
 
-      }
-   }
+        if (this.maxAge-- <= 0)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionX *= (double)0.85F;
+            this.motionY *= (double)0.85F;
+            this.motionZ *= (double)0.85F;
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+            if (!this.world.getFluidState(new BlockPos(this.posX, this.posY, this.posZ)).isTagged(FluidTags.WATER))
+            {
+                this.setExpired();
+            }
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-      public Factory(IAnimatedSprite p_i50448_1_) {
-         this.sprite = p_i50448_1_;
-      }
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         BubbleColumnUpParticle bubblecolumnupparticle = new BubbleColumnUpParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         bubblecolumnupparticle.pickSprite(this.sprite);
-         return bubblecolumnupparticle;
-      }
-   }
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            BubbleColumnUpParticle bubblecolumnupparticle = new BubbleColumnUpParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            bubblecolumnupparticle.selectSpriteRandomly(this.spriteSet);
+            return bubblecolumnupparticle;
+        }
+    }
 }

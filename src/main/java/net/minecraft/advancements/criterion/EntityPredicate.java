@@ -27,336 +27,429 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 
-public class EntityPredicate {
-   public static final EntityPredicate ANY = new EntityPredicate(EntityTypePredicate.ANY, DistancePredicate.ANY, LocationPredicate.ANY, MobEffectsPredicate.ANY, NBTPredicate.ANY, EntityFlagsPredicate.ANY, EntityEquipmentPredicate.ANY, PlayerPredicate.ANY, FishingPredicate.ANY, (String)null, (ResourceLocation)null);
-   private final EntityTypePredicate entityType;
-   private final DistancePredicate distanceToPlayer;
-   private final LocationPredicate location;
-   private final MobEffectsPredicate effects;
-   private final NBTPredicate nbt;
-   private final EntityFlagsPredicate flags;
-   private final EntityEquipmentPredicate equipment;
-   private final PlayerPredicate player;
-   private final FishingPredicate fishingHook;
-   private final EntityPredicate vehicle;
-   private final EntityPredicate targetedEntity;
-   @Nullable
-   private final String team;
-   @Nullable
-   private final ResourceLocation catType;
+public class EntityPredicate
+{
+    public static final EntityPredicate ANY = new EntityPredicate(EntityTypePredicate.ANY, DistancePredicate.ANY, LocationPredicate.ANY, MobEffectsPredicate.ANY, NBTPredicate.ANY, EntityFlagsPredicate.ALWAYS_TRUE, EntityEquipmentPredicate.ANY, PlayerPredicate.ANY, FishingPredicate.field_234635_a_, (String)null, (ResourceLocation)null);
+    private final EntityTypePredicate type;
+    private final DistancePredicate distance;
+    private final LocationPredicate location;
+    private final MobEffectsPredicate effects;
+    private final NBTPredicate nbt;
+    private final EntityFlagsPredicate flags;
+    private final EntityEquipmentPredicate equipment;
+    private final PlayerPredicate player;
+    private final FishingPredicate fishingCondition;
+    private final EntityPredicate mountCondition;
+    private final EntityPredicate targetCondition;
+    @Nullable
+    private final String team;
+    @Nullable
+    private final ResourceLocation catType;
 
-   private EntityPredicate(EntityTypePredicate p_i241236_1_, DistancePredicate p_i241236_2_, LocationPredicate p_i241236_3_, MobEffectsPredicate p_i241236_4_, NBTPredicate p_i241236_5_, EntityFlagsPredicate p_i241236_6_, EntityEquipmentPredicate p_i241236_7_, PlayerPredicate p_i241236_8_, FishingPredicate p_i241236_9_, @Nullable String p_i241236_10_, @Nullable ResourceLocation p_i241236_11_) {
-      this.entityType = p_i241236_1_;
-      this.distanceToPlayer = p_i241236_2_;
-      this.location = p_i241236_3_;
-      this.effects = p_i241236_4_;
-      this.nbt = p_i241236_5_;
-      this.flags = p_i241236_6_;
-      this.equipment = p_i241236_7_;
-      this.player = p_i241236_8_;
-      this.fishingHook = p_i241236_9_;
-      this.vehicle = this;
-      this.targetedEntity = this;
-      this.team = p_i241236_10_;
-      this.catType = p_i241236_11_;
-   }
+    private EntityPredicate(EntityTypePredicate type, DistancePredicate distance, LocationPredicate location, MobEffectsPredicate effects, NBTPredicate nbt, EntityFlagsPredicate flags, EntityEquipmentPredicate equipment, PlayerPredicate player, FishingPredicate fishingCondition, @Nullable String team, @Nullable ResourceLocation catType)
+    {
+        this.type = type;
+        this.distance = distance;
+        this.location = location;
+        this.effects = effects;
+        this.nbt = nbt;
+        this.flags = flags;
+        this.equipment = equipment;
+        this.player = player;
+        this.fishingCondition = fishingCondition;
+        this.mountCondition = this;
+        this.targetCondition = this;
+        this.team = team;
+        this.catType = catType;
+    }
 
-   private EntityPredicate(EntityTypePredicate p_i231578_1_, DistancePredicate p_i231578_2_, LocationPredicate p_i231578_3_, MobEffectsPredicate p_i231578_4_, NBTPredicate p_i231578_5_, EntityFlagsPredicate p_i231578_6_, EntityEquipmentPredicate p_i231578_7_, PlayerPredicate p_i231578_8_, FishingPredicate p_i231578_9_, EntityPredicate p_i231578_10_, EntityPredicate p_i231578_11_, @Nullable String p_i231578_12_, @Nullable ResourceLocation p_i231578_13_) {
-      this.entityType = p_i231578_1_;
-      this.distanceToPlayer = p_i231578_2_;
-      this.location = p_i231578_3_;
-      this.effects = p_i231578_4_;
-      this.nbt = p_i231578_5_;
-      this.flags = p_i231578_6_;
-      this.equipment = p_i231578_7_;
-      this.player = p_i231578_8_;
-      this.fishingHook = p_i231578_9_;
-      this.vehicle = p_i231578_10_;
-      this.targetedEntity = p_i231578_11_;
-      this.team = p_i231578_12_;
-      this.catType = p_i231578_13_;
-   }
+    private EntityPredicate(EntityTypePredicate type, DistancePredicate distance, LocationPredicate location, MobEffectsPredicate effects, NBTPredicate nbt, EntityFlagsPredicate flags, EntityEquipmentPredicate equipment, PlayerPredicate player, FishingPredicate fishingCondition, EntityPredicate mountCondition, EntityPredicate targetCondition, @Nullable String team, @Nullable ResourceLocation catType)
+    {
+        this.type = type;
+        this.distance = distance;
+        this.location = location;
+        this.effects = effects;
+        this.nbt = nbt;
+        this.flags = flags;
+        this.equipment = equipment;
+        this.player = player;
+        this.fishingCondition = fishingCondition;
+        this.mountCondition = mountCondition;
+        this.targetCondition = targetCondition;
+        this.team = team;
+        this.catType = catType;
+    }
 
-   public boolean matches(ServerPlayerEntity p_192482_1_, @Nullable Entity p_192482_2_) {
-      return this.matches(p_192482_1_.getLevel(), p_192482_1_.position(), p_192482_2_);
-   }
+    public boolean test(ServerPlayerEntity player, @Nullable Entity entity)
+    {
+        return this.test(player.getServerWorld(), player.getPositionVec(), entity);
+    }
 
-   public boolean matches(ServerWorld p_217993_1_, @Nullable Vector3d p_217993_2_, @Nullable Entity p_217993_3_) {
-      if (this == ANY) {
-         return true;
-      } else if (p_217993_3_ == null) {
-         return false;
-      } else if (!this.entityType.matches(p_217993_3_.getType())) {
-         return false;
-      } else {
-         if (p_217993_2_ == null) {
-            if (this.distanceToPlayer != DistancePredicate.ANY) {
-               return false;
+    public boolean test(ServerWorld world, @Nullable Vector3d vector, @Nullable Entity entity)
+    {
+        if (this == ANY)
+        {
+            return true;
+        }
+        else if (entity == null)
+        {
+            return false;
+        }
+        else if (!this.type.test(entity.getType()))
+        {
+            return false;
+        }
+        else
+        {
+            if (vector == null)
+            {
+                if (this.distance != DistancePredicate.ANY)
+                {
+                    return false;
+                }
             }
-         } else if (!this.distanceToPlayer.matches(p_217993_2_.x, p_217993_2_.y, p_217993_2_.z, p_217993_3_.getX(), p_217993_3_.getY(), p_217993_3_.getZ())) {
-            return false;
-         }
-
-         if (!this.location.matches(p_217993_1_, p_217993_3_.getX(), p_217993_3_.getY(), p_217993_3_.getZ())) {
-            return false;
-         } else if (!this.effects.matches(p_217993_3_)) {
-            return false;
-         } else if (!this.nbt.matches(p_217993_3_)) {
-            return false;
-         } else if (!this.flags.matches(p_217993_3_)) {
-            return false;
-         } else if (!this.equipment.matches(p_217993_3_)) {
-            return false;
-         } else if (!this.player.matches(p_217993_3_)) {
-            return false;
-         } else if (!this.fishingHook.matches(p_217993_3_)) {
-            return false;
-         } else if (!this.vehicle.matches(p_217993_1_, p_217993_2_, p_217993_3_.getVehicle())) {
-            return false;
-         } else if (!this.targetedEntity.matches(p_217993_1_, p_217993_2_, p_217993_3_ instanceof MobEntity ? ((MobEntity)p_217993_3_).getTarget() : null)) {
-            return false;
-         } else {
-            if (this.team != null) {
-               Team team = p_217993_3_.getTeam();
-               if (team == null || !this.team.equals(team.getName())) {
-                  return false;
-               }
+            else if (!this.distance.test(vector.x, vector.y, vector.z, entity.getPosX(), entity.getPosY(), entity.getPosZ()))
+            {
+                return false;
             }
 
-            return this.catType == null || p_217993_3_ instanceof CatEntity && ((CatEntity)p_217993_3_).getResourceLocation().equals(this.catType);
-         }
-      }
-   }
-
-   public static EntityPredicate fromJson(@Nullable JsonElement p_192481_0_) {
-      if (p_192481_0_ != null && !p_192481_0_.isJsonNull()) {
-         JsonObject jsonobject = JSONUtils.convertToJsonObject(p_192481_0_, "entity");
-         EntityTypePredicate entitytypepredicate = EntityTypePredicate.fromJson(jsonobject.get("type"));
-         DistancePredicate distancepredicate = DistancePredicate.fromJson(jsonobject.get("distance"));
-         LocationPredicate locationpredicate = LocationPredicate.fromJson(jsonobject.get("location"));
-         MobEffectsPredicate mobeffectspredicate = MobEffectsPredicate.fromJson(jsonobject.get("effects"));
-         NBTPredicate nbtpredicate = NBTPredicate.fromJson(jsonobject.get("nbt"));
-         EntityFlagsPredicate entityflagspredicate = EntityFlagsPredicate.fromJson(jsonobject.get("flags"));
-         EntityEquipmentPredicate entityequipmentpredicate = EntityEquipmentPredicate.fromJson(jsonobject.get("equipment"));
-         PlayerPredicate playerpredicate = PlayerPredicate.fromJson(jsonobject.get("player"));
-         FishingPredicate fishingpredicate = FishingPredicate.fromJson(jsonobject.get("fishing_hook"));
-         EntityPredicate entitypredicate = fromJson(jsonobject.get("vehicle"));
-         EntityPredicate entitypredicate1 = fromJson(jsonobject.get("targeted_entity"));
-         String s = JSONUtils.getAsString(jsonobject, "team", (String)null);
-         ResourceLocation resourcelocation = jsonobject.has("catType") ? new ResourceLocation(JSONUtils.getAsString(jsonobject, "catType")) : null;
-         return (new EntityPredicate.Builder()).entityType(entitytypepredicate).distance(distancepredicate).located(locationpredicate).effects(mobeffectspredicate).nbt(nbtpredicate).flags(entityflagspredicate).equipment(entityequipmentpredicate).player(playerpredicate).fishingHook(fishingpredicate).team(s).vehicle(entitypredicate).targetedEntity(entitypredicate1).catType(resourcelocation).build();
-      } else {
-         return ANY;
-      }
-   }
-
-   public JsonElement serializeToJson() {
-      if (this == ANY) {
-         return JsonNull.INSTANCE;
-      } else {
-         JsonObject jsonobject = new JsonObject();
-         jsonobject.add("type", this.entityType.serializeToJson());
-         jsonobject.add("distance", this.distanceToPlayer.serializeToJson());
-         jsonobject.add("location", this.location.serializeToJson());
-         jsonobject.add("effects", this.effects.serializeToJson());
-         jsonobject.add("nbt", this.nbt.serializeToJson());
-         jsonobject.add("flags", this.flags.serializeToJson());
-         jsonobject.add("equipment", this.equipment.serializeToJson());
-         jsonobject.add("player", this.player.serializeToJson());
-         jsonobject.add("fishing_hook", this.fishingHook.serializeToJson());
-         jsonobject.add("vehicle", this.vehicle.serializeToJson());
-         jsonobject.add("targeted_entity", this.targetedEntity.serializeToJson());
-         jsonobject.addProperty("team", this.team);
-         if (this.catType != null) {
-            jsonobject.addProperty("catType", this.catType.toString());
-         }
-
-         return jsonobject;
-      }
-   }
-
-   public static LootContext createContext(ServerPlayerEntity p_234575_0_, Entity p_234575_1_) {
-      return (new LootContext.Builder(p_234575_0_.getLevel())).withParameter(LootParameters.THIS_ENTITY, p_234575_1_).withParameter(LootParameters.ORIGIN, p_234575_0_.position()).withRandom(p_234575_0_.getRandom()).create(LootParameterSets.ADVANCEMENT_ENTITY);
-   }
-
-   public static class AndPredicate {
-      public static final EntityPredicate.AndPredicate ANY = new EntityPredicate.AndPredicate(new ILootCondition[0]);
-      private final ILootCondition[] conditions;
-      private final Predicate<LootContext> compositePredicates;
-
-      private AndPredicate(ILootCondition[] p_i231580_1_) {
-         this.conditions = p_i231580_1_;
-         this.compositePredicates = LootConditionManager.andConditions(p_i231580_1_);
-      }
-
-      public static EntityPredicate.AndPredicate create(ILootCondition... p_234591_0_) {
-         return new EntityPredicate.AndPredicate(p_234591_0_);
-      }
-
-      public static EntityPredicate.AndPredicate fromJson(JsonObject p_234587_0_, String p_234587_1_, ConditionArrayParser p_234587_2_) {
-         JsonElement jsonelement = p_234587_0_.get(p_234587_1_);
-         return fromElement(p_234587_1_, p_234587_2_, jsonelement);
-      }
-
-      public static EntityPredicate.AndPredicate[] fromJsonArray(JsonObject p_234592_0_, String p_234592_1_, ConditionArrayParser p_234592_2_) {
-         JsonElement jsonelement = p_234592_0_.get(p_234592_1_);
-         if (jsonelement != null && !jsonelement.isJsonNull()) {
-            JsonArray jsonarray = JSONUtils.convertToJsonArray(jsonelement, p_234592_1_);
-            EntityPredicate.AndPredicate[] aentitypredicate$andpredicate = new EntityPredicate.AndPredicate[jsonarray.size()];
-
-            for(int i = 0; i < jsonarray.size(); ++i) {
-               aentitypredicate$andpredicate[i] = fromElement(p_234592_1_ + "[" + i + "]", p_234592_2_, jsonarray.get(i));
+            if (!this.location.test(world, entity.getPosX(), entity.getPosY(), entity.getPosZ()))
+            {
+                return false;
             }
+            else if (!this.effects.test(entity))
+            {
+                return false;
+            }
+            else if (!this.nbt.test(entity))
+            {
+                return false;
+            }
+            else if (!this.flags.test(entity))
+            {
+                return false;
+            }
+            else if (!this.equipment.test(entity))
+            {
+                return false;
+            }
+            else if (!this.player.test(entity))
+            {
+                return false;
+            }
+            else if (!this.fishingCondition.func_234638_a_(entity))
+            {
+                return false;
+            }
+            else if (!this.mountCondition.test(world, vector, entity.getRidingEntity()))
+            {
+                return false;
+            }
+            else if (!this.targetCondition.test(world, vector, entity instanceof MobEntity ? ((MobEntity)entity).getAttackTarget() : null))
+            {
+                return false;
+            }
+            else
+            {
+                if (this.team != null)
+                {
+                    Team team = entity.getTeam();
 
-            return aentitypredicate$andpredicate;
-         } else {
-            return new EntityPredicate.AndPredicate[0];
-         }
-      }
+                    if (team == null || !this.team.equals(team.getName()))
+                    {
+                        return false;
+                    }
+                }
 
-      private static EntityPredicate.AndPredicate fromElement(String p_234589_0_, ConditionArrayParser p_234589_1_, @Nullable JsonElement p_234589_2_) {
-         if (p_234589_2_ != null && p_234589_2_.isJsonArray()) {
-            ILootCondition[] ailootcondition = p_234589_1_.deserializeConditions(p_234589_2_.getAsJsonArray(), p_234589_1_.getAdvancementId().toString() + "/" + p_234589_0_, LootParameterSets.ADVANCEMENT_ENTITY);
-            return new EntityPredicate.AndPredicate(ailootcondition);
-         } else {
-            EntityPredicate entitypredicate = EntityPredicate.fromJson(p_234589_2_);
-            return wrap(entitypredicate);
-         }
-      }
+                return this.catType == null || entity instanceof CatEntity && ((CatEntity)entity).getCatTypeName().equals(this.catType);
+            }
+        }
+    }
 
-      public static EntityPredicate.AndPredicate wrap(EntityPredicate p_234585_0_) {
-         if (p_234585_0_ == EntityPredicate.ANY) {
+    public static EntityPredicate deserialize(@Nullable JsonElement element)
+    {
+        if (element != null && !element.isJsonNull())
+        {
+            JsonObject jsonobject = JSONUtils.getJsonObject(element, "entity");
+            EntityTypePredicate entitytypepredicate = EntityTypePredicate.deserialize(jsonobject.get("type"));
+            DistancePredicate distancepredicate = DistancePredicate.deserialize(jsonobject.get("distance"));
+            LocationPredicate locationpredicate = LocationPredicate.deserialize(jsonobject.get("location"));
+            MobEffectsPredicate mobeffectspredicate = MobEffectsPredicate.deserialize(jsonobject.get("effects"));
+            NBTPredicate nbtpredicate = NBTPredicate.deserialize(jsonobject.get("nbt"));
+            EntityFlagsPredicate entityflagspredicate = EntityFlagsPredicate.deserialize(jsonobject.get("flags"));
+            EntityEquipmentPredicate entityequipmentpredicate = EntityEquipmentPredicate.deserialize(jsonobject.get("equipment"));
+            PlayerPredicate playerpredicate = PlayerPredicate.deserialize(jsonobject.get("player"));
+            FishingPredicate fishingpredicate = FishingPredicate.func_234639_a_(jsonobject.get("fishing_hook"));
+            EntityPredicate entitypredicate = deserialize(jsonobject.get("vehicle"));
+            EntityPredicate entitypredicate1 = deserialize(jsonobject.get("targeted_entity"));
+            String s = JSONUtils.getString(jsonobject, "team", (String)null);
+            ResourceLocation resourcelocation = jsonobject.has("catType") ? new ResourceLocation(JSONUtils.getString(jsonobject, "catType")) : null;
+            return (new EntityPredicate.Builder()).type(entitytypepredicate).distance(distancepredicate).location(locationpredicate).effects(mobeffectspredicate).nbt(nbtpredicate).flags(entityflagspredicate).equipment(entityequipmentpredicate).player(playerpredicate).fishing(fishingpredicate).team(s).mount(entitypredicate).target(entitypredicate1).catTypeOrNull(resourcelocation).build();
+        }
+        else
+        {
             return ANY;
-         } else {
-            ILootCondition ilootcondition = EntityHasProperty.hasProperties(LootContext.EntityTarget.THIS, p_234585_0_).build();
-            return new EntityPredicate.AndPredicate(new ILootCondition[]{ilootcondition});
-         }
-      }
+        }
+    }
 
-      public boolean matches(LootContext p_234588_1_) {
-         return this.compositePredicates.test(p_234588_1_);
-      }
-
-      public JsonElement toJson(ConditionArraySerializer p_234586_1_) {
-         return (JsonElement)(this.conditions.length == 0 ? JsonNull.INSTANCE : p_234586_1_.serializeConditions(this.conditions));
-      }
-
-      public static JsonElement toJson(EntityPredicate.AndPredicate[] p_234590_0_, ConditionArraySerializer p_234590_1_) {
-         if (p_234590_0_.length == 0) {
+    public JsonElement serialize()
+    {
+        if (this == ANY)
+        {
             return JsonNull.INSTANCE;
-         } else {
-            JsonArray jsonarray = new JsonArray();
+        }
+        else
+        {
+            JsonObject jsonobject = new JsonObject();
+            jsonobject.add("type", this.type.serialize());
+            jsonobject.add("distance", this.distance.serialize());
+            jsonobject.add("location", this.location.serialize());
+            jsonobject.add("effects", this.effects.serialize());
+            jsonobject.add("nbt", this.nbt.serialize());
+            jsonobject.add("flags", this.flags.serialize());
+            jsonobject.add("equipment", this.equipment.serialize());
+            jsonobject.add("player", this.player.serialize());
+            jsonobject.add("fishing_hook", this.fishingCondition.func_234637_a_());
+            jsonobject.add("vehicle", this.mountCondition.serialize());
+            jsonobject.add("targeted_entity", this.targetCondition.serialize());
+            jsonobject.addProperty("team", this.team);
 
-            for(EntityPredicate.AndPredicate entitypredicate$andpredicate : p_234590_0_) {
-               jsonarray.add(entitypredicate$andpredicate.toJson(p_234590_1_));
+            if (this.catType != null)
+            {
+                jsonobject.addProperty("catType", this.catType.toString());
             }
 
-            return jsonarray;
-         }
-      }
-   }
+            return jsonobject;
+        }
+    }
 
-   public static class Builder {
-      private EntityTypePredicate entityType = EntityTypePredicate.ANY;
-      private DistancePredicate distanceToPlayer = DistancePredicate.ANY;
-      private LocationPredicate location = LocationPredicate.ANY;
-      private MobEffectsPredicate effects = MobEffectsPredicate.ANY;
-      private NBTPredicate nbt = NBTPredicate.ANY;
-      private EntityFlagsPredicate flags = EntityFlagsPredicate.ANY;
-      private EntityEquipmentPredicate equipment = EntityEquipmentPredicate.ANY;
-      private PlayerPredicate player = PlayerPredicate.ANY;
-      private FishingPredicate fishingHook = FishingPredicate.ANY;
-      private EntityPredicate vehicle = EntityPredicate.ANY;
-      private EntityPredicate targetedEntity = EntityPredicate.ANY;
-      private String team;
-      private ResourceLocation catType;
+    public static LootContext getLootContext(ServerPlayerEntity player, Entity entity)
+    {
+        return (new LootContext.Builder(player.getServerWorld())).withParameter(LootParameters.THIS_ENTITY, entity).withParameter(LootParameters.field_237457_g_, player.getPositionVec()).withRandom(player.getRNG()).build(LootParameterSets.field_237454_j_);
+    }
 
-      public static EntityPredicate.Builder entity() {
-         return new EntityPredicate.Builder();
-      }
+    public static class AndPredicate
+    {
+        public static final EntityPredicate.AndPredicate ANY_AND = new EntityPredicate.AndPredicate(new ILootCondition[0]);
+        private final ILootCondition[] lootConditions;
+        private final Predicate<LootContext> lootContext;
 
-      public EntityPredicate.Builder of(EntityType<?> p_203998_1_) {
-         this.entityType = EntityTypePredicate.of(p_203998_1_);
-         return this;
-      }
+        private AndPredicate(ILootCondition[] lootConditions)
+        {
+            this.lootConditions = lootConditions;
+            this.lootContext = LootConditionManager.and(lootConditions);
+        }
 
-      public EntityPredicate.Builder of(ITag<EntityType<?>> p_217989_1_) {
-         this.entityType = EntityTypePredicate.of(p_217989_1_);
-         return this;
-      }
+        public static EntityPredicate.AndPredicate serializePredicate(ILootCondition... conditions)
+        {
+            return new EntityPredicate.AndPredicate(conditions);
+        }
 
-      public EntityPredicate.Builder of(ResourceLocation p_217986_1_) {
-         this.catType = p_217986_1_;
-         return this;
-      }
+        public static EntityPredicate.AndPredicate deserializeJSONObject(JsonObject jsonObject, String name, ConditionArrayParser conditions)
+        {
+            JsonElement jsonelement = jsonObject.get(name);
+            return fromJSONElement(name, conditions, jsonelement);
+        }
 
-      public EntityPredicate.Builder entityType(EntityTypePredicate p_209366_1_) {
-         this.entityType = p_209366_1_;
-         return this;
-      }
+        public static EntityPredicate.AndPredicate[] deserialize(JsonObject jsonObject, String name, ConditionArrayParser conditions)
+        {
+            JsonElement jsonelement = jsonObject.get(name);
 
-      public EntityPredicate.Builder distance(DistancePredicate p_203997_1_) {
-         this.distanceToPlayer = p_203997_1_;
-         return this;
-      }
+            if (jsonelement != null && !jsonelement.isJsonNull())
+            {
+                JsonArray jsonarray = JSONUtils.getJsonArray(jsonelement, name);
+                EntityPredicate.AndPredicate[] aentitypredicate$andpredicate = new EntityPredicate.AndPredicate[jsonarray.size()];
 
-      public EntityPredicate.Builder located(LocationPredicate p_203999_1_) {
-         this.location = p_203999_1_;
-         return this;
-      }
+                for (int i = 0; i < jsonarray.size(); ++i)
+                {
+                    aentitypredicate$andpredicate[i] = fromJSONElement(name + "[" + i + "]", conditions, jsonarray.get(i));
+                }
 
-      public EntityPredicate.Builder effects(MobEffectsPredicate p_209367_1_) {
-         this.effects = p_209367_1_;
-         return this;
-      }
+                return aentitypredicate$andpredicate;
+            }
+            else
+            {
+                return new EntityPredicate.AndPredicate[0];
+            }
+        }
 
-      public EntityPredicate.Builder nbt(NBTPredicate p_209365_1_) {
-         this.nbt = p_209365_1_;
-         return this;
-      }
+        private static EntityPredicate.AndPredicate fromJSONElement(String name, ConditionArrayParser conditions, @Nullable JsonElement element)
+        {
+            if (element != null && element.isJsonArray())
+            {
+                ILootCondition[] ailootcondition = conditions.func_234050_a_(element.getAsJsonArray(), conditions.func_234049_a_().toString() + "/" + name, LootParameterSets.field_237454_j_);
+                return new EntityPredicate.AndPredicate(ailootcondition);
+            }
+            else
+            {
+                EntityPredicate entitypredicate = EntityPredicate.deserialize(element);
+                return createAndFromEntityCondition(entitypredicate);
+            }
+        }
 
-      public EntityPredicate.Builder flags(EntityFlagsPredicate p_217987_1_) {
-         this.flags = p_217987_1_;
-         return this;
-      }
+        public static EntityPredicate.AndPredicate createAndFromEntityCondition(EntityPredicate entityCondition)
+        {
+            if (entityCondition == EntityPredicate.ANY)
+            {
+                return ANY_AND;
+            }
+            else
+            {
+                ILootCondition ilootcondition = EntityHasProperty.func_237477_a_(LootContext.EntityTarget.THIS, entityCondition).build();
+                return new EntityPredicate.AndPredicate(new ILootCondition[] {ilootcondition});
+            }
+        }
 
-      public EntityPredicate.Builder equipment(EntityEquipmentPredicate p_217985_1_) {
-         this.equipment = p_217985_1_;
-         return this;
-      }
+        public boolean testContext(LootContext context)
+        {
+            return this.lootContext.test(context);
+        }
 
-      public EntityPredicate.Builder player(PlayerPredicate p_226613_1_) {
-         this.player = p_226613_1_;
-         return this;
-      }
+        public JsonElement serializeConditions(ConditionArraySerializer serializer)
+        {
+            return (JsonElement)(this.lootConditions.length == 0 ? JsonNull.INSTANCE : serializer.func_235681_a_(this.lootConditions));
+        }
 
-      public EntityPredicate.Builder fishingHook(FishingPredicate p_234580_1_) {
-         this.fishingHook = p_234580_1_;
-         return this;
-      }
+        public static JsonElement serializeConditionsIn(EntityPredicate.AndPredicate[] predicates, ConditionArraySerializer serializer)
+        {
+            if (predicates.length == 0)
+            {
+                return JsonNull.INSTANCE;
+            }
+            else
+            {
+                JsonArray jsonarray = new JsonArray();
 
-      public EntityPredicate.Builder vehicle(EntityPredicate p_234579_1_) {
-         this.vehicle = p_234579_1_;
-         return this;
-      }
+                for (EntityPredicate.AndPredicate entitypredicate$andpredicate : predicates)
+                {
+                    jsonarray.add(entitypredicate$andpredicate.serializeConditions(serializer));
+                }
 
-      public EntityPredicate.Builder targetedEntity(EntityPredicate p_234581_1_) {
-         this.targetedEntity = p_234581_1_;
-         return this;
-      }
+                return jsonarray;
+            }
+        }
+    }
 
-      public EntityPredicate.Builder team(@Nullable String p_226614_1_) {
-         this.team = p_226614_1_;
-         return this;
-      }
+    public static class Builder
+    {
+        private EntityTypePredicate type = EntityTypePredicate.ANY;
+        private DistancePredicate distance = DistancePredicate.ANY;
+        private LocationPredicate location = LocationPredicate.ANY;
+        private MobEffectsPredicate effects = MobEffectsPredicate.ANY;
+        private NBTPredicate nbt = NBTPredicate.ANY;
+        private EntityFlagsPredicate flags = EntityFlagsPredicate.ALWAYS_TRUE;
+        private EntityEquipmentPredicate equipment = EntityEquipmentPredicate.ANY;
+        private PlayerPredicate player = PlayerPredicate.ANY;
+        private FishingPredicate fishing = FishingPredicate.field_234635_a_;
+        private EntityPredicate mount = EntityPredicate.ANY;
+        private EntityPredicate target = EntityPredicate.ANY;
+        private String team;
+        private ResourceLocation catType;
 
-      public EntityPredicate.Builder catType(@Nullable ResourceLocation p_217988_1_) {
-         this.catType = p_217988_1_;
-         return this;
-      }
+        public static EntityPredicate.Builder create()
+        {
+            return new EntityPredicate.Builder();
+        }
 
-      public EntityPredicate build() {
-         return new EntityPredicate(this.entityType, this.distanceToPlayer, this.location, this.effects, this.nbt, this.flags, this.equipment, this.player, this.fishingHook, this.vehicle, this.targetedEntity, this.team, this.catType);
-      }
-   }
+        public EntityPredicate.Builder type(EntityType<?> typeIn)
+        {
+            this.type = EntityTypePredicate.fromType(typeIn);
+            return this;
+        }
+
+        public EntityPredicate.Builder type(ITag < EntityType<? >> typeIn)
+        {
+            this.type = EntityTypePredicate.fromTag(typeIn);
+            return this;
+        }
+
+        public EntityPredicate.Builder catType(ResourceLocation catTypeIn)
+        {
+            this.catType = catTypeIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder type(EntityTypePredicate typeIn)
+        {
+            this.type = typeIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder distance(DistancePredicate distanceIn)
+        {
+            this.distance = distanceIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder location(LocationPredicate locationIn)
+        {
+            this.location = locationIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder effects(MobEffectsPredicate effectsIn)
+        {
+            this.effects = effectsIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder nbt(NBTPredicate nbtIn)
+        {
+            this.nbt = nbtIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder flags(EntityFlagsPredicate flagsIn)
+        {
+            this.flags = flagsIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder equipment(EntityEquipmentPredicate equipmentIn)
+        {
+            this.equipment = equipmentIn;
+            return this;
+        }
+
+        public EntityPredicate.Builder player(PlayerPredicate player)
+        {
+            this.player = player;
+            return this;
+        }
+
+        public EntityPredicate.Builder fishing(FishingPredicate fishing)
+        {
+            this.fishing = fishing;
+            return this;
+        }
+
+        public EntityPredicate.Builder mount(EntityPredicate mount)
+        {
+            this.mount = mount;
+            return this;
+        }
+
+        public EntityPredicate.Builder target(EntityPredicate target)
+        {
+            this.target = target;
+            return this;
+        }
+
+        public EntityPredicate.Builder team(@Nullable String team)
+        {
+            this.team = team;
+            return this;
+        }
+
+        public EntityPredicate.Builder catTypeOrNull(@Nullable ResourceLocation catTypeIn)
+        {
+            this.catType = catTypeIn;
+            return this;
+        }
+
+        public EntityPredicate build()
+        {
+            return new EntityPredicate(this.type, this.distance, this.location, this.effects, this.nbt, this.flags, this.equipment, this.player, this.fishing, this.mount, this.target, this.team, this.catType);
+        }
+    }
 }

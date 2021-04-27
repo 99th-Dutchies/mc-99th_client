@@ -12,42 +12,58 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class SoulSandBlock extends Block {
-   protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 14.0D, 16.0D);
+public class SoulSandBlock extends Block
+{
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 14.0D, 16.0D);
 
-   public SoulSandBlock(AbstractBlock.Properties p_i48326_1_) {
-      super(p_i48326_1_);
-   }
+    public SoulSandBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public VoxelShape getBlockSupportShape(BlockState p_230335_1_, IBlockReader p_230335_2_, BlockPos p_230335_3_) {
-      return VoxelShapes.block();
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader reader, BlockPos pos)
+    {
+        return VoxelShapes.fullCube();
+    }
 
-   public VoxelShape getVisualShape(BlockState p_230322_1_, IBlockReader p_230322_2_, BlockPos p_230322_3_, ISelectionContext p_230322_4_) {
-      return VoxelShapes.block();
-   }
+    public VoxelShape getRayTraceShape(BlockState state, IBlockReader reader, BlockPos pos, ISelectionContext context)
+    {
+        return VoxelShapes.fullCube();
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      BubbleColumnBlock.growColumn(p_225534_2_, p_225534_3_.above(), false);
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        BubbleColumnBlock.placeBubbleColumn(worldIn, pos.up(), false);
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_2_ == Direction.UP && p_196271_3_.is(Blocks.WATER)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 20);
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (facing == Direction.UP && facingState.isIn(Blocks.WATER))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 20);
+        }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      p_220082_2_.getBlockTicks().scheduleTick(p_220082_3_, this, 20);
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        worldIn.getPendingBlockTicks().scheduleTick(pos, this, 20);
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

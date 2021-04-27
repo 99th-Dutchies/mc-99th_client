@@ -3,24 +3,25 @@ package net.minecraft.item;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.SoundEvent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IArmorMaterial {
-   int getDurabilityForSlot(EquipmentSlotType p_200896_1_);
+public interface IArmorMaterial
+{
+    int getDurability(EquipmentSlotType slotIn);
 
-   int getDefenseForSlot(EquipmentSlotType p_200902_1_);
+    int getDamageReductionAmount(EquipmentSlotType slotIn);
 
-   int getEnchantmentValue();
+    int getEnchantability();
 
-   SoundEvent getEquipSound();
+    SoundEvent getSoundEvent();
 
-   Ingredient getRepairIngredient();
+    Ingredient getRepairMaterial();
 
-   @OnlyIn(Dist.CLIENT)
-   String getName();
+    String getName();
 
-   float getToughness();
+    float getToughness();
 
-   float getKnockbackResistance();
+    /**
+     * Gets the percentage of knockback resistance provided by armor of the material.
+     */
+    float getKnockbackResistance();
 }

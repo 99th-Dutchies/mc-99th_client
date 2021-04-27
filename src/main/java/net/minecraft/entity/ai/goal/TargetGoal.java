@@ -11,125 +11,192 @@ import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.math.MathHelper;
 
-public abstract class TargetGoal extends Goal {
-   protected final MobEntity mob;
-   protected final boolean mustSee;
-   private final boolean mustReach;
-   private int reachCache;
-   private int reachCacheTime;
-   private int unseenTicks;
-   protected LivingEntity targetMob;
-   protected int unseenMemoryTicks = 60;
+public abstract class TargetGoal extends Goal
+{
+    /** The entity that this goal belongs to */
+    protected final MobEntity goalOwner;
+    protected final boolean shouldCheckSight;
+    private final boolean nearbyOnly;
+    private int targetSearchStatus;
+    private int targetSearchDelay;
+    private int targetUnseenTicks;
+    protected LivingEntity target;
+    protected int unseenMemoryTicks = 60;
 
-   public TargetGoal(MobEntity p_i50308_1_, boolean p_i50308_2_) {
-      this(p_i50308_1_, p_i50308_2_, false);
-   }
+    public TargetGoal(MobEntity mobIn, boolean checkSight)
+    {
+        this(mobIn, checkSight, false);
+    }
 
-   public TargetGoal(MobEntity p_i50309_1_, boolean p_i50309_2_, boolean p_i50309_3_) {
-      this.mob = p_i50309_1_;
-      this.mustSee = p_i50309_2_;
-      this.mustReach = p_i50309_3_;
-   }
+    public TargetGoal(MobEntity mobIn, boolean checkSight, boolean nearbyOnlyIn)
+    {
+        this.goalOwner = mobIn;
+        this.shouldCheckSight = checkSight;
+        this.nearbyOnly = nearbyOnlyIn;
+    }
 
-   public boolean canContinueToUse() {
-      LivingEntity livingentity = this.mob.getTarget();
-      if (livingentity == null) {
-         livingentity = this.targetMob;
-      }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        LivingEntity livingentity = this.goalOwner.getAttackTarget();
 
-      if (livingentity == null) {
-         return false;
-      } else if (!livingentity.isAlive()) {
-         return false;
-      } else {
-         Team team = this.mob.getTeam();
-         Team team1 = livingentity.getTeam();
-         if (team != null && team1 == team) {
+        if (livingentity == null)
+        {
+            livingentity = this.target;
+        }
+
+        if (livingentity == null)
+        {
             return false;
-         } else {
-            double d0 = this.getFollowDistance();
-            if (this.mob.distanceToSqr(livingentity) > d0 * d0) {
-               return false;
-            } else {
-               if (this.mustSee) {
-                  if (this.mob.getSensing().canSee(livingentity)) {
-                     this.unseenTicks = 0;
-                  } else if (++this.unseenTicks > this.unseenMemoryTicks) {
-                     return false;
-                  }
-               }
-
-               if (livingentity instanceof PlayerEntity && ((PlayerEntity)livingentity).abilities.invulnerable) {
-                  return false;
-               } else {
-                  this.mob.setTarget(livingentity);
-                  return true;
-               }
-            }
-         }
-      }
-   }
-
-   protected double getFollowDistance() {
-      return this.mob.getAttributeValue(Attributes.FOLLOW_RANGE);
-   }
-
-   public void start() {
-      this.reachCache = 0;
-      this.reachCacheTime = 0;
-      this.unseenTicks = 0;
-   }
-
-   public void stop() {
-      this.mob.setTarget((LivingEntity)null);
-      this.targetMob = null;
-   }
-
-   protected boolean canAttack(@Nullable LivingEntity p_220777_1_, EntityPredicate p_220777_2_) {
-      if (p_220777_1_ == null) {
-         return false;
-      } else if (!p_220777_2_.test(this.mob, p_220777_1_)) {
-         return false;
-      } else if (!this.mob.isWithinRestriction(p_220777_1_.blockPosition())) {
-         return false;
-      } else {
-         if (this.mustReach) {
-            if (--this.reachCacheTime <= 0) {
-               this.reachCache = 0;
-            }
-
-            if (this.reachCache == 0) {
-               this.reachCache = this.canReach(p_220777_1_) ? 1 : 2;
-            }
-
-            if (this.reachCache == 2) {
-               return false;
-            }
-         }
-
-         return true;
-      }
-   }
-
-   private boolean canReach(LivingEntity p_75295_1_) {
-      this.reachCacheTime = 10 + this.mob.getRandom().nextInt(5);
-      Path path = this.mob.getNavigation().createPath(p_75295_1_, 0);
-      if (path == null) {
-         return false;
-      } else {
-         PathPoint pathpoint = path.getEndNode();
-         if (pathpoint == null) {
+        }
+        else if (!livingentity.isAlive())
+        {
             return false;
-         } else {
-            int i = pathpoint.x - MathHelper.floor(p_75295_1_.getX());
-            int j = pathpoint.z - MathHelper.floor(p_75295_1_.getZ());
-            return (double)(i * i + j * j) <= 2.25D;
-         }
-      }
-   }
+        }
+        else
+        {
+            Team team = this.goalOwner.getTeam();
+            Team team1 = livingentity.getTeam();
 
-   public TargetGoal setUnseenMemoryTicks(int p_190882_1_) {
-      this.unseenMemoryTicks = p_190882_1_;
-      return this;
-   }
+            if (team != null && team1 == team)
+            {
+                return false;
+            }
+            else
+            {
+                double d0 = this.getTargetDistance();
+
+                if (this.goalOwner.getDistanceSq(livingentity) > d0 * d0)
+                {
+                    return false;
+                }
+                else
+                {
+                    if (this.shouldCheckSight)
+                    {
+                        if (this.goalOwner.getEntitySenses().canSee(livingentity))
+                        {
+                            this.targetUnseenTicks = 0;
+                        }
+                        else if (++this.targetUnseenTicks > this.unseenMemoryTicks)
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (livingentity instanceof PlayerEntity && ((PlayerEntity)livingentity).abilities.disableDamage)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        this.goalOwner.setAttackTarget(livingentity);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    protected double getTargetDistance()
+    {
+        return this.goalOwner.getAttributeValue(Attributes.FOLLOW_RANGE);
+    }
+
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.targetSearchStatus = 0;
+        this.targetSearchDelay = 0;
+        this.targetUnseenTicks = 0;
+    }
+
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        this.goalOwner.setAttackTarget((LivingEntity)null);
+        this.target = null;
+    }
+
+    /**
+     * checks if is is a suitable target
+     */
+    protected boolean isSuitableTarget(@Nullable LivingEntity potentialTarget, EntityPredicate targetPredicate)
+    {
+        if (potentialTarget == null)
+        {
+            return false;
+        }
+        else if (!targetPredicate.canTarget(this.goalOwner, potentialTarget))
+        {
+            return false;
+        }
+        else if (!this.goalOwner.isWithinHomeDistanceFromPosition(potentialTarget.getPosition()))
+        {
+            return false;
+        }
+        else
+        {
+            if (this.nearbyOnly)
+            {
+                if (--this.targetSearchDelay <= 0)
+                {
+                    this.targetSearchStatus = 0;
+                }
+
+                if (this.targetSearchStatus == 0)
+                {
+                    this.targetSearchStatus = this.canEasilyReach(potentialTarget) ? 1 : 2;
+                }
+
+                if (this.targetSearchStatus == 2)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    /**
+     * Checks to see if this entity can find a short path to the given target.
+     */
+    private boolean canEasilyReach(LivingEntity target)
+    {
+        this.targetSearchDelay = 10 + this.goalOwner.getRNG().nextInt(5);
+        Path path = this.goalOwner.getNavigator().getPathToEntity(target, 0);
+
+        if (path == null)
+        {
+            return false;
+        }
+        else
+        {
+            PathPoint pathpoint = path.getFinalPathPoint();
+
+            if (pathpoint == null)
+            {
+                return false;
+            }
+            else
+            {
+                int i = pathpoint.x - MathHelper.floor(target.getPosX());
+                int j = pathpoint.z - MathHelper.floor(target.getPosZ());
+                return (double)(i * i + j * j) <= 2.25D;
+            }
+        }
+    }
+
+    public TargetGoal setUnseenMemoryTicks(int unseenMemoryTicksIn)
+    {
+        this.unseenMemoryTicks = unseenMemoryTicksIn;
+        return this;
+    }
 }

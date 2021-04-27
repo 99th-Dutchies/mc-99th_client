@@ -6,51 +6,66 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SUpdateTileEntityPacket implements IPacket<IClientPlayNetHandler> {
-   private BlockPos pos;
-   private int type;
-   private CompoundNBT tag;
+public class SUpdateTileEntityPacket implements IPacket<IClientPlayNetHandler>
+{
+    private BlockPos blockPos;
 
-   public SUpdateTileEntityPacket() {
-   }
+    /** Used only for vanilla tile entities */
+    private int tileEntityType;
+    private CompoundNBT nbt;
 
-   public SUpdateTileEntityPacket(BlockPos p_i46967_1_, int p_i46967_2_, CompoundNBT p_i46967_3_) {
-      this.pos = p_i46967_1_;
-      this.type = p_i46967_2_;
-      this.tag = p_i46967_3_;
-   }
+    public SUpdateTileEntityPacket()
+    {
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.pos = p_148837_1_.readBlockPos();
-      this.type = p_148837_1_.readUnsignedByte();
-      this.tag = p_148837_1_.readNbt();
-   }
+    public SUpdateTileEntityPacket(BlockPos blockPosIn, int tileEntityTypeIn, CompoundNBT compoundIn)
+    {
+        this.blockPos = blockPosIn;
+        this.tileEntityType = tileEntityTypeIn;
+        this.nbt = compoundIn;
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeBlockPos(this.pos);
-      p_148840_1_.writeByte((byte)this.type);
-      p_148840_1_.writeNbt(this.tag);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.blockPos = buf.readBlockPos();
+        this.tileEntityType = buf.readUnsignedByte();
+        this.nbt = buf.readCompoundTag();
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleBlockEntityData(this);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeBlockPos(this.blockPos);
+        buf.writeByte((byte)this.tileEntityType);
+        buf.writeCompoundTag(this.nbt);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleUpdateTileEntity(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getType() {
-      return this.type;
-   }
+    public BlockPos getPos()
+    {
+        return this.blockPos;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CompoundNBT getTag() {
-      return this.tag;
-   }
+    public int getTileEntityType()
+    {
+        return this.tileEntityType;
+    }
+
+    public CompoundNBT getNbtCompound()
+    {
+        return this.nbt;
+    }
 }

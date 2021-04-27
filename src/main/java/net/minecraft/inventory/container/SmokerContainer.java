@@ -6,12 +6,15 @@ import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.item.crafting.RecipeBookCategory;
 import net.minecraft.util.IIntArray;
 
-public class SmokerContainer extends AbstractFurnaceContainer {
-   public SmokerContainer(int p_i50061_1_, PlayerInventory p_i50061_2_) {
-      super(ContainerType.SMOKER, IRecipeType.SMOKING, RecipeBookCategory.SMOKER, p_i50061_1_, p_i50061_2_);
-   }
+public class SmokerContainer extends AbstractFurnaceContainer
+{
+    public SmokerContainer(int id, PlayerInventory playerInventory)
+    {
+        super(ContainerType.SMOKER, IRecipeType.SMOKING, RecipeBookCategory.SMOKER, id, playerInventory);
+    }
 
-   public SmokerContainer(int p_i50062_1_, PlayerInventory p_i50062_2_, IInventory p_i50062_3_, IIntArray p_i50062_4_) {
-      super(ContainerType.SMOKER, IRecipeType.SMOKING, RecipeBookCategory.SMOKER, p_i50062_1_, p_i50062_2_, p_i50062_3_, p_i50062_4_);
-   }
+    public SmokerContainer(int id, PlayerInventory playerInventory, IInventory inventory, IIntArray p_i50062_4_)
+    {
+        super(ContainerType.SMOKER, IRecipeType.SMOKING, RecipeBookCategory.SMOKER, id, playerInventory, inventory, p_i50062_4_);
+    }
 }

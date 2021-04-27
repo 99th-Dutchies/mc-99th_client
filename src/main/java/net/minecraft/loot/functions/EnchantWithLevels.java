@@ -14,62 +14,75 @@ import net.minecraft.loot.RandomRanges;
 import net.minecraft.loot.conditions.ILootCondition;
 import net.minecraft.util.JSONUtils;
 
-public class EnchantWithLevels extends LootFunction {
-   private final IRandomRange levels;
-   private final boolean treasure;
+public class EnchantWithLevels extends LootFunction
+{
+    private final IRandomRange randomLevel;
+    private final boolean isTreasure;
 
-   private EnchantWithLevels(ILootCondition[] p_i51236_1_, IRandomRange p_i51236_2_, boolean p_i51236_3_) {
-      super(p_i51236_1_);
-      this.levels = p_i51236_2_;
-      this.treasure = p_i51236_3_;
-   }
+    private EnchantWithLevels(ILootCondition[] p_i51236_1_, IRandomRange p_i51236_2_, boolean p_i51236_3_)
+    {
+        super(p_i51236_1_);
+        this.randomLevel = p_i51236_2_;
+        this.isTreasure = p_i51236_3_;
+    }
 
-   public LootFunctionType getType() {
-      return LootFunctionManager.ENCHANT_WITH_LEVELS;
-   }
+    public LootFunctionType getFunctionType()
+    {
+        return LootFunctionManager.ENCHANT_WITH_LEVELS;
+    }
 
-   public ItemStack run(ItemStack p_215859_1_, LootContext p_215859_2_) {
-      Random random = p_215859_2_.getRandom();
-      return EnchantmentHelper.enchantItem(random, p_215859_1_, this.levels.getInt(random), this.treasure);
-   }
+    public ItemStack doApply(ItemStack stack, LootContext context)
+    {
+        Random random = context.getRandom();
+        return EnchantmentHelper.addRandomEnchantment(random, stack, this.randomLevel.generateInt(random), this.isTreasure);
+    }
 
-   public static EnchantWithLevels.Builder enchantWithLevels(IRandomRange p_215895_0_) {
-      return new EnchantWithLevels.Builder(p_215895_0_);
-   }
+    public static EnchantWithLevels.Builder func_215895_a(IRandomRange p_215895_0_)
+    {
+        return new EnchantWithLevels.Builder(p_215895_0_);
+    }
 
-   public static class Builder extends LootFunction.Builder<EnchantWithLevels.Builder> {
-      private final IRandomRange levels;
-      private boolean treasure;
+    public static class Builder extends LootFunction.Builder<EnchantWithLevels.Builder>
+    {
+        private final IRandomRange field_216060_a;
+        private boolean field_216061_b;
 
-      public Builder(IRandomRange p_i51494_1_) {
-         this.levels = p_i51494_1_;
-      }
+        public Builder(IRandomRange p_i51494_1_)
+        {
+            this.field_216060_a = p_i51494_1_;
+        }
 
-      protected EnchantWithLevels.Builder getThis() {
-         return this;
-      }
+        protected EnchantWithLevels.Builder doCast()
+        {
+            return this;
+        }
 
-      public EnchantWithLevels.Builder allowTreasure() {
-         this.treasure = true;
-         return this;
-      }
+        public EnchantWithLevels.Builder func_216059_e()
+        {
+            this.field_216061_b = true;
+            return this;
+        }
 
-      public ILootFunction build() {
-         return new EnchantWithLevels(this.getConditions(), this.levels, this.treasure);
-      }
-   }
+        public ILootFunction build()
+        {
+            return new EnchantWithLevels(this.getConditions(), this.field_216060_a, this.field_216061_b);
+        }
+    }
 
-   public static class Serializer extends LootFunction.Serializer<EnchantWithLevels> {
-      public void serialize(JsonObject p_230424_1_, EnchantWithLevels p_230424_2_, JsonSerializationContext p_230424_3_) {
-         super.serialize(p_230424_1_, p_230424_2_, p_230424_3_);
-         p_230424_1_.add("levels", RandomRanges.serialize(p_230424_2_.levels, p_230424_3_));
-         p_230424_1_.addProperty("treasure", p_230424_2_.treasure);
-      }
+    public static class Serializer extends LootFunction.Serializer<EnchantWithLevels>
+    {
+        public void serialize(JsonObject p_230424_1_, EnchantWithLevels p_230424_2_, JsonSerializationContext p_230424_3_)
+        {
+            super.serialize(p_230424_1_, p_230424_2_, p_230424_3_);
+            p_230424_1_.add("levels", RandomRanges.serialize(p_230424_2_.randomLevel, p_230424_3_));
+            p_230424_1_.addProperty("treasure", p_230424_2_.isTreasure);
+        }
 
-      public EnchantWithLevels deserialize(JsonObject p_186530_1_, JsonDeserializationContext p_186530_2_, ILootCondition[] p_186530_3_) {
-         IRandomRange irandomrange = RandomRanges.deserialize(p_186530_1_.get("levels"), p_186530_2_);
-         boolean flag = JSONUtils.getAsBoolean(p_186530_1_, "treasure", false);
-         return new EnchantWithLevels(p_186530_3_, irandomrange, flag);
-      }
-   }
+        public EnchantWithLevels deserialize(JsonObject object, JsonDeserializationContext deserializationContext, ILootCondition[] conditionsIn)
+        {
+            IRandomRange irandomrange = RandomRanges.deserialize(object.get("levels"), deserializationContext);
+            boolean flag = JSONUtils.getBoolean(object, "treasure", false);
+            return new EnchantWithLevels(conditionsIn, irandomrange, flag);
+        }
+    }
 }

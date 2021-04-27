@@ -11,96 +11,118 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
 
-public class JumpOnBedTask extends Task<MobEntity> {
-   private final float speedModifier;
-   @Nullable
-   private BlockPos targetBed;
-   private int remainingTimeToReachBed;
-   private int remainingJumps;
-   private int remainingCooldownUntilNextJump;
+public class JumpOnBedTask extends Task<MobEntity>
+{
+    private final float speed;
+    @Nullable
+    private BlockPos bedPos;
+    private int field_220472_c;
+    private int field_220473_d;
+    private int field_220474_e;
 
-   public JumpOnBedTask(float p_i50362_1_) {
-      super(ImmutableMap.of(MemoryModuleType.NEAREST_BED, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT));
-      this.speedModifier = p_i50362_1_;
-   }
+    public JumpOnBedTask(float speed)
+    {
+        super(ImmutableMap.of(MemoryModuleType.NEAREST_BED, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT));
+        this.speed = speed;
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, MobEntity p_212832_2_) {
-      return p_212832_2_.isBaby() && this.nearBed(p_212832_1_, p_212832_2_);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, MobEntity owner)
+    {
+        return owner.isChild() && this.func_220469_b(worldIn, owner);
+    }
 
-   protected void start(ServerWorld p_212831_1_, MobEntity p_212831_2_, long p_212831_3_) {
-      super.start(p_212831_1_, p_212831_2_, p_212831_3_);
-      this.getNearestBed(p_212831_2_).ifPresent((p_220461_3_) -> {
-         this.targetBed = p_220461_3_;
-         this.remainingTimeToReachBed = 100;
-         this.remainingJumps = 3 + p_212831_1_.random.nextInt(4);
-         this.remainingCooldownUntilNextJump = 0;
-         this.startWalkingTowardsBed(p_212831_2_, p_220461_3_);
-      });
-   }
+    protected void startExecuting(ServerWorld worldIn, MobEntity entityIn, long gameTimeIn)
+    {
+        super.startExecuting(worldIn, entityIn, gameTimeIn);
+        this.getBed(entityIn).ifPresent((bedPos) ->
+        {
+            this.bedPos = bedPos;
+            this.field_220472_c = 100;
+            this.field_220473_d = 3 + worldIn.rand.nextInt(4);
+            this.field_220474_e = 0;
+            this.setWalkTarget(entityIn, bedPos);
+        });
+    }
 
-   protected void stop(ServerWorld p_212835_1_, MobEntity p_212835_2_, long p_212835_3_) {
-      super.stop(p_212835_1_, p_212835_2_, p_212835_3_);
-      this.targetBed = null;
-      this.remainingTimeToReachBed = 0;
-      this.remainingJumps = 0;
-      this.remainingCooldownUntilNextJump = 0;
-   }
+    protected void resetTask(ServerWorld worldIn, MobEntity entityIn, long gameTimeIn)
+    {
+        super.resetTask(worldIn, entityIn, gameTimeIn);
+        this.bedPos = null;
+        this.field_220472_c = 0;
+        this.field_220473_d = 0;
+        this.field_220474_e = 0;
+    }
 
-   protected boolean canStillUse(ServerWorld p_212834_1_, MobEntity p_212834_2_, long p_212834_3_) {
-      return p_212834_2_.isBaby() && this.targetBed != null && this.isBed(p_212834_1_, this.targetBed) && !this.tiredOfWalking(p_212834_1_, p_212834_2_) && !this.tiredOfJumping(p_212834_1_, p_212834_2_);
-   }
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, MobEntity entityIn, long gameTimeIn)
+    {
+        return entityIn.isChild() && this.bedPos != null && this.isBed(worldIn, this.bedPos) && !this.func_220464_e(worldIn, entityIn) && !this.func_220462_f(worldIn, entityIn);
+    }
 
-   protected boolean timedOut(long p_220383_1_) {
-      return false;
-   }
+    protected boolean isTimedOut(long gameTime)
+    {
+        return false;
+    }
 
-   protected void tick(ServerWorld p_212833_1_, MobEntity p_212833_2_, long p_212833_3_) {
-      if (!this.onOrOverBed(p_212833_1_, p_212833_2_)) {
-         --this.remainingTimeToReachBed;
-      } else if (this.remainingCooldownUntilNextJump > 0) {
-         --this.remainingCooldownUntilNextJump;
-      } else {
-         if (this.onBedSurface(p_212833_1_, p_212833_2_)) {
-            p_212833_2_.getJumpControl().jump();
-            --this.remainingJumps;
-            this.remainingCooldownUntilNextJump = 5;
-         }
+    protected void updateTask(ServerWorld worldIn, MobEntity owner, long gameTime)
+    {
+        if (!this.func_220468_c(worldIn, owner))
+        {
+            --this.field_220472_c;
+        }
+        else if (this.field_220474_e > 0)
+        {
+            --this.field_220474_e;
+        }
+        else
+        {
+            if (this.func_220465_d(worldIn, owner))
+            {
+                owner.getJumpController().setJumping();
+                --this.field_220473_d;
+                this.field_220474_e = 5;
+            }
+        }
+    }
 
-      }
-   }
+    private void setWalkTarget(MobEntity mob, BlockPos pos)
+    {
+        mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, this.speed, 0));
+    }
 
-   private void startWalkingTowardsBed(MobEntity p_220467_1_, BlockPos p_220467_2_) {
-      p_220467_1_.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(p_220467_2_, this.speedModifier, 0));
-   }
+    private boolean func_220469_b(ServerWorld world, MobEntity mob)
+    {
+        return this.func_220468_c(world, mob) || this.getBed(mob).isPresent();
+    }
 
-   private boolean nearBed(ServerWorld p_220469_1_, MobEntity p_220469_2_) {
-      return this.onOrOverBed(p_220469_1_, p_220469_2_) || this.getNearestBed(p_220469_2_).isPresent();
-   }
+    private boolean func_220468_c(ServerWorld world, MobEntity mob)
+    {
+        BlockPos blockpos = mob.getPosition();
+        BlockPos blockpos1 = blockpos.down();
+        return this.isBed(world, blockpos) || this.isBed(world, blockpos1);
+    }
 
-   private boolean onOrOverBed(ServerWorld p_220468_1_, MobEntity p_220468_2_) {
-      BlockPos blockpos = p_220468_2_.blockPosition();
-      BlockPos blockpos1 = blockpos.below();
-      return this.isBed(p_220468_1_, blockpos) || this.isBed(p_220468_1_, blockpos1);
-   }
+    private boolean func_220465_d(ServerWorld world, MobEntity mob)
+    {
+        return this.isBed(world, mob.getPosition());
+    }
 
-   private boolean onBedSurface(ServerWorld p_220465_1_, MobEntity p_220465_2_) {
-      return this.isBed(p_220465_1_, p_220465_2_.blockPosition());
-   }
+    private boolean isBed(ServerWorld world, BlockPos pos)
+    {
+        return world.getBlockState(pos).isIn(BlockTags.BEDS);
+    }
 
-   private boolean isBed(ServerWorld p_220466_1_, BlockPos p_220466_2_) {
-      return p_220466_1_.getBlockState(p_220466_2_).is(BlockTags.BEDS);
-   }
+    private Optional<BlockPos> getBed(MobEntity p_220463_1_)
+    {
+        return p_220463_1_.getBrain().getMemory(MemoryModuleType.NEAREST_BED);
+    }
 
-   private Optional<BlockPos> getNearestBed(MobEntity p_220463_1_) {
-      return p_220463_1_.getBrain().getMemory(MemoryModuleType.NEAREST_BED);
-   }
+    private boolean func_220464_e(ServerWorld world, MobEntity mob)
+    {
+        return !this.func_220468_c(world, mob) && this.field_220472_c <= 0;
+    }
 
-   private boolean tiredOfWalking(ServerWorld p_220464_1_, MobEntity p_220464_2_) {
-      return !this.onOrOverBed(p_220464_1_, p_220464_2_) && this.remainingTimeToReachBed <= 0;
-   }
-
-   private boolean tiredOfJumping(ServerWorld p_220462_1_, MobEntity p_220462_2_) {
-      return this.onOrOverBed(p_220462_1_, p_220462_2_) && this.remainingJumps <= 0;
-   }
+    private boolean func_220462_f(ServerWorld world, MobEntity mob)
+    {
+        return this.func_220468_c(world, mob) && this.field_220473_d <= 0;
+    }
 }

@@ -15,63 +15,85 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.server.ServerWorld;
 
-public class SleepAtHomeTask extends Task<LivingEntity> {
-   private long nextOkStartTime;
+public class SleepAtHomeTask extends Task<LivingEntity>
+{
+    private long field_220552_a;
 
-   public SleepAtHomeTask() {
-      super(ImmutableMap.of(MemoryModuleType.HOME, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.LAST_WOKEN, MemoryModuleStatus.REGISTERED));
-   }
+    public SleepAtHomeTask()
+    {
+        super(ImmutableMap.of(MemoryModuleType.HOME, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.LAST_WOKEN, MemoryModuleStatus.REGISTERED));
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, LivingEntity p_212832_2_) {
-      if (p_212832_2_.isPassenger()) {
-         return false;
-      } else {
-         Brain<?> brain = p_212832_2_.getBrain();
-         GlobalPos globalpos = brain.getMemory(MemoryModuleType.HOME).get();
-         if (p_212832_1_.dimension() != globalpos.dimension()) {
+    protected boolean shouldExecute(ServerWorld worldIn, LivingEntity owner)
+    {
+        if (owner.isPassenger())
+        {
             return false;
-         } else {
-            Optional<Long> optional = brain.getMemory(MemoryModuleType.LAST_WOKEN);
-            if (optional.isPresent()) {
-               long i = p_212832_1_.getGameTime() - optional.get();
-               if (i > 0L && i < 100L) {
-                  return false;
-               }
+        }
+        else
+        {
+            Brain<?> brain = owner.getBrain();
+            GlobalPos globalpos = brain.getMemory(MemoryModuleType.HOME).get();
+
+            if (worldIn.getDimensionKey() != globalpos.getDimension())
+            {
+                return false;
             }
+            else
+            {
+                Optional<Long> optional = brain.getMemory(MemoryModuleType.LAST_WOKEN);
 
-            BlockState blockstate = p_212832_1_.getBlockState(globalpos.pos());
-            return globalpos.pos().closerThan(p_212832_2_.position(), 2.0D) && blockstate.getBlock().is(BlockTags.BEDS) && !blockstate.getValue(BedBlock.OCCUPIED);
-         }
-      }
-   }
+                if (optional.isPresent())
+                {
+                    long i = worldIn.getGameTime() - optional.get();
 
-   protected boolean canStillUse(ServerWorld p_212834_1_, LivingEntity p_212834_2_, long p_212834_3_) {
-      Optional<GlobalPos> optional = p_212834_2_.getBrain().getMemory(MemoryModuleType.HOME);
-      if (!optional.isPresent()) {
-         return false;
-      } else {
-         BlockPos blockpos = optional.get().pos();
-         return p_212834_2_.getBrain().isActive(Activity.REST) && p_212834_2_.getY() > (double)blockpos.getY() + 0.4D && blockpos.closerThan(p_212834_2_.position(), 1.14D);
-      }
-   }
+                    if (i > 0L && i < 100L)
+                    {
+                        return false;
+                    }
+                }
 
-   protected void start(ServerWorld p_212831_1_, LivingEntity p_212831_2_, long p_212831_3_) {
-      if (p_212831_3_ > this.nextOkStartTime) {
-         InteractWithDoorTask.closeDoorsThatIHaveOpenedOrPassedThrough(p_212831_1_, p_212831_2_, (PathPoint)null, (PathPoint)null);
-         p_212831_2_.startSleeping(p_212831_2_.getBrain().getMemory(MemoryModuleType.HOME).get().pos());
-      }
+                BlockState blockstate = worldIn.getBlockState(globalpos.getPos());
+                return globalpos.getPos().withinDistance(owner.getPositionVec(), 2.0D) && blockstate.getBlock().isIn(BlockTags.BEDS) && !blockstate.get(BedBlock.OCCUPIED);
+            }
+        }
+    }
 
-   }
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, LivingEntity entityIn, long gameTimeIn)
+    {
+        Optional<GlobalPos> optional = entityIn.getBrain().getMemory(MemoryModuleType.HOME);
 
-   protected boolean timedOut(long p_220383_1_) {
-      return false;
-   }
+        if (!optional.isPresent())
+        {
+            return false;
+        }
+        else
+        {
+            BlockPos blockpos = optional.get().getPos();
+            return entityIn.getBrain().hasActivity(Activity.REST) && entityIn.getPosY() > (double)blockpos.getY() + 0.4D && blockpos.withinDistance(entityIn.getPositionVec(), 1.14D);
+        }
+    }
 
-   protected void stop(ServerWorld p_212835_1_, LivingEntity p_212835_2_, long p_212835_3_) {
-      if (p_212835_2_.isSleeping()) {
-         p_212835_2_.stopSleeping();
-         this.nextOkStartTime = p_212835_3_ + 40L;
-      }
+    protected void startExecuting(ServerWorld worldIn, LivingEntity entityIn, long gameTimeIn)
+    {
+        if (gameTimeIn > this.field_220552_a)
+        {
+            InteractWithDoorTask.func_242294_a(worldIn, entityIn, (PathPoint)null, (PathPoint)null);
+            entityIn.startSleeping(entityIn.getBrain().getMemory(MemoryModuleType.HOME).get().getPos());
+        }
+    }
 
-   }
+    protected boolean isTimedOut(long gameTime)
+    {
+        return false;
+    }
+
+    protected void resetTask(ServerWorld worldIn, LivingEntity entityIn, long gameTimeIn)
+    {
+        if (entityIn.isSleeping())
+        {
+            entityIn.wakeUp();
+            this.field_220552_a = gameTimeIn + 40L;
+        }
+    }
 }

@@ -4,43 +4,54 @@ import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PhaseManager {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final EnderDragonEntity dragon;
-   private final IPhase[] phases = new IPhase[PhaseType.getCount()];
-   private IPhase currentPhase;
+public class PhaseManager
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final EnderDragonEntity dragon;
+    private final IPhase[] phases = new IPhase[PhaseType.getTotalPhases()];
+    private IPhase phase;
 
-   public PhaseManager(EnderDragonEntity p_i46781_1_) {
-      this.dragon = p_i46781_1_;
-      this.setPhase(PhaseType.HOVERING);
-   }
+    public PhaseManager(EnderDragonEntity dragonIn)
+    {
+        this.dragon = dragonIn;
+        this.setPhase(PhaseType.HOVER);
+    }
 
-   public void setPhase(PhaseType<?> p_188758_1_) {
-      if (this.currentPhase == null || p_188758_1_ != this.currentPhase.getPhase()) {
-         if (this.currentPhase != null) {
-            this.currentPhase.end();
-         }
+    public void setPhase(PhaseType<?> phaseIn)
+    {
+        if (this.phase == null || phaseIn != this.phase.getType())
+        {
+            if (this.phase != null)
+            {
+                this.phase.removeAreaEffect();
+            }
 
-         this.currentPhase = this.getPhase(p_188758_1_);
-         if (!this.dragon.level.isClientSide) {
-            this.dragon.getEntityData().set(EnderDragonEntity.DATA_PHASE, p_188758_1_.getId());
-         }
+            this.phase = this.getPhase(phaseIn);
 
-         LOGGER.debug("Dragon is now in phase {} on the {}", p_188758_1_, this.dragon.level.isClientSide ? "client" : "server");
-         this.currentPhase.begin();
-      }
-   }
+            if (!this.dragon.world.isRemote)
+            {
+                this.dragon.getDataManager().set(EnderDragonEntity.PHASE, phaseIn.getId());
+            }
 
-   public IPhase getCurrentPhase() {
-      return this.currentPhase;
-   }
+            LOGGER.debug("Dragon is now in phase {} on the {}", phaseIn, this.dragon.world.isRemote ? "client" : "server");
+            this.phase.initPhase();
+        }
+    }
 
-   public <T extends IPhase> T getPhase(PhaseType<T> p_188757_1_) {
-      int i = p_188757_1_.getId();
-      if (this.phases[i] == null) {
-         this.phases[i] = p_188757_1_.createInstance(this.dragon);
-      }
+    public IPhase getCurrentPhase()
+    {
+        return this.phase;
+    }
 
-      return (T)this.phases[i];
-   }
+    public <T extends IPhase> T getPhase(PhaseType<T> phaseIn)
+    {
+        int i = phaseIn.getId();
+
+        if (this.phases[i] == null)
+        {
+            this.phases[i] = phaseIn.createPhase(this.dragon);
+        }
+
+        return (T)this.phases[i];
+    }
 }

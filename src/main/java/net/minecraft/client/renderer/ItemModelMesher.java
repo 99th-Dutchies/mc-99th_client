@@ -12,56 +12,63 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IItemProvider;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class ItemModelMesher {
-   public final Int2ObjectMap<ModelResourceLocation> shapes = new Int2ObjectOpenHashMap<>(256);
-   private final Int2ObjectMap<IBakedModel> shapesCache = new Int2ObjectOpenHashMap<>(256);
-   private final ModelManager modelManager;
+public class ItemModelMesher
+{
+    public final Int2ObjectMap<ModelResourceLocation> modelLocations = new Int2ObjectOpenHashMap<>(256);
+    private final Int2ObjectMap<IBakedModel> itemModels = new Int2ObjectOpenHashMap<>(256);
+    private final ModelManager modelManager;
 
-   public ItemModelMesher(ModelManager p_i46250_1_) {
-      this.modelManager = p_i46250_1_;
-   }
+    public ItemModelMesher(ModelManager modelManager)
+    {
+        this.modelManager = modelManager;
+    }
 
-   public TextureAtlasSprite getParticleIcon(IItemProvider p_199934_1_) {
-      return this.getParticleIcon(new ItemStack(p_199934_1_));
-   }
+    public TextureAtlasSprite getParticleIcon(IItemProvider itemProvider)
+    {
+        return this.getParticleIcon(new ItemStack(itemProvider));
+    }
 
-   public TextureAtlasSprite getParticleIcon(ItemStack p_199309_1_) {
-      IBakedModel ibakedmodel = this.getItemModel(p_199309_1_);
-      return ibakedmodel == this.modelManager.getMissingModel() && p_199309_1_.getItem() instanceof BlockItem ? this.modelManager.getBlockModelShaper().getParticleIcon(((BlockItem)p_199309_1_.getItem()).getBlock().defaultBlockState()) : ibakedmodel.getParticleIcon();
-   }
+    public TextureAtlasSprite getParticleIcon(ItemStack stack)
+    {
+        IBakedModel ibakedmodel = this.getItemModel(stack);
+        return ibakedmodel == this.modelManager.getMissingModel() && stack.getItem() instanceof BlockItem ? this.modelManager.getBlockModelShapes().getTexture(((BlockItem)stack.getItem()).getBlock().getDefaultState()) : ibakedmodel.getParticleTexture();
+    }
 
-   public IBakedModel getItemModel(ItemStack p_178089_1_) {
-      IBakedModel ibakedmodel = this.getItemModel(p_178089_1_.getItem());
-      return ibakedmodel == null ? this.modelManager.getMissingModel() : ibakedmodel;
-   }
+    public IBakedModel getItemModel(ItemStack stack)
+    {
+        IBakedModel ibakedmodel = this.getItemModel(stack.getItem());
+        return ibakedmodel == null ? this.modelManager.getMissingModel() : ibakedmodel;
+    }
 
-   @Nullable
-   public IBakedModel getItemModel(Item p_199312_1_) {
-      return this.shapesCache.get(getIndex(p_199312_1_));
-   }
+    @Nullable
+    public IBakedModel getItemModel(Item itemIn)
+    {
+        return this.itemModels.get(getIndex(itemIn));
+    }
 
-   private static int getIndex(Item p_199310_0_) {
-      return Item.getId(p_199310_0_);
-   }
+    private static int getIndex(Item itemIn)
+    {
+        return Item.getIdFromItem(itemIn);
+    }
 
-   public void register(Item p_199311_1_, ModelResourceLocation p_199311_2_) {
-      this.shapes.put(getIndex(p_199311_1_), p_199311_2_);
-   }
+    public void register(Item itemIn, ModelResourceLocation modelLocation)
+    {
+        this.modelLocations.put(getIndex(itemIn), modelLocation);
+    }
 
-   public ModelManager getModelManager() {
-      return this.modelManager;
-   }
+    public ModelManager getModelManager()
+    {
+        return this.modelManager;
+    }
 
-   public void rebuildCache() {
-      this.shapesCache.clear();
+    public void rebuildCache()
+    {
+        this.itemModels.clear();
 
-      for(Entry<Integer, ModelResourceLocation> entry : this.shapes.entrySet()) {
-         this.shapesCache.put(entry.getKey(), this.modelManager.getModel(entry.getValue()));
-      }
-
-   }
+        for (Entry<Integer, ModelResourceLocation> entry : this.modelLocations.entrySet())
+        {
+            this.itemModels.put(entry.getKey(), this.modelManager.getModel(entry.getValue()));
+        }
+    }
 }

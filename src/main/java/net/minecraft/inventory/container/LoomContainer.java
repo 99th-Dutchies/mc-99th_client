@@ -17,248 +17,340 @@ import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.util.IntReferenceHolder;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class LoomContainer extends Container {
-   private final IWorldPosCallable access;
-   private final IntReferenceHolder selectedBannerPatternIndex = IntReferenceHolder.standalone();
-   private Runnable slotUpdateListener = () -> {
-   };
-   private final Slot bannerSlot;
-   private final Slot dyeSlot;
-   private final Slot patternSlot;
-   private final Slot resultSlot;
-   private long lastSoundTime;
-   private final IInventory inputContainer = new Inventory(3) {
-      public void setChanged() {
-         super.setChanged();
-         LoomContainer.this.slotsChanged(this);
-         LoomContainer.this.slotUpdateListener.run();
-      }
-   };
-   private final IInventory outputContainer = new Inventory(1) {
-      public void setChanged() {
-         super.setChanged();
-         LoomContainer.this.slotUpdateListener.run();
-      }
-   };
+public class LoomContainer extends Container
+{
+    private final IWorldPosCallable worldPos;
+    private final IntReferenceHolder field_217034_d = IntReferenceHolder.single();
+    private Runnable runnable = () ->
+    {
+    };
+    private final Slot slotBanner;
+    private final Slot slotDye;
+    private final Slot slotPattern;
+    private final Slot output;
+    private long field_226622_j_;
+    private final IInventory inputInventory = new Inventory(3)
+    {
+        public void markDirty()
+        {
+            super.markDirty();
+            LoomContainer.this.onCraftMatrixChanged(this);
+            LoomContainer.this.runnable.run();
+        }
+    };
+    private final IInventory outputInventory = new Inventory(1)
+    {
+        public void markDirty()
+        {
+            super.markDirty();
+            LoomContainer.this.runnable.run();
+        }
+    };
 
-   public LoomContainer(int p_i50073_1_, PlayerInventory p_i50073_2_) {
-      this(p_i50073_1_, p_i50073_2_, IWorldPosCallable.NULL);
-   }
+    public LoomContainer(int id, PlayerInventory playerInventory)
+    {
+        this(id, playerInventory, IWorldPosCallable.DUMMY);
+    }
 
-   public LoomContainer(int p_i50074_1_, PlayerInventory p_i50074_2_, final IWorldPosCallable p_i50074_3_) {
-      super(ContainerType.LOOM, p_i50074_1_);
-      this.access = p_i50074_3_;
-      this.bannerSlot = this.addSlot(new Slot(this.inputContainer, 0, 13, 26) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
-            return p_75214_1_.getItem() instanceof BannerItem;
-         }
-      });
-      this.dyeSlot = this.addSlot(new Slot(this.inputContainer, 1, 33, 26) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
-            return p_75214_1_.getItem() instanceof DyeItem;
-         }
-      });
-      this.patternSlot = this.addSlot(new Slot(this.inputContainer, 2, 23, 45) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
-            return p_75214_1_.getItem() instanceof BannerPatternItem;
-         }
-      });
-      this.resultSlot = this.addSlot(new Slot(this.outputContainer, 0, 143, 58) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
+    public LoomContainer(int id, PlayerInventory playerInventory, final IWorldPosCallable worldCallable)
+    {
+        super(ContainerType.LOOM, id);
+        this.worldPos = worldCallable;
+        this.slotBanner = this.addSlot(new Slot(this.inputInventory, 0, 13, 26)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return stack.getItem() instanceof BannerItem;
+            }
+        });
+        this.slotDye = this.addSlot(new Slot(this.inputInventory, 1, 33, 26)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return stack.getItem() instanceof DyeItem;
+            }
+        });
+        this.slotPattern = this.addSlot(new Slot(this.inputInventory, 2, 23, 45)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return stack.getItem() instanceof BannerPatternItem;
+            }
+        });
+        this.output = this.addSlot(new Slot(this.outputInventory, 0, 143, 58)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return false;
+            }
+            public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+            {
+                LoomContainer.this.slotBanner.decrStackSize(1);
+                LoomContainer.this.slotDye.decrStackSize(1);
+
+                if (!LoomContainer.this.slotBanner.getHasStack() || !LoomContainer.this.slotDye.getHasStack())
+                {
+                    LoomContainer.this.field_217034_d.set(0);
+                }
+
+                worldCallable.consume((p_216951_1_, p_216951_2_) ->
+                {
+                    long l = p_216951_1_.getGameTime();
+
+                    if (LoomContainer.this.field_226622_j_ != l)
+                    {
+                        p_216951_1_.playSound((PlayerEntity)null, p_216951_2_, SoundEvents.UI_LOOM_TAKE_RESULT, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                        LoomContainer.this.field_226622_j_ = l;
+                    }
+                });
+                return super.onTake(thePlayer, stack);
+            }
+        });
+
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 9; ++j)
+            {
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+            }
+        }
+
+        for (int k = 0; k < 9; ++k)
+        {
+            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
+        }
+
+        this.trackInt(this.field_217034_d);
+    }
+
+    public int func_217023_e()
+    {
+        return this.field_217034_d.get();
+    }
+
+    /**
+     * Determines whether supplied player can use this container
+     */
+    public boolean canInteractWith(PlayerEntity playerIn)
+    {
+        return isWithinUsableDistance(this.worldPos, playerIn, Blocks.LOOM);
+    }
+
+    /**
+     * Handles the given Button-click on the server, currently only used by enchanting. Name is for legacy.
+     */
+    public boolean enchantItem(PlayerEntity playerIn, int id)
+    {
+        if (id > 0 && id <= BannerPattern.PATTERN_ITEM_INDEX)
+        {
+            this.field_217034_d.set(id);
+            this.createOutputStack();
+            return true;
+        }
+        else
+        {
             return false;
-         }
+        }
+    }
 
-         public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
-            LoomContainer.this.bannerSlot.remove(1);
-            LoomContainer.this.dyeSlot.remove(1);
-            if (!LoomContainer.this.bannerSlot.hasItem() || !LoomContainer.this.dyeSlot.hasItem()) {
-               LoomContainer.this.selectedBannerPatternIndex.set(0);
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
+    public void onCraftMatrixChanged(IInventory inventoryIn)
+    {
+        ItemStack itemstack = this.slotBanner.getStack();
+        ItemStack itemstack1 = this.slotDye.getStack();
+        ItemStack itemstack2 = this.slotPattern.getStack();
+        ItemStack itemstack3 = this.output.getStack();
+
+        if (itemstack3.isEmpty() || !itemstack.isEmpty() && !itemstack1.isEmpty() && this.field_217034_d.get() > 0 && (this.field_217034_d.get() < BannerPattern.BANNER_PATTERNS_COUNT - BannerPattern.BANNERS_WITH_ITEMS || !itemstack2.isEmpty()))
+        {
+            if (!itemstack2.isEmpty() && itemstack2.getItem() instanceof BannerPatternItem)
+            {
+                CompoundNBT compoundnbt = itemstack.getOrCreateChildTag("BlockEntityTag");
+                boolean flag = compoundnbt.contains("Patterns", 9) && !itemstack.isEmpty() && compoundnbt.getList("Patterns", 10).size() >= 6;
+
+                if (flag)
+                {
+                    this.field_217034_d.set(0);
+                }
+                else
+                {
+                    this.field_217034_d.set(((BannerPatternItem)itemstack2.getItem()).getBannerPattern().ordinal());
+                }
+            }
+        }
+        else
+        {
+            this.output.putStack(ItemStack.EMPTY);
+            this.field_217034_d.set(0);
+        }
+
+        this.createOutputStack();
+        this.detectAndSendChanges();
+    }
+
+    public void func_217020_a(Runnable p_217020_1_)
+    {
+        this.runnable = p_217020_1_;
+    }
+
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player
+     * inventory and the other inventory(s).
+     */
+    public ItemStack transferStackInSlot(PlayerEntity playerIn, int index)
+    {
+        ItemStack itemstack = ItemStack.EMPTY;
+        Slot slot = this.inventorySlots.get(index);
+
+        if (slot != null && slot.getHasStack())
+        {
+            ItemStack itemstack1 = slot.getStack();
+            itemstack = itemstack1.copy();
+
+            if (index == this.output.slotNumber)
+            {
+                if (!this.mergeItemStack(itemstack1, 4, 40, true))
+                {
+                    return ItemStack.EMPTY;
+                }
+
+                slot.onSlotChange(itemstack1, itemstack);
+            }
+            else if (index != this.slotDye.slotNumber && index != this.slotBanner.slotNumber && index != this.slotPattern.slotNumber)
+            {
+                if (itemstack1.getItem() instanceof BannerItem)
+                {
+                    if (!this.mergeItemStack(itemstack1, this.slotBanner.slotNumber, this.slotBanner.slotNumber + 1, false))
+                    {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                else if (itemstack1.getItem() instanceof DyeItem)
+                {
+                    if (!this.mergeItemStack(itemstack1, this.slotDye.slotNumber, this.slotDye.slotNumber + 1, false))
+                    {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                else if (itemstack1.getItem() instanceof BannerPatternItem)
+                {
+                    if (!this.mergeItemStack(itemstack1, this.slotPattern.slotNumber, this.slotPattern.slotNumber + 1, false))
+                    {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                else if (index >= 4 && index < 31)
+                {
+                    if (!this.mergeItemStack(itemstack1, 31, 40, false))
+                    {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                else if (index >= 31 && index < 40 && !this.mergeItemStack(itemstack1, 4, 31, false))
+                {
+                    return ItemStack.EMPTY;
+                }
+            }
+            else if (!this.mergeItemStack(itemstack1, 4, 40, false))
+            {
+                return ItemStack.EMPTY;
             }
 
-            p_i50074_3_.execute((p_216951_1_, p_216951_2_) -> {
-               long l = p_216951_1_.getGameTime();
-               if (LoomContainer.this.lastSoundTime != l) {
-                  p_216951_1_.playSound((PlayerEntity)null, p_216951_2_, SoundEvents.UI_LOOM_TAKE_RESULT, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                  LoomContainer.this.lastSoundTime = l;
-               }
-
-            });
-            return super.onTake(p_190901_1_, p_190901_2_);
-         }
-      });
-
-      for(int i = 0; i < 3; ++i) {
-         for(int j = 0; j < 9; ++j) {
-            this.addSlot(new Slot(p_i50074_2_, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
-         }
-      }
-
-      for(int k = 0; k < 9; ++k) {
-         this.addSlot(new Slot(p_i50074_2_, k, 8 + k * 18, 142));
-      }
-
-      this.addDataSlot(this.selectedBannerPatternIndex);
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public int getSelectedBannerPatternIndex() {
-      return this.selectedBannerPatternIndex.get();
-   }
-
-   public boolean stillValid(PlayerEntity p_75145_1_) {
-      return stillValid(this.access, p_75145_1_, Blocks.LOOM);
-   }
-
-   public boolean clickMenuButton(PlayerEntity p_75140_1_, int p_75140_2_) {
-      if (p_75140_2_ > 0 && p_75140_2_ <= BannerPattern.AVAILABLE_PATTERNS) {
-         this.selectedBannerPatternIndex.set(p_75140_2_);
-         this.setupResultSlot();
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   public void slotsChanged(IInventory p_75130_1_) {
-      ItemStack itemstack = this.bannerSlot.getItem();
-      ItemStack itemstack1 = this.dyeSlot.getItem();
-      ItemStack itemstack2 = this.patternSlot.getItem();
-      ItemStack itemstack3 = this.resultSlot.getItem();
-      if (itemstack3.isEmpty() || !itemstack.isEmpty() && !itemstack1.isEmpty() && this.selectedBannerPatternIndex.get() > 0 && (this.selectedBannerPatternIndex.get() < BannerPattern.COUNT - BannerPattern.PATTERN_ITEM_COUNT || !itemstack2.isEmpty())) {
-         if (!itemstack2.isEmpty() && itemstack2.getItem() instanceof BannerPatternItem) {
-            CompoundNBT compoundnbt = itemstack.getOrCreateTagElement("BlockEntityTag");
-            boolean flag = compoundnbt.contains("Patterns", 9) && !itemstack.isEmpty() && compoundnbt.getList("Patterns", 10).size() >= 6;
-            if (flag) {
-               this.selectedBannerPatternIndex.set(0);
-            } else {
-               this.selectedBannerPatternIndex.set(((BannerPatternItem)itemstack2.getItem()).getBannerPattern().ordinal());
+            if (itemstack1.isEmpty())
+            {
+                slot.putStack(ItemStack.EMPTY);
             }
-         }
-      } else {
-         this.resultSlot.set(ItemStack.EMPTY);
-         this.selectedBannerPatternIndex.set(0);
-      }
-
-      this.setupResultSlot();
-      this.broadcastChanges();
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public void registerUpdateListener(Runnable p_217020_1_) {
-      this.slotUpdateListener = p_217020_1_;
-   }
-
-   public ItemStack quickMoveStack(PlayerEntity p_82846_1_, int p_82846_2_) {
-      ItemStack itemstack = ItemStack.EMPTY;
-      Slot slot = this.slots.get(p_82846_2_);
-      if (slot != null && slot.hasItem()) {
-         ItemStack itemstack1 = slot.getItem();
-         itemstack = itemstack1.copy();
-         if (p_82846_2_ == this.resultSlot.index) {
-            if (!this.moveItemStackTo(itemstack1, 4, 40, true)) {
-               return ItemStack.EMPTY;
+            else
+            {
+                slot.onSlotChanged();
             }
 
-            slot.onQuickCraft(itemstack1, itemstack);
-         } else if (p_82846_2_ != this.dyeSlot.index && p_82846_2_ != this.bannerSlot.index && p_82846_2_ != this.patternSlot.index) {
-            if (itemstack1.getItem() instanceof BannerItem) {
-               if (!this.moveItemStackTo(itemstack1, this.bannerSlot.index, this.bannerSlot.index + 1, false)) {
-                  return ItemStack.EMPTY;
-               }
-            } else if (itemstack1.getItem() instanceof DyeItem) {
-               if (!this.moveItemStackTo(itemstack1, this.dyeSlot.index, this.dyeSlot.index + 1, false)) {
-                  return ItemStack.EMPTY;
-               }
-            } else if (itemstack1.getItem() instanceof BannerPatternItem) {
-               if (!this.moveItemStackTo(itemstack1, this.patternSlot.index, this.patternSlot.index + 1, false)) {
-                  return ItemStack.EMPTY;
-               }
-            } else if (p_82846_2_ >= 4 && p_82846_2_ < 31) {
-               if (!this.moveItemStackTo(itemstack1, 31, 40, false)) {
-                  return ItemStack.EMPTY;
-               }
-            } else if (p_82846_2_ >= 31 && p_82846_2_ < 40 && !this.moveItemStackTo(itemstack1, 4, 31, false)) {
-               return ItemStack.EMPTY;
-            }
-         } else if (!this.moveItemStackTo(itemstack1, 4, 40, false)) {
-            return ItemStack.EMPTY;
-         }
-
-         if (itemstack1.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-         } else {
-            slot.setChanged();
-         }
-
-         if (itemstack1.getCount() == itemstack.getCount()) {
-            return ItemStack.EMPTY;
-         }
-
-         slot.onTake(p_82846_1_, itemstack1);
-      }
-
-      return itemstack;
-   }
-
-   public void removed(PlayerEntity p_75134_1_) {
-      super.removed(p_75134_1_);
-      this.access.execute((p_217028_2_, p_217028_3_) -> {
-         this.clearContainer(p_75134_1_, p_75134_1_.level, this.inputContainer);
-      });
-   }
-
-   private void setupResultSlot() {
-      if (this.selectedBannerPatternIndex.get() > 0) {
-         ItemStack itemstack = this.bannerSlot.getItem();
-         ItemStack itemstack1 = this.dyeSlot.getItem();
-         ItemStack itemstack2 = ItemStack.EMPTY;
-         if (!itemstack.isEmpty() && !itemstack1.isEmpty()) {
-            itemstack2 = itemstack.copy();
-            itemstack2.setCount(1);
-            BannerPattern bannerpattern = BannerPattern.values()[this.selectedBannerPatternIndex.get()];
-            DyeColor dyecolor = ((DyeItem)itemstack1.getItem()).getDyeColor();
-            CompoundNBT compoundnbt = itemstack2.getOrCreateTagElement("BlockEntityTag");
-            ListNBT listnbt;
-            if (compoundnbt.contains("Patterns", 9)) {
-               listnbt = compoundnbt.getList("Patterns", 10);
-            } else {
-               listnbt = new ListNBT();
-               compoundnbt.put("Patterns", listnbt);
+            if (itemstack1.getCount() == itemstack.getCount())
+            {
+                return ItemStack.EMPTY;
             }
 
-            CompoundNBT compoundnbt1 = new CompoundNBT();
-            compoundnbt1.putString("Pattern", bannerpattern.getHashname());
-            compoundnbt1.putInt("Color", dyecolor.getId());
-            listnbt.add(compoundnbt1);
-         }
+            slot.onTake(playerIn, itemstack1);
+        }
 
-         if (!ItemStack.matches(itemstack2, this.resultSlot.getItem())) {
-            this.resultSlot.set(itemstack2);
-         }
-      }
+        return itemstack;
+    }
 
-   }
+    /**
+     * Called when the container is closed.
+     */
+    public void onContainerClosed(PlayerEntity playerIn)
+    {
+        super.onContainerClosed(playerIn);
+        this.worldPos.consume((p_217028_2_, p_217028_3_) ->
+        {
+            this.clearContainer(playerIn, playerIn.world, this.inputInventory);
+        });
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Slot getBannerSlot() {
-      return this.bannerSlot;
-   }
+    /**
+     * Creates an output banner ItemStack based on the patterns, dyes, etc. in the loom.
+     */
+    private void createOutputStack()
+    {
+        if (this.field_217034_d.get() > 0)
+        {
+            ItemStack itemstack = this.slotBanner.getStack();
+            ItemStack itemstack1 = this.slotDye.getStack();
+            ItemStack itemstack2 = ItemStack.EMPTY;
 
-   @OnlyIn(Dist.CLIENT)
-   public Slot getDyeSlot() {
-      return this.dyeSlot;
-   }
+            if (!itemstack.isEmpty() && !itemstack1.isEmpty())
+            {
+                itemstack2 = itemstack.copy();
+                itemstack2.setCount(1);
+                BannerPattern bannerpattern = BannerPattern.values()[this.field_217034_d.get()];
+                DyeColor dyecolor = ((DyeItem)itemstack1.getItem()).getDyeColor();
+                CompoundNBT compoundnbt = itemstack2.getOrCreateChildTag("BlockEntityTag");
+                ListNBT listnbt;
 
-   @OnlyIn(Dist.CLIENT)
-   public Slot getPatternSlot() {
-      return this.patternSlot;
-   }
+                if (compoundnbt.contains("Patterns", 9))
+                {
+                    listnbt = compoundnbt.getList("Patterns", 10);
+                }
+                else
+                {
+                    listnbt = new ListNBT();
+                    compoundnbt.put("Patterns", listnbt);
+                }
 
-   @OnlyIn(Dist.CLIENT)
-   public Slot getResultSlot() {
-      return this.resultSlot;
-   }
+                CompoundNBT compoundnbt1 = new CompoundNBT();
+                compoundnbt1.putString("Pattern", bannerpattern.getHashname());
+                compoundnbt1.putInt("Color", dyecolor.getId());
+                listnbt.add(compoundnbt1);
+            }
+
+            if (!ItemStack.areItemStacksEqual(itemstack2, this.output.getStack()))
+            {
+                this.output.putStack(itemstack2);
+            }
+        }
+    }
+
+    public Slot getBannerSlot()
+    {
+        return this.slotBanner;
+    }
+
+    public Slot getDyeSlot()
+    {
+        return this.slotDye;
+    }
+
+    public Slot getPatternSlot()
+    {
+        return this.slotPattern;
+    }
+
+    public Slot getOutputSlot()
+    {
+        return this.output;
+    }
 }

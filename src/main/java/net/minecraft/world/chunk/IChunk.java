@@ -26,123 +26,146 @@ import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
 import org.apache.logging.log4j.LogManager;
 
-public interface IChunk extends IBlockReader, IStructureReader {
-   @Nullable
-   BlockState setBlockState(BlockPos p_177436_1_, BlockState p_177436_2_, boolean p_177436_3_);
+public interface IChunk extends IBlockReader, IStructureReader
+{
+    @Nullable
+    BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving);
 
-   void setBlockEntity(BlockPos p_177426_1_, TileEntity p_177426_2_);
+    void addTileEntity(BlockPos pos, TileEntity tileEntityIn);
 
-   void addEntity(Entity p_76612_1_);
+    /**
+     * Adds an entity to the chunk.
+     */
+    void addEntity(Entity entityIn);
 
-   @Nullable
-   default ChunkSection getHighestSection() {
-      ChunkSection[] achunksection = this.getSections();
+    @Nullable
 
-      for(int i = achunksection.length - 1; i >= 0; --i) {
-         ChunkSection chunksection = achunksection[i];
-         if (!ChunkSection.isEmpty(chunksection)) {
-            return chunksection;
-         }
-      }
+default ChunkSection getLastExtendedBlockStorage()
+    {
+        ChunkSection[] achunksection = this.getSections();
 
-      return null;
-   }
+        for (int i = achunksection.length - 1; i >= 0; --i)
+        {
+            ChunkSection chunksection = achunksection[i];
 
-   default int getHighestSectionPosition() {
-      ChunkSection chunksection = this.getHighestSection();
-      return chunksection == null ? 0 : chunksection.bottomBlockY();
-   }
+            if (!ChunkSection.isEmpty(chunksection))
+            {
+                return chunksection;
+            }
+        }
 
-   Set<BlockPos> getBlockEntitiesPos();
+        return null;
+    }
 
-   ChunkSection[] getSections();
+default int getTopFilledSegment()
+    {
+        ChunkSection chunksection = this.getLastExtendedBlockStorage();
+        return chunksection == null ? 0 : chunksection.getYLocation();
+    }
 
-   Collection<Entry<Heightmap.Type, Heightmap>> getHeightmaps();
+    Set<BlockPos> getTileEntitiesPos();
 
-   void setHeightmap(Heightmap.Type p_201607_1_, long[] p_201607_2_);
+    ChunkSection[] getSections();
 
-   Heightmap getOrCreateHeightmapUnprimed(Heightmap.Type p_217303_1_);
+    Collection<Entry<Heightmap.Type, Heightmap>> getHeightmaps();
 
-   int getHeight(Heightmap.Type p_201576_1_, int p_201576_2_, int p_201576_3_);
+    void setHeightmap(Heightmap.Type type, long[] data);
 
-   ChunkPos getPos();
+    Heightmap getHeightmap(Heightmap.Type typeIn);
 
-   void setLastSaveTime(long p_177432_1_);
+    int getTopBlockY(Heightmap.Type heightmapType, int x, int z);
 
-   Map<Structure<?>, StructureStart<?>> getAllStarts();
+    /**
+     * Gets a {@link ChunkPos} representing the x and z coordinates of this chunk.
+     */
+    ChunkPos getPos();
 
-   void setAllStarts(Map<Structure<?>, StructureStart<?>> p_201612_1_);
+    void setLastSaveTime(long saveTime);
 
-   default boolean isYSpaceEmpty(int p_76606_1_, int p_76606_2_) {
-      if (p_76606_1_ < 0) {
-         p_76606_1_ = 0;
-      }
+    Map < Structure<?>, StructureStart<? >> getStructureStarts();
 
-      if (p_76606_2_ >= 256) {
-         p_76606_2_ = 255;
-      }
+    void setStructureStarts(Map < Structure<?>, StructureStart<? >> structureStartsIn);
 
-      for(int i = p_76606_1_; i <= p_76606_2_; i += 16) {
-         if (!ChunkSection.isEmpty(this.getSections()[i >> 4])) {
-            return false;
-         }
-      }
+default boolean isEmptyBetween(int startY, int endY)
+    {
+        if (startY < 0)
+        {
+            startY = 0;
+        }
 
-      return true;
-   }
+        if (endY >= 256)
+        {
+            endY = 255;
+        }
 
-   @Nullable
-   BiomeContainer getBiomes();
+        for (int i = startY; i <= endY; i += 16)
+        {
+            if (!ChunkSection.isEmpty(this.getSections()[i >> 4]))
+            {
+                return false;
+            }
+        }
 
-   void setUnsaved(boolean p_177427_1_);
+        return true;
+    }
 
-   boolean isUnsaved();
+    @Nullable
+    BiomeContainer getBiomes();
 
-   ChunkStatus getStatus();
+    void setModified(boolean modified);
 
-   void removeBlockEntity(BlockPos p_177425_1_);
+    boolean isModified();
 
-   default void markPosForPostprocessing(BlockPos p_201594_1_) {
-      LogManager.getLogger().warn("Trying to mark a block for PostProcessing @ {}, but this operation is not supported.", (Object)p_201594_1_);
-   }
+    ChunkStatus getStatus();
 
-   ShortList[] getPostProcessing();
+    void removeTileEntity(BlockPos pos);
 
-   default void addPackedPostProcess(short p_201636_1_, int p_201636_2_) {
-      getOrCreateOffsetList(this.getPostProcessing(), p_201636_2_).add(p_201636_1_);
-   }
+default void markBlockForPostprocessing(BlockPos pos)
+    {
+        LogManager.getLogger().warn("Trying to mark a block for PostProcessing @ {}, but this operation is not supported.", (Object)pos);
+    }
 
-   default void setBlockEntityNbt(CompoundNBT p_201591_1_) {
-      LogManager.getLogger().warn("Trying to set a BlockEntity, but this operation is not supported.");
-   }
+    ShortList[] getPackedPositions();
 
-   @Nullable
-   CompoundNBT getBlockEntityNbt(BlockPos p_201579_1_);
+default void addPackedPosition(short packedPosition, int index)
+    {
+        getList(this.getPackedPositions(), index).add(packedPosition);
+    }
 
-   @Nullable
-   CompoundNBT getBlockEntityNbtForSaving(BlockPos p_223134_1_);
+default void addTileEntity(CompoundNBT nbt)
+    {
+        LogManager.getLogger().warn("Trying to set a BlockEntity, but this operation is not supported.");
+    }
 
-   Stream<BlockPos> getLights();
+    @Nullable
+    CompoundNBT getDeferredTileEntity(BlockPos pos);
 
-   ITickList<Block> getBlockTicks();
+    @Nullable
+    CompoundNBT getTileEntityNBT(BlockPos pos);
 
-   ITickList<Fluid> getLiquidTicks();
+    Stream<BlockPos> getLightSources();
 
-   UpgradeData getUpgradeData();
+    ITickList<Block> getBlocksToBeTicked();
 
-   void setInhabitedTime(long p_177415_1_);
+    ITickList<Fluid> getFluidsToBeTicked();
 
-   long getInhabitedTime();
+    UpgradeData getUpgradeData();
 
-   static ShortList getOrCreateOffsetList(ShortList[] p_217308_0_, int p_217308_1_) {
-      if (p_217308_0_[p_217308_1_] == null) {
-         p_217308_0_[p_217308_1_] = new ShortArrayList();
-      }
+    void setInhabitedTime(long newInhabitedTime);
 
-      return p_217308_0_[p_217308_1_];
-   }
+    long getInhabitedTime();
 
-   boolean isLightCorrect();
+    static ShortList getList(ShortList[] packedPositions, int index)
+    {
+        if (packedPositions[index] == null)
+        {
+            packedPositions[index] = new ShortArrayList();
+        }
 
-   void setLightCorrect(boolean p_217305_1_);
+        return packedPositions[index];
+    }
+
+    boolean hasLight();
+
+    void setLight(boolean lightCorrectIn);
 }

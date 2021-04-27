@@ -5,50 +5,81 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class LeapAtTargetGoal extends Goal {
-   private final MobEntity mob;
-   private LivingEntity target;
-   private final float yd;
+public class LeapAtTargetGoal extends Goal
+{
+    private final MobEntity leaper;
+    private LivingEntity leapTarget;
+    private final float leapMotionY;
 
-   public LeapAtTargetGoal(MobEntity p_i1630_1_, float p_i1630_2_) {
-      this.mob = p_i1630_1_;
-      this.yd = p_i1630_2_;
-      this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
-   }
+    public LeapAtTargetGoal(MobEntity leapingEntity, float leapMotionYIn)
+    {
+        this.leaper = leapingEntity;
+        this.leapMotionY = leapMotionYIn;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
+    }
 
-   public boolean canUse() {
-      if (this.mob.isVehicle()) {
-         return false;
-      } else {
-         this.target = this.mob.getTarget();
-         if (this.target == null) {
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        if (this.leaper.isBeingRidden())
+        {
             return false;
-         } else {
-            double d0 = this.mob.distanceToSqr(this.target);
-            if (!(d0 < 4.0D) && !(d0 > 16.0D)) {
-               if (!this.mob.isOnGround()) {
-                  return false;
-               } else {
-                  return this.mob.getRandom().nextInt(5) == 0;
-               }
-            } else {
-               return false;
+        }
+        else
+        {
+            this.leapTarget = this.leaper.getAttackTarget();
+
+            if (this.leapTarget == null)
+            {
+                return false;
             }
-         }
-      }
-   }
+            else
+            {
+                double d0 = this.leaper.getDistanceSq(this.leapTarget);
 
-   public boolean canContinueToUse() {
-      return !this.mob.isOnGround();
-   }
+                if (!(d0 < 4.0D) && !(d0 > 16.0D))
+                {
+                    if (!this.leaper.isOnGround())
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return this.leaper.getRNG().nextInt(5) == 0;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+    }
 
-   public void start() {
-      Vector3d vector3d = this.mob.getDeltaMovement();
-      Vector3d vector3d1 = new Vector3d(this.target.getX() - this.mob.getX(), 0.0D, this.target.getZ() - this.mob.getZ());
-      if (vector3d1.lengthSqr() > 1.0E-7D) {
-         vector3d1 = vector3d1.normalize().scale(0.4D).add(vector3d.scale(0.2D));
-      }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        return !this.leaper.isOnGround();
+    }
 
-      this.mob.setDeltaMovement(vector3d1.x, (double)this.yd, vector3d1.z);
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        Vector3d vector3d = this.leaper.getMotion();
+        Vector3d vector3d1 = new Vector3d(this.leapTarget.getPosX() - this.leaper.getPosX(), 0.0D, this.leapTarget.getPosZ() - this.leaper.getPosZ());
+
+        if (vector3d1.lengthSquared() > 1.0E-7D)
+        {
+            vector3d1 = vector3d1.normalize().scale(0.4D).add(vector3d.scale(0.2D));
+        }
+
+        this.leaper.setMotion(vector3d1.x, (double)this.leapMotionY, vector3d1.z);
+    }
 }

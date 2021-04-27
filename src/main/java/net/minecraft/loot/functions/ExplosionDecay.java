@@ -10,42 +10,53 @@ import net.minecraft.loot.LootFunctionType;
 import net.minecraft.loot.LootParameters;
 import net.minecraft.loot.conditions.ILootCondition;
 
-public class ExplosionDecay extends LootFunction {
-   private ExplosionDecay(ILootCondition[] p_i51244_1_) {
-      super(p_i51244_1_);
-   }
+public class ExplosionDecay extends LootFunction
+{
+    private ExplosionDecay(ILootCondition[] p_i51244_1_)
+    {
+        super(p_i51244_1_);
+    }
 
-   public LootFunctionType getType() {
-      return LootFunctionManager.EXPLOSION_DECAY;
-   }
+    public LootFunctionType getFunctionType()
+    {
+        return LootFunctionManager.EXPLOSION_DECAY;
+    }
 
-   public ItemStack run(ItemStack p_215859_1_, LootContext p_215859_2_) {
-      Float f = p_215859_2_.getParamOrNull(LootParameters.EXPLOSION_RADIUS);
-      if (f != null) {
-         Random random = p_215859_2_.getRandom();
-         float f1 = 1.0F / f;
-         int i = p_215859_1_.getCount();
-         int j = 0;
+    public ItemStack doApply(ItemStack stack, LootContext context)
+    {
+        Float f = context.get(LootParameters.EXPLOSION_RADIUS);
 
-         for(int k = 0; k < i; ++k) {
-            if (random.nextFloat() <= f1) {
-               ++j;
+        if (f != null)
+        {
+            Random random = context.getRandom();
+            float f1 = 1.0F / f;
+            int i = stack.getCount();
+            int j = 0;
+
+            for (int k = 0; k < i; ++k)
+            {
+                if (random.nextFloat() <= f1)
+                {
+                    ++j;
+                }
             }
-         }
 
-         p_215859_1_.setCount(j);
-      }
+            stack.setCount(j);
+        }
 
-      return p_215859_1_;
-   }
+        return stack;
+    }
 
-   public static LootFunction.Builder<?> explosionDecay() {
-      return simpleBuilder(ExplosionDecay::new);
-   }
+    public static LootFunction.Builder<?> builder()
+    {
+        return builder(ExplosionDecay::new);
+    }
 
-   public static class Serializer extends LootFunction.Serializer<ExplosionDecay> {
-      public ExplosionDecay deserialize(JsonObject p_186530_1_, JsonDeserializationContext p_186530_2_, ILootCondition[] p_186530_3_) {
-         return new ExplosionDecay(p_186530_3_);
-      }
-   }
+    public static class Serializer extends LootFunction.Serializer<ExplosionDecay>
+    {
+        public ExplosionDecay deserialize(JsonObject object, JsonDeserializationContext deserializationContext, ILootCondition[] conditionsIn)
+        {
+            return new ExplosionDecay(conditionsIn);
+        }
+    }
 }

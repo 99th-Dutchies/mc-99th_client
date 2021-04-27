@@ -47,94 +47,162 @@ import net.minecraft.network.play.client.CUpdateSignPacket;
 import net.minecraft.network.play.client.CUpdateStructureBlockPacket;
 import net.minecraft.network.play.client.CUseEntityPacket;
 
-public interface IServerPlayNetHandler extends INetHandler {
-   void handleAnimate(CAnimateHandPacket p_175087_1_);
+public interface IServerPlayNetHandler extends INetHandler
+{
+    void handleAnimation(CAnimateHandPacket packetIn);
 
-   void handleChat(CChatMessagePacket p_147354_1_);
+    /**
+     * Process chat messages (broadcast back to clients) and commands (executes)
+     */
+    void processChatMessage(CChatMessagePacket packetIn);
 
-   void handleClientCommand(CClientStatusPacket p_147342_1_);
+    /**
+     * Processes the client status updates: respawn attempt from player, opening statistics or achievements, or
+     * acquiring 'open inventory' achievement
+     */
+    void processClientStatus(CClientStatusPacket packetIn);
 
-   void handleClientInformation(CClientSettingsPacket p_147352_1_);
+    /**
+     * Updates serverside copy of client settings: language, render distance, chat visibility, chat colours, difficulty,
+     * and whether to show the cape
+     */
+    void processClientSettings(CClientSettingsPacket packetIn);
 
-   void handleContainerAck(CConfirmTransactionPacket p_147339_1_);
+    /**
+     * Received in response to the server requesting to confirm that the client-side open container matches the servers'
+     * after a mismatched container-slot manipulation. It will unlock the player's ability to manipulate the container
+     * contents
+     */
+    void processConfirmTransaction(CConfirmTransactionPacket packetIn);
 
-   void handleContainerButtonClick(CEnchantItemPacket p_147338_1_);
+    /**
+     * Enchants the item identified by the packet given some convoluted conditions (matching window, which
+     * should/shouldn't be in use?)
+     */
+    void processEnchantItem(CEnchantItemPacket packetIn);
 
-   void handleContainerClick(CClickWindowPacket p_147351_1_);
+    /**
+     * Executes a container/inventory slot manipulation as indicated by the packet. Sends the serverside result if they
+     * didn't match the indicated result and prevents further manipulation by the player until he confirms that it has
+     * the same open container/inventory
+     */
+    void processClickWindow(CClickWindowPacket packetIn);
 
-   void handlePlaceRecipe(CPlaceRecipePacket p_194308_1_);
+    void processPlaceRecipe(CPlaceRecipePacket packetIn);
 
-   void handleContainerClose(CCloseWindowPacket p_147356_1_);
+    /**
+     * Processes the client closing windows (container)
+     */
+    void processCloseWindow(CCloseWindowPacket packetIn);
 
-   void handleCustomPayload(CCustomPayloadPacket p_147349_1_);
+    /**
+     * Synchronizes serverside and clientside book contents and signing
+     */
+    void processCustomPayload(CCustomPayloadPacket packetIn);
 
-   void handleInteract(CUseEntityPacket p_147340_1_);
+    /**
+     * Processes left and right clicks on entities
+     */
+    void processUseEntity(CUseEntityPacket packetIn);
 
-   void handleKeepAlive(CKeepAlivePacket p_147353_1_);
+    /**
+     * Updates a players' ping statistics
+     */
+    void processKeepAlive(CKeepAlivePacket packetIn);
 
-   void handleMovePlayer(CPlayerPacket p_147347_1_);
+    /**
+     * Processes clients perspective on player positioning and/or orientation
+     */
+    void processPlayer(CPlayerPacket packetIn);
 
-   void handlePlayerAbilities(CPlayerAbilitiesPacket p_147348_1_);
+    /**
+     * Processes a player starting/stopping flying
+     */
+    void processPlayerAbilities(CPlayerAbilitiesPacket packetIn);
 
-   void handlePlayerAction(CPlayerDiggingPacket p_147345_1_);
+    /**
+     * Processes the player initiating/stopping digging on a particular spot, as well as a player dropping items
+     */
+    void processPlayerDigging(CPlayerDiggingPacket packetIn);
 
-   void handlePlayerCommand(CEntityActionPacket p_147357_1_);
+    /**
+     * Processes a range of action-types: sneaking, sprinting, waking from sleep, opening the inventory or setting jump
+     * height of the horse the player is riding
+     */
+    void processEntityAction(CEntityActionPacket packetIn);
 
-   void handlePlayerInput(CInputPacket p_147358_1_);
+    /**
+     * Processes player movement input. Includes walking, strafing, jumping, sneaking; excludes riding and toggling
+     * flying/sprinting
+     */
+    void processInput(CInputPacket packetIn);
 
-   void handleSetCarriedItem(CHeldItemChangePacket p_147355_1_);
+    /**
+     * Updates which quickbar slot is selected
+     */
+    void processHeldItemChange(CHeldItemChangePacket packetIn);
 
-   void handleSetCreativeModeSlot(CCreativeInventoryActionPacket p_147344_1_);
+    /**
+     * Update the server with an ItemStack in a slot.
+     */
+    void processCreativeInventoryAction(CCreativeInventoryActionPacket packetIn);
 
-   void handleSignUpdate(CUpdateSignPacket p_147343_1_);
+    void processUpdateSign(CUpdateSignPacket packetIn);
 
-   void handleUseItemOn(CPlayerTryUseItemOnBlockPacket p_184337_1_);
+    void processTryUseItemOnBlock(CPlayerTryUseItemOnBlockPacket packetIn);
 
-   void handleUseItem(CPlayerTryUseItemPacket p_147346_1_);
+    /**
+     * Called when a client is using an item while not pointing at a block, but simply using an item
+     */
+    void processTryUseItem(CPlayerTryUseItemPacket packetIn);
 
-   void handleTeleportToEntityPacket(CSpectatePacket p_175088_1_);
+    void handleSpectate(CSpectatePacket packetIn);
 
-   void handleResourcePackResponse(CResourcePackStatusPacket p_175086_1_);
+    void handleResourcePackStatus(CResourcePackStatusPacket packetIn);
 
-   void handlePaddleBoat(CSteerBoatPacket p_184340_1_);
+    void processSteerBoat(CSteerBoatPacket packetIn);
 
-   void handleMoveVehicle(CMoveVehiclePacket p_184338_1_);
+    void processVehicleMove(CMoveVehiclePacket packetIn);
 
-   void handleAcceptTeleportPacket(CConfirmTeleportPacket p_184339_1_);
+    void processConfirmTeleport(CConfirmTeleportPacket packetIn);
 
-   void handleRecipeBookSeenRecipePacket(CMarkRecipeSeenPacket p_191984_1_);
+    void handleRecipeBookUpdate(CMarkRecipeSeenPacket packetIn);
 
-   void handleRecipeBookChangeSettingsPacket(CUpdateRecipeBookStatusPacket p_241831_1_);
+    void func_241831_a(CUpdateRecipeBookStatusPacket p_241831_1_);
 
-   void handleSeenAdvancements(CSeenAdvancementsPacket p_194027_1_);
+    void handleSeenAdvancements(CSeenAdvancementsPacket packetIn);
 
-   void handleCustomCommandSuggestions(CTabCompletePacket p_195518_1_);
+    /**
+     * This method is only called for manual tab-completion (the {@link
+     * net.minecraft.command.arguments.SuggestionProviders#ASK_SERVER minecraft:ask_server} suggestion provider).
+     */
+    void processTabComplete(CTabCompletePacket packetIn);
 
-   void handleSetCommandBlock(CUpdateCommandBlockPacket p_210153_1_);
+    void processUpdateCommandBlock(CUpdateCommandBlockPacket packetIn);
 
-   void handleSetCommandMinecart(CUpdateMinecartCommandBlockPacket p_210158_1_);
+    void processUpdateCommandMinecart(CUpdateMinecartCommandBlockPacket packetIn);
 
-   void handlePickItem(CPickItemPacket p_210152_1_);
+    void processPickItem(CPickItemPacket packetIn);
 
-   void handleRenameItem(CRenameItemPacket p_210155_1_);
+    void processRenameItem(CRenameItemPacket packetIn);
 
-   void handleSetBeaconPacket(CUpdateBeaconPacket p_210154_1_);
+    void processUpdateBeacon(CUpdateBeaconPacket packetIn);
 
-   void handleSetStructureBlock(CUpdateStructureBlockPacket p_210157_1_);
+    void processUpdateStructureBlock(CUpdateStructureBlockPacket packetIn);
 
-   void handleSelectTrade(CSelectTradePacket p_210159_1_);
+    void processSelectTrade(CSelectTradePacket packetIn);
 
-   void handleEditBook(CEditBookPacket p_210156_1_);
+    void processEditBook(CEditBookPacket packetIn);
 
-   void handleEntityTagQuery(CQueryEntityNBTPacket p_211526_1_);
+    void processNBTQueryEntity(CQueryEntityNBTPacket packetIn);
 
-   void handleBlockEntityTagQuery(CQueryTileEntityNBTPacket p_211525_1_);
+    void processNBTQueryBlockEntity(CQueryTileEntityNBTPacket packetIn);
 
-   void handleSetJigsawBlock(CUpdateJigsawBlockPacket p_217262_1_);
+    void func_217262_a(CUpdateJigsawBlockPacket p_217262_1_);
 
-   void handleJigsawGenerate(CJigsawBlockGeneratePacket p_230549_1_);
+    void func_230549_a_(CJigsawBlockGeneratePacket p_230549_1_);
 
-   void handleChangeDifficulty(CSetDifficultyPacket p_217263_1_);
+    void func_217263_a(CSetDifficultyPacket p_217263_1_);
 
-   void handleLockDifficulty(CLockDifficultyPacket p_217261_1_);
+    void func_217261_a(CLockDifficultyPacket p_217261_1_);
 }

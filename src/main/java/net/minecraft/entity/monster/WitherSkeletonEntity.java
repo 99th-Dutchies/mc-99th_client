@@ -26,84 +26,115 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 
-public class WitherSkeletonEntity extends AbstractSkeletonEntity {
-   public WitherSkeletonEntity(EntityType<? extends WitherSkeletonEntity> p_i50187_1_, World p_i50187_2_) {
-      super(p_i50187_1_, p_i50187_2_);
-      this.setPathfindingMalus(PathNodeType.LAVA, 8.0F);
-   }
+public class WitherSkeletonEntity extends AbstractSkeletonEntity
+{
+    public WitherSkeletonEntity(EntityType <? extends WitherSkeletonEntity > typeIn, World worldIn)
+    {
+        super(typeIn, worldIn);
+        this.setPathPriority(PathNodeType.LAVA, 8.0F);
+    }
 
-   protected void registerGoals() {
-      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractPiglinEntity.class, true));
-      super.registerGoals();
-   }
+    protected void registerGoals()
+    {
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractPiglinEntity.class, true));
+        super.registerGoals();
+    }
 
-   protected SoundEvent getAmbientSound() {
-      return SoundEvents.WITHER_SKELETON_AMBIENT;
-   }
+    protected SoundEvent getAmbientSound()
+    {
+        return SoundEvents.ENTITY_WITHER_SKELETON_AMBIENT;
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.WITHER_SKELETON_HURT;
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_WITHER_SKELETON_HURT;
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.WITHER_SKELETON_DEATH;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_WITHER_SKELETON_DEATH;
+    }
 
-   SoundEvent getStepSound() {
-      return SoundEvents.WITHER_SKELETON_STEP;
-   }
+    SoundEvent getStepSound()
+    {
+        return SoundEvents.ENTITY_WITHER_SKELETON_STEP;
+    }
 
-   protected void dropCustomDeathLoot(DamageSource p_213333_1_, int p_213333_2_, boolean p_213333_3_) {
-      super.dropCustomDeathLoot(p_213333_1_, p_213333_2_, p_213333_3_);
-      Entity entity = p_213333_1_.getEntity();
-      if (entity instanceof CreeperEntity) {
-         CreeperEntity creeperentity = (CreeperEntity)entity;
-         if (creeperentity.canDropMobsSkull()) {
-            creeperentity.increaseDroppedSkulls();
-            this.spawnAtLocation(Items.WITHER_SKELETON_SKULL);
-         }
-      }
+    protected void dropSpecialItems(DamageSource source, int looting, boolean recentlyHitIn)
+    {
+        super.dropSpecialItems(source, looting, recentlyHitIn);
+        Entity entity = source.getTrueSource();
 
-   }
+        if (entity instanceof CreeperEntity)
+        {
+            CreeperEntity creeperentity = (CreeperEntity)entity;
 
-   protected void populateDefaultEquipmentSlots(DifficultyInstance p_180481_1_) {
-      this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_SWORD));
-   }
+            if (creeperentity.ableToCauseSkullDrop())
+            {
+                creeperentity.incrementDroppedSkulls();
+                this.entityDropItem(Items.WITHER_SKELETON_SKULL);
+            }
+        }
+    }
 
-   protected void populateDefaultEquipmentEnchantments(DifficultyInstance p_180483_1_) {
-   }
+    /**
+     * Gives armor or weapon for entity based on given DifficultyInstance
+     */
+    protected void setEquipmentBasedOnDifficulty(DifficultyInstance difficulty)
+    {
+        this.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_SWORD));
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      ILivingEntityData ilivingentitydata = super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-      this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(4.0D);
-      this.reassessWeaponGoal();
-      return ilivingentitydata;
-   }
+    /**
+     * Enchants Entity's current equipments based on given DifficultyInstance
+     */
+    protected void setEnchantmentBasedOnDifficulty(DifficultyInstance difficulty)
+    {
+    }
 
-   protected float getStandingEyeHeight(Pose p_213348_1_, EntitySize p_213348_2_) {
-      return 2.1F;
-   }
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        ILivingEntityData ilivingentitydata = super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(4.0D);
+        this.setCombatTask();
+        return ilivingentitydata;
+    }
 
-   public boolean doHurtTarget(Entity p_70652_1_) {
-      if (!super.doHurtTarget(p_70652_1_)) {
-         return false;
-      } else {
-         if (p_70652_1_ instanceof LivingEntity) {
-            ((LivingEntity)p_70652_1_).addEffect(new EffectInstance(Effects.WITHER, 200));
-         }
+    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return 2.1F;
+    }
 
-         return true;
-      }
-   }
+    public boolean attackEntityAsMob(Entity entityIn)
+    {
+        if (!super.attackEntityAsMob(entityIn))
+        {
+            return false;
+        }
+        else
+        {
+            if (entityIn instanceof LivingEntity)
+            {
+                ((LivingEntity)entityIn).addPotionEffect(new EffectInstance(Effects.WITHER, 200));
+            }
 
-   protected AbstractArrowEntity getArrow(ItemStack p_213624_1_, float p_213624_2_) {
-      AbstractArrowEntity abstractarrowentity = super.getArrow(p_213624_1_, p_213624_2_);
-      abstractarrowentity.setSecondsOnFire(100);
-      return abstractarrowentity;
-   }
+            return true;
+        }
+    }
 
-   public boolean canBeAffected(EffectInstance p_70687_1_) {
-      return p_70687_1_.getEffect() == Effects.WITHER ? false : super.canBeAffected(p_70687_1_);
-   }
+    /**
+     * Fires an arrow
+     */
+    protected AbstractArrowEntity fireArrow(ItemStack arrowStack, float distanceFactor)
+    {
+        AbstractArrowEntity abstractarrowentity = super.fireArrow(arrowStack, distanceFactor);
+        abstractarrowentity.setFire(100);
+        return abstractarrowentity;
+    }
+
+    public boolean isPotionApplicable(EffectInstance potioneffectIn)
+    {
+        return potioneffectIn.getPotion() == Effects.WITHER ? false : super.isPotionApplicable(potioneffectIn);
+    }
 }

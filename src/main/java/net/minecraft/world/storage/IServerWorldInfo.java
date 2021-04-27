@@ -7,61 +7,98 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.GameType;
 import net.minecraft.world.border.WorldBorder;
 
-public interface IServerWorldInfo extends ISpawnWorldInfo {
-   String getLevelName();
+public interface IServerWorldInfo extends ISpawnWorldInfo
+{
+    /**
+     * Get current world name
+     */
+    String getWorldName();
 
-   void setThundering(boolean p_76069_1_);
+    /**
+     * Sets whether it is thundering or not.
+     */
+    void setThundering(boolean thunderingIn);
 
-   int getRainTime();
+    /**
+     * Return the number of ticks until rain.
+     */
+    int getRainTime();
 
-   void setRainTime(int p_76080_1_);
+    /**
+     * Sets the number of ticks until rain.
+     */
+    void setRainTime(int time);
 
-   void setThunderTime(int p_76090_1_);
+    /**
+     * Defines the number of ticks until next thunderbolt.
+     */
+    void setThunderTime(int time);
 
-   int getThunderTime();
+    /**
+     * Returns the number of ticks until next thunderbolt.
+     */
+    int getThunderTime();
 
-   default void fillCrashReportCategory(CrashReportCategory p_85118_1_) {
-      ISpawnWorldInfo.super.fillCrashReportCategory(p_85118_1_);
-      p_85118_1_.setDetail("Level name", this::getLevelName);
-      p_85118_1_.setDetail("Level game mode", () -> {
-         return String.format("Game mode: %s (ID %d). Hardcore: %b. Cheats: %b", this.getGameType().getName(), this.getGameType().getId(), this.isHardcore(), this.getAllowCommands());
-      });
-      p_85118_1_.setDetail("Level weather", () -> {
-         return String.format("Rain time: %d (now: %b), thunder time: %d (now: %b)", this.getRainTime(), this.isRaining(), this.getThunderTime(), this.isThundering());
-      });
-   }
+default void addToCrashReport(CrashReportCategory category)
+    {
+        ISpawnWorldInfo.super.addToCrashReport(category);
+        category.addDetail("Level name", this::getWorldName);
+        category.addDetail("Level game mode", () ->
+        {
+            return String.format("Game mode: %s (ID %d). Hardcore: %b. Cheats: %b", this.getGameType().getName(), this.getGameType().getID(), this.isHardcore(), this.areCommandsAllowed());
+        });
+        category.addDetail("Level weather", () ->
+        {
+            return String.format("Rain time: %d (now: %b), thunder time: %d (now: %b)", this.getRainTime(), this.isRaining(), this.getThunderTime(), this.isThundering());
+        });
+    }
 
-   int getClearWeatherTime();
+    int getClearWeatherTime();
 
-   void setClearWeatherTime(int p_230391_1_);
+    void setClearWeatherTime(int time);
 
-   int getWanderingTraderSpawnDelay();
+    int getWanderingTraderSpawnDelay();
 
-   void setWanderingTraderSpawnDelay(int p_230396_1_);
+    void setWanderingTraderSpawnDelay(int delay);
 
-   int getWanderingTraderSpawnChance();
+    int getWanderingTraderSpawnChance();
 
-   void setWanderingTraderSpawnChance(int p_230397_1_);
+    void setWanderingTraderSpawnChance(int chance);
 
-   void setWanderingTraderId(UUID p_230394_1_);
+    void setWanderingTraderID(UUID id);
 
-   GameType getGameType();
+    /**
+     * Gets the GameType.
+     */
+    GameType getGameType();
 
-   void setWorldBorder(WorldBorder.Serializer p_230393_1_);
+    void setWorldBorderSerializer(WorldBorder.Serializer serializer);
 
-   WorldBorder.Serializer getWorldBorder();
+    WorldBorder.Serializer getWorldBorderSerializer();
 
-   boolean isInitialized();
+    /**
+     * Returns true if the World is initialized.
+     */
+    boolean isInitialized();
 
-   void setInitialized(boolean p_76091_1_);
+    /**
+     * Sets the initialization status of the World.
+     */
+    void setInitialized(boolean initializedIn);
 
-   boolean getAllowCommands();
+    /**
+     * Returns true if commands are allowed on this World.
+     */
+    boolean areCommandsAllowed();
 
-   void setGameType(GameType p_230392_1_);
+    void setGameType(GameType type);
 
-   TimerCallbackManager<MinecraftServer> getScheduledEvents();
+    TimerCallbackManager<MinecraftServer> getScheduledEvents();
 
-   void setGameTime(long p_82572_1_);
+    void setGameTime(long time);
 
-   void setDayTime(long p_76068_1_);
+    /**
+     * Set current world time
+     */
+    void setDayTime(long time);
 }

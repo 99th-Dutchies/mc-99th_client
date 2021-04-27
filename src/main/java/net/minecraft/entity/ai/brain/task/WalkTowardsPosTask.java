@@ -10,35 +10,40 @@ import net.minecraft.entity.ai.brain.memory.WalkTarget;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.server.ServerWorld;
 
-public class WalkTowardsPosTask extends Task<CreatureEntity> {
-   private final MemoryModuleType<GlobalPos> memoryType;
-   private final int closeEnoughDist;
-   private final int maxDistanceFromPoi;
-   private final float speedModifier;
-   private long nextOkStartTime;
+public class WalkTowardsPosTask extends Task<CreatureEntity>
+{
+    private final MemoryModuleType<GlobalPos> field_220581_a;
+    private final int field_220582_b;
+    private final int field_220583_c;
+    private final float field_242306_e;
+    private long field_220584_d;
 
-   public WalkTowardsPosTask(MemoryModuleType<GlobalPos> p_i241910_1_, float p_i241910_2_, int p_i241910_3_, int p_i241910_4_) {
-      super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED, p_i241910_1_, MemoryModuleStatus.VALUE_PRESENT));
-      this.memoryType = p_i241910_1_;
-      this.speedModifier = p_i241910_2_;
-      this.closeEnoughDist = p_i241910_3_;
-      this.maxDistanceFromPoi = p_i241910_4_;
-   }
+    public WalkTowardsPosTask(MemoryModuleType<GlobalPos> p_i241910_1_, float p_i241910_2_, int p_i241910_3_, int p_i241910_4_)
+    {
+        super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED, p_i241910_1_, MemoryModuleStatus.VALUE_PRESENT));
+        this.field_220581_a = p_i241910_1_;
+        this.field_242306_e = p_i241910_2_;
+        this.field_220582_b = p_i241910_3_;
+        this.field_220583_c = p_i241910_4_;
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, CreatureEntity p_212832_2_) {
-      Optional<GlobalPos> optional = p_212832_2_.getBrain().getMemory(this.memoryType);
-      return optional.isPresent() && p_212832_1_.dimension() == optional.get().dimension() && optional.get().pos().closerThan(p_212832_2_.position(), (double)this.maxDistanceFromPoi);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, CreatureEntity owner)
+    {
+        Optional<GlobalPos> optional = owner.getBrain().getMemory(this.field_220581_a);
+        return optional.isPresent() && worldIn.getDimensionKey() == optional.get().getDimension() && optional.get().getPos().withinDistance(owner.getPositionVec(), (double)this.field_220583_c);
+    }
 
-   protected void start(ServerWorld p_212831_1_, CreatureEntity p_212831_2_, long p_212831_3_) {
-      if (p_212831_3_ > this.nextOkStartTime) {
-         Brain<?> brain = p_212831_2_.getBrain();
-         Optional<GlobalPos> optional = brain.getMemory(this.memoryType);
-         optional.ifPresent((p_220580_2_) -> {
-            brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(p_220580_2_.pos(), this.speedModifier, this.closeEnoughDist));
-         });
-         this.nextOkStartTime = p_212831_3_ + 80L;
-      }
-
-   }
+    protected void startExecuting(ServerWorld worldIn, CreatureEntity entityIn, long gameTimeIn)
+    {
+        if (gameTimeIn > this.field_220584_d)
+        {
+            Brain<?> brain = entityIn.getBrain();
+            Optional<GlobalPos> optional = brain.getMemory(this.field_220581_a);
+            optional.ifPresent((p_220580_2_) ->
+            {
+                brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(p_220580_2_.getPos(), this.field_242306_e, this.field_220582_b));
+            });
+            this.field_220584_d = gameTimeIn + 80L;
+        }
+    }
 }

@@ -6,98 +6,118 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class STitlePacket implements IPacket<IClientPlayNetHandler> {
-   private STitlePacket.Type type;
-   private ITextComponent text;
-   private int fadeInTime;
-   private int stayTime;
-   private int fadeOutTime;
+public class STitlePacket implements IPacket<IClientPlayNetHandler>
+{
+    private STitlePacket.Type type;
+    private ITextComponent message;
+    private int fadeInTime;
+    private int displayTime;
+    private int fadeOutTime;
 
-   public STitlePacket() {
-   }
+    public STitlePacket()
+    {
+    }
 
-   public STitlePacket(STitlePacket.Type p_i46899_1_, ITextComponent p_i46899_2_) {
-      this(p_i46899_1_, p_i46899_2_, -1, -1, -1);
-   }
+    public STitlePacket(STitlePacket.Type typeIn, ITextComponent messageIn)
+    {
+        this(typeIn, messageIn, -1, -1, -1);
+    }
 
-   public STitlePacket(int p_i46900_1_, int p_i46900_2_, int p_i46900_3_) {
-      this(STitlePacket.Type.TIMES, (ITextComponent)null, p_i46900_1_, p_i46900_2_, p_i46900_3_);
-   }
+    public STitlePacket(int fadeInTimeIn, int displayTimeIn, int fadeOutTimeIn)
+    {
+        this(STitlePacket.Type.TIMES, (ITextComponent)null, fadeInTimeIn, displayTimeIn, fadeOutTimeIn);
+    }
 
-   public STitlePacket(STitlePacket.Type p_i46901_1_, @Nullable ITextComponent p_i46901_2_, int p_i46901_3_, int p_i46901_4_, int p_i46901_5_) {
-      this.type = p_i46901_1_;
-      this.text = p_i46901_2_;
-      this.fadeInTime = p_i46901_3_;
-      this.stayTime = p_i46901_4_;
-      this.fadeOutTime = p_i46901_5_;
-   }
+    public STitlePacket(STitlePacket.Type typeIn, @Nullable ITextComponent messageIn, int fadeInTimeIn, int displayTimeIn, int fadeOutTimeIn)
+    {
+        this.type = typeIn;
+        this.message = messageIn;
+        this.fadeInTime = fadeInTimeIn;
+        this.displayTime = displayTimeIn;
+        this.fadeOutTime = fadeOutTimeIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.type = p_148837_1_.readEnum(STitlePacket.Type.class);
-      if (this.type == STitlePacket.Type.TITLE || this.type == STitlePacket.Type.SUBTITLE || this.type == STitlePacket.Type.ACTIONBAR) {
-         this.text = p_148837_1_.readComponent();
-      }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.type = buf.readEnumValue(STitlePacket.Type.class);
 
-      if (this.type == STitlePacket.Type.TIMES) {
-         this.fadeInTime = p_148837_1_.readInt();
-         this.stayTime = p_148837_1_.readInt();
-         this.fadeOutTime = p_148837_1_.readInt();
-      }
+        if (this.type == STitlePacket.Type.TITLE || this.type == STitlePacket.Type.SUBTITLE || this.type == STitlePacket.Type.ACTIONBAR)
+        {
+            this.message = buf.readTextComponent();
+        }
 
-   }
+        if (this.type == STitlePacket.Type.TIMES)
+        {
+            this.fadeInTime = buf.readInt();
+            this.displayTime = buf.readInt();
+            this.fadeOutTime = buf.readInt();
+        }
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeEnum(this.type);
-      if (this.type == STitlePacket.Type.TITLE || this.type == STitlePacket.Type.SUBTITLE || this.type == STitlePacket.Type.ACTIONBAR) {
-         p_148840_1_.writeComponent(this.text);
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeEnumValue(this.type);
 
-      if (this.type == STitlePacket.Type.TIMES) {
-         p_148840_1_.writeInt(this.fadeInTime);
-         p_148840_1_.writeInt(this.stayTime);
-         p_148840_1_.writeInt(this.fadeOutTime);
-      }
+        if (this.type == STitlePacket.Type.TITLE || this.type == STitlePacket.Type.SUBTITLE || this.type == STitlePacket.Type.ACTIONBAR)
+        {
+            buf.writeTextComponent(this.message);
+        }
 
-   }
+        if (this.type == STitlePacket.Type.TIMES)
+        {
+            buf.writeInt(this.fadeInTime);
+            buf.writeInt(this.displayTime);
+            buf.writeInt(this.fadeOutTime);
+        }
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetTitles(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleTitle(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public STitlePacket.Type getType() {
-      return this.type;
-   }
+    public STitlePacket.Type getType()
+    {
+        return this.type;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getText() {
-      return this.text;
-   }
+    public ITextComponent getMessage()
+    {
+        return this.message;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getFadeInTime() {
-      return this.fadeInTime;
-   }
+    public int getFadeInTime()
+    {
+        return this.fadeInTime;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getStayTime() {
-      return this.stayTime;
-   }
+    public int getDisplayTime()
+    {
+        return this.displayTime;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getFadeOutTime() {
-      return this.fadeOutTime;
-   }
+    public int getFadeOutTime()
+    {
+        return this.fadeOutTime;
+    }
 
-   public static enum Type {
-      TITLE,
-      SUBTITLE,
-      ACTIONBAR,
-      TIMES,
-      CLEAR,
-      RESET;
-   }
+    public static enum Type
+    {
+        TITLE,
+        SUBTITLE,
+        ACTIONBAR,
+        TIMES,
+        CLEAR,
+        RESET;
+    }
 }

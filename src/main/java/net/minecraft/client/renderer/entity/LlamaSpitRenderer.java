@@ -9,31 +9,35 @@ import net.minecraft.entity.projectile.LlamaSpitEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3f;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class LlamaSpitRenderer extends EntityRenderer<LlamaSpitEntity> {
-   private static final ResourceLocation LLAMA_SPIT_LOCATION = new ResourceLocation("textures/entity/llama/spit.png");
-   private final LlamaSpitModel<LlamaSpitEntity> model = new LlamaSpitModel<>();
+public class LlamaSpitRenderer extends EntityRenderer<LlamaSpitEntity>
+{
+    private static final ResourceLocation LLAMA_SPIT_TEXTURE = new ResourceLocation("textures/entity/llama/spit.png");
+    private final LlamaSpitModel<LlamaSpitEntity> model = new LlamaSpitModel<>();
 
-   public LlamaSpitRenderer(EntityRendererManager p_i47202_1_) {
-      super(p_i47202_1_);
-   }
+    public LlamaSpitRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn);
+    }
 
-   public void render(LlamaSpitEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      p_225623_4_.pushPose();
-      p_225623_4_.translate(0.0D, (double)0.15F, 0.0D);
-      p_225623_4_.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(p_225623_3_, p_225623_1_.yRotO, p_225623_1_.yRot) - 90.0F));
-      p_225623_4_.mulPose(Vector3f.ZP.rotationDegrees(MathHelper.lerp(p_225623_3_, p_225623_1_.xRotO, p_225623_1_.xRot)));
-      this.model.setupAnim(p_225623_1_, p_225623_3_, 0.0F, -0.1F, 0.0F, 0.0F);
-      IVertexBuilder ivertexbuilder = p_225623_5_.getBuffer(this.model.renderType(LLAMA_SPIT_LOCATION));
-      this.model.renderToBuffer(p_225623_4_, ivertexbuilder, p_225623_6_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-      p_225623_4_.popPose();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+    public void render(LlamaSpitEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        matrixStackIn.push();
+        matrixStackIn.translate(0.0D, (double)0.15F, 0.0D);
+        matrixStackIn.rotate(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevRotationYaw, entityIn.rotationYaw) - 90.0F));
+        matrixStackIn.rotate(Vector3f.ZP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevRotationPitch, entityIn.rotationPitch)));
+        this.model.setRotationAngles(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(this.model.getRenderType(LLAMA_SPIT_TEXTURE));
+        this.model.render(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        matrixStackIn.pop();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
 
-   public ResourceLocation getTextureLocation(LlamaSpitEntity p_110775_1_) {
-      return LLAMA_SPIT_LOCATION;
-   }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(LlamaSpitEntity entity)
+    {
+        return LLAMA_SPIT_TEXTURE;
+    }
 }

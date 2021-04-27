@@ -22,78 +22,118 @@ import net.minecraft.world.biome.BiomeRegistry;
 import net.minecraft.world.lighting.WorldLightManager;
 import net.minecraft.world.server.ChunkHolder;
 
-public class EmptyChunk extends Chunk {
-   private static final Biome[] BIOMES = Util.make(new Biome[BiomeContainer.BIOMES_SIZE], (p_203406_0_) -> {
-      Arrays.fill(p_203406_0_, BiomeRegistry.PLAINS);
-   });
+public class EmptyChunk extends Chunk
+{
+    private static final Biome[] BIOMES = Util.make(new Biome[BiomeContainer.BIOMES_SIZE], (biomes) ->
+    {
+        Arrays.fill(biomes, BiomeRegistry.PLAINS);
+    });
 
-   public EmptyChunk(World p_i49950_1_, ChunkPos p_i49950_2_) {
-      super(p_i49950_1_, p_i49950_2_, new BiomeContainer(p_i49950_1_.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), BIOMES));
-   }
+    public EmptyChunk(World worldIn, ChunkPos chunkPos)
+    {
+        super(worldIn, chunkPos, new BiomeContainer(worldIn.func_241828_r().getRegistry(Registry.BIOME_KEY), BIOMES));
+    }
 
-   public BlockState getBlockState(BlockPos p_180495_1_) {
-      return Blocks.VOID_AIR.defaultBlockState();
-   }
+    public BlockState getBlockState(BlockPos pos)
+    {
+        return Blocks.VOID_AIR.getDefaultState();
+    }
 
-   @Nullable
-   public BlockState setBlockState(BlockPos p_177436_1_, BlockState p_177436_2_, boolean p_177436_3_) {
-      return null;
-   }
+    @Nullable
+    public BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving)
+    {
+        return null;
+    }
 
-   public FluidState getFluidState(BlockPos p_204610_1_) {
-      return Fluids.EMPTY.defaultFluidState();
-   }
+    public FluidState getFluidState(BlockPos pos)
+    {
+        return Fluids.EMPTY.getDefaultState();
+    }
 
-   @Nullable
-   public WorldLightManager getLightEngine() {
-      return null;
-   }
+    @Nullable
+    public WorldLightManager getWorldLightManager()
+    {
+        return null;
+    }
 
-   public int getLightEmission(BlockPos p_217298_1_) {
-      return 0;
-   }
+    public int getLightValue(BlockPos pos)
+    {
+        return 0;
+    }
 
-   public void addEntity(Entity p_76612_1_) {
-   }
+    /**
+     * Adds an entity to the chunk.
+     */
+    public void addEntity(Entity entityIn)
+    {
+    }
 
-   public void removeEntity(Entity p_76622_1_) {
-   }
+    /**
+     * removes entity using its y chunk coordinate as its index
+     */
+    public void removeEntity(Entity entityIn)
+    {
+    }
 
-   public void removeEntity(Entity p_76608_1_, int p_76608_2_) {
-   }
+    /**
+     * Removes entity at the specified index from the entity array.
+     */
+    public void removeEntityAtIndex(Entity entityIn, int index)
+    {
+    }
 
-   @Nullable
-   public TileEntity getBlockEntity(BlockPos p_177424_1_, Chunk.CreateEntityType p_177424_2_) {
-      return null;
-   }
+    @Nullable
+    public TileEntity getTileEntity(BlockPos pos, Chunk.CreateEntityType creationMode)
+    {
+        return null;
+    }
 
-   public void addBlockEntity(TileEntity p_150813_1_) {
-   }
+    public void addTileEntity(TileEntity tileEntityIn)
+    {
+    }
 
-   public void setBlockEntity(BlockPos p_177426_1_, TileEntity p_177426_2_) {
-   }
+    public void addTileEntity(BlockPos pos, TileEntity tileEntityIn)
+    {
+    }
 
-   public void removeBlockEntity(BlockPos p_177425_1_) {
-   }
+    public void removeTileEntity(BlockPos pos)
+    {
+    }
 
-   public void markUnsaved() {
-   }
+    /**
+     * Sets the isModified flag for this Chunk
+     */
+    public void markDirty()
+    {
+    }
 
-   public void getEntities(@Nullable Entity p_177414_1_, AxisAlignedBB p_177414_2_, List<Entity> p_177414_3_, Predicate<? super Entity> p_177414_4_) {
-   }
+    /**
+     * Fills the given list of all entities that intersect within the given bounding box that aren't the passed entity.
+     */
+    public void getEntitiesWithinAABBForEntity(@Nullable Entity entityIn, AxisAlignedBB aabb, List<Entity> listToFill, Predicate <? super Entity > filter)
+    {
+    }
 
-   public <T extends Entity> void getEntitiesOfClass(Class<? extends T> p_177430_1_, AxisAlignedBB p_177430_2_, List<T> p_177430_3_, Predicate<? super T> p_177430_4_) {
-   }
+    public <T extends Entity> void getEntitiesOfTypeWithinAABB(Class <? extends T > entityClass, AxisAlignedBB aabb, List<T> listToFill, Predicate <? super T > filter)
+    {
+    }
 
-   public boolean isEmpty() {
-      return true;
-   }
+    public boolean isEmpty()
+    {
+        return true;
+    }
 
-   public boolean isYSpaceEmpty(int p_76606_1_, int p_76606_2_) {
-      return true;
-   }
+    /**
+     * Returns whether the ExtendedBlockStorages containing levels (in blocks) from arg 1 to arg 2 are fully empty
+     * (true) or not (false).
+     */
+    public boolean isEmptyBetween(int startY, int endY)
+    {
+        return true;
+    }
 
-   public ChunkHolder.LocationType getFullStatus() {
-      return ChunkHolder.LocationType.BORDER;
-   }
+    public ChunkHolder.LocationType getLocationType()
+    {
+        return ChunkHolder.LocationType.BORDER;
+    }
 }

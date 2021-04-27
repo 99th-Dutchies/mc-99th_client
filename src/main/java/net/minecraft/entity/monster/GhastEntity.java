@@ -31,266 +31,346 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class GhastEntity extends FlyingEntity implements IMob {
-   private static final DataParameter<Boolean> DATA_IS_CHARGING = EntityDataManager.defineId(GhastEntity.class, DataSerializers.BOOLEAN);
-   private int explosionPower = 1;
+public class GhastEntity extends FlyingEntity implements IMob
+{
+    private static final DataParameter<Boolean> ATTACKING = EntityDataManager.createKey(GhastEntity.class, DataSerializers.BOOLEAN);
+    private int explosionStrength = 1;
 
-   public GhastEntity(EntityType<? extends GhastEntity> p_i50206_1_, World p_i50206_2_) {
-      super(p_i50206_1_, p_i50206_2_);
-      this.xpReward = 5;
-      this.moveControl = new GhastEntity.MoveHelperController(this);
-   }
+    public GhastEntity(EntityType <? extends GhastEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+        this.experienceValue = 5;
+        this.moveController = new GhastEntity.MoveHelperController(this);
+    }
 
-   protected void registerGoals() {
-      this.goalSelector.addGoal(5, new GhastEntity.RandomFlyGoal(this));
-      this.goalSelector.addGoal(7, new GhastEntity.LookAroundGoal(this));
-      this.goalSelector.addGoal(7, new GhastEntity.FireballAttackGoal(this));
-      this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, (p_213812_1_) -> {
-         return Math.abs(p_213812_1_.getY() - this.getY()) <= 4.0D;
-      }));
-   }
+    protected void registerGoals()
+    {
+        this.goalSelector.addGoal(5, new GhastEntity.RandomFlyGoal(this));
+        this.goalSelector.addGoal(7, new GhastEntity.LookAroundGoal(this));
+        this.goalSelector.addGoal(7, new GhastEntity.FireballAttackGoal(this));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, (p_213812_1_) ->
+        {
+            return Math.abs(p_213812_1_.getPosY() - this.getPosY()) <= 4.0D;
+        }));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isCharging() {
-      return this.entityData.get(DATA_IS_CHARGING);
-   }
+    public boolean isAttacking()
+    {
+        return this.dataManager.get(ATTACKING);
+    }
 
-   public void setCharging(boolean p_175454_1_) {
-      this.entityData.set(DATA_IS_CHARGING, p_175454_1_);
-   }
+    public void setAttacking(boolean attacking)
+    {
+        this.dataManager.set(ATTACKING, attacking);
+    }
 
-   public int getExplosionPower() {
-      return this.explosionPower;
-   }
+    public int getFireballStrength()
+    {
+        return this.explosionStrength;
+    }
 
-   protected boolean shouldDespawnInPeaceful() {
-      return true;
-   }
+    protected boolean isDespawnPeaceful()
+    {
+        return true;
+    }
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      if (this.isInvulnerableTo(p_70097_1_)) {
-         return false;
-      } else if (p_70097_1_.getDirectEntity() instanceof FireballEntity && p_70097_1_.getEntity() instanceof PlayerEntity) {
-         super.hurt(p_70097_1_, 1000.0F);
-         return true;
-      } else {
-         return super.hurt(p_70097_1_, p_70097_2_);
-      }
-   }
-
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_IS_CHARGING, false);
-   }
-
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MobEntity.createMobAttributes().add(Attributes.MAX_HEALTH, 10.0D).add(Attributes.FOLLOW_RANGE, 100.0D);
-   }
-
-   public SoundCategory getSoundSource() {
-      return SoundCategory.HOSTILE;
-   }
-
-   protected SoundEvent getAmbientSound() {
-      return SoundEvents.GHAST_AMBIENT;
-   }
-
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.GHAST_HURT;
-   }
-
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.GHAST_DEATH;
-   }
-
-   protected float getSoundVolume() {
-      return 5.0F;
-   }
-
-   public static boolean checkGhastSpawnRules(EntityType<GhastEntity> p_223368_0_, IWorld p_223368_1_, SpawnReason p_223368_2_, BlockPos p_223368_3_, Random p_223368_4_) {
-      return p_223368_1_.getDifficulty() != Difficulty.PEACEFUL && p_223368_4_.nextInt(20) == 0 && checkMobSpawnRules(p_223368_0_, p_223368_1_, p_223368_2_, p_223368_3_, p_223368_4_);
-   }
-
-   public int getMaxSpawnClusterSize() {
-      return 1;
-   }
-
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putInt("ExplosionPower", this.explosionPower);
-   }
-
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      if (p_70037_1_.contains("ExplosionPower", 99)) {
-         this.explosionPower = p_70037_1_.getInt("ExplosionPower");
-      }
-
-   }
-
-   protected float getStandingEyeHeight(Pose p_213348_1_, EntitySize p_213348_2_) {
-      return 2.6F;
-   }
-
-   static class FireballAttackGoal extends Goal {
-      private final GhastEntity ghast;
-      public int chargeTime;
-
-      public FireballAttackGoal(GhastEntity p_i45837_1_) {
-         this.ghast = p_i45837_1_;
-      }
-
-      public boolean canUse() {
-         return this.ghast.getTarget() != null;
-      }
-
-      public void start() {
-         this.chargeTime = 0;
-      }
-
-      public void stop() {
-         this.ghast.setCharging(false);
-      }
-
-      public void tick() {
-         LivingEntity livingentity = this.ghast.getTarget();
-         double d0 = 64.0D;
-         if (livingentity.distanceToSqr(this.ghast) < 4096.0D && this.ghast.canSee(livingentity)) {
-            World world = this.ghast.level;
-            ++this.chargeTime;
-            if (this.chargeTime == 10 && !this.ghast.isSilent()) {
-               world.levelEvent((PlayerEntity)null, 1015, this.ghast.blockPosition(), 0);
-            }
-
-            if (this.chargeTime == 20) {
-               double d1 = 4.0D;
-               Vector3d vector3d = this.ghast.getViewVector(1.0F);
-               double d2 = livingentity.getX() - (this.ghast.getX() + vector3d.x * 4.0D);
-               double d3 = livingentity.getY(0.5D) - (0.5D + this.ghast.getY(0.5D));
-               double d4 = livingentity.getZ() - (this.ghast.getZ() + vector3d.z * 4.0D);
-               if (!this.ghast.isSilent()) {
-                  world.levelEvent((PlayerEntity)null, 1016, this.ghast.blockPosition(), 0);
-               }
-
-               FireballEntity fireballentity = new FireballEntity(world, this.ghast, d2, d3, d4);
-               fireballentity.explosionPower = this.ghast.getExplosionPower();
-               fireballentity.setPos(this.ghast.getX() + vector3d.x * 4.0D, this.ghast.getY(0.5D) + 0.5D, fireballentity.getZ() + vector3d.z * 4.0D);
-               world.addFreshEntity(fireballentity);
-               this.chargeTime = -40;
-            }
-         } else if (this.chargeTime > 0) {
-            --this.chargeTime;
-         }
-
-         this.ghast.setCharging(this.chargeTime > 10);
-      }
-   }
-
-   static class LookAroundGoal extends Goal {
-      private final GhastEntity ghast;
-
-      public LookAroundGoal(GhastEntity p_i45839_1_) {
-         this.ghast = p_i45839_1_;
-         this.setFlags(EnumSet.of(Goal.Flag.LOOK));
-      }
-
-      public boolean canUse() {
-         return true;
-      }
-
-      public void tick() {
-         if (this.ghast.getTarget() == null) {
-            Vector3d vector3d = this.ghast.getDeltaMovement();
-            this.ghast.yRot = -((float)MathHelper.atan2(vector3d.x, vector3d.z)) * (180F / (float)Math.PI);
-            this.ghast.yBodyRot = this.ghast.yRot;
-         } else {
-            LivingEntity livingentity = this.ghast.getTarget();
-            double d0 = 64.0D;
-            if (livingentity.distanceToSqr(this.ghast) < 4096.0D) {
-               double d1 = livingentity.getX() - this.ghast.getX();
-               double d2 = livingentity.getZ() - this.ghast.getZ();
-               this.ghast.yRot = -((float)MathHelper.atan2(d1, d2)) * (180F / (float)Math.PI);
-               this.ghast.yBodyRot = this.ghast.yRot;
-            }
-         }
-
-      }
-   }
-
-   static class MoveHelperController extends MovementController {
-      private final GhastEntity ghast;
-      private int floatDuration;
-
-      public MoveHelperController(GhastEntity p_i45838_1_) {
-         super(p_i45838_1_);
-         this.ghast = p_i45838_1_;
-      }
-
-      public void tick() {
-         if (this.operation == MovementController.Action.MOVE_TO) {
-            if (this.floatDuration-- <= 0) {
-               this.floatDuration += this.ghast.getRandom().nextInt(5) + 2;
-               Vector3d vector3d = new Vector3d(this.wantedX - this.ghast.getX(), this.wantedY - this.ghast.getY(), this.wantedZ - this.ghast.getZ());
-               double d0 = vector3d.length();
-               vector3d = vector3d.normalize();
-               if (this.canReach(vector3d, MathHelper.ceil(d0))) {
-                  this.ghast.setDeltaMovement(this.ghast.getDeltaMovement().add(vector3d.scale(0.1D)));
-               } else {
-                  this.operation = MovementController.Action.WAIT;
-               }
-            }
-
-         }
-      }
-
-      private boolean canReach(Vector3d p_220673_1_, int p_220673_2_) {
-         AxisAlignedBB axisalignedbb = this.ghast.getBoundingBox();
-
-         for(int i = 1; i < p_220673_2_; ++i) {
-            axisalignedbb = axisalignedbb.move(p_220673_1_);
-            if (!this.ghast.level.noCollision(this.ghast, axisalignedbb)) {
-               return false;
-            }
-         }
-
-         return true;
-      }
-   }
-
-   static class RandomFlyGoal extends Goal {
-      private final GhastEntity ghast;
-
-      public RandomFlyGoal(GhastEntity p_i45836_1_) {
-         this.ghast = p_i45836_1_;
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      }
-
-      public boolean canUse() {
-         MovementController movementcontroller = this.ghast.getMoveControl();
-         if (!movementcontroller.hasWanted()) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        if (this.isInvulnerableTo(source))
+        {
+            return false;
+        }
+        else if (source.getImmediateSource() instanceof FireballEntity && source.getTrueSource() instanceof PlayerEntity)
+        {
+            super.attackEntityFrom(source, 1000.0F);
             return true;
-         } else {
-            double d0 = movementcontroller.getWantedX() - this.ghast.getX();
-            double d1 = movementcontroller.getWantedY() - this.ghast.getY();
-            double d2 = movementcontroller.getWantedZ() - this.ghast.getZ();
-            double d3 = d0 * d0 + d1 * d1 + d2 * d2;
-            return d3 < 1.0D || d3 > 3600.0D;
-         }
-      }
+        }
+        else
+        {
+            return super.attackEntityFrom(source, amount);
+        }
+    }
 
-      public boolean canContinueToUse() {
-         return false;
-      }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(ATTACKING, false);
+    }
 
-      public void start() {
-         Random random = this.ghast.getRandom();
-         double d0 = this.ghast.getX() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
-         double d1 = this.ghast.getY() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
-         double d2 = this.ghast.getZ() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
-         this.ghast.getMoveControl().setWantedPosition(d0, d1, d2, 1.0D);
-      }
-   }
+    public static AttributeModifierMap.MutableAttribute func_234290_eH_()
+    {
+        return MobEntity.func_233666_p_().createMutableAttribute(Attributes.MAX_HEALTH, 10.0D).createMutableAttribute(Attributes.FOLLOW_RANGE, 100.0D);
+    }
+
+    public SoundCategory getSoundCategory()
+    {
+        return SoundCategory.HOSTILE;
+    }
+
+    protected SoundEvent getAmbientSound()
+    {
+        return SoundEvents.ENTITY_GHAST_AMBIENT;
+    }
+
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_GHAST_HURT;
+    }
+
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_GHAST_DEATH;
+    }
+
+    /**
+     * Returns the volume for the sounds this mob makes.
+     */
+    protected float getSoundVolume()
+    {
+        return 5.0F;
+    }
+
+    public static boolean func_223368_b(EntityType<GhastEntity> p_223368_0_, IWorld p_223368_1_, SpawnReason reason, BlockPos p_223368_3_, Random p_223368_4_)
+    {
+        return p_223368_1_.getDifficulty() != Difficulty.PEACEFUL && p_223368_4_.nextInt(20) == 0 && canSpawnOn(p_223368_0_, p_223368_1_, reason, p_223368_3_, p_223368_4_);
+    }
+
+    /**
+     * Will return how many at most can spawn in a chunk at once.
+     */
+    public int getMaxSpawnedInChunk()
+    {
+        return 1;
+    }
+
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putInt("ExplosionPower", this.explosionStrength);
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+
+        if (compound.contains("ExplosionPower", 99))
+        {
+            this.explosionStrength = compound.getInt("ExplosionPower");
+        }
+    }
+
+    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return 2.6F;
+    }
+
+    static class FireballAttackGoal extends Goal
+    {
+        private final GhastEntity parentEntity;
+        public int attackTimer;
+
+        public FireballAttackGoal(GhastEntity ghast)
+        {
+            this.parentEntity = ghast;
+        }
+
+        public boolean shouldExecute()
+        {
+            return this.parentEntity.getAttackTarget() != null;
+        }
+
+        public void startExecuting()
+        {
+            this.attackTimer = 0;
+        }
+
+        public void resetTask()
+        {
+            this.parentEntity.setAttacking(false);
+        }
+
+        public void tick()
+        {
+            LivingEntity livingentity = this.parentEntity.getAttackTarget();
+            double d0 = 64.0D;
+
+            if (livingentity.getDistanceSq(this.parentEntity) < 4096.0D && this.parentEntity.canEntityBeSeen(livingentity))
+            {
+                World world = this.parentEntity.world;
+                ++this.attackTimer;
+
+                if (this.attackTimer == 10 && !this.parentEntity.isSilent())
+                {
+                    world.playEvent((PlayerEntity)null, 1015, this.parentEntity.getPosition(), 0);
+                }
+
+                if (this.attackTimer == 20)
+                {
+                    double d1 = 4.0D;
+                    Vector3d vector3d = this.parentEntity.getLook(1.0F);
+                    double d2 = livingentity.getPosX() - (this.parentEntity.getPosX() + vector3d.x * 4.0D);
+                    double d3 = livingentity.getPosYHeight(0.5D) - (0.5D + this.parentEntity.getPosYHeight(0.5D));
+                    double d4 = livingentity.getPosZ() - (this.parentEntity.getPosZ() + vector3d.z * 4.0D);
+
+                    if (!this.parentEntity.isSilent())
+                    {
+                        world.playEvent((PlayerEntity)null, 1016, this.parentEntity.getPosition(), 0);
+                    }
+
+                    FireballEntity fireballentity = new FireballEntity(world, this.parentEntity, d2, d3, d4);
+                    fireballentity.explosionPower = this.parentEntity.getFireballStrength();
+                    fireballentity.setPosition(this.parentEntity.getPosX() + vector3d.x * 4.0D, this.parentEntity.getPosYHeight(0.5D) + 0.5D, fireballentity.getPosZ() + vector3d.z * 4.0D);
+                    world.addEntity(fireballentity);
+                    this.attackTimer = -40;
+                }
+            }
+            else if (this.attackTimer > 0)
+            {
+                --this.attackTimer;
+            }
+
+            this.parentEntity.setAttacking(this.attackTimer > 10);
+        }
+    }
+
+    static class LookAroundGoal extends Goal
+    {
+        private final GhastEntity parentEntity;
+
+        public LookAroundGoal(GhastEntity ghast)
+        {
+            this.parentEntity = ghast;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.LOOK));
+        }
+
+        public boolean shouldExecute()
+        {
+            return true;
+        }
+
+        public void tick()
+        {
+            if (this.parentEntity.getAttackTarget() == null)
+            {
+                Vector3d vector3d = this.parentEntity.getMotion();
+                this.parentEntity.rotationYaw = -((float)MathHelper.atan2(vector3d.x, vector3d.z)) * (180F / (float)Math.PI);
+                this.parentEntity.renderYawOffset = this.parentEntity.rotationYaw;
+            }
+            else
+            {
+                LivingEntity livingentity = this.parentEntity.getAttackTarget();
+                double d0 = 64.0D;
+
+                if (livingentity.getDistanceSq(this.parentEntity) < 4096.0D)
+                {
+                    double d1 = livingentity.getPosX() - this.parentEntity.getPosX();
+                    double d2 = livingentity.getPosZ() - this.parentEntity.getPosZ();
+                    this.parentEntity.rotationYaw = -((float)MathHelper.atan2(d1, d2)) * (180F / (float)Math.PI);
+                    this.parentEntity.renderYawOffset = this.parentEntity.rotationYaw;
+                }
+            }
+        }
+    }
+
+    static class MoveHelperController extends MovementController
+    {
+        private final GhastEntity parentEntity;
+        private int courseChangeCooldown;
+
+        public MoveHelperController(GhastEntity ghast)
+        {
+            super(ghast);
+            this.parentEntity = ghast;
+        }
+
+        public void tick()
+        {
+            if (this.action == MovementController.Action.MOVE_TO)
+            {
+                if (this.courseChangeCooldown-- <= 0)
+                {
+                    this.courseChangeCooldown += this.parentEntity.getRNG().nextInt(5) + 2;
+                    Vector3d vector3d = new Vector3d(this.posX - this.parentEntity.getPosX(), this.posY - this.parentEntity.getPosY(), this.posZ - this.parentEntity.getPosZ());
+                    double d0 = vector3d.length();
+                    vector3d = vector3d.normalize();
+
+                    if (this.func_220673_a(vector3d, MathHelper.ceil(d0)))
+                    {
+                        this.parentEntity.setMotion(this.parentEntity.getMotion().add(vector3d.scale(0.1D)));
+                    }
+                    else
+                    {
+                        this.action = MovementController.Action.WAIT;
+                    }
+                }
+            }
+        }
+
+        private boolean func_220673_a(Vector3d p_220673_1_, int p_220673_2_)
+        {
+            AxisAlignedBB axisalignedbb = this.parentEntity.getBoundingBox();
+
+            for (int i = 1; i < p_220673_2_; ++i)
+            {
+                axisalignedbb = axisalignedbb.offset(p_220673_1_);
+
+                if (!this.parentEntity.world.hasNoCollisions(this.parentEntity, axisalignedbb))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    static class RandomFlyGoal extends Goal
+    {
+        private final GhastEntity parentEntity;
+
+        public RandomFlyGoal(GhastEntity ghast)
+        {
+            this.parentEntity = ghast;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        public boolean shouldExecute()
+        {
+            MovementController movementcontroller = this.parentEntity.getMoveHelper();
+
+            if (!movementcontroller.isUpdating())
+            {
+                return true;
+            }
+            else
+            {
+                double d0 = movementcontroller.getX() - this.parentEntity.getPosX();
+                double d1 = movementcontroller.getY() - this.parentEntity.getPosY();
+                double d2 = movementcontroller.getZ() - this.parentEntity.getPosZ();
+                double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+                return d3 < 1.0D || d3 > 3600.0D;
+            }
+        }
+
+        public boolean shouldContinueExecuting()
+        {
+            return false;
+        }
+
+        public void startExecuting()
+        {
+            Random random = this.parentEntity.getRNG();
+            double d0 = this.parentEntity.getPosX() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            double d1 = this.parentEntity.getPosY() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            double d2 = this.parentEntity.getPosZ() + (double)((random.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            this.parentEntity.getMoveHelper().setMoveTo(d0, d1, d2, 1.0D);
+        }
+    }
 }

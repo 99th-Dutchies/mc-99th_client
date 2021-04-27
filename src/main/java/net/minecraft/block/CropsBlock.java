@@ -18,153 +18,201 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CropsBlock extends BushBlock implements IGrowable {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_7;
-   private static final VoxelShape[] SHAPE_BY_AGE = new VoxelShape[]{Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 4.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 6.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 10.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 14.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D)};
+public class CropsBlock extends BushBlock implements IGrowable
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_7;
+    private static final VoxelShape[] SHAPE_BY_AGE = new VoxelShape[] {Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 4.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 6.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 10.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 14.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D)};
 
-   protected CropsBlock(AbstractBlock.Properties p_i48421_1_) {
-      super(p_i48421_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(this.getAgeProperty(), Integer.valueOf(0)));
-   }
+    protected CropsBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(this.getAgeProperty(), Integer.valueOf(0)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE_BY_AGE[p_220053_1_.getValue(this.getAgeProperty())];
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE_BY_AGE[state.get(this.getAgeProperty())];
+    }
 
-   protected boolean mayPlaceOn(BlockState p_200014_1_, IBlockReader p_200014_2_, BlockPos p_200014_3_) {
-      return p_200014_1_.is(Blocks.FARMLAND);
-   }
+    protected boolean isValidGround(BlockState state, IBlockReader worldIn, BlockPos pos)
+    {
+        return state.isIn(Blocks.FARMLAND);
+    }
 
-   public IntegerProperty getAgeProperty() {
-      return AGE;
-   }
+    public IntegerProperty getAgeProperty()
+    {
+        return AGE;
+    }
 
-   public int getMaxAge() {
-      return 7;
-   }
+    public int getMaxAge()
+    {
+        return 7;
+    }
 
-   protected int getAge(BlockState p_185527_1_) {
-      return p_185527_1_.getValue(this.getAgeProperty());
-   }
+    protected int getAge(BlockState state)
+    {
+        return state.get(this.getAgeProperty());
+    }
 
-   public BlockState getStateForAge(int p_185528_1_) {
-      return this.defaultBlockState().setValue(this.getAgeProperty(), Integer.valueOf(p_185528_1_));
-   }
+    public BlockState withAge(int age)
+    {
+        return this.getDefaultState().with(this.getAgeProperty(), Integer.valueOf(age));
+    }
 
-   public boolean isMaxAge(BlockState p_185525_1_) {
-      return p_185525_1_.getValue(this.getAgeProperty()) >= this.getMaxAge();
-   }
+    public boolean isMaxAge(BlockState state)
+    {
+        return state.get(this.getAgeProperty()) >= this.getMaxAge();
+    }
 
-   public boolean isRandomlyTicking(BlockState p_149653_1_) {
-      return !this.isMaxAge(p_149653_1_);
-   }
+    /**
+     * Returns whether or not this block is of a type that needs random ticking. Called for ref-counting purposes by
+     * ExtendedBlockStorage in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
+    public boolean ticksRandomly(BlockState state)
+    {
+        return !this.isMaxAge(state);
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_2_.getRawBrightness(p_225542_3_, 0) >= 9) {
-         int i = this.getAge(p_225542_1_);
-         if (i < this.getMaxAge()) {
-            float f = getGrowthSpeed(this, p_225542_2_, p_225542_3_);
-            if (p_225542_4_.nextInt((int)(25.0F / f) + 1) == 0) {
-               p_225542_2_.setBlock(p_225542_3_, this.getStateForAge(i + 1), 2);
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (worldIn.getLightSubtracted(pos, 0) >= 9)
+        {
+            int i = this.getAge(state);
+
+            if (i < this.getMaxAge())
+            {
+                float f = getGrowthChance(this, worldIn, pos);
+
+                if (random.nextInt((int)(25.0F / f) + 1) == 0)
+                {
+                    worldIn.setBlockState(pos, this.withAge(i + 1), 2);
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
+    public void grow(World worldIn, BlockPos pos, BlockState state)
+    {
+        int i = this.getAge(state) + this.getBonemealAgeIncrease(worldIn);
+        int j = this.getMaxAge();
 
-   public void growCrops(World p_176487_1_, BlockPos p_176487_2_, BlockState p_176487_3_) {
-      int i = this.getAge(p_176487_3_) + this.getBonemealAgeIncrease(p_176487_1_);
-      int j = this.getMaxAge();
-      if (i > j) {
-         i = j;
-      }
+        if (i > j)
+        {
+            i = j;
+        }
 
-      p_176487_1_.setBlock(p_176487_2_, this.getStateForAge(i), 2);
-   }
+        worldIn.setBlockState(pos, this.withAge(i), 2);
+    }
 
-   protected int getBonemealAgeIncrease(World p_185529_1_) {
-      return MathHelper.nextInt(p_185529_1_.random, 2, 5);
-   }
+    protected int getBonemealAgeIncrease(World worldIn)
+    {
+        return MathHelper.nextInt(worldIn.rand, 2, 5);
+    }
 
-   protected static float getGrowthSpeed(Block p_180672_0_, IBlockReader p_180672_1_, BlockPos p_180672_2_) {
-      float f = 1.0F;
-      BlockPos blockpos = p_180672_2_.below();
+    protected static float getGrowthChance(Block blockIn, IBlockReader worldIn, BlockPos pos)
+    {
+        float f = 1.0F;
+        BlockPos blockpos = pos.down();
 
-      for(int i = -1; i <= 1; ++i) {
-         for(int j = -1; j <= 1; ++j) {
-            float f1 = 0.0F;
-            BlockState blockstate = p_180672_1_.getBlockState(blockpos.offset(i, 0, j));
-            if (blockstate.is(Blocks.FARMLAND)) {
-               f1 = 1.0F;
-               if (blockstate.getValue(FarmlandBlock.MOISTURE) > 0) {
-                  f1 = 3.0F;
-               }
+        for (int i = -1; i <= 1; ++i)
+        {
+            for (int j = -1; j <= 1; ++j)
+            {
+                float f1 = 0.0F;
+                BlockState blockstate = worldIn.getBlockState(blockpos.add(i, 0, j));
+
+                if (blockstate.isIn(Blocks.FARMLAND))
+                {
+                    f1 = 1.0F;
+
+                    if (blockstate.get(FarmlandBlock.MOISTURE) > 0)
+                    {
+                        f1 = 3.0F;
+                    }
+                }
+
+                if (i != 0 || j != 0)
+                {
+                    f1 /= 4.0F;
+                }
+
+                f += f1;
             }
+        }
 
-            if (i != 0 || j != 0) {
-               f1 /= 4.0F;
-            }
+        BlockPos blockpos1 = pos.north();
+        BlockPos blockpos2 = pos.south();
+        BlockPos blockpos3 = pos.west();
+        BlockPos blockpos4 = pos.east();
+        boolean flag = blockIn == worldIn.getBlockState(blockpos3).getBlock() || blockIn == worldIn.getBlockState(blockpos4).getBlock();
+        boolean flag1 = blockIn == worldIn.getBlockState(blockpos1).getBlock() || blockIn == worldIn.getBlockState(blockpos2).getBlock();
 
-            f += f1;
-         }
-      }
-
-      BlockPos blockpos1 = p_180672_2_.north();
-      BlockPos blockpos2 = p_180672_2_.south();
-      BlockPos blockpos3 = p_180672_2_.west();
-      BlockPos blockpos4 = p_180672_2_.east();
-      boolean flag = p_180672_0_ == p_180672_1_.getBlockState(blockpos3).getBlock() || p_180672_0_ == p_180672_1_.getBlockState(blockpos4).getBlock();
-      boolean flag1 = p_180672_0_ == p_180672_1_.getBlockState(blockpos1).getBlock() || p_180672_0_ == p_180672_1_.getBlockState(blockpos2).getBlock();
-      if (flag && flag1) {
-         f /= 2.0F;
-      } else {
-         boolean flag2 = p_180672_0_ == p_180672_1_.getBlockState(blockpos3.north()).getBlock() || p_180672_0_ == p_180672_1_.getBlockState(blockpos4.north()).getBlock() || p_180672_0_ == p_180672_1_.getBlockState(blockpos4.south()).getBlock() || p_180672_0_ == p_180672_1_.getBlockState(blockpos3.south()).getBlock();
-         if (flag2) {
+        if (flag && flag1)
+        {
             f /= 2.0F;
-         }
-      }
+        }
+        else
+        {
+            boolean flag2 = blockIn == worldIn.getBlockState(blockpos3.north()).getBlock() || blockIn == worldIn.getBlockState(blockpos4.north()).getBlock() || blockIn == worldIn.getBlockState(blockpos4.south()).getBlock() || blockIn == worldIn.getBlockState(blockpos3.south()).getBlock();
 
-      return f;
-   }
+            if (flag2)
+            {
+                f /= 2.0F;
+            }
+        }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      return (p_196260_2_.getRawBrightness(p_196260_3_, 0) >= 8 || p_196260_2_.canSeeSky(p_196260_3_)) && super.canSurvive(p_196260_1_, p_196260_2_, p_196260_3_);
-   }
+        return f;
+    }
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      if (p_196262_4_ instanceof RavagerEntity && p_196262_2_.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-         p_196262_2_.destroyBlock(p_196262_3_, true, p_196262_4_);
-      }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        return (worldIn.getLightSubtracted(pos, 0) >= 8 || worldIn.canSeeSky(pos)) && super.isValidPosition(state, worldIn, pos);
+    }
 
-      super.entityInside(p_196262_1_, p_196262_2_, p_196262_3_, p_196262_4_);
-   }
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        if (entityIn instanceof RavagerEntity && worldIn.getGameRules().getBoolean(GameRules.MOB_GRIEFING))
+        {
+            worldIn.destroyBlock(pos, true, entityIn);
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   protected IItemProvider getBaseSeedId() {
-      return Items.WHEAT_SEEDS;
-   }
+        super.onEntityCollision(state, worldIn, pos, entityIn);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      return new ItemStack(this.getBaseSeedId());
-   }
+    protected IItemProvider getSeedsItem()
+    {
+        return Items.WHEAT_SEEDS;
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return !this.isMaxAge(p_176473_3_);
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        return new ItemStack(this.getSeedsItem());
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return !this.isMaxAge(state);
+    }
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      this.growCrops(p_225535_1_, p_225535_3_, p_225535_4_);
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        this.grow(worldIn, pos, state);
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
 }

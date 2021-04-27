@@ -6,32 +6,38 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.MovementInput;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public interface ITutorialStep {
-   default void clear() {
-   }
+public interface ITutorialStep
+{
+default void onStop()
+    {
+    }
 
-   default void tick() {
-   }
+default void tick()
+    {
+    }
 
-   default void onInput(MovementInput p_193247_1_) {
-   }
+default void handleMovement(MovementInput input)
+    {
+    }
 
-   default void onMouse(double p_195870_1_, double p_195870_3_) {
-   }
+default void onMouseMove(double velocityX, double velocityY)
+    {
+    }
 
-   default void onLookAt(ClientWorld p_193246_1_, RayTraceResult p_193246_2_) {
-   }
+default void onMouseHover(ClientWorld worldIn, RayTraceResult result)
+    {
+    }
 
-   default void onDestroyBlock(ClientWorld p_193250_1_, BlockPos p_193250_2_, BlockState p_193250_3_, float p_193250_4_) {
-   }
+default void onHitBlock(ClientWorld worldIn, BlockPos pos, BlockState state, float diggingStage)
+    {
+    }
 
-   default void onOpenInventory() {
-   }
+default void openInventory()
+    {
+    }
 
-   default void onGetItem(ItemStack p_193252_1_) {
-   }
+default void handleSetSlot(ItemStack stack)
+    {
+    }
 }

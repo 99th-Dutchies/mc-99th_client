@@ -18,119 +18,157 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 
-public class FourWayBlock extends Block implements IWaterLoggable {
-   public static final BooleanProperty NORTH = SixWayBlock.NORTH;
-   public static final BooleanProperty EAST = SixWayBlock.EAST;
-   public static final BooleanProperty SOUTH = SixWayBlock.SOUTH;
-   public static final BooleanProperty WEST = SixWayBlock.WEST;
-   public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-   protected static final Map<Direction, BooleanProperty> PROPERTY_BY_DIRECTION = SixWayBlock.PROPERTY_BY_DIRECTION.entrySet().stream().filter((p_199775_0_) -> {
-      return p_199775_0_.getKey().getAxis().isHorizontal();
-   }).collect(Util.toMap());
-   protected final VoxelShape[] collisionShapeByIndex;
-   protected final VoxelShape[] shapeByIndex;
-   private final Object2IntMap<BlockState> stateToIndex = new Object2IntOpenHashMap<>();
+public class FourWayBlock extends Block implements IWaterLoggable
+{
+    public static final BooleanProperty NORTH = SixWayBlock.NORTH;
+    public static final BooleanProperty EAST = SixWayBlock.EAST;
+    public static final BooleanProperty SOUTH = SixWayBlock.SOUTH;
+    public static final BooleanProperty WEST = SixWayBlock.WEST;
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    protected static final Map<Direction, BooleanProperty> FACING_TO_PROPERTY_MAP = SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet().stream().filter((facingProperty) ->
+    {
+        return facingProperty.getKey().getAxis().isHorizontal();
+    }).collect(Util.toMapCollector());
+    protected final VoxelShape[] collisionShapes;
+    protected final VoxelShape[] shapes;
+    private final Object2IntMap<BlockState> statePaletteMap = new Object2IntOpenHashMap<>();
 
-   protected FourWayBlock(float p_i48420_1_, float p_i48420_2_, float p_i48420_3_, float p_i48420_4_, float p_i48420_5_, AbstractBlock.Properties p_i48420_6_) {
-      super(p_i48420_6_);
-      this.collisionShapeByIndex = this.makeShapes(p_i48420_1_, p_i48420_2_, p_i48420_5_, 0.0F, p_i48420_5_);
-      this.shapeByIndex = this.makeShapes(p_i48420_1_, p_i48420_2_, p_i48420_3_, 0.0F, p_i48420_4_);
+    protected FourWayBlock(float nodeWidth, float extensionWidth, float nodeHeight, float extensionHeight, float collisionY, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.collisionShapes = this.makeShapes(nodeWidth, extensionWidth, collisionY, 0.0F, collisionY);
+        this.shapes = this.makeShapes(nodeWidth, extensionWidth, nodeHeight, 0.0F, extensionHeight);
 
-      for(BlockState blockstate : this.stateDefinition.getPossibleStates()) {
-         this.getAABBIndex(blockstate);
-      }
+        for (BlockState blockstate : this.stateContainer.getValidStates())
+        {
+            this.getIndex(blockstate);
+        }
+    }
 
-   }
+    protected VoxelShape[] makeShapes(float nodeWidth, float extensionWidth, float nodeHeight, float extensionBottom, float extensionHeight)
+    {
+        float f = 8.0F - nodeWidth;
+        float f1 = 8.0F + nodeWidth;
+        float f2 = 8.0F - extensionWidth;
+        float f3 = 8.0F + extensionWidth;
+        VoxelShape voxelshape = Block.makeCuboidShape((double)f, 0.0D, (double)f, (double)f1, (double)nodeHeight, (double)f1);
+        VoxelShape voxelshape1 = Block.makeCuboidShape((double)f2, (double)extensionBottom, 0.0D, (double)f3, (double)extensionHeight, (double)f3);
+        VoxelShape voxelshape2 = Block.makeCuboidShape((double)f2, (double)extensionBottom, (double)f2, (double)f3, (double)extensionHeight, 16.0D);
+        VoxelShape voxelshape3 = Block.makeCuboidShape(0.0D, (double)extensionBottom, (double)f2, (double)f3, (double)extensionHeight, (double)f3);
+        VoxelShape voxelshape4 = Block.makeCuboidShape((double)f2, (double)extensionBottom, (double)f2, 16.0D, (double)extensionHeight, (double)f3);
+        VoxelShape voxelshape5 = VoxelShapes.or(voxelshape1, voxelshape4);
+        VoxelShape voxelshape6 = VoxelShapes.or(voxelshape2, voxelshape3);
+        VoxelShape[] avoxelshape = new VoxelShape[] {VoxelShapes.empty(), voxelshape2, voxelshape3, voxelshape6, voxelshape1, VoxelShapes.or(voxelshape2, voxelshape1), VoxelShapes.or(voxelshape3, voxelshape1), VoxelShapes.or(voxelshape6, voxelshape1), voxelshape4, VoxelShapes.or(voxelshape2, voxelshape4), VoxelShapes.or(voxelshape3, voxelshape4), VoxelShapes.or(voxelshape6, voxelshape4), voxelshape5, VoxelShapes.or(voxelshape2, voxelshape5), VoxelShapes.or(voxelshape3, voxelshape5), VoxelShapes.or(voxelshape6, voxelshape5)};
 
-   protected VoxelShape[] makeShapes(float p_196408_1_, float p_196408_2_, float p_196408_3_, float p_196408_4_, float p_196408_5_) {
-      float f = 8.0F - p_196408_1_;
-      float f1 = 8.0F + p_196408_1_;
-      float f2 = 8.0F - p_196408_2_;
-      float f3 = 8.0F + p_196408_2_;
-      VoxelShape voxelshape = Block.box((double)f, 0.0D, (double)f, (double)f1, (double)p_196408_3_, (double)f1);
-      VoxelShape voxelshape1 = Block.box((double)f2, (double)p_196408_4_, 0.0D, (double)f3, (double)p_196408_5_, (double)f3);
-      VoxelShape voxelshape2 = Block.box((double)f2, (double)p_196408_4_, (double)f2, (double)f3, (double)p_196408_5_, 16.0D);
-      VoxelShape voxelshape3 = Block.box(0.0D, (double)p_196408_4_, (double)f2, (double)f3, (double)p_196408_5_, (double)f3);
-      VoxelShape voxelshape4 = Block.box((double)f2, (double)p_196408_4_, (double)f2, 16.0D, (double)p_196408_5_, (double)f3);
-      VoxelShape voxelshape5 = VoxelShapes.or(voxelshape1, voxelshape4);
-      VoxelShape voxelshape6 = VoxelShapes.or(voxelshape2, voxelshape3);
-      VoxelShape[] avoxelshape = new VoxelShape[]{VoxelShapes.empty(), voxelshape2, voxelshape3, voxelshape6, voxelshape1, VoxelShapes.or(voxelshape2, voxelshape1), VoxelShapes.or(voxelshape3, voxelshape1), VoxelShapes.or(voxelshape6, voxelshape1), voxelshape4, VoxelShapes.or(voxelshape2, voxelshape4), VoxelShapes.or(voxelshape3, voxelshape4), VoxelShapes.or(voxelshape6, voxelshape4), voxelshape5, VoxelShapes.or(voxelshape2, voxelshape5), VoxelShapes.or(voxelshape3, voxelshape5), VoxelShapes.or(voxelshape6, voxelshape5)};
+        for (int i = 0; i < 16; ++i)
+        {
+            avoxelshape[i] = VoxelShapes.or(voxelshape, avoxelshape[i]);
+        }
 
-      for(int i = 0; i < 16; ++i) {
-         avoxelshape[i] = VoxelShapes.or(voxelshape, avoxelshape[i]);
-      }
+        return avoxelshape;
+    }
 
-      return avoxelshape;
-   }
+    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos)
+    {
+        return !state.get(WATERLOGGED);
+    }
 
-   public boolean propagatesSkylightDown(BlockState p_200123_1_, IBlockReader p_200123_2_, BlockPos p_200123_3_) {
-      return !p_200123_1_.getValue(WATERLOGGED);
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return this.shapes[this.getIndex(state)];
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return this.shapeByIndex[this.getAABBIndex(p_220053_1_)];
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return this.collisionShapes[this.getIndex(state)];
+    }
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      return this.collisionShapeByIndex[this.getAABBIndex(p_220071_1_)];
-   }
+    private static int getMask(Direction facing)
+    {
+        return 1 << facing.getHorizontalIndex();
+    }
 
-   private static int indexFor(Direction p_196407_0_) {
-      return 1 << p_196407_0_.get2DDataValue();
-   }
+    protected int getIndex(BlockState state)
+    {
+        return this.statePaletteMap.computeIntIfAbsent(state, (stateIn) ->
+        {
+            int i = 0;
 
-   protected int getAABBIndex(BlockState p_196406_1_) {
-      return this.stateToIndex.computeIntIfAbsent(p_196406_1_, (p_223007_0_) -> {
-         int i = 0;
-         if (p_223007_0_.getValue(NORTH)) {
-            i |= indexFor(Direction.NORTH);
-         }
+            if (stateIn.get(NORTH))
+            {
+                i |= getMask(Direction.NORTH);
+            }
 
-         if (p_223007_0_.getValue(EAST)) {
-            i |= indexFor(Direction.EAST);
-         }
+            if (stateIn.get(EAST))
+            {
+                i |= getMask(Direction.EAST);
+            }
 
-         if (p_223007_0_.getValue(SOUTH)) {
-            i |= indexFor(Direction.SOUTH);
-         }
+            if (stateIn.get(SOUTH))
+            {
+                i |= getMask(Direction.SOUTH);
+            }
 
-         if (p_223007_0_.getValue(WEST)) {
-            i |= indexFor(Direction.WEST);
-         }
+            if (stateIn.get(WEST))
+            {
+                i |= getMask(Direction.WEST);
+            }
 
-         return i;
-      });
-   }
+            return i;
+        });
+    }
 
-   public FluidState getFluidState(BlockState p_204507_1_) {
-      return p_204507_1_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_204507_1_);
-   }
+    public FluidState getFluidState(BlockState state)
+    {
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStillFluidState(false) : super.getFluidState(state);
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      switch(p_185499_2_) {
-      case CLOCKWISE_180:
-         return p_185499_1_.setValue(NORTH, p_185499_1_.getValue(SOUTH)).setValue(EAST, p_185499_1_.getValue(WEST)).setValue(SOUTH, p_185499_1_.getValue(NORTH)).setValue(WEST, p_185499_1_.getValue(EAST));
-      case COUNTERCLOCKWISE_90:
-         return p_185499_1_.setValue(NORTH, p_185499_1_.getValue(EAST)).setValue(EAST, p_185499_1_.getValue(SOUTH)).setValue(SOUTH, p_185499_1_.getValue(WEST)).setValue(WEST, p_185499_1_.getValue(NORTH));
-      case CLOCKWISE_90:
-         return p_185499_1_.setValue(NORTH, p_185499_1_.getValue(WEST)).setValue(EAST, p_185499_1_.getValue(NORTH)).setValue(SOUTH, p_185499_1_.getValue(EAST)).setValue(WEST, p_185499_1_.getValue(SOUTH));
-      default:
-         return p_185499_1_;
-      }
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        switch (rot)
+        {
+            case CLOCKWISE_180:
+                return state.with(NORTH, state.get(SOUTH)).with(EAST, state.get(WEST)).with(SOUTH, state.get(NORTH)).with(WEST, state.get(EAST));
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      switch(p_185471_2_) {
-      case LEFT_RIGHT:
-         return p_185471_1_.setValue(NORTH, p_185471_1_.getValue(SOUTH)).setValue(SOUTH, p_185471_1_.getValue(NORTH));
-      case FRONT_BACK:
-         return p_185471_1_.setValue(EAST, p_185471_1_.getValue(WEST)).setValue(WEST, p_185471_1_.getValue(EAST));
-      default:
-         return super.mirror(p_185471_1_, p_185471_2_);
-      }
-   }
+            case COUNTERCLOCKWISE_90:
+                return state.with(NORTH, state.get(EAST)).with(EAST, state.get(SOUTH)).with(SOUTH, state.get(WEST)).with(WEST, state.get(NORTH));
+
+            case CLOCKWISE_90:
+                return state.with(NORTH, state.get(WEST)).with(EAST, state.get(NORTH)).with(SOUTH, state.get(EAST)).with(WEST, state.get(SOUTH));
+
+            default:
+                return state;
+        }
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        switch (mirrorIn)
+        {
+            case LEFT_RIGHT:
+                return state.with(NORTH, state.get(SOUTH)).with(SOUTH, state.get(NORTH));
+
+            case FRONT_BACK:
+                return state.with(EAST, state.get(WEST)).with(WEST, state.get(EAST));
+
+            default:
+                return super.mirror(state, mirrorIn);
+        }
+    }
 }

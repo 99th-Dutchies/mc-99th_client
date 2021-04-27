@@ -24,576 +24,828 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class PlayerInventory implements IInventory, INameable {
-   public final NonNullList<ItemStack> items = NonNullList.withSize(36, ItemStack.EMPTY);
-   public final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
-   public final NonNullList<ItemStack> offhand = NonNullList.withSize(1, ItemStack.EMPTY);
-   private final List<NonNullList<ItemStack>> compartments = ImmutableList.of(this.items, this.armor, this.offhand);
-   public int selected;
-   public final PlayerEntity player;
-   private ItemStack carried = ItemStack.EMPTY;
-   private int timesChanged;
+public class PlayerInventory implements IInventory, INameable
+{
+    public final NonNullList<ItemStack> mainInventory = NonNullList.withSize(36, ItemStack.EMPTY);
+    public final NonNullList<ItemStack> armorInventory = NonNullList.withSize(4, ItemStack.EMPTY);
+    public final NonNullList<ItemStack> offHandInventory = NonNullList.withSize(1, ItemStack.EMPTY);
+    private final List<NonNullList<ItemStack>> allInventories = ImmutableList.of(this.mainInventory, this.armorInventory, this.offHandInventory);
+    public int currentItem;
+    public final PlayerEntity player;
+    private ItemStack itemStack = ItemStack.EMPTY;
+    private int timesChanged;
 
-   public PlayerInventory(PlayerEntity p_i1750_1_) {
-      this.player = p_i1750_1_;
-   }
+    public PlayerInventory(PlayerEntity playerIn)
+    {
+        this.player = playerIn;
+    }
 
-   public ItemStack getSelected() {
-      return isHotbarSlot(this.selected) ? this.items.get(this.selected) : ItemStack.EMPTY;
-   }
+    /**
+     * Returns the item stack currently held by the player.
+     */
+    public ItemStack getCurrentItem()
+    {
+        return isHotbar(this.currentItem) ? this.mainInventory.get(this.currentItem) : ItemStack.EMPTY;
+    }
 
-   public static int getSelectionSize() {
-      return 9;
-   }
+    /**
+     * Get the size of the player hotbar inventory
+     */
+    public static int getHotbarSize()
+    {
+        return 9;
+    }
 
-   private boolean hasRemainingSpaceForItem(ItemStack p_184436_1_, ItemStack p_184436_2_) {
-      return !p_184436_1_.isEmpty() && this.isSameItem(p_184436_1_, p_184436_2_) && p_184436_1_.isStackable() && p_184436_1_.getCount() < p_184436_1_.getMaxStackSize() && p_184436_1_.getCount() < this.getMaxStackSize();
-   }
+    private boolean canMergeStacks(ItemStack stack1, ItemStack stack2)
+    {
+        return !stack1.isEmpty() && this.stackEqualExact(stack1, stack2) && stack1.isStackable() && stack1.getCount() < stack1.getMaxStackSize() && stack1.getCount() < this.getInventoryStackLimit();
+    }
 
-   private boolean isSameItem(ItemStack p_184431_1_, ItemStack p_184431_2_) {
-      return p_184431_1_.getItem() == p_184431_2_.getItem() && ItemStack.tagMatches(p_184431_1_, p_184431_2_);
-   }
+    /**
+     * Checks item, NBT, and meta if the item is not damageable
+     */
+    private boolean stackEqualExact(ItemStack stack1, ItemStack stack2)
+    {
+        return stack1.getItem() == stack2.getItem() && ItemStack.areItemStackTagsEqual(stack1, stack2);
+    }
 
-   public int getFreeSlot() {
-      for(int i = 0; i < this.items.size(); ++i) {
-         if (this.items.get(i).isEmpty()) {
+    /**
+     * Returns the first item stack that is empty.
+     */
+    public int getFirstEmptyStack()
+    {
+        for (int i = 0; i < this.mainInventory.size(); ++i)
+        {
+            if (this.mainInventory.get(i).isEmpty())
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public void setPickedItemStack(ItemStack stack)
+    {
+        int i = this.getSlotFor(stack);
+
+        if (isHotbar(i))
+        {
+            this.currentItem = i;
+        }
+        else
+        {
+            if (i == -1)
+            {
+                this.currentItem = this.getBestHotbarSlot();
+
+                if (!this.mainInventory.get(this.currentItem).isEmpty())
+                {
+                    int j = this.getFirstEmptyStack();
+
+                    if (j != -1)
+                    {
+                        this.mainInventory.set(j, this.mainInventory.get(this.currentItem));
+                    }
+                }
+
+                this.mainInventory.set(this.currentItem, stack);
+            }
+            else
+            {
+                this.pickItem(i);
+            }
+        }
+    }
+
+    public void pickItem(int index)
+    {
+        this.currentItem = this.getBestHotbarSlot();
+        ItemStack itemstack = this.mainInventory.get(this.currentItem);
+        this.mainInventory.set(this.currentItem, this.mainInventory.get(index));
+        this.mainInventory.set(index, itemstack);
+    }
+
+    public static boolean isHotbar(int index)
+    {
+        return index >= 0 && index < 9;
+    }
+
+    /**
+     * Finds the stack or an equivalent one in the main inventory
+     */
+    public int getSlotFor(ItemStack stack)
+    {
+        for (int i = 0; i < this.mainInventory.size(); ++i)
+        {
+            if (!this.mainInventory.get(i).isEmpty() && this.stackEqualExact(stack, this.mainInventory.get(i)))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public int findSlotMatchingUnusedItem(ItemStack p_194014_1_)
+    {
+        for (int i = 0; i < this.mainInventory.size(); ++i)
+        {
+            ItemStack itemstack = this.mainInventory.get(i);
+
+            if (!this.mainInventory.get(i).isEmpty() && this.stackEqualExact(p_194014_1_, this.mainInventory.get(i)) && !this.mainInventory.get(i).isDamaged() && !itemstack.isEnchanted() && !itemstack.hasDisplayName())
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public int getBestHotbarSlot()
+    {
+        for (int i = 0; i < 9; ++i)
+        {
+            int j = (this.currentItem + i) % 9;
+
+            if (this.mainInventory.get(j).isEmpty())
+            {
+                return j;
+            }
+        }
+
+        for (int k = 0; k < 9; ++k)
+        {
+            int l = (this.currentItem + k) % 9;
+
+            if (!this.mainInventory.get(l).isEnchanted())
+            {
+                return l;
+            }
+        }
+
+        return this.currentItem;
+    }
+
+    public void changeCurrentItem(double direction)
+    {
+        if (direction > 0.0D)
+        {
+            direction = 1.0D;
+        }
+
+        if (direction < 0.0D)
+        {
+            direction = -1.0D;
+        }
+
+        for (this.currentItem = (int)((double)this.currentItem - direction); this.currentItem < 0; this.currentItem += 9)
+        {
+        }
+
+        while (this.currentItem >= 9)
+        {
+            this.currentItem -= 9;
+        }
+    }
+
+    public int func_234564_a_(Predicate<ItemStack> p_234564_1_, int p_234564_2_, IInventory p_234564_3_)
+    {
+        int i = 0;
+        boolean flag = p_234564_2_ == 0;
+        i = i + ItemStackHelper.func_233534_a_(this, p_234564_1_, p_234564_2_ - i, flag);
+        i = i + ItemStackHelper.func_233534_a_(p_234564_3_, p_234564_1_, p_234564_2_ - i, flag);
+        i = i + ItemStackHelper.func_233535_a_(this.itemStack, p_234564_1_, p_234564_2_ - i, flag);
+
+        if (this.itemStack.isEmpty())
+        {
+            this.itemStack = ItemStack.EMPTY;
+        }
+
+        return i;
+    }
+
+    /**
+     * This function stores as many items of an ItemStack as possible in a matching slot and returns the quantity of
+     * left over items.
+     */
+    private int storePartialItemStack(ItemStack itemStackIn)
+    {
+        int i = this.storeItemStack(itemStackIn);
+
+        if (i == -1)
+        {
+            i = this.getFirstEmptyStack();
+        }
+
+        return i == -1 ? itemStackIn.getCount() : this.addResource(i, itemStackIn);
+    }
+
+    private int addResource(int p_191973_1_, ItemStack p_191973_2_)
+    {
+        Item item = p_191973_2_.getItem();
+        int i = p_191973_2_.getCount();
+        ItemStack itemstack = this.getStackInSlot(p_191973_1_);
+
+        if (itemstack.isEmpty())
+        {
+            itemstack = new ItemStack(item, 0);
+
+            if (p_191973_2_.hasTag())
+            {
+                itemstack.setTag(p_191973_2_.getTag().copy());
+            }
+
+            this.setInventorySlotContents(p_191973_1_, itemstack);
+        }
+
+        int j = i;
+
+        if (i > itemstack.getMaxStackSize() - itemstack.getCount())
+        {
+            j = itemstack.getMaxStackSize() - itemstack.getCount();
+        }
+
+        if (j > this.getInventoryStackLimit() - itemstack.getCount())
+        {
+            j = this.getInventoryStackLimit() - itemstack.getCount();
+        }
+
+        if (j == 0)
+        {
             return i;
-         }
-      }
-
-      return -1;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public void setPickedItem(ItemStack p_184434_1_) {
-      int i = this.findSlotMatchingItem(p_184434_1_);
-      if (isHotbarSlot(i)) {
-         this.selected = i;
-      } else {
-         if (i == -1) {
-            this.selected = this.getSuitableHotbarSlot();
-            if (!this.items.get(this.selected).isEmpty()) {
-               int j = this.getFreeSlot();
-               if (j != -1) {
-                  this.items.set(j, this.items.get(this.selected));
-               }
-            }
-
-            this.items.set(this.selected, p_184434_1_);
-         } else {
-            this.pickSlot(i);
-         }
-
-      }
-   }
-
-   public void pickSlot(int p_184430_1_) {
-      this.selected = this.getSuitableHotbarSlot();
-      ItemStack itemstack = this.items.get(this.selected);
-      this.items.set(this.selected, this.items.get(p_184430_1_));
-      this.items.set(p_184430_1_, itemstack);
-   }
-
-   public static boolean isHotbarSlot(int p_184435_0_) {
-      return p_184435_0_ >= 0 && p_184435_0_ < 9;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public int findSlotMatchingItem(ItemStack p_184429_1_) {
-      for(int i = 0; i < this.items.size(); ++i) {
-         if (!this.items.get(i).isEmpty() && this.isSameItem(p_184429_1_, this.items.get(i))) {
+        }
+        else
+        {
+            i = i - j;
+            itemstack.grow(j);
+            itemstack.setAnimationsToGo(5);
             return i;
-         }
-      }
+        }
+    }
 
-      return -1;
-   }
-
-   public int findSlotMatchingUnusedItem(ItemStack p_194014_1_) {
-      for(int i = 0; i < this.items.size(); ++i) {
-         ItemStack itemstack = this.items.get(i);
-         if (!this.items.get(i).isEmpty() && this.isSameItem(p_194014_1_, this.items.get(i)) && !this.items.get(i).isDamaged() && !itemstack.isEnchanted() && !itemstack.hasCustomHoverName()) {
-            return i;
-         }
-      }
-
-      return -1;
-   }
-
-   public int getSuitableHotbarSlot() {
-      for(int i = 0; i < 9; ++i) {
-         int j = (this.selected + i) % 9;
-         if (this.items.get(j).isEmpty()) {
-            return j;
-         }
-      }
-
-      for(int k = 0; k < 9; ++k) {
-         int l = (this.selected + k) % 9;
-         if (!this.items.get(l).isEnchanted()) {
-            return l;
-         }
-      }
-
-      return this.selected;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public void swapPaint(double p_195409_1_) {
-      if (p_195409_1_ > 0.0D) {
-         p_195409_1_ = 1.0D;
-      }
-
-      if (p_195409_1_ < 0.0D) {
-         p_195409_1_ = -1.0D;
-      }
-
-      for(this.selected = (int)((double)this.selected - p_195409_1_); this.selected < 0; this.selected += 9) {
-      }
-
-      while(this.selected >= 9) {
-         this.selected -= 9;
-      }
-
-   }
-
-   public int clearOrCountMatchingItems(Predicate<ItemStack> p_234564_1_, int p_234564_2_, IInventory p_234564_3_) {
-      int i = 0;
-      boolean flag = p_234564_2_ == 0;
-      i = i + ItemStackHelper.clearOrCountMatchingItems(this, p_234564_1_, p_234564_2_ - i, flag);
-      i = i + ItemStackHelper.clearOrCountMatchingItems(p_234564_3_, p_234564_1_, p_234564_2_ - i, flag);
-      i = i + ItemStackHelper.clearOrCountMatchingItems(this.carried, p_234564_1_, p_234564_2_ - i, flag);
-      if (this.carried.isEmpty()) {
-         this.carried = ItemStack.EMPTY;
-      }
-
-      return i;
-   }
-
-   private int addResource(ItemStack p_70452_1_) {
-      int i = this.getSlotWithRemainingSpace(p_70452_1_);
-      if (i == -1) {
-         i = this.getFreeSlot();
-      }
-
-      return i == -1 ? p_70452_1_.getCount() : this.addResource(i, p_70452_1_);
-   }
-
-   private int addResource(int p_191973_1_, ItemStack p_191973_2_) {
-      Item item = p_191973_2_.getItem();
-      int i = p_191973_2_.getCount();
-      ItemStack itemstack = this.getItem(p_191973_1_);
-      if (itemstack.isEmpty()) {
-         itemstack = new ItemStack(item, 0);
-         if (p_191973_2_.hasTag()) {
-            itemstack.setTag(p_191973_2_.getTag().copy());
-         }
-
-         this.setItem(p_191973_1_, itemstack);
-      }
-
-      int j = i;
-      if (i > itemstack.getMaxStackSize() - itemstack.getCount()) {
-         j = itemstack.getMaxStackSize() - itemstack.getCount();
-      }
-
-      if (j > this.getMaxStackSize() - itemstack.getCount()) {
-         j = this.getMaxStackSize() - itemstack.getCount();
-      }
-
-      if (j == 0) {
-         return i;
-      } else {
-         i = i - j;
-         itemstack.grow(j);
-         itemstack.setPopTime(5);
-         return i;
-      }
-   }
-
-   public int getSlotWithRemainingSpace(ItemStack p_70432_1_) {
-      if (this.hasRemainingSpaceForItem(this.getItem(this.selected), p_70432_1_)) {
-         return this.selected;
-      } else if (this.hasRemainingSpaceForItem(this.getItem(40), p_70432_1_)) {
-         return 40;
-      } else {
-         for(int i = 0; i < this.items.size(); ++i) {
-            if (this.hasRemainingSpaceForItem(this.items.get(i), p_70432_1_)) {
-               return i;
-            }
-         }
-
-         return -1;
-      }
-   }
-
-   public void tick() {
-      for(NonNullList<ItemStack> nonnulllist : this.compartments) {
-         for(int i = 0; i < nonnulllist.size(); ++i) {
-            if (!nonnulllist.get(i).isEmpty()) {
-               nonnulllist.get(i).inventoryTick(this.player.level, this.player, i, this.selected == i);
-            }
-         }
-      }
-
-   }
-
-   public boolean add(ItemStack p_70441_1_) {
-      return this.add(-1, p_70441_1_);
-   }
-
-   public boolean add(int p_191971_1_, ItemStack p_191971_2_) {
-      if (p_191971_2_.isEmpty()) {
-         return false;
-      } else {
-         try {
-            if (p_191971_2_.isDamaged()) {
-               if (p_191971_1_ == -1) {
-                  p_191971_1_ = this.getFreeSlot();
-               }
-
-               if (p_191971_1_ >= 0) {
-                  this.items.set(p_191971_1_, p_191971_2_.copy());
-                  this.items.get(p_191971_1_).setPopTime(5);
-                  p_191971_2_.setCount(0);
-                  return true;
-               } else if (this.player.abilities.instabuild) {
-                  p_191971_2_.setCount(0);
-                  return true;
-               } else {
-                  return false;
-               }
-            } else {
-               int i;
-               do {
-                  i = p_191971_2_.getCount();
-                  if (p_191971_1_ == -1) {
-                     p_191971_2_.setCount(this.addResource(p_191971_2_));
-                  } else {
-                     p_191971_2_.setCount(this.addResource(p_191971_1_, p_191971_2_));
-                  }
-               } while(!p_191971_2_.isEmpty() && p_191971_2_.getCount() < i);
-
-               if (p_191971_2_.getCount() == i && this.player.abilities.instabuild) {
-                  p_191971_2_.setCount(0);
-                  return true;
-               } else {
-                  return p_191971_2_.getCount() < i;
-               }
-            }
-         } catch (Throwable throwable) {
-            CrashReport crashreport = CrashReport.forThrowable(throwable, "Adding item to inventory");
-            CrashReportCategory crashreportcategory = crashreport.addCategory("Item being added");
-            crashreportcategory.setDetail("Item ID", Item.getId(p_191971_2_.getItem()));
-            crashreportcategory.setDetail("Item data", p_191971_2_.getDamageValue());
-            crashreportcategory.setDetail("Item name", () -> {
-               return p_191971_2_.getHoverName().getString();
-            });
-            throw new ReportedException(crashreport);
-         }
-      }
-   }
-
-   public void placeItemBackInInventory(World p_191975_1_, ItemStack p_191975_2_) {
-      if (!p_191975_1_.isClientSide) {
-         while(!p_191975_2_.isEmpty()) {
-            int i = this.getSlotWithRemainingSpace(p_191975_2_);
-            if (i == -1) {
-               i = this.getFreeSlot();
+    /**
+     * Stores a stack in the player's inventory. It first tries to place it in the selected slot in the player's hotbar,
+     * then the offhand slot, then any available/empty slot in the player's inventory.
+     */
+    public int storeItemStack(ItemStack itemStackIn)
+    {
+        if (this.canMergeStacks(this.getStackInSlot(this.currentItem), itemStackIn))
+        {
+            return this.currentItem;
+        }
+        else if (this.canMergeStacks(this.getStackInSlot(40), itemStackIn))
+        {
+            return 40;
+        }
+        else
+        {
+            for (int i = 0; i < this.mainInventory.size(); ++i)
+            {
+                if (this.canMergeStacks(this.mainInventory.get(i), itemStackIn))
+                {
+                    return i;
+                }
             }
 
-            if (i == -1) {
-               this.player.drop(p_191975_2_, false);
-               break;
+            return -1;
+        }
+    }
+
+    /**
+     * Decrement the number of animations remaining. Only called on client side. This is used to handle the animation of
+     * receiving a block.
+     */
+    public void tick()
+    {
+        for (NonNullList<ItemStack> nonnulllist : this.allInventories)
+        {
+            for (int i = 0; i < nonnulllist.size(); ++i)
+            {
+                if (!nonnulllist.get(i).isEmpty())
+                {
+                    nonnulllist.get(i).inventoryTick(this.player.world, this.player, i, this.currentItem == i);
+                }
             }
+        }
+    }
 
-            int j = p_191975_2_.getMaxStackSize() - this.getItem(i).getCount();
-            if (this.add(i, p_191975_2_.split(j))) {
-               ((ServerPlayerEntity)this.player).connection.send(new SSetSlotPacket(-2, i, this.getItem(i)));
-            }
-         }
+    /**
+     * Adds the stack to the first empty slot in the player's inventory. Returns {@code false} if it's not possible to
+     * place the entire stack in the inventory.
+     */
+    public boolean addItemStackToInventory(ItemStack itemStackIn)
+    {
+        return this.add(-1, itemStackIn);
+    }
 
-      }
-   }
-
-   public ItemStack removeItem(int p_70298_1_, int p_70298_2_) {
-      List<ItemStack> list = null;
-
-      for(NonNullList<ItemStack> nonnulllist : this.compartments) {
-         if (p_70298_1_ < nonnulllist.size()) {
-            list = nonnulllist;
-            break;
-         }
-
-         p_70298_1_ -= nonnulllist.size();
-      }
-
-      return list != null && !list.get(p_70298_1_).isEmpty() ? ItemStackHelper.removeItem(list, p_70298_1_, p_70298_2_) : ItemStack.EMPTY;
-   }
-
-   public void removeItem(ItemStack p_184437_1_) {
-      for(NonNullList<ItemStack> nonnulllist : this.compartments) {
-         for(int i = 0; i < nonnulllist.size(); ++i) {
-            if (nonnulllist.get(i) == p_184437_1_) {
-               nonnulllist.set(i, ItemStack.EMPTY);
-               break;
-            }
-         }
-      }
-
-   }
-
-   public ItemStack removeItemNoUpdate(int p_70304_1_) {
-      NonNullList<ItemStack> nonnulllist = null;
-
-      for(NonNullList<ItemStack> nonnulllist1 : this.compartments) {
-         if (p_70304_1_ < nonnulllist1.size()) {
-            nonnulllist = nonnulllist1;
-            break;
-         }
-
-         p_70304_1_ -= nonnulllist1.size();
-      }
-
-      if (nonnulllist != null && !nonnulllist.get(p_70304_1_).isEmpty()) {
-         ItemStack itemstack = nonnulllist.get(p_70304_1_);
-         nonnulllist.set(p_70304_1_, ItemStack.EMPTY);
-         return itemstack;
-      } else {
-         return ItemStack.EMPTY;
-      }
-   }
-
-   public void setItem(int p_70299_1_, ItemStack p_70299_2_) {
-      NonNullList<ItemStack> nonnulllist = null;
-
-      for(NonNullList<ItemStack> nonnulllist1 : this.compartments) {
-         if (p_70299_1_ < nonnulllist1.size()) {
-            nonnulllist = nonnulllist1;
-            break;
-         }
-
-         p_70299_1_ -= nonnulllist1.size();
-      }
-
-      if (nonnulllist != null) {
-         nonnulllist.set(p_70299_1_, p_70299_2_);
-      }
-
-   }
-
-   public float getDestroySpeed(BlockState p_184438_1_) {
-      return this.items.get(this.selected).getDestroySpeed(p_184438_1_);
-   }
-
-   public ListNBT save(ListNBT p_70442_1_) {
-      for(int i = 0; i < this.items.size(); ++i) {
-         if (!this.items.get(i).isEmpty()) {
-            CompoundNBT compoundnbt = new CompoundNBT();
-            compoundnbt.putByte("Slot", (byte)i);
-            this.items.get(i).save(compoundnbt);
-            p_70442_1_.add(compoundnbt);
-         }
-      }
-
-      for(int j = 0; j < this.armor.size(); ++j) {
-         if (!this.armor.get(j).isEmpty()) {
-            CompoundNBT compoundnbt1 = new CompoundNBT();
-            compoundnbt1.putByte("Slot", (byte)(j + 100));
-            this.armor.get(j).save(compoundnbt1);
-            p_70442_1_.add(compoundnbt1);
-         }
-      }
-
-      for(int k = 0; k < this.offhand.size(); ++k) {
-         if (!this.offhand.get(k).isEmpty()) {
-            CompoundNBT compoundnbt2 = new CompoundNBT();
-            compoundnbt2.putByte("Slot", (byte)(k + 150));
-            this.offhand.get(k).save(compoundnbt2);
-            p_70442_1_.add(compoundnbt2);
-         }
-      }
-
-      return p_70442_1_;
-   }
-
-   public void load(ListNBT p_70443_1_) {
-      this.items.clear();
-      this.armor.clear();
-      this.offhand.clear();
-
-      for(int i = 0; i < p_70443_1_.size(); ++i) {
-         CompoundNBT compoundnbt = p_70443_1_.getCompound(i);
-         int j = compoundnbt.getByte("Slot") & 255;
-         ItemStack itemstack = ItemStack.of(compoundnbt);
-         if (!itemstack.isEmpty()) {
-            if (j >= 0 && j < this.items.size()) {
-               this.items.set(j, itemstack);
-            } else if (j >= 100 && j < this.armor.size() + 100) {
-               this.armor.set(j - 100, itemstack);
-            } else if (j >= 150 && j < this.offhand.size() + 150) {
-               this.offhand.set(j - 150, itemstack);
-            }
-         }
-      }
-
-   }
-
-   public int getContainerSize() {
-      return this.items.size() + this.armor.size() + this.offhand.size();
-   }
-
-   public boolean isEmpty() {
-      for(ItemStack itemstack : this.items) {
-         if (!itemstack.isEmpty()) {
+    /**
+     * Adds the stack to the specified slot in the player's inventory. Returns {@code false} if it's not possible to
+     * place the entire stack in the inventory.
+     */
+    public boolean add(int slotIn, ItemStack stack)
+    {
+        if (stack.isEmpty())
+        {
             return false;
-         }
-      }
+        }
+        else
+        {
+            try
+            {
+                if (stack.isDamaged())
+                {
+                    if (slotIn == -1)
+                    {
+                        slotIn = this.getFirstEmptyStack();
+                    }
 
-      for(ItemStack itemstack1 : this.armor) {
-         if (!itemstack1.isEmpty()) {
+                    if (slotIn >= 0)
+                    {
+                        this.mainInventory.set(slotIn, stack.copy());
+                        this.mainInventory.get(slotIn).setAnimationsToGo(5);
+                        stack.setCount(0);
+                        return true;
+                    }
+                    else if (this.player.abilities.isCreativeMode)
+                    {
+                        stack.setCount(0);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    int i;
+
+                    do
+                    {
+                        i = stack.getCount();
+
+                        if (slotIn == -1)
+                        {
+                            stack.setCount(this.storePartialItemStack(stack));
+                        }
+                        else
+                        {
+                            stack.setCount(this.addResource(slotIn, stack));
+                        }
+                    }
+                    while (!stack.isEmpty() && stack.getCount() < i);
+
+                    if (stack.getCount() == i && this.player.abilities.isCreativeMode)
+                    {
+                        stack.setCount(0);
+                        return true;
+                    }
+                    else
+                    {
+                        return stack.getCount() < i;
+                    }
+                }
+            }
+            catch (Throwable throwable)
+            {
+                CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Adding item to inventory");
+                CrashReportCategory crashreportcategory = crashreport.makeCategory("Item being added");
+                crashreportcategory.addDetail("Item ID", Item.getIdFromItem(stack.getItem()));
+                crashreportcategory.addDetail("Item data", stack.getDamage());
+                crashreportcategory.addDetail("Item name", () ->
+                {
+                    return stack.getDisplayName().getString();
+                });
+                throw new ReportedException(crashreport);
+            }
+        }
+    }
+
+    public void placeItemBackInInventory(World worldIn, ItemStack stack)
+    {
+        if (!worldIn.isRemote)
+        {
+            while (!stack.isEmpty())
+            {
+                int i = this.storeItemStack(stack);
+
+                if (i == -1)
+                {
+                    i = this.getFirstEmptyStack();
+                }
+
+                if (i == -1)
+                {
+                    this.player.dropItem(stack, false);
+                    break;
+                }
+
+                int j = stack.getMaxStackSize() - this.getStackInSlot(i).getCount();
+
+                if (this.add(i, stack.split(j)))
+                {
+                    ((ServerPlayerEntity)this.player).connection.sendPacket(new SSetSlotPacket(-2, i, this.getStackInSlot(i)));
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    public ItemStack decrStackSize(int index, int count)
+    {
+        List<ItemStack> list = null;
+
+        for (NonNullList<ItemStack> nonnulllist : this.allInventories)
+        {
+            if (index < nonnulllist.size())
+            {
+                list = nonnulllist;
+                break;
+            }
+
+            index -= nonnulllist.size();
+        }
+
+        return list != null && !list.get(index).isEmpty() ? ItemStackHelper.getAndSplit(list, index, count) : ItemStack.EMPTY;
+    }
+
+    public void deleteStack(ItemStack stack)
+    {
+        for (NonNullList<ItemStack> nonnulllist : this.allInventories)
+        {
+            for (int i = 0; i < nonnulllist.size(); ++i)
+            {
+                if (nonnulllist.get(i) == stack)
+                {
+                    nonnulllist.set(i, ItemStack.EMPTY);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    public ItemStack removeStackFromSlot(int index)
+    {
+        NonNullList<ItemStack> nonnulllist = null;
+
+        for (NonNullList<ItemStack> nonnulllist1 : this.allInventories)
+        {
+            if (index < nonnulllist1.size())
+            {
+                nonnulllist = nonnulllist1;
+                break;
+            }
+
+            index -= nonnulllist1.size();
+        }
+
+        if (nonnulllist != null && !nonnulllist.get(index).isEmpty())
+        {
+            ItemStack itemstack = nonnulllist.get(index);
+            nonnulllist.set(index, ItemStack.EMPTY);
+            return itemstack;
+        }
+        else
+        {
+            return ItemStack.EMPTY;
+        }
+    }
+
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int index, ItemStack stack)
+    {
+        NonNullList<ItemStack> nonnulllist = null;
+
+        for (NonNullList<ItemStack> nonnulllist1 : this.allInventories)
+        {
+            if (index < nonnulllist1.size())
+            {
+                nonnulllist = nonnulllist1;
+                break;
+            }
+
+            index -= nonnulllist1.size();
+        }
+
+        if (nonnulllist != null)
+        {
+            nonnulllist.set(index, stack);
+        }
+    }
+
+    public float getDestroySpeed(BlockState state)
+    {
+        return this.mainInventory.get(this.currentItem).getDestroySpeed(state);
+    }
+
+    /**
+     * Writes the inventory out as a list of compound tags. This is where the slot indices are used (+100 for armor, +80
+     * for crafting).
+     */
+    public ListNBT write(ListNBT nbtTagListIn)
+    {
+        for (int i = 0; i < this.mainInventory.size(); ++i)
+        {
+            if (!this.mainInventory.get(i).isEmpty())
+            {
+                CompoundNBT compoundnbt = new CompoundNBT();
+                compoundnbt.putByte("Slot", (byte)i);
+                this.mainInventory.get(i).write(compoundnbt);
+                nbtTagListIn.add(compoundnbt);
+            }
+        }
+
+        for (int j = 0; j < this.armorInventory.size(); ++j)
+        {
+            if (!this.armorInventory.get(j).isEmpty())
+            {
+                CompoundNBT compoundnbt1 = new CompoundNBT();
+                compoundnbt1.putByte("Slot", (byte)(j + 100));
+                this.armorInventory.get(j).write(compoundnbt1);
+                nbtTagListIn.add(compoundnbt1);
+            }
+        }
+
+        for (int k = 0; k < this.offHandInventory.size(); ++k)
+        {
+            if (!this.offHandInventory.get(k).isEmpty())
+            {
+                CompoundNBT compoundnbt2 = new CompoundNBT();
+                compoundnbt2.putByte("Slot", (byte)(k + 150));
+                this.offHandInventory.get(k).write(compoundnbt2);
+                nbtTagListIn.add(compoundnbt2);
+            }
+        }
+
+        return nbtTagListIn;
+    }
+
+    /**
+     * Reads from the given tag list and fills the slots in the inventory with the correct items.
+     */
+    public void read(ListNBT nbtTagListIn)
+    {
+        this.mainInventory.clear();
+        this.armorInventory.clear();
+        this.offHandInventory.clear();
+
+        for (int i = 0; i < nbtTagListIn.size(); ++i)
+        {
+            CompoundNBT compoundnbt = nbtTagListIn.getCompound(i);
+            int j = compoundnbt.getByte("Slot") & 255;
+            ItemStack itemstack = ItemStack.read(compoundnbt);
+
+            if (!itemstack.isEmpty())
+            {
+                if (j >= 0 && j < this.mainInventory.size())
+                {
+                    this.mainInventory.set(j, itemstack);
+                }
+                else if (j >= 100 && j < this.armorInventory.size() + 100)
+                {
+                    this.armorInventory.set(j - 100, itemstack);
+                }
+                else if (j >= 150 && j < this.offHandInventory.size() + 150)
+                {
+                    this.offHandInventory.set(j - 150, itemstack);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return this.mainInventory.size() + this.armorInventory.size() + this.offHandInventory.size();
+    }
+
+    public boolean isEmpty()
+    {
+        for (ItemStack itemstack : this.mainInventory)
+        {
+            if (!itemstack.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        for (ItemStack itemstack1 : this.armorInventory)
+        {
+            if (!itemstack1.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        for (ItemStack itemstack2 : this.offHandInventory)
+        {
+            if (!itemstack2.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns the stack in the given slot.
+     */
+    public ItemStack getStackInSlot(int index)
+    {
+        List<ItemStack> list = null;
+
+        for (NonNullList<ItemStack> nonnulllist : this.allInventories)
+        {
+            if (index < nonnulllist.size())
+            {
+                list = nonnulllist;
+                break;
+            }
+
+            index -= nonnulllist.size();
+        }
+
+        return list == null ? ItemStack.EMPTY : list.get(index);
+    }
+
+    public ITextComponent getName()
+    {
+        return new TranslationTextComponent("container.inventory");
+    }
+
+    /**
+     * returns a player armor item (as itemstack) contained in specified armor slot.
+     */
+    public ItemStack armorItemInSlot(int slotIn)
+    {
+        return this.armorInventory.get(slotIn);
+    }
+
+    public void func_234563_a_(DamageSource p_234563_1_, float p_234563_2_)
+    {
+        if (!(p_234563_2_ <= 0.0F))
+        {
+            p_234563_2_ = p_234563_2_ / 4.0F;
+
+            if (p_234563_2_ < 1.0F)
+            {
+                p_234563_2_ = 1.0F;
+            }
+
+            for (int i = 0; i < this.armorInventory.size(); ++i)
+            {
+                ItemStack itemstack = this.armorInventory.get(i);
+
+                if ((!p_234563_1_.isFireDamage() || !itemstack.getItem().isImmuneToFire()) && itemstack.getItem() instanceof ArmorItem)
+                {
+                    int j = i;
+                    itemstack.damageItem((int)p_234563_2_, this.player, (p_214023_1_) ->
+                    {
+                        p_214023_1_.sendBreakAnimation(EquipmentSlotType.fromSlotTypeAndIndex(EquipmentSlotType.Group.ARMOR, j));
+                    });
+                }
+            }
+        }
+    }
+
+    /**
+     * Drop all armor and main inventory items.
+     */
+    public void dropAllItems()
+    {
+        for (List<ItemStack> list : this.allInventories)
+        {
+            for (int i = 0; i < list.size(); ++i)
+            {
+                ItemStack itemstack = list.get(i);
+
+                if (!itemstack.isEmpty())
+                {
+                    this.player.dropItem(itemstack, true, false);
+                    list.set(i, ItemStack.EMPTY);
+                }
+            }
+        }
+    }
+
+    /**
+     * For tile entities, ensures the chunk containing the tile entity is saved to disk later - the game won't think it
+     * hasn't changed and skip it.
+     */
+    public void markDirty()
+    {
+        ++this.timesChanged;
+    }
+
+    public int getTimesChanged()
+    {
+        return this.timesChanged;
+    }
+
+    /**
+     * Set the stack helds by mouse, used in GUI/Container
+     */
+    public void setItemStack(ItemStack itemStackIn)
+    {
+        this.itemStack = itemStackIn;
+    }
+
+    /**
+     * Stack helds by mouse, used in GUI and Containers
+     */
+    public ItemStack getItemStack()
+    {
+        return this.itemStack;
+    }
+
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
+    public boolean isUsableByPlayer(PlayerEntity player)
+    {
+        if (this.player.removed)
+        {
             return false;
-         }
-      }
+        }
+        else
+        {
+            return !(player.getDistanceSq(this.player) > 64.0D);
+        }
+    }
 
-      for(ItemStack itemstack2 : this.offhand) {
-         if (!itemstack2.isEmpty()) {
-            return false;
-         }
-      }
-
-      return true;
-   }
-
-   public ItemStack getItem(int p_70301_1_) {
-      List<ItemStack> list = null;
-
-      for(NonNullList<ItemStack> nonnulllist : this.compartments) {
-         if (p_70301_1_ < nonnulllist.size()) {
-            list = nonnulllist;
-            break;
-         }
-
-         p_70301_1_ -= nonnulllist.size();
-      }
-
-      return list == null ? ItemStack.EMPTY : list.get(p_70301_1_);
-   }
-
-   public ITextComponent getName() {
-      return new TranslationTextComponent("container.inventory");
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getArmor(int p_70440_1_) {
-      return this.armor.get(p_70440_1_);
-   }
-
-   public void hurtArmor(DamageSource p_234563_1_, float p_234563_2_) {
-      if (!(p_234563_2_ <= 0.0F)) {
-         p_234563_2_ = p_234563_2_ / 4.0F;
-         if (p_234563_2_ < 1.0F) {
-            p_234563_2_ = 1.0F;
-         }
-
-         for(int i = 0; i < this.armor.size(); ++i) {
-            ItemStack itemstack = this.armor.get(i);
-            if ((!p_234563_1_.isFire() || !itemstack.getItem().isFireResistant()) && itemstack.getItem() instanceof ArmorItem) {
-               int j = i;
-               itemstack.hurtAndBreak((int)p_234563_2_, this.player, (p_214023_1_) -> {
-                  p_214023_1_.broadcastBreakEvent(EquipmentSlotType.byTypeAndIndex(EquipmentSlotType.Group.ARMOR, j));
-               });
+    /**
+     * Returns true if the specified ItemStack exists in the inventory.
+     */
+    public boolean hasItemStack(ItemStack itemStackIn)
+    {
+        for (List<ItemStack> list : this.allInventories)
+        {
+            for (ItemStack itemstack : list)
+            {
+                if (!itemstack.isEmpty() && itemstack.isItemEqual(itemStackIn))
+                {
+                    return true;
+                }
             }
-         }
+        }
 
-      }
-   }
+        return false;
+    }
 
-   public void dropAll() {
-      for(List<ItemStack> list : this.compartments) {
-         for(int i = 0; i < list.size(); ++i) {
-            ItemStack itemstack = list.get(i);
-            if (!itemstack.isEmpty()) {
-               this.player.drop(itemstack, true, false);
-               list.set(i, ItemStack.EMPTY);
+    public boolean hasTag(ITag<Item> itemTag)
+    {
+        for (List<ItemStack> list : this.allInventories)
+        {
+            for (ItemStack itemstack : list)
+            {
+                if (!itemstack.isEmpty() && itemTag.contains(itemstack.getItem()))
+                {
+                    return true;
+                }
             }
-         }
-      }
+        }
 
-   }
+        return false;
+    }
 
-   public void setChanged() {
-      ++this.timesChanged;
-   }
+    /**
+     * Copy the ItemStack contents from another InventoryPlayer instance
+     */
+    public void copyInventory(PlayerInventory playerInventory)
+    {
+        for (int i = 0; i < this.getSizeInventory(); ++i)
+        {
+            this.setInventorySlotContents(i, playerInventory.getStackInSlot(i));
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getTimesChanged() {
-      return this.timesChanged;
-   }
+        this.currentItem = playerInventory.currentItem;
+    }
 
-   public void setCarried(ItemStack p_70437_1_) {
-      this.carried = p_70437_1_;
-   }
+    public void clear()
+    {
+        for (List<ItemStack> list : this.allInventories)
+        {
+            list.clear();
+        }
+    }
 
-   public ItemStack getCarried() {
-      return this.carried;
-   }
-
-   public boolean stillValid(PlayerEntity p_70300_1_) {
-      if (this.player.removed) {
-         return false;
-      } else {
-         return !(p_70300_1_.distanceToSqr(this.player) > 64.0D);
-      }
-   }
-
-   public boolean contains(ItemStack p_70431_1_) {
-      for(List<ItemStack> list : this.compartments) {
-         for(ItemStack itemstack : list) {
-            if (!itemstack.isEmpty() && itemstack.sameItem(p_70431_1_)) {
-               return true;
-            }
-         }
-      }
-
-      return false;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean contains(ITag<Item> p_199712_1_) {
-      for(List<ItemStack> list : this.compartments) {
-         for(ItemStack itemstack : list) {
-            if (!itemstack.isEmpty() && p_199712_1_.contains(itemstack.getItem())) {
-               return true;
-            }
-         }
-      }
-
-      return false;
-   }
-
-   public void replaceWith(PlayerInventory p_70455_1_) {
-      for(int i = 0; i < this.getContainerSize(); ++i) {
-         this.setItem(i, p_70455_1_.getItem(i));
-      }
-
-      this.selected = p_70455_1_.selected;
-   }
-
-   public void clearContent() {
-      for(List<ItemStack> list : this.compartments) {
-         list.clear();
-      }
-
-   }
-
-   public void fillStackedContents(RecipeItemHelper p_201571_1_) {
-      for(ItemStack itemstack : this.items) {
-         p_201571_1_.accountSimpleStack(itemstack);
-      }
-
-   }
+    public void accountStacks(RecipeItemHelper p_201571_1_)
+    {
+        for (ItemStack itemstack : this.mainInventory)
+        {
+            p_201571_1_.accountPlainStack(itemstack);
+        }
+    }
 }

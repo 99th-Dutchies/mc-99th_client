@@ -15,61 +15,77 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.structure.LegacyStructureDataUtil;
 import net.minecraft.world.storage.DimensionSavedDataManager;
 
-public class ChunkLoader implements AutoCloseable {
-   private final IOWorker worker;
-   protected final DataFixer fixerUpper;
-   @Nullable
-   private LegacyStructureDataUtil legacyStructureHandler;
+public class ChunkLoader implements AutoCloseable
+{
+    private final IOWorker field_227077_a_;
+    protected final DataFixer dataFixer;
+    @Nullable
+    private LegacyStructureDataUtil field_219167_a;
 
-   public ChunkLoader(File p_i231889_1_, DataFixer p_i231889_2_, boolean p_i231889_3_) {
-      this.fixerUpper = p_i231889_2_;
-      this.worker = new IOWorker(p_i231889_1_, p_i231889_3_, "chunk");
-   }
+    public ChunkLoader(File p_i231889_1_, DataFixer p_i231889_2_, boolean p_i231889_3_)
+    {
+        this.dataFixer = p_i231889_2_;
+        this.field_227077_a_ = new IOWorker(p_i231889_1_, p_i231889_3_, "chunk");
+    }
 
-   public CompoundNBT upgradeChunkTag(RegistryKey<World> p_235968_1_, Supplier<DimensionSavedDataManager> p_235968_2_, CompoundNBT p_235968_3_) {
-      int i = getVersion(p_235968_3_);
-      int j = 1493;
-      if (i < 1493) {
-         p_235968_3_ = NBTUtil.update(this.fixerUpper, DefaultTypeReferences.CHUNK, p_235968_3_, i, 1493);
-         if (p_235968_3_.getCompound("Level").getBoolean("hasLegacyStructureData")) {
-            if (this.legacyStructureHandler == null) {
-               this.legacyStructureHandler = LegacyStructureDataUtil.getLegacyStructureHandler(p_235968_1_, p_235968_2_.get());
+    public CompoundNBT func_235968_a_(RegistryKey<World> p_235968_1_, Supplier<DimensionSavedDataManager> p_235968_2_, CompoundNBT p_235968_3_)
+    {
+        int i = getDataVersion(p_235968_3_);
+        int j = 1493;
+
+        if (i < 1493)
+        {
+            p_235968_3_ = NBTUtil.update(this.dataFixer, DefaultTypeReferences.CHUNK, p_235968_3_, i, 1493);
+
+            if (p_235968_3_.getCompound("Level").getBoolean("hasLegacyStructureData"))
+            {
+                if (this.field_219167_a == null)
+                {
+                    this.field_219167_a = LegacyStructureDataUtil.func_236992_a_(p_235968_1_, p_235968_2_.get());
+                }
+
+                p_235968_3_ = this.field_219167_a.func_212181_a(p_235968_3_);
             }
+        }
 
-            p_235968_3_ = this.legacyStructureHandler.updateFromLegacy(p_235968_3_);
-         }
-      }
+        p_235968_3_ = NBTUtil.update(this.dataFixer, DefaultTypeReferences.CHUNK, p_235968_3_, Math.max(1493, i));
 
-      p_235968_3_ = NBTUtil.update(this.fixerUpper, DefaultTypeReferences.CHUNK, p_235968_3_, Math.max(1493, i));
-      if (i < SharedConstants.getCurrentVersion().getWorldVersion()) {
-         p_235968_3_.putInt("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
-      }
+        if (i < SharedConstants.getVersion().getWorldVersion())
+        {
+            p_235968_3_.putInt("DataVersion", SharedConstants.getVersion().getWorldVersion());
+        }
 
-      return p_235968_3_;
-   }
+        return p_235968_3_;
+    }
 
-   public static int getVersion(CompoundNBT p_219165_0_) {
-      return p_219165_0_.contains("DataVersion", 99) ? p_219165_0_.getInt("DataVersion") : -1;
-   }
+    public static int getDataVersion(CompoundNBT compound)
+    {
+        return compound.contains("DataVersion", 99) ? compound.getInt("DataVersion") : -1;
+    }
 
-   @Nullable
-   public CompoundNBT read(ChunkPos p_227078_1_) throws IOException {
-      return this.worker.load(p_227078_1_);
-   }
+    @Nullable
+    public CompoundNBT readChunk(ChunkPos p_227078_1_) throws IOException
+    {
+        return this.field_227077_a_.func_227090_a_(p_227078_1_);
+    }
 
-   public void write(ChunkPos p_219100_1_, CompoundNBT p_219100_2_) {
-      this.worker.store(p_219100_1_, p_219100_2_);
-      if (this.legacyStructureHandler != null) {
-         this.legacyStructureHandler.removeIndex(p_219100_1_.toLong());
-      }
+    public void writeChunk(ChunkPos pos, CompoundNBT compound)
+    {
+        this.field_227077_a_.func_227093_a_(pos, compound);
 
-   }
+        if (this.field_219167_a != null)
+        {
+            this.field_219167_a.func_208216_a(pos.asLong());
+        }
+    }
 
-   public void flushWorker() {
-      this.worker.synchronize().join();
-   }
+    public void func_227079_i_()
+    {
+        this.field_227077_a_.func_227088_a_().join();
+    }
 
-   public void close() throws IOException {
-      this.worker.close();
-   }
+    public void close() throws IOException
+    {
+        this.field_227077_a_.close();
+    }
 }

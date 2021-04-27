@@ -11,65 +11,81 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentUtils;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class STabCompletePacket implements IPacket<IClientPlayNetHandler> {
-   private int id;
-   private Suggestions suggestions;
+public class STabCompletePacket implements IPacket<IClientPlayNetHandler>
+{
+    private int transactionId;
+    private Suggestions suggestions;
 
-   public STabCompletePacket() {
-   }
+    public STabCompletePacket()
+    {
+    }
 
-   public STabCompletePacket(int p_i47941_1_, Suggestions p_i47941_2_) {
-      this.id = p_i47941_1_;
-      this.suggestions = p_i47941_2_;
-   }
+    public STabCompletePacket(int p_i47941_1_, Suggestions p_i47941_2_)
+    {
+        this.transactionId = p_i47941_1_;
+        this.suggestions = p_i47941_2_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readVarInt();
-      int i = p_148837_1_.readVarInt();
-      int j = p_148837_1_.readVarInt();
-      StringRange stringrange = StringRange.between(i, i + j);
-      int k = p_148837_1_.readVarInt();
-      List<Suggestion> list = Lists.newArrayListWithCapacity(k);
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.transactionId = buf.readVarInt();
+        int i = buf.readVarInt();
+        int j = buf.readVarInt();
+        StringRange stringrange = StringRange.between(i, i + j);
+        int k = buf.readVarInt();
+        List<Suggestion> list = Lists.newArrayListWithCapacity(k);
 
-      for(int l = 0; l < k; ++l) {
-         String s = p_148837_1_.readUtf(32767);
-         ITextComponent itextcomponent = p_148837_1_.readBoolean() ? p_148837_1_.readComponent() : null;
-         list.add(new Suggestion(stringrange, s, itextcomponent));
-      }
+        for (int l = 0; l < k; ++l)
+        {
+            String s = buf.readString(32767);
+            ITextComponent itextcomponent = buf.readBoolean() ? buf.readTextComponent() : null;
+            list.add(new Suggestion(stringrange, s, itextcomponent));
+        }
 
-      this.suggestions = new Suggestions(stringrange, list);
-   }
+        this.suggestions = new Suggestions(stringrange, list);
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.id);
-      p_148840_1_.writeVarInt(this.suggestions.getRange().getStart());
-      p_148840_1_.writeVarInt(this.suggestions.getRange().getLength());
-      p_148840_1_.writeVarInt(this.suggestions.getList().size());
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.transactionId);
+        buf.writeVarInt(this.suggestions.getRange().getStart());
+        buf.writeVarInt(this.suggestions.getRange().getLength());
+        buf.writeVarInt(this.suggestions.getList().size());
 
-      for(Suggestion suggestion : this.suggestions.getList()) {
-         p_148840_1_.writeUtf(suggestion.getText());
-         p_148840_1_.writeBoolean(suggestion.getTooltip() != null);
-         if (suggestion.getTooltip() != null) {
-            p_148840_1_.writeComponent(TextComponentUtils.fromMessage(suggestion.getTooltip()));
-         }
-      }
+        for (Suggestion suggestion : this.suggestions.getList())
+        {
+            buf.writeString(suggestion.getText());
+            buf.writeBoolean(suggestion.getTooltip() != null);
 
-   }
+            if (suggestion.getTooltip() != null)
+            {
+                buf.writeTextComponent(TextComponentUtils.toTextComponent(suggestion.getTooltip()));
+            }
+        }
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleCommandSuggestions(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleTabComplete(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int getTransactionId()
+    {
+        return this.transactionId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Suggestions getSuggestions() {
-      return this.suggestions;
-   }
+    public Suggestions getSuggestions()
+    {
+        return this.suggestions;
+    }
 }

@@ -16,107 +16,142 @@ import net.minecraft.util.math.GlobalPos;
 import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.server.ServerWorld;
 
-public class CreateBabyVillagerTask extends Task<VillagerEntity> {
-   private long birthTimestamp;
+public class CreateBabyVillagerTask extends Task<VillagerEntity>
+{
+    private long duration;
 
-   public CreateBabyVillagerTask() {
-      super(ImmutableMap.of(MemoryModuleType.BREED_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.VALUE_PRESENT), 350, 350);
-   }
+    public CreateBabyVillagerTask()
+    {
+        super(ImmutableMap.of(MemoryModuleType.BREED_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.VISIBLE_MOBS, MemoryModuleStatus.VALUE_PRESENT), 350, 350);
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, VillagerEntity p_212832_2_) {
-      return this.isBreedingPossible(p_212832_2_);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, VillagerEntity owner)
+    {
+        return this.canBreed(owner);
+    }
 
-   protected boolean canStillUse(ServerWorld p_212834_1_, VillagerEntity p_212834_2_, long p_212834_3_) {
-      return p_212834_3_ <= this.birthTimestamp && this.isBreedingPossible(p_212834_2_);
-   }
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        return gameTimeIn <= this.duration && this.canBreed(entityIn);
+    }
 
-   protected void start(ServerWorld p_212831_1_, VillagerEntity p_212831_2_, long p_212831_3_) {
-      AgeableEntity ageableentity = p_212831_2_.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
-      BrainUtil.lockGazeAndWalkToEachOther(p_212831_2_, ageableentity, 0.5F);
-      p_212831_1_.broadcastEntityEvent(ageableentity, (byte)18);
-      p_212831_1_.broadcastEntityEvent(p_212831_2_, (byte)18);
-      int i = 275 + p_212831_2_.getRandom().nextInt(50);
-      this.birthTimestamp = p_212831_3_ + (long)i;
-   }
+    protected void startExecuting(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        AgeableEntity ageableentity = entityIn.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
+        BrainUtil.lookApproachEachOther(entityIn, ageableentity, 0.5F);
+        worldIn.setEntityState(ageableentity, (byte)18);
+        worldIn.setEntityState(entityIn, (byte)18);
+        int i = 275 + entityIn.getRNG().nextInt(50);
+        this.duration = gameTimeIn + (long)i;
+    }
 
-   protected void tick(ServerWorld p_212833_1_, VillagerEntity p_212833_2_, long p_212833_3_) {
-      VillagerEntity villagerentity = (VillagerEntity)p_212833_2_.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
-      if (!(p_212833_2_.distanceToSqr(villagerentity) > 5.0D)) {
-         BrainUtil.lockGazeAndWalkToEachOther(p_212833_2_, villagerentity, 0.5F);
-         if (p_212833_3_ >= this.birthTimestamp) {
-            p_212833_2_.eatAndDigestFood();
-            villagerentity.eatAndDigestFood();
-            this.tryToGiveBirth(p_212833_1_, p_212833_2_, villagerentity);
-         } else if (p_212833_2_.getRandom().nextInt(35) == 0) {
-            p_212833_1_.broadcastEntityEvent(villagerentity, (byte)12);
-            p_212833_1_.broadcastEntityEvent(p_212833_2_, (byte)12);
-         }
+    protected void updateTask(ServerWorld worldIn, VillagerEntity owner, long gameTime)
+    {
+        VillagerEntity villagerentity = (VillagerEntity)owner.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
 
-      }
-   }
+        if (!(owner.getDistanceSq(villagerentity) > 5.0D))
+        {
+            BrainUtil.lookApproachEachOther(owner, villagerentity, 0.5F);
 
-   private void tryToGiveBirth(ServerWorld p_223521_1_, VillagerEntity p_223521_2_, VillagerEntity p_223521_3_) {
-      Optional<BlockPos> optional = this.takeVacantBed(p_223521_1_, p_223521_2_);
-      if (!optional.isPresent()) {
-         p_223521_1_.broadcastEntityEvent(p_223521_3_, (byte)13);
-         p_223521_1_.broadcastEntityEvent(p_223521_2_, (byte)13);
-      } else {
-         Optional<VillagerEntity> optional1 = this.breed(p_223521_1_, p_223521_2_, p_223521_3_);
-         if (optional1.isPresent()) {
-            this.giveBedToChild(p_223521_1_, optional1.get(), optional.get());
-         } else {
-            p_223521_1_.getPoiManager().release(optional.get());
-            DebugPacketSender.sendPoiTicketCountPacket(p_223521_1_, optional.get());
-         }
-      }
+            if (gameTime >= this.duration)
+            {
+                owner.func_223346_ep();
+                villagerentity.func_223346_ep();
+                this.breed(worldIn, owner, villagerentity);
+            }
+            else if (owner.getRNG().nextInt(35) == 0)
+            {
+                worldIn.setEntityState(villagerentity, (byte)12);
+                worldIn.setEntityState(owner, (byte)12);
+            }
+        }
+    }
 
-   }
+    private void breed(ServerWorld world, VillagerEntity parent, VillagerEntity partner)
+    {
+        Optional<BlockPos> optional = this.findHomePosition(world, parent);
 
-   protected void stop(ServerWorld p_212835_1_, VillagerEntity p_212835_2_, long p_212835_3_) {
-      p_212835_2_.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
-   }
+        if (!optional.isPresent())
+        {
+            world.setEntityState(partner, (byte)13);
+            world.setEntityState(parent, (byte)13);
+        }
+        else
+        {
+            Optional<VillagerEntity> optional1 = this.createChild(world, parent, partner);
 
-   private boolean isBreedingPossible(VillagerEntity p_220478_1_) {
-      Brain<VillagerEntity> brain = p_220478_1_.getBrain();
-      Optional<AgeableEntity> optional = brain.getMemory(MemoryModuleType.BREED_TARGET).filter((p_233999_0_) -> {
-         return p_233999_0_.getType() == EntityType.VILLAGER;
-      });
-      if (!optional.isPresent()) {
-         return false;
-      } else {
-         return BrainUtil.targetIsValid(brain, MemoryModuleType.BREED_TARGET, EntityType.VILLAGER) && p_220478_1_.canBreed() && optional.get().canBreed();
-      }
-   }
+            if (optional1.isPresent())
+            {
+                this.setHomePosition(world, optional1.get(), optional.get());
+            }
+            else
+            {
+                world.getPointOfInterestManager().release(optional.get());
+                DebugPacketSender.func_218801_c(world, optional.get());
+            }
+        }
+    }
 
-   private Optional<BlockPos> takeVacantBed(ServerWorld p_220479_1_, VillagerEntity p_220479_2_) {
-      return p_220479_1_.getPoiManager().take(PointOfInterestType.HOME.getPredicate(), (p_220481_2_) -> {
-         return this.canReach(p_220479_2_, p_220481_2_);
-      }, p_220479_2_.blockPosition(), 48);
-   }
+    protected void resetTask(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        entityIn.getBrain().removeMemory(MemoryModuleType.BREED_TARGET);
+    }
 
-   private boolean canReach(VillagerEntity p_223520_1_, BlockPos p_223520_2_) {
-      Path path = p_223520_1_.getNavigation().createPath(p_223520_2_, PointOfInterestType.HOME.getValidRange());
-      return path != null && path.canReach();
-   }
+    private boolean canBreed(VillagerEntity villager)
+    {
+        Brain<VillagerEntity> brain = villager.getBrain();
+        Optional<AgeableEntity> optional = brain.getMemory(MemoryModuleType.BREED_TARGET).filter((breedTarget) ->
+        {
+            return breedTarget.getType() == EntityType.VILLAGER;
+        });
 
-   private Optional<VillagerEntity> breed(ServerWorld p_242307_1_, VillagerEntity p_242307_2_, VillagerEntity p_242307_3_) {
-      VillagerEntity villagerentity = p_242307_2_.getBreedOffspring(p_242307_1_, p_242307_3_);
-      if (villagerentity == null) {
-         return Optional.empty();
-      } else {
-         p_242307_2_.setAge(6000);
-         p_242307_3_.setAge(6000);
-         villagerentity.setAge(-24000);
-         villagerentity.moveTo(p_242307_2_.getX(), p_242307_2_.getY(), p_242307_2_.getZ(), 0.0F, 0.0F);
-         p_242307_1_.addFreshEntityWithPassengers(villagerentity);
-         p_242307_1_.broadcastEntityEvent(villagerentity, (byte)12);
-         return Optional.of(villagerentity);
-      }
-   }
+        if (!optional.isPresent())
+        {
+            return false;
+        }
+        else
+        {
+            return BrainUtil.isCorrectVisibleType(brain, MemoryModuleType.BREED_TARGET, EntityType.VILLAGER) && villager.canBreed() && optional.get().canBreed();
+        }
+    }
 
-   private void giveBedToChild(ServerWorld p_220477_1_, VillagerEntity p_220477_2_, BlockPos p_220477_3_) {
-      GlobalPos globalpos = GlobalPos.of(p_220477_1_.dimension(), p_220477_3_);
-      p_220477_2_.getBrain().setMemory(MemoryModuleType.HOME, globalpos);
-   }
+    private Optional<BlockPos> findHomePosition(ServerWorld world, VillagerEntity villager)
+    {
+        return world.getPointOfInterestManager().take(PointOfInterestType.HOME.getPredicate(), (pos) ->
+        {
+            return this.canReachHomePosition(villager, pos);
+        }, villager.getPosition(), 48);
+    }
+
+    private boolean canReachHomePosition(VillagerEntity villager, BlockPos pos)
+    {
+        Path path = villager.getNavigator().getPathToPos(pos, PointOfInterestType.HOME.getValidRange());
+        return path != null && path.reachesTarget();
+    }
+
+    private Optional<VillagerEntity> createChild(ServerWorld world, VillagerEntity parent, VillagerEntity partner)
+    {
+        VillagerEntity villagerentity = parent.func_241840_a(world, partner);
+
+        if (villagerentity == null)
+        {
+            return Optional.empty();
+        }
+        else
+        {
+            parent.setGrowingAge(6000);
+            partner.setGrowingAge(6000);
+            villagerentity.setGrowingAge(-24000);
+            villagerentity.setLocationAndAngles(parent.getPosX(), parent.getPosY(), parent.getPosZ(), 0.0F, 0.0F);
+            world.func_242417_l(villagerentity);
+            world.setEntityState(villagerentity, (byte)12);
+            return Optional.of(villagerentity);
+        }
+    }
+
+    private void setHomePosition(ServerWorld world, VillagerEntity villager, BlockPos pos)
+    {
+        GlobalPos globalpos = GlobalPos.getPosition(world.getDimensionKey(), pos);
+        villager.getBrain().setMemory(MemoryModuleType.HOME, globalpos);
+    }
 }

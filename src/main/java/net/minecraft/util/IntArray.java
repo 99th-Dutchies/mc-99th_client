@@ -1,21 +1,26 @@
 package net.minecraft.util;
 
-public class IntArray implements IIntArray {
-   private final int[] ints;
+public class IntArray implements IIntArray
+{
+    private final int[] array;
 
-   public IntArray(int p_i50063_1_) {
-      this.ints = new int[p_i50063_1_];
-   }
+    public IntArray(int size)
+    {
+        this.array = new int[size];
+    }
 
-   public int get(int p_221476_1_) {
-      return this.ints[p_221476_1_];
-   }
+    public int get(int index)
+    {
+        return this.array[index];
+    }
 
-   public void set(int p_221477_1_, int p_221477_2_) {
-      this.ints[p_221477_1_] = p_221477_2_;
-   }
+    public void set(int index, int value)
+    {
+        this.array[index] = value;
+    }
 
-   public int getCount() {
-      return this.ints.length;
-   }
+    public int size()
+    {
+        return this.array.length;
+    }
 }

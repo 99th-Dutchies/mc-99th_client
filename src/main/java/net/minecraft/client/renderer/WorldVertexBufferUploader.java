@@ -6,34 +6,63 @@ import com.mojang.datafixers.util.Pair;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
+import net.optifine.render.MultiTextureData;
+import net.optifine.render.MultiTextureRenderer;
+import net.optifine.shaders.SVertexBuilder;
 import org.lwjgl.system.MemoryUtil;
 
-@OnlyIn(Dist.CLIENT)
-public class WorldVertexBufferUploader {
-   public static void end(BufferBuilder p_181679_0_) {
-      if (!RenderSystem.isOnRenderThread()) {
-         RenderSystem.recordRenderCall(() -> {
-            Pair<BufferBuilder.DrawState, ByteBuffer> pair1 = p_181679_0_.popNextBuffer();
-            BufferBuilder.DrawState bufferbuilder$drawstate1 = pair1.getFirst();
-            _end(pair1.getSecond(), bufferbuilder$drawstate1.mode(), bufferbuilder$drawstate1.format(), bufferbuilder$drawstate1.vertexCount());
-         });
-      } else {
-         Pair<BufferBuilder.DrawState, ByteBuffer> pair = p_181679_0_.popNextBuffer();
-         BufferBuilder.DrawState bufferbuilder$drawstate = pair.getFirst();
-         _end(pair.getSecond(), bufferbuilder$drawstate.mode(), bufferbuilder$drawstate.format(), bufferbuilder$drawstate.vertexCount());
-      }
+public class WorldVertexBufferUploader
+{
+    public static void draw(BufferBuilder bufferBuilderIn)
+    {
+        if (!RenderSystem.isOnRenderThread())
+        {
+            RenderSystem.recordRenderCall(() ->
+            {
+                Pair<BufferBuilder.DrawState, ByteBuffer> pair1 = bufferBuilderIn.getNextBuffer();
+                BufferBuilder.DrawState bufferbuilder$drawstate1 = pair1.getFirst();
+                draw(pair1.getSecond(), bufferbuilder$drawstate1.getDrawMode(), bufferbuilder$drawstate1.getFormat(), bufferbuilder$drawstate1.getVertexCount(), bufferbuilder$drawstate1.getMultiTextureData());
+            });
+        }
+        else
+        {
+            Pair<BufferBuilder.DrawState, ByteBuffer> pair = bufferBuilderIn.getNextBuffer();
+            BufferBuilder.DrawState bufferbuilder$drawstate = pair.getFirst();
+            draw(pair.getSecond(), bufferbuilder$drawstate.getDrawMode(), bufferbuilder$drawstate.getFormat(), bufferbuilder$drawstate.getVertexCount(), bufferbuilder$drawstate.getMultiTextureData());
+        }
+    }
 
-   }
+    private static void draw(ByteBuffer bufferIn, int modeIn, VertexFormat vertexFormatIn, int countIn)
+    {
+        draw(bufferIn, modeIn, vertexFormatIn, countIn, (MultiTextureData)null);
+    }
 
-   private static void _end(ByteBuffer p_227844_0_, int p_227844_1_, VertexFormat p_227844_2_, int p_227844_3_) {
-      RenderSystem.assertThread(RenderSystem::isOnRenderThread);
-      ((Buffer)p_227844_0_).clear();
-      if (p_227844_3_ > 0) {
-         p_227844_2_.setupBufferState(MemoryUtil.memAddress(p_227844_0_));
-         GlStateManager._drawArrays(p_227844_1_, 0, p_227844_3_);
-         p_227844_2_.clearBufferState();
-      }
-   }
+    private static void draw(ByteBuffer p_draw_0_, int p_draw_1_, VertexFormat p_draw_2_, int p_draw_3_, MultiTextureData p_draw_4_)
+    {
+        RenderSystem.assertThread(RenderSystem::isOnRenderThread);
+        ((Buffer)p_draw_0_).clear();
+
+        if (p_draw_3_ > 0)
+        {
+            p_draw_2_.setupBufferState(MemoryUtil.memAddress(p_draw_0_));
+            boolean flag = Config.isShaders() && SVertexBuilder.preDrawArrays(p_draw_2_, p_draw_0_);
+
+            if (p_draw_4_ != null)
+            {
+                MultiTextureRenderer.draw(p_draw_1_, p_draw_4_);
+            }
+            else
+            {
+                GlStateManager.drawArrays(p_draw_1_, 0, p_draw_3_);
+            }
+
+            if (flag)
+            {
+                SVertexBuilder.postDrawArrays();
+            }
+
+            p_draw_2_.clearBufferState();
+        }
+    }
 }

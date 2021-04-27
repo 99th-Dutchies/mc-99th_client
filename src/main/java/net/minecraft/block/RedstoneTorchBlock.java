@@ -14,123 +14,168 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class RedstoneTorchBlock extends TorchBlock {
-   public static final BooleanProperty LIT = BlockStateProperties.LIT;
-   private static final Map<IBlockReader, List<RedstoneTorchBlock.Toggle>> RECENT_TOGGLES = new WeakHashMap<>();
+public class RedstoneTorchBlock extends TorchBlock
+{
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    private static final Map<IBlockReader, List<RedstoneTorchBlock.Toggle>> BURNED_TORCHES = new WeakHashMap<>();
 
-   protected RedstoneTorchBlock(AbstractBlock.Properties p_i48342_1_) {
-      super(p_i48342_1_, RedstoneParticleData.REDSTONE);
-      this.registerDefaultState(this.stateDefinition.any().setValue(LIT, Boolean.valueOf(true)));
-   }
+    protected RedstoneTorchBlock(AbstractBlock.Properties properties)
+    {
+        super(properties, RedstoneParticleData.REDSTONE_DUST);
+        this.setDefaultState(this.stateContainer.getBaseState().with(LIT, Boolean.valueOf(true)));
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      for(Direction direction : Direction.values()) {
-         p_220082_2_.updateNeighborsAt(p_220082_3_.relative(direction), this);
-      }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        for (Direction direction : Direction.values())
+        {
+            worldIn.notifyNeighborsOfStateChange(pos.offset(direction), this);
+        }
+    }
 
-   }
-
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_5_) {
-         for(Direction direction : Direction.values()) {
-            p_196243_2_.updateNeighborsAt(p_196243_3_.relative(direction), this);
-         }
-
-      }
-   }
-
-   public int getSignal(BlockState p_180656_1_, IBlockReader p_180656_2_, BlockPos p_180656_3_, Direction p_180656_4_) {
-      return p_180656_1_.getValue(LIT) && Direction.UP != p_180656_4_ ? 15 : 0;
-   }
-
-   protected boolean hasNeighborSignal(World p_176597_1_, BlockPos p_176597_2_, BlockState p_176597_3_) {
-      return p_176597_1_.hasSignal(p_176597_2_.below(), Direction.DOWN);
-   }
-
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      boolean flag = this.hasNeighborSignal(p_225534_2_, p_225534_3_, p_225534_1_);
-      List<RedstoneTorchBlock.Toggle> list = RECENT_TOGGLES.get(p_225534_2_);
-
-      while(list != null && !list.isEmpty() && p_225534_2_.getGameTime() - (list.get(0)).when > 60L) {
-         list.remove(0);
-      }
-
-      if (p_225534_1_.getValue(LIT)) {
-         if (flag) {
-            p_225534_2_.setBlock(p_225534_3_, p_225534_1_.setValue(LIT, Boolean.valueOf(false)), 3);
-            if (isToggledTooFrequently(p_225534_2_, p_225534_3_, true)) {
-               p_225534_2_.levelEvent(1502, p_225534_3_, 0);
-               p_225534_2_.getBlockTicks().scheduleTick(p_225534_3_, p_225534_2_.getBlockState(p_225534_3_).getBlock(), 160);
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!isMoving)
+        {
+            for (Direction direction : Direction.values())
+            {
+                worldIn.notifyNeighborsOfStateChange(pos.offset(direction), this);
             }
-         }
-      } else if (!flag && !isToggledTooFrequently(p_225534_2_, p_225534_3_, false)) {
-         p_225534_2_.setBlock(p_225534_3_, p_225534_1_.setValue(LIT, Boolean.valueOf(true)), 3);
-      }
+        }
+    }
 
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getWeakPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return blockState.get(LIT) && Direction.UP != side ? 15 : 0;
+    }
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      if (p_220069_1_.getValue(LIT) == this.hasNeighborSignal(p_220069_2_, p_220069_3_, p_220069_1_) && !p_220069_2_.getBlockTicks().willTickThisTick(p_220069_3_, this)) {
-         p_220069_2_.getBlockTicks().scheduleTick(p_220069_3_, this, 2);
-      }
+    protected boolean shouldBeOff(World worldIn, BlockPos pos, BlockState state)
+    {
+        return worldIn.isSidePowered(pos.down(), Direction.DOWN);
+    }
 
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        boolean flag = this.shouldBeOff(worldIn, pos, state);
+        List<RedstoneTorchBlock.Toggle> list = BURNED_TORCHES.get(worldIn);
 
-   public int getDirectSignal(BlockState p_176211_1_, IBlockReader p_176211_2_, BlockPos p_176211_3_, Direction p_176211_4_) {
-      return p_176211_4_ == Direction.DOWN ? p_176211_1_.getSignal(p_176211_2_, p_176211_3_, p_176211_4_) : 0;
-   }
+        while (list != null && !list.isEmpty() && worldIn.getGameTime() - (list.get(0)).time > 60L)
+        {
+            list.remove(0);
+        }
 
-   public boolean isSignalSource(BlockState p_149744_1_) {
-      return true;
-   }
+        if (state.get(LIT))
+        {
+            if (flag)
+            {
+                worldIn.setBlockState(pos, state.with(LIT, Boolean.valueOf(false)), 3);
 
-   @OnlyIn(Dist.CLIENT)
-   public void animateTick(BlockState p_180655_1_, World p_180655_2_, BlockPos p_180655_3_, Random p_180655_4_) {
-      if (p_180655_1_.getValue(LIT)) {
-         double d0 = (double)p_180655_3_.getX() + 0.5D + (p_180655_4_.nextDouble() - 0.5D) * 0.2D;
-         double d1 = (double)p_180655_3_.getY() + 0.7D + (p_180655_4_.nextDouble() - 0.5D) * 0.2D;
-         double d2 = (double)p_180655_3_.getZ() + 0.5D + (p_180655_4_.nextDouble() - 0.5D) * 0.2D;
-         p_180655_2_.addParticle(this.flameParticle, d0, d1, d2, 0.0D, 0.0D, 0.0D);
-      }
-   }
-
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(LIT);
-   }
-
-   private static boolean isToggledTooFrequently(World p_176598_0_, BlockPos p_176598_1_, boolean p_176598_2_) {
-      List<RedstoneTorchBlock.Toggle> list = RECENT_TOGGLES.computeIfAbsent(p_176598_0_, (p_220288_0_) -> {
-         return Lists.newArrayList();
-      });
-      if (p_176598_2_) {
-         list.add(new RedstoneTorchBlock.Toggle(p_176598_1_.immutable(), p_176598_0_.getGameTime()));
-      }
-
-      int i = 0;
-
-      for(int j = 0; j < list.size(); ++j) {
-         RedstoneTorchBlock.Toggle redstonetorchblock$toggle = list.get(j);
-         if (redstonetorchblock$toggle.pos.equals(p_176598_1_)) {
-            ++i;
-            if (i >= 8) {
-               return true;
+                if (isBurnedOut(worldIn, pos, true))
+                {
+                    worldIn.playEvent(1502, pos, 0);
+                    worldIn.getPendingBlockTicks().scheduleTick(pos, worldIn.getBlockState(pos).getBlock(), 160);
+                }
             }
-         }
-      }
+        }
+        else if (!flag && !isBurnedOut(worldIn, pos, false))
+        {
+            worldIn.setBlockState(pos, state.with(LIT, Boolean.valueOf(true)), 3);
+        }
+    }
 
-      return false;
-   }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        if (state.get(LIT) == this.shouldBeOff(worldIn, pos, state) && !worldIn.getPendingBlockTicks().isTickPending(pos, this))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(pos, this, 2);
+        }
+    }
 
-   public static class Toggle {
-      private final BlockPos pos;
-      private final long when;
+    /**
+     * @deprecated call via {@link IBlockState#getStrongPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getStrongPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return side == Direction.DOWN ? blockState.getWeakPower(blockAccess, pos, side) : 0;
+    }
 
-      public Toggle(BlockPos p_i45688_1_, long p_i45688_2_) {
-         this.pos = p_i45688_1_;
-         this.when = p_i45688_2_;
-      }
-   }
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     * @deprecated call via {@link IBlockState#canProvidePower()} whenever possible. Implementing/overriding is fine.
+     */
+    public boolean canProvidePower(BlockState state)
+    {
+        return true;
+    }
+
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles). Note that
+     * this method is unrelated to {@link randomTick} and {@link #needsRandomTick}, and will always be called regardless
+     * of whether the block can receive random update ticks
+     */
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand)
+    {
+        if (stateIn.get(LIT))
+        {
+            double d0 = (double)pos.getX() + 0.5D + (rand.nextDouble() - 0.5D) * 0.2D;
+            double d1 = (double)pos.getY() + 0.7D + (rand.nextDouble() - 0.5D) * 0.2D;
+            double d2 = (double)pos.getZ() + 0.5D + (rand.nextDouble() - 0.5D) * 0.2D;
+            worldIn.addParticle(this.particleData, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(LIT);
+    }
+
+    private static boolean isBurnedOut(World world, BlockPos worldIn, boolean pos)
+    {
+        List<RedstoneTorchBlock.Toggle> list = BURNED_TORCHES.computeIfAbsent(world, (reader) ->
+        {
+            return Lists.newArrayList();
+        });
+
+        if (pos)
+        {
+            list.add(new RedstoneTorchBlock.Toggle(worldIn.toImmutable(), world.getGameTime()));
+        }
+
+        int i = 0;
+
+        for (int j = 0; j < list.size(); ++j)
+        {
+            RedstoneTorchBlock.Toggle redstonetorchblock$toggle = list.get(j);
+
+            if (redstonetorchblock$toggle.pos.equals(worldIn))
+            {
+                ++i;
+
+                if (i >= 8)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static class Toggle
+    {
+        private final BlockPos pos;
+        private final long time;
+
+        public Toggle(BlockPos pos, long time)
+        {
+            this.pos = pos;
+            this.time = time;
+        }
+    }
 }

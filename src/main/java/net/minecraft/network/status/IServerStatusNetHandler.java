@@ -4,8 +4,9 @@ import net.minecraft.network.INetHandler;
 import net.minecraft.network.status.client.CPingPacket;
 import net.minecraft.network.status.client.CServerQueryPacket;
 
-public interface IServerStatusNetHandler extends INetHandler {
-   void handlePingRequest(CPingPacket p_147311_1_);
+public interface IServerStatusNetHandler extends INetHandler
+{
+    void processPing(CPingPacket packetIn);
 
-   void handleStatusRequest(CServerQueryPacket p_147312_1_);
+    void processServerQuery(CServerQueryPacket packetIn);
 }

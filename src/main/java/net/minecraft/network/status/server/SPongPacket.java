@@ -5,25 +5,40 @@ import net.minecraft.client.network.status.IClientStatusNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 
-public class SPongPacket implements IPacket<IClientStatusNetHandler> {
-   private long time;
+public class SPongPacket implements IPacket<IClientStatusNetHandler>
+{
+    private long clientTime;
 
-   public SPongPacket() {
-   }
+    public SPongPacket()
+    {
+    }
 
-   public SPongPacket(long p_i46850_1_) {
-      this.time = p_i46850_1_;
-   }
+    public SPongPacket(long clientTimeIn)
+    {
+        this.clientTime = clientTimeIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.time = p_148837_1_.readLong();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.clientTime = buf.readLong();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeLong(this.time);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeLong(this.clientTime);
+    }
 
-   public void handle(IClientStatusNetHandler p_148833_1_) {
-      p_148833_1_.handlePongResponse(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientStatusNetHandler handler)
+    {
+        handler.handlePong(this);
+    }
 }

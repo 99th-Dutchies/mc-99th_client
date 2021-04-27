@@ -1,17 +1,24 @@
 package net.minecraft.dispenser;
 
-public abstract class OptionalDispenseBehavior extends DefaultDispenseItemBehavior {
-   private boolean success = true;
+public abstract class OptionalDispenseBehavior extends DefaultDispenseItemBehavior
+{
+    private boolean successful = true;
 
-   public boolean isSuccess() {
-      return this.success;
-   }
+    public boolean isSuccessful()
+    {
+        return this.successful;
+    }
 
-   public void setSuccess(boolean p_239796_1_) {
-      this.success = p_239796_1_;
-   }
+    public void setSuccessful(boolean success)
+    {
+        this.successful = success;
+    }
 
-   protected void playSound(IBlockSource p_82485_1_) {
-      p_82485_1_.getLevel().levelEvent(this.isSuccess() ? 1000 : 1001, p_82485_1_.getPos(), 0);
-   }
+    /**
+     * Play the dispense sound from the specified block.
+     */
+    protected void playDispenseSound(IBlockSource source)
+    {
+        source.getWorld().playEvent(this.isSuccessful() ? 1000 : 1001, source.getBlockPos(), 0);
+    }
 }

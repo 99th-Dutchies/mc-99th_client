@@ -5,30 +5,43 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
-public class FindWaterGoal extends Goal {
-   private final CreatureEntity mob;
+public class FindWaterGoal extends Goal
+{
+    private final CreatureEntity creature;
 
-   public FindWaterGoal(CreatureEntity p_i48936_1_) {
-      this.mob = p_i48936_1_;
-   }
+    public FindWaterGoal(CreatureEntity creature)
+    {
+        this.creature = creature;
+    }
 
-   public boolean canUse() {
-      return this.mob.isOnGround() && !this.mob.level.getFluidState(this.mob.blockPosition()).is(FluidTags.WATER);
-   }
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        return this.creature.isOnGround() && !this.creature.world.getFluidState(this.creature.getPosition()).isTagged(FluidTags.WATER);
+    }
 
-   public void start() {
-      BlockPos blockpos = null;
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        BlockPos blockpos = null;
 
-      for(BlockPos blockpos1 : BlockPos.betweenClosed(MathHelper.floor(this.mob.getX() - 2.0D), MathHelper.floor(this.mob.getY() - 2.0D), MathHelper.floor(this.mob.getZ() - 2.0D), MathHelper.floor(this.mob.getX() + 2.0D), MathHelper.floor(this.mob.getY()), MathHelper.floor(this.mob.getZ() + 2.0D))) {
-         if (this.mob.level.getFluidState(blockpos1).is(FluidTags.WATER)) {
-            blockpos = blockpos1;
-            break;
-         }
-      }
+        for (BlockPos blockpos1 : BlockPos.getAllInBoxMutable(MathHelper.floor(this.creature.getPosX() - 2.0D), MathHelper.floor(this.creature.getPosY() - 2.0D), MathHelper.floor(this.creature.getPosZ() - 2.0D), MathHelper.floor(this.creature.getPosX() + 2.0D), MathHelper.floor(this.creature.getPosY()), MathHelper.floor(this.creature.getPosZ() + 2.0D)))
+        {
+            if (this.creature.world.getFluidState(blockpos1).isTagged(FluidTags.WATER))
+            {
+                blockpos = blockpos1;
+                break;
+            }
+        }
 
-      if (blockpos != null) {
-         this.mob.getMoveControl().setWantedPosition((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0D);
-      }
-
-   }
+        if (blockpos != null)
+        {
+            this.creature.getMoveHelper().setMoveTo((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0D);
+        }
+    }
 }

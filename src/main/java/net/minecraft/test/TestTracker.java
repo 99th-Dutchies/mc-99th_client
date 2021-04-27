@@ -13,183 +13,233 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
 
-public class TestTracker {
-   private final TestFunctionInfo testFunction;
-   @Nullable
-   private BlockPos structureBlockPos;
-   private final ServerWorld level;
-   private final Collection<ITestCallback> listeners = Lists.newArrayList();
-   private final int timeoutTicks;
-   private final Collection<TestList> sequences = Lists.newCopyOnWriteArrayList();
-   private Object2LongMap<Runnable> runAtTickTimeMap = new Object2LongOpenHashMap<>();
-   private long startTick;
-   private long tickCount;
-   private boolean started = false;
-   private final Stopwatch timer = Stopwatch.createUnstarted();
-   private boolean done = false;
-   private final Rotation rotation;
-   @Nullable
-   private Throwable error;
+public class TestTracker
+{
+    private final TestFunctionInfo field_229488_a_;
+    @Nullable
+    private BlockPos field_229489_b_;
+    private final ServerWorld field_229490_c_;
+    private final Collection<ITestCallback> field_229491_d_ = Lists.newArrayList();
+    private final int field_229492_e_;
+    private final Collection<TestList> field_229493_f_ = Lists.newCopyOnWriteArrayList();
+    private Object2LongMap<Runnable> field_229494_g_ = new Object2LongOpenHashMap<>();
+    private long field_229495_h_;
+    private long field_229496_i_;
+    private boolean field_229497_j_ = false;
+    private final Stopwatch field_229498_k_ = Stopwatch.createUnstarted();
+    private boolean field_229499_l_ = false;
+    private final Rotation field_240541_m_;
+    @Nullable
+    private Throwable field_229500_m_;
 
-   public TestTracker(TestFunctionInfo p_i232556_1_, Rotation p_i232556_2_, ServerWorld p_i232556_3_) {
-      this.testFunction = p_i232556_1_;
-      this.level = p_i232556_3_;
-      this.timeoutTicks = p_i232556_1_.getMaxTicks();
-      this.rotation = p_i232556_1_.getRotation().getRotated(p_i232556_2_);
-   }
+    public TestTracker(TestFunctionInfo p_i232556_1_, Rotation p_i232556_2_, ServerWorld p_i232556_3_)
+    {
+        this.field_229488_a_ = p_i232556_1_;
+        this.field_229490_c_ = p_i232556_3_;
+        this.field_229492_e_ = p_i232556_1_.func_229660_c_();
+        this.field_240541_m_ = p_i232556_1_.func_240590_g_().add(p_i232556_2_);
+    }
 
-   void setStructureBlockPos(BlockPos p_229503_1_) {
-      this.structureBlockPos = p_229503_1_;
-   }
+    void func_229503_a_(BlockPos p_229503_1_)
+    {
+        this.field_229489_b_ = p_229503_1_;
+    }
 
-   void startExecution() {
-      this.startTick = this.level.getGameTime() + 1L + this.testFunction.getSetupTicks();
-      this.timer.start();
-   }
+    void func_229501_a_()
+    {
+        this.field_229495_h_ = this.field_229490_c_.getGameTime() + 1L + this.field_229488_a_.func_229663_f_();
+        this.field_229498_k_.start();
+    }
 
-   public void tick() {
-      if (!this.isDone()) {
-         this.tickCount = this.level.getGameTime() - this.startTick;
-         if (this.tickCount >= 0L) {
-            if (this.tickCount == 0L) {
-               this.startTest();
+    public void func_229507_b_()
+    {
+        if (!this.func_229518_k_())
+        {
+            this.field_229496_i_ = this.field_229490_c_.getGameTime() - this.field_229495_h_;
+
+            if (this.field_229496_i_ >= 0L)
+            {
+                if (this.field_229496_i_ == 0L)
+                {
+                    this.func_229523_t_();
+                }
+
+                ObjectIterator<Entry<Runnable>> objectiterator = this.field_229494_g_.object2LongEntrySet().iterator();
+
+                while (objectiterator.hasNext())
+                {
+                    Entry<Runnable> entry = objectiterator.next();
+
+                    if (entry.getLongValue() <= this.field_229496_i_)
+                    {
+                        try
+                        {
+                            entry.getKey().run();
+                        }
+                        catch (Exception exception)
+                        {
+                            this.func_229506_a_(exception);
+                        }
+
+                        objectiterator.remove();
+                    }
+                }
+
+                if (this.field_229496_i_ > (long)this.field_229492_e_)
+                {
+                    if (this.field_229493_f_.isEmpty())
+                    {
+                        this.func_229506_a_(new TestTimeoutException("Didn't succeed or fail within " + this.field_229488_a_.func_229660_c_() + " ticks"));
+                    }
+                    else
+                    {
+                        this.field_229493_f_.forEach((p_229509_1_) ->
+                        {
+                            p_229509_1_.func_229568_b_(this.field_229496_i_);
+                        });
+
+                        if (this.field_229500_m_ == null)
+                        {
+                            this.func_229506_a_(new TestTimeoutException("No sequences finished"));
+                        }
+                    }
+                }
+                else
+                {
+                    this.field_229493_f_.forEach((p_229505_1_) ->
+                    {
+                        p_229505_1_.func_229567_a_(this.field_229496_i_);
+                    });
+                }
             }
+        }
+    }
 
-            ObjectIterator<Entry<Runnable>> objectiterator = this.runAtTickTimeMap.object2LongEntrySet().iterator();
+    private void func_229523_t_()
+    {
+        if (this.field_229497_j_)
+        {
+            throw new IllegalStateException("Test already started");
+        }
+        else
+        {
+            this.field_229497_j_ = true;
 
-            while(objectiterator.hasNext()) {
-               Entry<Runnable> entry = objectiterator.next();
-               if (entry.getLongValue() <= this.tickCount) {
-                  try {
-                     entry.getKey().run();
-                  } catch (Exception exception) {
-                     this.fail(exception);
-                  }
-
-                  objectiterator.remove();
-               }
+            try
+            {
+                this.field_229488_a_.func_229658_a_(new TestTrackerHolder(this));
             }
-
-            if (this.tickCount > (long)this.timeoutTicks) {
-               if (this.sequences.isEmpty()) {
-                  this.fail(new TestTimeoutException("Didn't succeed or fail within " + this.testFunction.getMaxTicks() + " ticks"));
-               } else {
-                  this.sequences.forEach((p_229509_1_) -> {
-                     p_229509_1_.tickAndFailIfNotComplete(this.tickCount);
-                  });
-                  if (this.error == null) {
-                     this.fail(new TestTimeoutException("No sequences finished"));
-                  }
-               }
-            } else {
-               this.sequences.forEach((p_229505_1_) -> {
-                  p_229505_1_.tickAndContinue(this.tickCount);
-               });
+            catch (Exception exception)
+            {
+                this.func_229506_a_(exception);
             }
+        }
+    }
 
-         }
-      }
-   }
+    public String func_229510_c_()
+    {
+        return this.field_229488_a_.func_229657_a_();
+    }
 
-   private void startTest() {
-      if (this.started) {
-         throw new IllegalStateException("Test already started");
-      } else {
-         this.started = true;
+    public BlockPos func_229512_d_()
+    {
+        return this.field_229489_b_;
+    }
 
-         try {
-            this.testFunction.run(new TestTrackerHolder(this));
-         } catch (Exception exception) {
-            this.fail(exception);
-         }
+    public ServerWorld func_229514_g_()
+    {
+        return this.field_229490_c_;
+    }
 
-      }
-   }
+    public boolean func_229515_h_()
+    {
+        return this.field_229499_l_ && this.field_229500_m_ == null;
+    }
 
-   public String getTestName() {
-      return this.testFunction.getTestName();
-   }
+    public boolean func_229516_i_()
+    {
+        return this.field_229500_m_ != null;
+    }
 
-   public BlockPos getStructureBlockPos() {
-      return this.structureBlockPos;
-   }
+    public boolean func_229517_j_()
+    {
+        return this.field_229497_j_;
+    }
 
-   public ServerWorld getLevel() {
-      return this.level;
-   }
+    public boolean func_229518_k_()
+    {
+        return this.field_229499_l_;
+    }
 
-   public boolean hasSucceeded() {
-      return this.done && this.error == null;
-   }
+    private void func_229525_v_()
+    {
+        if (!this.field_229499_l_)
+        {
+            this.field_229499_l_ = true;
+            this.field_229498_k_.stop();
+        }
+    }
 
-   public boolean hasFailed() {
-      return this.error != null;
-   }
+    public void func_229506_a_(Throwable p_229506_1_)
+    {
+        this.func_229525_v_();
+        this.field_229500_m_ = p_229506_1_;
+        this.field_229491_d_.forEach((p_229511_1_) ->
+        {
+            p_229511_1_.func_225645_c_(this);
+        });
+    }
 
-   public boolean hasStarted() {
-      return this.started;
-   }
+    @Nullable
+    public Throwable func_229519_n_()
+    {
+        return this.field_229500_m_;
+    }
 
-   public boolean isDone() {
-      return this.done;
-   }
+    public String toString()
+    {
+        return this.func_229510_c_();
+    }
 
-   private void finish() {
-      if (!this.done) {
-         this.done = true;
-         this.timer.stop();
-      }
+    public void func_229504_a_(ITestCallback p_229504_1_)
+    {
+        this.field_229491_d_.add(p_229504_1_);
+    }
 
-   }
+    public void func_240543_a_(BlockPos p_240543_1_, int p_240543_2_)
+    {
+        StructureBlockTileEntity structureblocktileentity = StructureHelper.func_240565_a_(this.func_229522_s_(), p_240543_1_, this.func_240545_t_(), p_240543_2_, this.field_229490_c_, false);
+        this.func_229503_a_(structureblocktileentity.getPos());
+        structureblocktileentity.setName(this.func_229510_c_());
+        StructureHelper.func_240564_a_(this.field_229489_b_, new BlockPos(1, 0, -1), this.func_240545_t_(), this.field_229490_c_);
+        this.field_229491_d_.forEach((p_229508_1_) ->
+        {
+            p_229508_1_.func_225644_a_(this);
+        });
+    }
 
-   public void fail(Throwable p_229506_1_) {
-      this.finish();
-      this.error = p_229506_1_;
-      this.listeners.forEach((p_229511_1_) -> {
-         p_229511_1_.testFailed(this);
-      });
-   }
+    public boolean func_229520_q_()
+    {
+        return this.field_229488_a_.func_229661_d_();
+    }
 
-   @Nullable
-   public Throwable getError() {
-      return this.error;
-   }
+    public boolean func_229521_r_()
+    {
+        return !this.field_229488_a_.func_229661_d_();
+    }
 
-   public String toString() {
-      return this.getTestName();
-   }
+    public String func_229522_s_()
+    {
+        return this.field_229488_a_.func_229659_b_();
+    }
 
-   public void addListener(ITestCallback p_229504_1_) {
-      this.listeners.add(p_229504_1_);
-   }
+    public Rotation func_240545_t_()
+    {
+        return this.field_240541_m_;
+    }
 
-   public void spawnStructure(BlockPos p_240543_1_, int p_240543_2_) {
-      StructureBlockTileEntity structureblocktileentity = StructureHelper.spawnStructure(this.getStructureName(), p_240543_1_, this.getRotation(), p_240543_2_, this.level, false);
-      this.setStructureBlockPos(structureblocktileentity.getBlockPos());
-      structureblocktileentity.setStructureName(this.getTestName());
-      StructureHelper.addCommandBlockAndButtonToStartTest(this.structureBlockPos, new BlockPos(1, 0, -1), this.getRotation(), this.level);
-      this.listeners.forEach((p_229508_1_) -> {
-         p_229508_1_.testStructureLoaded(this);
-      });
-   }
-
-   public boolean isRequired() {
-      return this.testFunction.isRequired();
-   }
-
-   public boolean isOptional() {
-      return !this.testFunction.isRequired();
-   }
-
-   public String getStructureName() {
-      return this.testFunction.getStructureName();
-   }
-
-   public Rotation getRotation() {
-      return this.rotation;
-   }
-
-   public TestFunctionInfo getTestFunction() {
-      return this.testFunction;
-   }
+    public TestFunctionInfo func_240546_u_()
+    {
+        return this.field_229488_a_;
+    }
 }

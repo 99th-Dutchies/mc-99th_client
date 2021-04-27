@@ -8,57 +8,80 @@ import javax.annotation.Nullable;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 
-public class DefaultedRegistry<T> extends SimpleRegistry<T> {
-   private final ResourceLocation defaultKey;
-   private T defaultValue;
+public class DefaultedRegistry<T> extends SimpleRegistry<T>
+{
+    /** The key of the default value. */
+    private final ResourceLocation defaultValueKey;
 
-   public DefaultedRegistry(String p_i232506_1_, RegistryKey<? extends Registry<T>> p_i232506_2_, Lifecycle p_i232506_3_) {
-      super(p_i232506_2_, p_i232506_3_);
-      this.defaultKey = new ResourceLocation(p_i232506_1_);
-   }
+    /**
+     * The default value for this registry, retrurned in the place of a null value.
+     */
+    private T defaultValue;
 
-   public <V extends T> V registerMapping(int p_218382_1_, RegistryKey<T> p_218382_2_, V p_218382_3_, Lifecycle p_218382_4_) {
-      if (this.defaultKey.equals(p_218382_2_.location())) {
-         this.defaultValue = (T)p_218382_3_;
-      }
+    public DefaultedRegistry(String defaultValueKey, RegistryKey <? extends Registry<T >> registryKey, Lifecycle lifecycle)
+    {
+        super(registryKey, lifecycle);
+        this.defaultValueKey = new ResourceLocation(defaultValueKey);
+    }
 
-      return super.registerMapping(p_218382_1_, p_218382_2_, p_218382_3_, p_218382_4_);
-   }
+    public <V extends T> V register(int id, RegistryKey<T> name, V instance, Lifecycle lifecycle)
+    {
+        if (this.defaultValueKey.equals(name.getLocation()))
+        {
+            this.defaultValue = (T)instance;
+        }
 
-   public int getId(@Nullable T p_148757_1_) {
-      int i = super.getId(p_148757_1_);
-      return i == -1 ? super.getId(this.defaultValue) : i;
-   }
+        return super.register(id, name, instance, lifecycle);
+    }
 
-   @Nonnull
-   public ResourceLocation getKey(T p_177774_1_) {
-      ResourceLocation resourcelocation = super.getKey(p_177774_1_);
-      return resourcelocation == null ? this.defaultKey : resourcelocation;
-   }
+    /**
+     * Gets the integer ID we use to identify the given object.
+     */
+    public int getId(@Nullable T value)
+    {
+        int i = super.getId(value);
+        return i == -1 ? super.getId(this.defaultValue) : i;
+    }
 
-   @Nonnull
-   public T get(@Nullable ResourceLocation p_82594_1_) {
-      T t = super.get(p_82594_1_);
-      return (T)(t == null ? this.defaultValue : t);
-   }
+    @Nonnull
 
-   public Optional<T> getOptional(@Nullable ResourceLocation p_241873_1_) {
-      return Optional.ofNullable(super.get(p_241873_1_));
-   }
+    /**
+     * Gets the name we use to identify the given object.
+     */
+    public ResourceLocation getKey(T value)
+    {
+        ResourceLocation resourcelocation = super.getKey(value);
+        return resourcelocation == null ? this.defaultValueKey : resourcelocation;
+    }
 
-   @Nonnull
-   public T byId(int p_148745_1_) {
-      T t = super.byId(p_148745_1_);
-      return (T)(t == null ? this.defaultValue : t);
-   }
+    @Nonnull
+    public T getOrDefault(@Nullable ResourceLocation name)
+    {
+        T t = super.getOrDefault(name);
+        return (T)(t == null ? this.defaultValue : t);
+    }
 
-   @Nonnull
-   public T getRandom(Random p_186801_1_) {
-      T t = super.getRandom(p_186801_1_);
-      return (T)(t == null ? this.defaultValue : t);
-   }
+    public Optional<T> getOptional(@Nullable ResourceLocation id)
+    {
+        return Optional.ofNullable(super.getOrDefault(id));
+    }
 
-   public ResourceLocation getDefaultKey() {
-      return this.defaultKey;
-   }
+    @Nonnull
+    public T getByValue(int value)
+    {
+        T t = super.getByValue(value);
+        return (T)(t == null ? this.defaultValue : t);
+    }
+
+    @Nonnull
+    public T getRandom(Random random)
+    {
+        T t = super.getRandom(random);
+        return (T)(t == null ? this.defaultValue : t);
+    }
+
+    public ResourceLocation getDefaultKey()
+    {
+        return this.defaultValueKey;
+    }
 }

@@ -9,82 +9,98 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BlockParticleData;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class FallingDustParticle extends SpriteTexturedParticle {
-   private final float rotSpeed;
-   private final IAnimatedSprite sprites;
+public class FallingDustParticle extends SpriteTexturedParticle
+{
+    private final float rotSpeed;
+    private final IAnimatedSprite spriteWithAge;
 
-   private FallingDustParticle(ClientWorld p_i232385_1_, double p_i232385_2_, double p_i232385_4_, double p_i232385_6_, float p_i232385_8_, float p_i232385_9_, float p_i232385_10_, IAnimatedSprite p_i232385_11_) {
-      super(p_i232385_1_, p_i232385_2_, p_i232385_4_, p_i232385_6_);
-      this.sprites = p_i232385_11_;
-      this.rCol = p_i232385_8_;
-      this.gCol = p_i232385_9_;
-      this.bCol = p_i232385_10_;
-      float f = 0.9F;
-      this.quadSize *= 0.67499995F;
-      int i = (int)(32.0D / (Math.random() * 0.8D + 0.2D));
-      this.lifetime = (int)Math.max((float)i * 0.9F, 1.0F);
-      this.setSpriteFromAge(p_i232385_11_);
-      this.rotSpeed = ((float)Math.random() - 0.5F) * 0.1F;
-      this.roll = (float)Math.random() * ((float)Math.PI * 2F);
-   }
+    private FallingDustParticle(ClientWorld world, double x, double y, double z, float red, float green, float blue, IAnimatedSprite spriteWithAge)
+    {
+        super(world, x, y, z);
+        this.spriteWithAge = spriteWithAge;
+        this.particleRed = red;
+        this.particleGreen = green;
+        this.particleBlue = blue;
+        float f = 0.9F;
+        this.particleScale *= 0.67499995F;
+        int i = (int)(32.0D / (Math.random() * 0.8D + 0.2D));
+        this.maxAge = (int)Math.max((float)i * 0.9F, 1.0F);
+        this.selectSpriteWithAge(spriteWithAge);
+        this.rotSpeed = ((float)Math.random() - 0.5F) * 0.1F;
+        this.particleAngle = (float)Math.random() * ((float)Math.PI * 2F);
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-   public float getQuadSize(float p_217561_1_) {
-      return this.quadSize * MathHelper.clamp(((float)this.age + p_217561_1_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
-   }
+    public float getScale(float scaleFactor)
+    {
+        return this.particleScale * MathHelper.clamp(((float)this.age + scaleFactor) / (float)this.maxAge * 32.0F, 0.0F, 1.0F);
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.setSpriteFromAge(this.sprites);
-         this.oRoll = this.roll;
-         this.roll += (float)Math.PI * this.rotSpeed * 2.0F;
-         if (this.onGround) {
-            this.oRoll = this.roll = 0.0F;
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-         this.move(this.xd, this.yd, this.zd);
-         this.yd -= (double)0.003F;
-         this.yd = Math.max(this.yd, (double)-0.14F);
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.selectSpriteWithAge(this.spriteWithAge);
+            this.prevParticleAngle = this.particleAngle;
+            this.particleAngle += (float)Math.PI * this.rotSpeed * 2.0F;
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BlockParticleData> {
-      private final IAnimatedSprite sprite;
-
-      public Factory(IAnimatedSprite p_i51109_1_) {
-         this.sprite = p_i51109_1_;
-      }
-
-      @Nullable
-      public Particle createParticle(BlockParticleData p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         BlockState blockstate = p_199234_1_.getState();
-         if (!blockstate.isAir() && blockstate.getRenderShape() == BlockRenderType.INVISIBLE) {
-            return null;
-         } else {
-            BlockPos blockpos = new BlockPos(p_199234_3_, p_199234_5_, p_199234_7_);
-            int i = Minecraft.getInstance().getBlockColors().getColor(blockstate, p_199234_2_, blockpos);
-            if (blockstate.getBlock() instanceof FallingBlock) {
-               i = ((FallingBlock)blockstate.getBlock()).getDustColor(blockstate, p_199234_2_, blockpos);
+            if (this.onGround)
+            {
+                this.prevParticleAngle = this.particleAngle = 0.0F;
             }
 
-            float f = (float)(i >> 16 & 255) / 255.0F;
-            float f1 = (float)(i >> 8 & 255) / 255.0F;
-            float f2 = (float)(i & 255) / 255.0F;
-            return new FallingDustParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, f, f1, f2, this.sprite);
-         }
-      }
-   }
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionY -= (double)0.003F;
+            this.motionY = Math.max(this.motionY, (double) - 0.14F);
+        }
+    }
+
+    public static class Factory implements IParticleFactory<BlockParticleData>
+    {
+        private final IAnimatedSprite spriteSet;
+
+        public Factory(IAnimatedSprite spriteSetIn)
+        {
+            this.spriteSet = spriteSetIn;
+        }
+
+        @Nullable
+        public Particle makeParticle(BlockParticleData typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            BlockState blockstate = typeIn.getBlockState();
+
+            if (!blockstate.isAir() && blockstate.getRenderType() == BlockRenderType.INVISIBLE)
+            {
+                return null;
+            }
+            else
+            {
+                BlockPos blockpos = new BlockPos(x, y, z);
+                int i = Minecraft.getInstance().getBlockColors().getColorOrMaterialColor(blockstate, worldIn, blockpos);
+
+                if (blockstate.getBlock() instanceof FallingBlock)
+                {
+                    i = ((FallingBlock)blockstate.getBlock()).getDustColor(blockstate, worldIn, blockpos);
+                }
+
+                float f = (float)(i >> 16 & 255) / 255.0F;
+                float f1 = (float)(i >> 8 & 255) / 255.0F;
+                float f2 = (float)(i & 255) / 255.0F;
+                return new FallingDustParticle(worldIn, x, y, z, f, f1, f2, this.spriteSet);
+            }
+        }
+    }
 }

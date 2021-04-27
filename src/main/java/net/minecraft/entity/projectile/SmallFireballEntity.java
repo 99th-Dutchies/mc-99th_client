@@ -13,65 +13,99 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 
-public class SmallFireballEntity extends AbstractFireballEntity {
-   public SmallFireballEntity(EntityType<? extends SmallFireballEntity> p_i50160_1_, World p_i50160_2_) {
-      super(p_i50160_1_, p_i50160_2_);
-   }
+public class SmallFireballEntity extends AbstractFireballEntity
+{
+    public SmallFireballEntity(EntityType <? extends SmallFireballEntity > p_i50160_1_, World p_i50160_2_)
+    {
+        super(p_i50160_1_, p_i50160_2_);
+    }
 
-   public SmallFireballEntity(World p_i1771_1_, LivingEntity p_i1771_2_, double p_i1771_3_, double p_i1771_5_, double p_i1771_7_) {
-      super(EntityType.SMALL_FIREBALL, p_i1771_2_, p_i1771_3_, p_i1771_5_, p_i1771_7_, p_i1771_1_);
-   }
+    public SmallFireballEntity(World worldIn, LivingEntity shooter, double accelX, double accelY, double accelZ)
+    {
+        super(EntityType.SMALL_FIREBALL, shooter, accelX, accelY, accelZ, worldIn);
+    }
 
-   public SmallFireballEntity(World p_i1772_1_, double p_i1772_2_, double p_i1772_4_, double p_i1772_6_, double p_i1772_8_, double p_i1772_10_, double p_i1772_12_) {
-      super(EntityType.SMALL_FIREBALL, p_i1772_2_, p_i1772_4_, p_i1772_6_, p_i1772_8_, p_i1772_10_, p_i1772_12_, p_i1772_1_);
-   }
+    public SmallFireballEntity(World worldIn, double x, double y, double z, double accelX, double accelY, double accelZ)
+    {
+        super(EntityType.SMALL_FIREBALL, x, y, z, accelX, accelY, accelZ, worldIn);
+    }
 
-   protected void onHitEntity(EntityRayTraceResult p_213868_1_) {
-      super.onHitEntity(p_213868_1_);
-      if (!this.level.isClientSide) {
-         Entity entity = p_213868_1_.getEntity();
-         if (!entity.fireImmune()) {
-            Entity entity1 = this.getOwner();
-            int i = entity.getRemainingFireTicks();
-            entity.setSecondsOnFire(5);
-            boolean flag = entity.hurt(DamageSource.fireball(this, entity1), 5.0F);
-            if (!flag) {
-               entity.setRemainingFireTicks(i);
-            } else if (entity1 instanceof LivingEntity) {
-               this.doEnchantDamageEffects((LivingEntity)entity1, entity);
+    /**
+     * Called when the arrow hits an entity
+     */
+    protected void onEntityHit(EntityRayTraceResult p_213868_1_)
+    {
+        super.onEntityHit(p_213868_1_);
+
+        if (!this.world.isRemote)
+        {
+            Entity entity = p_213868_1_.getEntity();
+
+            if (!entity.isImmuneToFire())
+            {
+                Entity entity1 = this.func_234616_v_();
+                int i = entity.getFireTimer();
+                entity.setFire(5);
+                boolean flag = entity.attackEntityFrom(DamageSource.func_233547_a_(this, entity1), 5.0F);
+
+                if (!flag)
+                {
+                    entity.forceFireTicks(i);
+                }
+                else if (entity1 instanceof LivingEntity)
+                {
+                    this.applyEnchantments((LivingEntity)entity1, entity);
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
+    protected void func_230299_a_(BlockRayTraceResult p_230299_1_)
+    {
+        super.func_230299_a_(p_230299_1_);
 
-   protected void onHitBlock(BlockRayTraceResult p_230299_1_) {
-      super.onHitBlock(p_230299_1_);
-      if (!this.level.isClientSide) {
-         Entity entity = this.getOwner();
-         if (entity == null || !(entity instanceof MobEntity) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-            BlockPos blockpos = p_230299_1_.getBlockPos().relative(p_230299_1_.getDirection());
-            if (this.level.isEmptyBlock(blockpos)) {
-               this.level.setBlockAndUpdate(blockpos, AbstractFireBlock.getState(this.level, blockpos));
+        if (!this.world.isRemote)
+        {
+            Entity entity = this.func_234616_v_();
+
+            if (entity == null || !(entity instanceof MobEntity) || this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING))
+            {
+                BlockPos blockpos = p_230299_1_.getPos().offset(p_230299_1_.getFace());
+
+                if (this.world.isAirBlock(blockpos))
+                {
+                    this.world.setBlockState(blockpos, AbstractFireBlock.getFireForPlacement(this.world, blockpos));
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
+    protected void onImpact(RayTraceResult result)
+    {
+        super.onImpact(result);
 
-   protected void onHit(RayTraceResult p_70227_1_) {
-      super.onHit(p_70227_1_);
-      if (!this.level.isClientSide) {
-         this.remove();
-      }
+        if (!this.world.isRemote)
+        {
+            this.remove();
+        }
+    }
 
-   }
+    /**
+     * Returns true if other Entities should be prevented from moving through this Entity.
+     */
+    public boolean canBeCollidedWith()
+    {
+        return false;
+    }
 
-   public boolean isPickable() {
-      return false;
-   }
-
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      return false;
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        return false;
+    }
 }

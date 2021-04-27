@@ -5,29 +5,41 @@ import java.io.IOException;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 
-public interface INBT {
-   TextFormatting SYNTAX_HIGHLIGHTING_KEY = TextFormatting.AQUA;
-   TextFormatting SYNTAX_HIGHLIGHTING_STRING = TextFormatting.GREEN;
-   TextFormatting SYNTAX_HIGHLIGHTING_NUMBER = TextFormatting.GOLD;
-   TextFormatting SYNTAX_HIGHLIGHTING_NUMBER_TYPE = TextFormatting.RED;
+public interface INBT
+{
+    TextFormatting SYNTAX_HIGHLIGHTING_KEY = TextFormatting.AQUA;
+    TextFormatting SYNTAX_HIGHLIGHTING_STRING = TextFormatting.GREEN;
+    TextFormatting SYNTAX_HIGHLIGHTING_NUMBER = TextFormatting.GOLD;
+    TextFormatting SYNTAX_HIGHLIGHTING_NUMBER_TYPE = TextFormatting.RED;
 
-   void write(DataOutput p_74734_1_) throws IOException;
+    /**
+     * Write the actual data contents of the tag, implemented in NBT extension classes
+     */
+    void write(DataOutput output) throws IOException;
 
-   String toString();
+    String toString();
 
-   byte getId();
+    /**
+     * Gets the type byte for the tag.
+     */
+    byte getId();
 
-   INBTType<?> getType();
+    INBTType<?> getType();
 
-   INBT copy();
+    /**
+     * Creates a clone of the tag.
+     */
+    INBT copy();
 
-   default String getAsString() {
-      return this.toString();
-   }
+default String getString()
+    {
+        return this.toString();
+    }
 
-   default ITextComponent getPrettyDisplay() {
-      return this.getPrettyDisplay("", 0);
-   }
+default ITextComponent toFormattedComponent()
+    {
+        return this.toFormattedComponent("", 0);
+    }
 
-   ITextComponent getPrettyDisplay(String p_199850_1_, int p_199850_2_);
+    ITextComponent toFormattedComponent(String indentation, int indentDepth);
 }

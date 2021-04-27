@@ -2,46 +2,53 @@ package net.minecraft.client.particle;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class SpriteTexturedParticle extends TexturedParticle {
-   protected TextureAtlasSprite sprite;
+public abstract class SpriteTexturedParticle extends TexturedParticle
+{
+    protected TextureAtlasSprite sprite;
 
-   protected SpriteTexturedParticle(ClientWorld p_i232447_1_, double p_i232447_2_, double p_i232447_4_, double p_i232447_6_) {
-      super(p_i232447_1_, p_i232447_2_, p_i232447_4_, p_i232447_6_);
-   }
+    protected SpriteTexturedParticle(ClientWorld world, double x, double y, double z)
+    {
+        super(world, x, y, z);
+    }
 
-   protected SpriteTexturedParticle(ClientWorld p_i232448_1_, double p_i232448_2_, double p_i232448_4_, double p_i232448_6_, double p_i232448_8_, double p_i232448_10_, double p_i232448_12_) {
-      super(p_i232448_1_, p_i232448_2_, p_i232448_4_, p_i232448_6_, p_i232448_8_, p_i232448_10_, p_i232448_12_);
-   }
+    protected SpriteTexturedParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ)
+    {
+        super(world, x, y, z, motionX, motionY, motionZ);
+    }
 
-   protected void setSprite(TextureAtlasSprite p_217567_1_) {
-      this.sprite = p_217567_1_;
-   }
+    protected void setSprite(TextureAtlasSprite sprite)
+    {
+        this.sprite = sprite;
+    }
 
-   protected float getU0() {
-      return this.sprite.getU0();
-   }
+    protected float getMinU()
+    {
+        return this.sprite.getMinU();
+    }
 
-   protected float getU1() {
-      return this.sprite.getU1();
-   }
+    protected float getMaxU()
+    {
+        return this.sprite.getMaxU();
+    }
 
-   protected float getV0() {
-      return this.sprite.getV0();
-   }
+    protected float getMinV()
+    {
+        return this.sprite.getMinV();
+    }
 
-   protected float getV1() {
-      return this.sprite.getV1();
-   }
+    protected float getMaxV()
+    {
+        return this.sprite.getMaxV();
+    }
 
-   public void pickSprite(IAnimatedSprite p_217568_1_) {
-      this.setSprite(p_217568_1_.get(this.random));
-   }
+    public void selectSpriteRandomly(IAnimatedSprite sprite)
+    {
+        this.setSprite(sprite.get(this.rand));
+    }
 
-   public void setSpriteFromAge(IAnimatedSprite p_217566_1_) {
-      this.setSprite(p_217566_1_.get(this.age, this.lifetime));
-   }
+    public void selectSpriteWithAge(IAnimatedSprite sprite)
+    {
+        this.setSprite(sprite.get(this.age, this.maxAge));
+    }
 }

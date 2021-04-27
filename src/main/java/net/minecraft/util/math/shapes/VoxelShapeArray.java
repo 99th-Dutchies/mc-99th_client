@@ -6,39 +6,51 @@ import java.util.Arrays;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Util;
 
-public final class VoxelShapeArray extends VoxelShape {
-   private final DoubleList xs;
-   private final DoubleList ys;
-   private final DoubleList zs;
+public final class VoxelShapeArray extends VoxelShape
+{
+    private final DoubleList xPoints;
+    private final DoubleList yPoints;
+    private final DoubleList zPoints;
 
-   protected VoxelShapeArray(VoxelShapePart p_i47693_1_, double[] p_i47693_2_, double[] p_i47693_3_, double[] p_i47693_4_) {
-      this(p_i47693_1_, (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(p_i47693_2_, p_i47693_1_.getXSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(p_i47693_3_, p_i47693_1_.getYSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(p_i47693_4_, p_i47693_1_.getZSize() + 1)));
-   }
+    protected VoxelShapeArray(VoxelShapePart shapePartIn, double[] xPointsIn, double[] yPointsIn, double[] zPointsIn)
+    {
+        this(shapePartIn, (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(xPointsIn, shapePartIn.getXSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(yPointsIn, shapePartIn.getYSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(zPointsIn, shapePartIn.getZSize() + 1)));
+    }
 
-   VoxelShapeArray(VoxelShapePart p_i47694_1_, DoubleList p_i47694_2_, DoubleList p_i47694_3_, DoubleList p_i47694_4_) {
-      super(p_i47694_1_);
-      int i = p_i47694_1_.getXSize() + 1;
-      int j = p_i47694_1_.getYSize() + 1;
-      int k = p_i47694_1_.getZSize() + 1;
-      if (i == p_i47694_2_.size() && j == p_i47694_3_.size() && k == p_i47694_4_.size()) {
-         this.xs = p_i47694_2_;
-         this.ys = p_i47694_3_;
-         this.zs = p_i47694_4_;
-      } else {
-         throw (IllegalArgumentException)Util.pauseInIde(new IllegalArgumentException("Lengths of point arrays must be consistent with the size of the VoxelShape."));
-      }
-   }
+    VoxelShapeArray(VoxelShapePart shapePartIn, DoubleList xPointsIn, DoubleList yPointsIn, DoubleList zPointsIn)
+    {
+        super(shapePartIn);
+        int i = shapePartIn.getXSize() + 1;
+        int j = shapePartIn.getYSize() + 1;
+        int k = shapePartIn.getZSize() + 1;
 
-   protected DoubleList getCoords(Direction.Axis p_197757_1_) {
-      switch(p_197757_1_) {
-      case X:
-         return this.xs;
-      case Y:
-         return this.ys;
-      case Z:
-         return this.zs;
-      default:
-         throw new IllegalArgumentException();
-      }
-   }
+        if (i == xPointsIn.size() && j == yPointsIn.size() && k == zPointsIn.size())
+        {
+            this.xPoints = xPointsIn;
+            this.yPoints = yPointsIn;
+            this.zPoints = zPointsIn;
+        }
+        else
+        {
+            throw(IllegalArgumentException)Util.pauseDevMode(new IllegalArgumentException("Lengths of point arrays must be consistent with the size of the VoxelShape."));
+        }
+    }
+
+    protected DoubleList getValues(Direction.Axis axis)
+    {
+        switch (axis)
+        {
+            case X:
+                return this.xPoints;
+
+            case Y:
+                return this.yPoints;
+
+            case Z:
+                return this.zPoints;
+
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
 }

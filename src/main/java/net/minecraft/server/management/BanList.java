@@ -4,31 +4,41 @@ import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import java.io.File;
 
-public class BanList extends UserList<GameProfile, ProfileBanEntry> {
-   public BanList(File p_i1138_1_) {
-      super(p_i1138_1_);
-   }
+public class BanList extends UserList<GameProfile, ProfileBanEntry>
+{
+    public BanList(File bansFile)
+    {
+        super(bansFile);
+    }
 
-   protected UserListEntry<GameProfile> createEntry(JsonObject p_152682_1_) {
-      return new ProfileBanEntry(p_152682_1_);
-   }
+    protected UserListEntry<GameProfile> createEntry(JsonObject entryData)
+    {
+        return new ProfileBanEntry(entryData);
+    }
 
-   public boolean isBanned(GameProfile p_152702_1_) {
-      return this.contains(p_152702_1_);
-   }
+    public boolean isBanned(GameProfile profile)
+    {
+        return this.hasEntry(profile);
+    }
 
-   public String[] getUserList() {
-      String[] astring = new String[this.getEntries().size()];
-      int i = 0;
+    public String[] getKeys()
+    {
+        String[] astring = new String[this.getEntries().size()];
+        int i = 0;
 
-      for(UserListEntry<GameProfile> userlistentry : this.getEntries()) {
-         astring[i++] = userlistentry.getUser().getName();
-      }
+        for (UserListEntry<GameProfile> userlistentry : this.getEntries())
+        {
+            astring[i++] = userlistentry.getValue().getName();
+        }
 
-      return astring;
-   }
+        return astring;
+    }
 
-   protected String getKeyForUser(GameProfile p_152681_1_) {
-      return p_152681_1_.getId().toString();
-   }
+    /**
+     * Gets the key value for the given object
+     */
+    protected String getObjectKey(GameProfile obj)
+    {
+        return obj.getId().toString();
+    }
 }

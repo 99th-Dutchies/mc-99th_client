@@ -14,42 +14,54 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.util.JSONUtils;
 
-public class SetNBT extends LootFunction {
-   private final CompoundNBT tag;
+public class SetNBT extends LootFunction
+{
+    private final CompoundNBT tag;
 
-   private SetNBT(ILootCondition[] p_i46620_1_, CompoundNBT p_i46620_2_) {
-      super(p_i46620_1_);
-      this.tag = p_i46620_2_;
-   }
+    private SetNBT(ILootCondition[] conditionsIn, CompoundNBT tagIn)
+    {
+        super(conditionsIn);
+        this.tag = tagIn;
+    }
 
-   public LootFunctionType getType() {
-      return LootFunctionManager.SET_NBT;
-   }
+    public LootFunctionType getFunctionType()
+    {
+        return LootFunctionManager.SET_NBT;
+    }
 
-   public ItemStack run(ItemStack p_215859_1_, LootContext p_215859_2_) {
-      p_215859_1_.getOrCreateTag().merge(this.tag);
-      return p_215859_1_;
-   }
+    public ItemStack doApply(ItemStack stack, LootContext context)
+    {
+        stack.getOrCreateTag().merge(this.tag);
+        return stack;
+    }
 
-   public static LootFunction.Builder<?> setTag(CompoundNBT p_215952_0_) {
-      return simpleBuilder((p_215951_1_) -> {
-         return new SetNBT(p_215951_1_, p_215952_0_);
-      });
-   }
+    public static LootFunction.Builder<?> builder(CompoundNBT p_215952_0_)
+    {
+        return builder((p_215951_1_) ->
+        {
+            return new SetNBT(p_215951_1_, p_215952_0_);
+        });
+    }
 
-   public static class Serializer extends LootFunction.Serializer<SetNBT> {
-      public void serialize(JsonObject p_230424_1_, SetNBT p_230424_2_, JsonSerializationContext p_230424_3_) {
-         super.serialize(p_230424_1_, p_230424_2_, p_230424_3_);
-         p_230424_1_.addProperty("tag", p_230424_2_.tag.toString());
-      }
+    public static class Serializer extends LootFunction.Serializer<SetNBT>
+    {
+        public void serialize(JsonObject p_230424_1_, SetNBT p_230424_2_, JsonSerializationContext p_230424_3_)
+        {
+            super.serialize(p_230424_1_, p_230424_2_, p_230424_3_);
+            p_230424_1_.addProperty("tag", p_230424_2_.tag.toString());
+        }
 
-      public SetNBT deserialize(JsonObject p_186530_1_, JsonDeserializationContext p_186530_2_, ILootCondition[] p_186530_3_) {
-         try {
-            CompoundNBT compoundnbt = JsonToNBT.parseTag(JSONUtils.getAsString(p_186530_1_, "tag"));
-            return new SetNBT(p_186530_3_, compoundnbt);
-         } catch (CommandSyntaxException commandsyntaxexception) {
-            throw new JsonSyntaxException(commandsyntaxexception.getMessage());
-         }
-      }
-   }
+        public SetNBT deserialize(JsonObject object, JsonDeserializationContext deserializationContext, ILootCondition[] conditionsIn)
+        {
+            try
+            {
+                CompoundNBT compoundnbt = JsonToNBT.getTagFromJson(JSONUtils.getString(object, "tag"));
+                return new SetNBT(conditionsIn, compoundnbt);
+            }
+            catch (CommandSyntaxException commandsyntaxexception)
+            {
+                throw new JsonSyntaxException(commandsyntaxexception.getMessage());
+            }
+        }
+    }
 }

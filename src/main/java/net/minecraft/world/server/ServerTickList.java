@@ -28,177 +28,221 @@ import net.minecraft.world.ITickList;
 import net.minecraft.world.NextTickListEntry;
 import net.minecraft.world.TickPriority;
 
-public class ServerTickList<T> implements ITickList<T> {
-   protected final Predicate<T> ignore;
-   private final Function<T, ResourceLocation> toId;
-   private final Set<NextTickListEntry<T>> tickNextTickSet = Sets.newHashSet();
-   private final TreeSet<NextTickListEntry<T>> tickNextTickList = Sets.newTreeSet(NextTickListEntry.createTimeComparator());
-   private final ServerWorld level;
-   private final Queue<NextTickListEntry<T>> currentlyTicking = Queues.newArrayDeque();
-   private final List<NextTickListEntry<T>> alreadyTicked = Lists.newArrayList();
-   private final Consumer<NextTickListEntry<T>> ticker;
+public class ServerTickList<T> implements ITickList<T>
+{
+    protected final Predicate<T> filter;
+    private final Function<T, ResourceLocation> serializer;
+    private final Set<NextTickListEntry<T>> pendingTickListEntriesHashSet = Sets.newHashSet();
+    private final TreeSet<NextTickListEntry<T>> pendingTickListEntriesTreeSet = Sets.newTreeSet(NextTickListEntry.func_223192_a());
+    private final ServerWorld world;
+    private final Queue<NextTickListEntry<T>> pendingTickListEntriesThisTick = Queues.newArrayDeque();
+    private final List<NextTickListEntry<T>> entriesRunThisTick = Lists.newArrayList();
+    private final Consumer<NextTickListEntry<T>> tickFunction;
 
-   public ServerTickList(ServerWorld p_i231625_1_, Predicate<T> p_i231625_2_, Function<T, ResourceLocation> p_i231625_3_, Consumer<NextTickListEntry<T>> p_i231625_4_) {
-      this.ignore = p_i231625_2_;
-      this.toId = p_i231625_3_;
-      this.level = p_i231625_1_;
-      this.ticker = p_i231625_4_;
-   }
+    public ServerTickList(ServerWorld p_i231625_1_, Predicate<T> p_i231625_2_, Function<T, ResourceLocation> p_i231625_3_, Consumer<NextTickListEntry<T>> p_i231625_4_)
+    {
+        this.filter = p_i231625_2_;
+        this.serializer = p_i231625_3_;
+        this.world = p_i231625_1_;
+        this.tickFunction = p_i231625_4_;
+    }
 
-   public void tick() {
-      int i = this.tickNextTickList.size();
-      if (i != this.tickNextTickSet.size()) {
-         throw new IllegalStateException("TickNextTick list out of synch");
-      } else {
-         if (i > 65536) {
-            i = 65536;
-         }
+    public void tick()
+    {
+        int i = this.pendingTickListEntriesTreeSet.size();
 
-         ServerChunkProvider serverchunkprovider = this.level.getChunkSource();
-         Iterator<NextTickListEntry<T>> iterator = this.tickNextTickList.iterator();
-         this.level.getProfiler().push("cleaning");
+        if (i != this.pendingTickListEntriesHashSet.size())
+        {
+            throw new IllegalStateException("TickNextTick list out of synch");
+        }
+        else
+        {
+            if (i > 65536)
+            {
+                i = 65536;
+            }
 
-         while(i > 0 && iterator.hasNext()) {
+            ServerChunkProvider serverchunkprovider = this.world.getChunkProvider();
+            Iterator<NextTickListEntry<T>> iterator = this.pendingTickListEntriesTreeSet.iterator();
+            this.world.getProfiler().startSection("cleaning");
+
+            while (i > 0 && iterator.hasNext())
+            {
+                NextTickListEntry<T> nextticklistentry = iterator.next();
+
+                if (nextticklistentry.field_235017_b_ > this.world.getGameTime())
+                {
+                    break;
+                }
+
+                if (serverchunkprovider.canTick(nextticklistentry.position))
+                {
+                    iterator.remove();
+                    this.pendingTickListEntriesHashSet.remove(nextticklistentry);
+                    this.pendingTickListEntriesThisTick.add(nextticklistentry);
+                    --i;
+                }
+            }
+
+            this.world.getProfiler().endStartSection("ticking");
+            NextTickListEntry<T> nextticklistentry1;
+
+            while ((nextticklistentry1 = this.pendingTickListEntriesThisTick.poll()) != null)
+            {
+                if (serverchunkprovider.canTick(nextticklistentry1.position))
+                {
+                    try
+                    {
+                        this.entriesRunThisTick.add(nextticklistentry1);
+                        this.tickFunction.accept(nextticklistentry1);
+                    }
+                    catch (Throwable throwable)
+                    {
+                        CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Exception while ticking");
+                        CrashReportCategory crashreportcategory = crashreport.makeCategory("Block being ticked");
+                        CrashReportCategory.addBlockInfo(crashreportcategory, nextticklistentry1.position, (BlockState)null);
+                        throw new ReportedException(crashreport);
+                    }
+                }
+                else
+                {
+                    this.scheduleTick(nextticklistentry1.position, nextticklistentry1.getTarget(), 0);
+                }
+            }
+
+            this.world.getProfiler().endSection();
+            this.entriesRunThisTick.clear();
+            this.pendingTickListEntriesThisTick.clear();
+        }
+    }
+
+    /**
+     * Checks if this position/item is scheduled to be updated this tick
+     */
+    public boolean isTickPending(BlockPos pos, T obj)
+    {
+        return this.pendingTickListEntriesThisTick.contains(new NextTickListEntry(pos, obj));
+    }
+
+    public List<NextTickListEntry<T>> getPending(ChunkPos pos, boolean remove, boolean skipCompleted)
+    {
+        int i = (pos.x << 4) - 2;
+        int j = i + 16 + 2;
+        int k = (pos.z << 4) - 2;
+        int l = k + 16 + 2;
+        return this.getPending(new MutableBoundingBox(i, 0, k, j, 256, l), remove, skipCompleted);
+    }
+
+    public List<NextTickListEntry<T>> getPending(MutableBoundingBox p_205366_1_, boolean remove, boolean skipCompleted)
+    {
+        List<NextTickListEntry<T>> list = this.getEntries((List<NextTickListEntry<T>>)null, this.pendingTickListEntriesTreeSet, p_205366_1_, remove);
+
+        if (remove && list != null)
+        {
+            this.pendingTickListEntriesHashSet.removeAll(list);
+        }
+
+        list = this.getEntries(list, this.pendingTickListEntriesThisTick, p_205366_1_, remove);
+
+        if (!skipCompleted)
+        {
+            list = this.getEntries(list, this.entriesRunThisTick, p_205366_1_, remove);
+        }
+
+        return list == null ? Collections.emptyList() : list;
+    }
+
+    @Nullable
+    private List<NextTickListEntry<T>> getEntries(@Nullable List<NextTickListEntry<T>> result, Collection<NextTickListEntry<T>> entries, MutableBoundingBox bb, boolean remove)
+    {
+        Iterator<NextTickListEntry<T>> iterator = entries.iterator();
+
+        while (iterator.hasNext())
+        {
             NextTickListEntry<T> nextticklistentry = iterator.next();
-            if (nextticklistentry.triggerTick > this.level.getGameTime()) {
-               break;
+            BlockPos blockpos = nextticklistentry.position;
+
+            if (blockpos.getX() >= bb.minX && blockpos.getX() < bb.maxX && blockpos.getZ() >= bb.minZ && blockpos.getZ() < bb.maxZ)
+            {
+                if (remove)
+                {
+                    iterator.remove();
+                }
+
+                if (result == null)
+                {
+                    result = Lists.newArrayList();
+                }
+
+                result.add(nextticklistentry);
             }
+        }
 
-            if (serverchunkprovider.isTickingChunk(nextticklistentry.pos)) {
-               iterator.remove();
-               this.tickNextTickSet.remove(nextticklistentry);
-               this.currentlyTicking.add(nextticklistentry);
-               --i;
+        return result;
+    }
+
+    public void copyTicks(MutableBoundingBox area, BlockPos offset)
+    {
+        for (NextTickListEntry<T> nextticklistentry : this.getPending(area, false, false))
+        {
+            if (area.isVecInside(nextticklistentry.position))
+            {
+                BlockPos blockpos = nextticklistentry.position.add(offset);
+                T t = nextticklistentry.getTarget();
+                this.addEntry(new NextTickListEntry<>(blockpos, t, nextticklistentry.field_235017_b_, nextticklistentry.priority));
             }
-         }
+        }
+    }
 
-         this.level.getProfiler().popPush("ticking");
+    public ListNBT func_219503_a(ChunkPos p_219503_1_)
+    {
+        List<NextTickListEntry<T>> list = this.getPending(p_219503_1_, false, true);
+        return func_219502_a(this.serializer, list, this.world.getGameTime());
+    }
 
-         NextTickListEntry<T> nextticklistentry1;
-         while((nextticklistentry1 = this.currentlyTicking.poll()) != null) {
-            if (serverchunkprovider.isTickingChunk(nextticklistentry1.pos)) {
-               try {
-                  this.alreadyTicked.add(nextticklistentry1);
-                  this.ticker.accept(nextticklistentry1);
-               } catch (Throwable throwable) {
-                  CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception while ticking");
-                  CrashReportCategory crashreportcategory = crashreport.addCategory("Block being ticked");
-                  CrashReportCategory.populateBlockDetails(crashreportcategory, nextticklistentry1.pos, (BlockState)null);
-                  throw new ReportedException(crashreport);
-               }
-            } else {
-               this.scheduleTick(nextticklistentry1.pos, nextticklistentry1.getType(), 0);
-            }
-         }
+    private static <T> ListNBT func_219502_a(Function<T, ResourceLocation> p_219502_0_, Iterable<NextTickListEntry<T>> p_219502_1_, long p_219502_2_)
+    {
+        ListNBT listnbt = new ListNBT();
 
-         this.level.getProfiler().pop();
-         this.alreadyTicked.clear();
-         this.currentlyTicking.clear();
-      }
-   }
+        for (NextTickListEntry<T> nextticklistentry : p_219502_1_)
+        {
+            CompoundNBT compoundnbt = new CompoundNBT();
+            compoundnbt.putString("i", p_219502_0_.apply(nextticklistentry.getTarget()).toString());
+            compoundnbt.putInt("x", nextticklistentry.position.getX());
+            compoundnbt.putInt("y", nextticklistentry.position.getY());
+            compoundnbt.putInt("z", nextticklistentry.position.getZ());
+            compoundnbt.putInt("t", (int)(nextticklistentry.field_235017_b_ - p_219502_2_));
+            compoundnbt.putInt("p", nextticklistentry.priority.getPriority());
+            listnbt.add(compoundnbt);
+        }
 
-   public boolean willTickThisTick(BlockPos p_205361_1_, T p_205361_2_) {
-      return this.currentlyTicking.contains(new NextTickListEntry(p_205361_1_, p_205361_2_));
-   }
+        return listnbt;
+    }
 
-   public List<NextTickListEntry<T>> fetchTicksInChunk(ChunkPos p_223188_1_, boolean p_223188_2_, boolean p_223188_3_) {
-      int i = (p_223188_1_.x << 4) - 2;
-      int j = i + 16 + 2;
-      int k = (p_223188_1_.z << 4) - 2;
-      int l = k + 16 + 2;
-      return this.fetchTicksInArea(new MutableBoundingBox(i, 0, k, j, 256, l), p_223188_2_, p_223188_3_);
-   }
+    public boolean isTickScheduled(BlockPos pos, T itemIn)
+    {
+        return this.pendingTickListEntriesHashSet.contains(new NextTickListEntry(pos, itemIn));
+    }
 
-   public List<NextTickListEntry<T>> fetchTicksInArea(MutableBoundingBox p_205366_1_, boolean p_205366_2_, boolean p_205366_3_) {
-      List<NextTickListEntry<T>> list = this.fetchTicksInArea((List<NextTickListEntry<T>>)null, this.tickNextTickList, p_205366_1_, p_205366_2_);
-      if (p_205366_2_ && list != null) {
-         this.tickNextTickSet.removeAll(list);
-      }
+    public void scheduleTick(BlockPos pos, T itemIn, int scheduledTime, TickPriority priority)
+    {
+        if (!this.filter.test(itemIn))
+        {
+            this.addEntry(new NextTickListEntry<>(pos, itemIn, (long)scheduledTime + this.world.getGameTime(), priority));
+        }
+    }
 
-      list = this.fetchTicksInArea(list, this.currentlyTicking, p_205366_1_, p_205366_2_);
-      if (!p_205366_3_) {
-         list = this.fetchTicksInArea(list, this.alreadyTicked, p_205366_1_, p_205366_2_);
-      }
+    private void addEntry(NextTickListEntry<T> p_219504_1_)
+    {
+        if (!this.pendingTickListEntriesHashSet.contains(p_219504_1_))
+        {
+            this.pendingTickListEntriesHashSet.add(p_219504_1_);
+            this.pendingTickListEntriesTreeSet.add(p_219504_1_);
+        }
+    }
 
-      return list == null ? Collections.emptyList() : list;
-   }
-
-   @Nullable
-   private List<NextTickListEntry<T>> fetchTicksInArea(@Nullable List<NextTickListEntry<T>> p_223187_1_, Collection<NextTickListEntry<T>> p_223187_2_, MutableBoundingBox p_223187_3_, boolean p_223187_4_) {
-      Iterator<NextTickListEntry<T>> iterator = p_223187_2_.iterator();
-
-      while(iterator.hasNext()) {
-         NextTickListEntry<T> nextticklistentry = iterator.next();
-         BlockPos blockpos = nextticklistentry.pos;
-         if (blockpos.getX() >= p_223187_3_.x0 && blockpos.getX() < p_223187_3_.x1 && blockpos.getZ() >= p_223187_3_.z0 && blockpos.getZ() < p_223187_3_.z1) {
-            if (p_223187_4_) {
-               iterator.remove();
-            }
-
-            if (p_223187_1_ == null) {
-               p_223187_1_ = Lists.newArrayList();
-            }
-
-            p_223187_1_.add(nextticklistentry);
-         }
-      }
-
-      return p_223187_1_;
-   }
-
-   public void copy(MutableBoundingBox p_205368_1_, BlockPos p_205368_2_) {
-      for(NextTickListEntry<T> nextticklistentry : this.fetchTicksInArea(p_205368_1_, false, false)) {
-         if (p_205368_1_.isInside(nextticklistentry.pos)) {
-            BlockPos blockpos = nextticklistentry.pos.offset(p_205368_2_);
-            T t = nextticklistentry.getType();
-            this.addTickData(new NextTickListEntry<>(blockpos, t, nextticklistentry.triggerTick, nextticklistentry.priority));
-         }
-      }
-
-   }
-
-   public ListNBT save(ChunkPos p_219503_1_) {
-      List<NextTickListEntry<T>> list = this.fetchTicksInChunk(p_219503_1_, false, true);
-      return saveTickList(this.toId, list, this.level.getGameTime());
-   }
-
-   private static <T> ListNBT saveTickList(Function<T, ResourceLocation> p_219502_0_, Iterable<NextTickListEntry<T>> p_219502_1_, long p_219502_2_) {
-      ListNBT listnbt = new ListNBT();
-
-      for(NextTickListEntry<T> nextticklistentry : p_219502_1_) {
-         CompoundNBT compoundnbt = new CompoundNBT();
-         compoundnbt.putString("i", p_219502_0_.apply(nextticklistentry.getType()).toString());
-         compoundnbt.putInt("x", nextticklistentry.pos.getX());
-         compoundnbt.putInt("y", nextticklistentry.pos.getY());
-         compoundnbt.putInt("z", nextticklistentry.pos.getZ());
-         compoundnbt.putInt("t", (int)(nextticklistentry.triggerTick - p_219502_2_));
-         compoundnbt.putInt("p", nextticklistentry.priority.getValue());
-         listnbt.add(compoundnbt);
-      }
-
-      return listnbt;
-   }
-
-   public boolean hasScheduledTick(BlockPos p_205359_1_, T p_205359_2_) {
-      return this.tickNextTickSet.contains(new NextTickListEntry(p_205359_1_, p_205359_2_));
-   }
-
-   public void scheduleTick(BlockPos p_205362_1_, T p_205362_2_, int p_205362_3_, TickPriority p_205362_4_) {
-      if (!this.ignore.test(p_205362_2_)) {
-         this.addTickData(new NextTickListEntry<>(p_205362_1_, p_205362_2_, (long)p_205362_3_ + this.level.getGameTime(), p_205362_4_));
-      }
-
-   }
-
-   private void addTickData(NextTickListEntry<T> p_219504_1_) {
-      if (!this.tickNextTickSet.contains(p_219504_1_)) {
-         this.tickNextTickSet.add(p_219504_1_);
-         this.tickNextTickList.add(p_219504_1_);
-      }
-
-   }
-
-   public int size() {
-      return this.tickNextTickSet.size();
-   }
+    public int func_225420_a()
+    {
+        return this.pendingTickListEntriesHashSet.size();
+    }
 }

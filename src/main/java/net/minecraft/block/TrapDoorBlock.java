@@ -23,128 +23,174 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
-public class TrapDoorBlock extends HorizontalBlock implements IWaterLoggable {
-   public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
-   public static final EnumProperty<Half> HALF = BlockStateProperties.HALF;
-   public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-   public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-   protected static final VoxelShape EAST_OPEN_AABB = Block.box(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D);
-   protected static final VoxelShape WEST_OPEN_AABB = Block.box(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
-   protected static final VoxelShape SOUTH_OPEN_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D);
-   protected static final VoxelShape NORTH_OPEN_AABB = Block.box(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D);
-   protected static final VoxelShape BOTTOM_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 3.0D, 16.0D);
-   protected static final VoxelShape TOP_AABB = Block.box(0.0D, 13.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+public class TrapDoorBlock extends HorizontalBlock implements IWaterLoggable
+{
+    public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
+    public static final EnumProperty<Half> HALF = BlockStateProperties.HALF;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    protected static final VoxelShape EAST_OPEN_AABB = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D);
+    protected static final VoxelShape WEST_OPEN_AABB = Block.makeCuboidShape(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+    protected static final VoxelShape SOUTH_OPEN_AABB = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D);
+    protected static final VoxelShape NORTH_OPEN_AABB = Block.makeCuboidShape(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D);
+    protected static final VoxelShape BOTTOM_AABB = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 3.0D, 16.0D);
+    protected static final VoxelShape TOP_AABB = Block.makeCuboidShape(0.0D, 13.0D, 0.0D, 16.0D, 16.0D, 16.0D);
 
-   protected TrapDoorBlock(AbstractBlock.Properties p_i48307_1_) {
-      super(p_i48307_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(OPEN, Boolean.valueOf(false)).setValue(HALF, Half.BOTTOM).setValue(POWERED, Boolean.valueOf(false)).setValue(WATERLOGGED, Boolean.valueOf(false)));
-   }
+    protected TrapDoorBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(HORIZONTAL_FACING, Direction.NORTH).with(OPEN, Boolean.valueOf(false)).with(HALF, Half.BOTTOM).with(POWERED, Boolean.valueOf(false)).with(WATERLOGGED, Boolean.valueOf(false)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      if (!p_220053_1_.getValue(OPEN)) {
-         return p_220053_1_.getValue(HALF) == Half.TOP ? TOP_AABB : BOTTOM_AABB;
-      } else {
-         switch((Direction)p_220053_1_.getValue(FACING)) {
-         case NORTH:
-         default:
-            return NORTH_OPEN_AABB;
-         case SOUTH:
-            return SOUTH_OPEN_AABB;
-         case WEST:
-            return WEST_OPEN_AABB;
-         case EAST:
-            return EAST_OPEN_AABB;
-         }
-      }
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        if (!state.get(OPEN))
+        {
+            return state.get(HALF) == Half.TOP ? TOP_AABB : BOTTOM_AABB;
+        }
+        else
+        {
+            switch ((Direction)state.get(HORIZONTAL_FACING))
+            {
+                case NORTH:
+                default:
+                    return NORTH_OPEN_AABB;
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      switch(p_196266_4_) {
-      case LAND:
-         return p_196266_1_.getValue(OPEN);
-      case WATER:
-         return p_196266_1_.getValue(WATERLOGGED);
-      case AIR:
-         return p_196266_1_.getValue(OPEN);
-      default:
-         return false;
-      }
-   }
+                case SOUTH:
+                    return SOUTH_OPEN_AABB;
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (this.material == Material.METAL) {
-         return ActionResultType.PASS;
-      } else {
-         p_225533_1_ = p_225533_1_.cycle(OPEN);
-         p_225533_2_.setBlock(p_225533_3_, p_225533_1_, 2);
-         if (p_225533_1_.getValue(WATERLOGGED)) {
-            p_225533_2_.getLiquidTicks().scheduleTick(p_225533_3_, Fluids.WATER, Fluids.WATER.getTickDelay(p_225533_2_));
-         }
+                case WEST:
+                    return WEST_OPEN_AABB;
 
-         this.playSound(p_225533_4_, p_225533_2_, p_225533_3_, p_225533_1_.getValue(OPEN));
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      }
-   }
+                case EAST:
+                    return EAST_OPEN_AABB;
+            }
+        }
+    }
 
-   protected void playSound(@Nullable PlayerEntity p_185731_1_, World p_185731_2_, BlockPos p_185731_3_, boolean p_185731_4_) {
-      if (p_185731_4_) {
-         int i = this.material == Material.METAL ? 1037 : 1007;
-         p_185731_2_.levelEvent(p_185731_1_, i, p_185731_3_, 0);
-      } else {
-         int j = this.material == Material.METAL ? 1036 : 1013;
-         p_185731_2_.levelEvent(p_185731_1_, j, p_185731_3_, 0);
-      }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        switch (type)
+        {
+            case LAND:
+                return state.get(OPEN);
 
-   }
+            case WATER:
+                return state.get(WATERLOGGED);
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      if (!p_220069_2_.isClientSide) {
-         boolean flag = p_220069_2_.hasNeighborSignal(p_220069_3_);
-         if (flag != p_220069_1_.getValue(POWERED)) {
-            if (p_220069_1_.getValue(OPEN) != flag) {
-               p_220069_1_ = p_220069_1_.setValue(OPEN, Boolean.valueOf(flag));
-               this.playSound((PlayerEntity)null, p_220069_2_, p_220069_3_, flag);
+            case AIR:
+                return state.get(OPEN);
+
+            default:
+                return false;
+        }
+    }
+
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (this.material == Material.IRON)
+        {
+            return ActionResultType.PASS;
+        }
+        else
+        {
+            state = state.func_235896_a_(OPEN);
+            worldIn.setBlockState(pos, state, 2);
+
+            if (state.get(WATERLOGGED))
+            {
+                worldIn.getPendingFluidTicks().scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
             }
 
-            p_220069_2_.setBlock(p_220069_3_, p_220069_1_.setValue(POWERED, Boolean.valueOf(flag)), 2);
-            if (p_220069_1_.getValue(WATERLOGGED)) {
-               p_220069_2_.getLiquidTicks().scheduleTick(p_220069_3_, Fluids.WATER, Fluids.WATER.getTickDelay(p_220069_2_));
+            this.playSound(player, worldIn, pos, state.get(OPEN));
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+    }
+
+    protected void playSound(@Nullable PlayerEntity player, World worldIn, BlockPos pos, boolean isOpened)
+    {
+        if (isOpened)
+        {
+            int i = this.material == Material.IRON ? 1037 : 1007;
+            worldIn.playEvent(player, i, pos, 0);
+        }
+        else
+        {
+            int j = this.material == Material.IRON ? 1036 : 1013;
+            worldIn.playEvent(player, j, pos, 0);
+        }
+    }
+
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        if (!worldIn.isRemote)
+        {
+            boolean flag = worldIn.isBlockPowered(pos);
+
+            if (flag != state.get(POWERED))
+            {
+                if (state.get(OPEN) != flag)
+                {
+                    state = state.with(OPEN, Boolean.valueOf(flag));
+                    this.playSound((PlayerEntity)null, worldIn, pos, flag);
+                }
+
+                worldIn.setBlockState(pos, state.with(POWERED, Boolean.valueOf(flag)), 2);
+
+                if (state.get(WATERLOGGED))
+                {
+                    worldIn.getPendingFluidTicks().scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        BlockState blockstate = this.getDefaultState();
+        FluidState fluidstate = context.getWorld().getFluidState(context.getPos());
+        Direction direction = context.getFace();
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      BlockState blockstate = this.defaultBlockState();
-      FluidState fluidstate = p_196258_1_.getLevel().getFluidState(p_196258_1_.getClickedPos());
-      Direction direction = p_196258_1_.getClickedFace();
-      if (!p_196258_1_.replacingClickedOnBlock() && direction.getAxis().isHorizontal()) {
-         blockstate = blockstate.setValue(FACING, direction).setValue(HALF, p_196258_1_.getClickLocation().y - (double)p_196258_1_.getClickedPos().getY() > 0.5D ? Half.TOP : Half.BOTTOM);
-      } else {
-         blockstate = blockstate.setValue(FACING, p_196258_1_.getHorizontalDirection().getOpposite()).setValue(HALF, direction == Direction.UP ? Half.BOTTOM : Half.TOP);
-      }
+        if (!context.replacingClickedOnBlock() && direction.getAxis().isHorizontal())
+        {
+            blockstate = blockstate.with(HORIZONTAL_FACING, direction).with(HALF, context.getHitVec().y - (double)context.getPos().getY() > 0.5D ? Half.TOP : Half.BOTTOM);
+        }
+        else
+        {
+            blockstate = blockstate.with(HORIZONTAL_FACING, context.getPlacementHorizontalFacing().getOpposite()).with(HALF, direction == Direction.UP ? Half.BOTTOM : Half.TOP);
+        }
 
-      if (p_196258_1_.getLevel().hasNeighborSignal(p_196258_1_.getClickedPos())) {
-         blockstate = blockstate.setValue(OPEN, Boolean.valueOf(true)).setValue(POWERED, Boolean.valueOf(true));
-      }
+        if (context.getWorld().isBlockPowered(context.getPos()))
+        {
+            blockstate = blockstate.with(OPEN, Boolean.valueOf(true)).with(POWERED, Boolean.valueOf(true));
+        }
 
-      return blockstate.setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
-   }
+        return blockstate.with(WATERLOGGED, Boolean.valueOf(fluidstate.getFluid() == Fluids.WATER));
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, OPEN, HALF, POWERED, WATERLOGGED);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(HORIZONTAL_FACING, OPEN, HALF, POWERED, WATERLOGGED);
+    }
 
-   public FluidState getFluidState(BlockState p_204507_1_) {
-      return p_204507_1_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_204507_1_);
-   }
+    public FluidState getFluidState(BlockState state)
+    {
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStillFluidState(false) : super.getFluidState(state);
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_1_.getValue(WATERLOGGED)) {
-         p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (stateIn.get(WATERLOGGED))
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+        }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 }

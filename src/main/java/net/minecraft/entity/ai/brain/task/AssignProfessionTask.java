@@ -12,33 +12,42 @@ import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.server.ServerWorld;
 
-public class AssignProfessionTask extends Task<VillagerEntity> {
-   public AssignProfessionTask() {
-      super(ImmutableMap.of(MemoryModuleType.POTENTIAL_JOB_SITE, MemoryModuleStatus.VALUE_PRESENT));
-   }
+public class AssignProfessionTask extends Task<VillagerEntity>
+{
+    public AssignProfessionTask()
+    {
+        super(ImmutableMap.of(MemoryModuleType.POTENTIAL_JOB_SITE, MemoryModuleStatus.VALUE_PRESENT));
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, VillagerEntity p_212832_2_) {
-      BlockPos blockpos = p_212832_2_.getBrain().getMemory(MemoryModuleType.POTENTIAL_JOB_SITE).get().pos();
-      return blockpos.closerThan(p_212832_2_.position(), 2.0D) || p_212832_2_.assignProfessionWhenSpawned();
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, VillagerEntity owner)
+    {
+        BlockPos blockpos = owner.getBrain().getMemory(MemoryModuleType.POTENTIAL_JOB_SITE).get().getPos();
+        return blockpos.withinDistance(owner.getPositionVec(), 2.0D) || owner.shouldAssignProfessionOnSpawn();
+    }
 
-   protected void start(ServerWorld p_212831_1_, VillagerEntity p_212831_2_, long p_212831_3_) {
-      GlobalPos globalpos = p_212831_2_.getBrain().getMemory(MemoryModuleType.POTENTIAL_JOB_SITE).get();
-      p_212831_2_.getBrain().eraseMemory(MemoryModuleType.POTENTIAL_JOB_SITE);
-      p_212831_2_.getBrain().setMemory(MemoryModuleType.JOB_SITE, globalpos);
-      p_212831_1_.broadcastEntityEvent(p_212831_2_, (byte)14);
-      if (p_212831_2_.getVillagerData().getProfession() == VillagerProfession.NONE) {
-         MinecraftServer minecraftserver = p_212831_1_.getServer();
-         Optional.ofNullable(minecraftserver.getLevel(globalpos.dimension())).flatMap((p_241376_1_) -> {
-            return p_241376_1_.getPoiManager().getType(globalpos.pos());
-         }).flatMap((p_220390_0_) -> {
-            return Registry.VILLAGER_PROFESSION.stream().filter((p_220389_1_) -> {
-               return p_220389_1_.getJobPoiType() == p_220390_0_;
-            }).findFirst();
-         }).ifPresent((p_220388_2_) -> {
-            p_212831_2_.setVillagerData(p_212831_2_.getVillagerData().setProfession(p_220388_2_));
-            p_212831_2_.refreshBrain(p_212831_1_);
-         });
-      }
-   }
+    protected void startExecuting(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        GlobalPos globalpos = entityIn.getBrain().getMemory(MemoryModuleType.POTENTIAL_JOB_SITE).get();
+        entityIn.getBrain().removeMemory(MemoryModuleType.POTENTIAL_JOB_SITE);
+        entityIn.getBrain().setMemory(MemoryModuleType.JOB_SITE, globalpos);
+        worldIn.setEntityState(entityIn, (byte)14);
+
+        if (entityIn.getVillagerData().getProfession() == VillagerProfession.NONE)
+        {
+            MinecraftServer minecraftserver = worldIn.getServer();
+            Optional.ofNullable(minecraftserver.getWorld(globalpos.getDimension())).flatMap((world) ->
+            {
+                return world.getPointOfInterestManager().getType(globalpos.getPos());
+            }).flatMap((poiType) ->
+            {
+                return Registry.VILLAGER_PROFESSION.stream().filter((profession) -> {
+                    return profession.getPointOfInterest() == poiType;
+                }).findFirst();
+            }).ifPresent((profession) ->
+            {
+                entityIn.setVillagerData(entityIn.getVillagerData().withProfession(profession));
+                entityIn.resetBrain(worldIn);
+            });
+        }
+    }
 }

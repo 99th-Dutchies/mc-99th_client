@@ -11,69 +11,81 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.play.NetworkPlayerInfo;
 import net.minecraft.util.Util;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class FilterManager {
-   private final Minecraft minecraft;
-   private final Set<UUID> hiddenPlayers = Sets.newHashSet();
-   private final SocialInteractionsService service;
-   private final Map<String, UUID> discoveredNamesToUUID = Maps.newHashMap();
+public class FilterManager
+{
+    private final Minecraft field_244642_a;
+    private final Set<UUID> field_244643_b = Sets.newHashSet();
+    private final SocialInteractionsService field_244755_c;
+    private final Map<String, UUID> field_244796_d = Maps.newHashMap();
 
-   public FilterManager(Minecraft p_i244725_1_, SocialInteractionsService p_i244725_2_) {
-      this.minecraft = p_i244725_1_;
-      this.service = p_i244725_2_;
-   }
+    public FilterManager(Minecraft p_i242141_1_, SocialInteractionsService p_i242141_2_)
+    {
+        this.field_244642_a = p_i242141_1_;
+        this.field_244755_c = p_i242141_2_;
+    }
 
-   public void hidePlayer(UUID p_244646_1_) {
-      this.hiddenPlayers.add(p_244646_1_);
-   }
+    public void func_244646_a(UUID p_244646_1_)
+    {
+        this.field_244643_b.add(p_244646_1_);
+    }
 
-   public void showPlayer(UUID p_244647_1_) {
-      this.hiddenPlayers.remove(p_244647_1_);
-   }
+    public void func_244647_b(UUID p_244647_1_)
+    {
+        this.field_244643_b.remove(p_244647_1_);
+    }
 
-   public boolean shouldHideMessageFrom(UUID p_244756_1_) {
-      return this.isHidden(p_244756_1_) || this.isBlocked(p_244756_1_);
-   }
+    public boolean func_244756_c(UUID p_244756_1_)
+    {
+        return this.func_244648_c(p_244756_1_) || this.func_244757_e(p_244756_1_);
+    }
 
-   public boolean isHidden(UUID p_244648_1_) {
-      return this.hiddenPlayers.contains(p_244648_1_);
-   }
+    public boolean func_244648_c(UUID p_244648_1_)
+    {
+        return this.field_244643_b.contains(p_244648_1_);
+    }
 
-   public boolean isBlocked(UUID p_244757_1_) {
-      return this.service.isBlockedPlayer(p_244757_1_);
-   }
+    public boolean func_244757_e(UUID p_244757_1_)
+    {
+        return this.field_244755_c.isBlockedPlayer(p_244757_1_);
+    }
 
-   public Set<UUID> getHiddenPlayers() {
-      return this.hiddenPlayers;
-   }
+    public Set<UUID> func_244644_a()
+    {
+        return this.field_244643_b;
+    }
 
-   public UUID getDiscoveredUUID(String p_244797_1_) {
-      return this.discoveredNamesToUUID.getOrDefault(p_244797_1_, Util.NIL_UUID);
-   }
+    public UUID func_244797_a(String p_244797_1_)
+    {
+        return this.field_244796_d.getOrDefault(p_244797_1_, Util.DUMMY_UUID);
+    }
 
-   public void addPlayer(NetworkPlayerInfo p_244645_1_) {
-      GameProfile gameprofile = p_244645_1_.getProfile();
-      if (gameprofile.isComplete()) {
-         this.discoveredNamesToUUID.put(gameprofile.getName(), gameprofile.getId());
-      }
+    public void func_244645_a(NetworkPlayerInfo p_244645_1_)
+    {
+        GameProfile gameprofile = p_244645_1_.getGameProfile();
 
-      Screen screen = this.minecraft.screen;
-      if (screen instanceof SocialInteractionsScreen) {
-         SocialInteractionsScreen socialinteractionsscreen = (SocialInteractionsScreen)screen;
-         socialinteractionsscreen.onAddPlayer(p_244645_1_);
-      }
+        if (gameprofile.isComplete())
+        {
+            this.field_244796_d.put(gameprofile.getName(), gameprofile.getId());
+        }
 
-   }
+        Screen screen = this.field_244642_a.currentScreen;
 
-   public void removePlayer(UUID p_244649_1_) {
-      Screen screen = this.minecraft.screen;
-      if (screen instanceof SocialInteractionsScreen) {
-         SocialInteractionsScreen socialinteractionsscreen = (SocialInteractionsScreen)screen;
-         socialinteractionsscreen.onRemovePlayer(p_244649_1_);
-      }
+        if (screen instanceof SocialInteractionsScreen)
+        {
+            SocialInteractionsScreen socialinteractionsscreen = (SocialInteractionsScreen)screen;
+            socialinteractionsscreen.func_244683_a(p_244645_1_);
+        }
+    }
 
-   }
+    public void func_244649_d(UUID p_244649_1_)
+    {
+        Screen screen = this.field_244642_a.currentScreen;
+
+        if (screen instanceof SocialInteractionsScreen)
+        {
+            SocialInteractionsScreen socialinteractionsscreen = (SocialInteractionsScreen)screen;
+            socialinteractionsscreen.func_244685_a(p_244649_1_);
+        }
+    }
 }

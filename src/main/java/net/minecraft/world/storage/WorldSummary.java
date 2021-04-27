@@ -10,138 +10,166 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
 
-public class WorldSummary implements Comparable<WorldSummary> {
-   private final WorldSettings settings;
-   private final VersionData levelVersion;
-   private final String levelId;
-   private final boolean requiresConversion;
-   private final boolean locked;
-   private final File icon;
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   private ITextComponent info;
+public class WorldSummary implements Comparable<WorldSummary>
+{
+    private final WorldSettings settings;
+    private final VersionData versionData;
+    private final String fileName;
+    private final boolean requiresConversion;
+    private final boolean locked;
+    private final File iconFile;
+    @Nullable
+    private ITextComponent description;
 
-   public WorldSummary(WorldSettings p_i232155_1_, VersionData p_i232155_2_, String p_i232155_3_, boolean p_i232155_4_, boolean p_i232155_5_, File p_i232155_6_) {
-      this.settings = p_i232155_1_;
-      this.levelVersion = p_i232155_2_;
-      this.levelId = p_i232155_3_;
-      this.locked = p_i232155_5_;
-      this.icon = p_i232155_6_;
-      this.requiresConversion = p_i232155_4_;
-   }
+    public WorldSummary(WorldSettings settings, VersionData versionData, String directoryName, boolean requiresConversion, boolean locked, File iconFile)
+    {
+        this.settings = settings;
+        this.versionData = versionData;
+        this.fileName = directoryName;
+        this.locked = locked;
+        this.iconFile = iconFile;
+        this.requiresConversion = requiresConversion;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getLevelId() {
-      return this.levelId;
-   }
+    /**
+     * return the file name
+     */
+    public String getFileName()
+    {
+        return this.fileName;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getLevelName() {
-      return StringUtils.isEmpty(this.settings.levelName()) ? this.levelId : this.settings.levelName();
-   }
+    /**
+     * return the display name of the save
+     */
+    public String getDisplayName()
+    {
+        return StringUtils.isEmpty(this.settings.getWorldName()) ? this.fileName : this.settings.getWorldName();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public File getIcon() {
-      return this.icon;
-   }
+    public File getIconFile()
+    {
+        return this.iconFile;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isRequiresConversion() {
-      return this.requiresConversion;
-   }
+    public boolean requiresConversion()
+    {
+        return this.requiresConversion;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public long getLastPlayed() {
-      return this.levelVersion.lastPlayed();
-   }
+    public long getLastTimePlayed()
+    {
+        return this.versionData.getLastPlayed();
+    }
 
-   public int compareTo(WorldSummary p_compareTo_1_) {
-      if (this.levelVersion.lastPlayed() < p_compareTo_1_.levelVersion.lastPlayed()) {
-         return 1;
-      } else {
-         return this.levelVersion.lastPlayed() > p_compareTo_1_.levelVersion.lastPlayed() ? -1 : this.levelId.compareTo(p_compareTo_1_.levelId);
-      }
-   }
+    public int compareTo(WorldSummary p_compareTo_1_)
+    {
+        if (this.versionData.getLastPlayed() < p_compareTo_1_.versionData.getLastPlayed())
+        {
+            return 1;
+        }
+        else
+        {
+            return this.versionData.getLastPlayed() > p_compareTo_1_.versionData.getLastPlayed() ? -1 : this.fileName.compareTo(p_compareTo_1_.fileName);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public GameType getGameMode() {
-      return this.settings.gameType();
-   }
+    /**
+     * Gets the EnumGameType.
+     */
+    public GameType getEnumGameType()
+    {
+        return this.settings.getGameType();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isHardcore() {
-      return this.settings.hardcore();
-   }
+    public boolean isHardcoreModeEnabled()
+    {
+        return this.settings.isHardcoreEnabled();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean hasCheats() {
-      return this.settings.allowCommands();
-   }
+    /**
+     * @return {@code true} if cheats are enabled for this world
+     */
+    public boolean getCheatsEnabled()
+    {
+        return this.settings.isCommandsAllowed();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public IFormattableTextComponent getWorldVersionName() {
-      return (IFormattableTextComponent)(net.minecraft.util.StringUtils.isNullOrEmpty(this.levelVersion.minecraftVersionName()) ? new TranslationTextComponent("selectWorld.versionUnknown") : new StringTextComponent(this.levelVersion.minecraftVersionName()));
-   }
+    public IFormattableTextComponent getVersionName()
+    {
+        return (IFormattableTextComponent)(net.minecraft.util.StringUtils.isNullOrEmpty(this.versionData.getName()) ? new TranslationTextComponent("selectWorld.versionUnknown") : new StringTextComponent(this.versionData.getName()));
+    }
 
-   public VersionData levelVersion() {
-      return this.levelVersion;
-   }
+    public VersionData getVersionData()
+    {
+        return this.versionData;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean markVersionInList() {
-      return this.askToOpenWorld() || !SharedConstants.getCurrentVersion().isStable() && !this.levelVersion.snapshot() || this.shouldBackup();
-   }
+    public boolean markVersionInList()
+    {
+        return this.askToOpenWorld() || !SharedConstants.getVersion().isStable() && !this.versionData.isSnapshot() || this.askToCreateBackup();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean askToOpenWorld() {
-      return this.levelVersion.minecraftVersion() > SharedConstants.getCurrentVersion().getWorldVersion();
-   }
+    public boolean askToOpenWorld()
+    {
+        return this.versionData.getID() > SharedConstants.getVersion().getWorldVersion();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean shouldBackup() {
-      return this.levelVersion.minecraftVersion() < SharedConstants.getCurrentVersion().getWorldVersion();
-   }
+    public boolean askToCreateBackup()
+    {
+        return this.versionData.getID() < SharedConstants.getVersion().getWorldVersion();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isLocked() {
-      return this.locked;
-   }
+    public boolean isLocked()
+    {
+        return this.locked;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getInfo() {
-      if (this.info == null) {
-         this.info = this.createInfo();
-      }
+    public ITextComponent getDescription()
+    {
+        if (this.description == null)
+        {
+            this.description = this.createDescription();
+        }
 
-      return this.info;
-   }
+        return this.description;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   private ITextComponent createInfo() {
-      if (this.isLocked()) {
-         return (new TranslationTextComponent("selectWorld.locked")).withStyle(TextFormatting.RED);
-      } else if (this.isRequiresConversion()) {
-         return new TranslationTextComponent("selectWorld.conversion");
-      } else {
-         IFormattableTextComponent iformattabletextcomponent = (IFormattableTextComponent)(this.isHardcore() ? (new StringTextComponent("")).append((new TranslationTextComponent("gameMode.hardcore")).withStyle(TextFormatting.DARK_RED)) : new TranslationTextComponent("gameMode." + this.getGameMode().getName()));
-         if (this.hasCheats()) {
-            iformattabletextcomponent.append(", ").append(new TranslationTextComponent("selectWorld.cheats"));
-         }
+    private ITextComponent createDescription()
+    {
+        if (this.isLocked())
+        {
+            return (new TranslationTextComponent("selectWorld.locked")).mergeStyle(TextFormatting.RED);
+        }
+        else if (this.requiresConversion())
+        {
+            return new TranslationTextComponent("selectWorld.conversion");
+        }
+        else
+        {
+            IFormattableTextComponent iformattabletextcomponent = (IFormattableTextComponent)(this.isHardcoreModeEnabled() ? (new StringTextComponent("")).append((new TranslationTextComponent("gameMode.hardcore")).mergeStyle(TextFormatting.DARK_RED)) : new TranslationTextComponent("gameMode." + this.getEnumGameType().getName()));
 
-         IFormattableTextComponent iformattabletextcomponent1 = this.getWorldVersionName();
-         IFormattableTextComponent iformattabletextcomponent2 = (new StringTextComponent(", ")).append(new TranslationTextComponent("selectWorld.version")).append(" ");
-         if (this.markVersionInList()) {
-            iformattabletextcomponent2.append(iformattabletextcomponent1.withStyle(this.askToOpenWorld() ? TextFormatting.RED : TextFormatting.ITALIC));
-         } else {
-            iformattabletextcomponent2.append(iformattabletextcomponent1);
-         }
+            if (this.getCheatsEnabled())
+            {
+                iformattabletextcomponent.appendString(", ").append(new TranslationTextComponent("selectWorld.cheats"));
+            }
 
-         iformattabletextcomponent.append(iformattabletextcomponent2);
-         return iformattabletextcomponent;
-      }
-   }
+            IFormattableTextComponent iformattabletextcomponent1 = this.getVersionName();
+            IFormattableTextComponent iformattabletextcomponent2 = (new StringTextComponent(", ")).append(new TranslationTextComponent("selectWorld.version")).appendString(" ");
+
+            if (this.markVersionInList())
+            {
+                iformattabletextcomponent2.append(iformattabletextcomponent1.mergeStyle(this.askToOpenWorld() ? TextFormatting.RED : TextFormatting.ITALIC));
+            }
+            else
+            {
+                iformattabletextcomponent2.append(iformattabletextcomponent1);
+            }
+
+            iformattabletextcomponent.append(iformattabletextcomponent2);
+            return iformattabletextcomponent;
+        }
+    }
 }

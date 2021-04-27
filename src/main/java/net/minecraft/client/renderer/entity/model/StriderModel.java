@@ -4,115 +4,124 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.passive.StriderEntity;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class StriderModel<T extends StriderEntity> extends SegmentedModel<T> {
-   private final ModelRenderer rightLeg;
-   private final ModelRenderer leftLeg;
-   private final ModelRenderer body;
-   private final ModelRenderer bristle0;
-   private final ModelRenderer bristle1;
-   private final ModelRenderer bristle2;
-   private final ModelRenderer bristle3;
-   private final ModelRenderer bristle4;
-   private final ModelRenderer bristle5;
+public class StriderModel<T extends StriderEntity> extends SegmentedModel<T>
+{
+    private final ModelRenderer field_239118_a_;
+    private final ModelRenderer field_239119_b_;
+    private final ModelRenderer field_239120_f_;
+    private final ModelRenderer field_239121_g_;
+    private final ModelRenderer field_239122_h_;
+    private final ModelRenderer field_239123_i_;
+    private final ModelRenderer field_239124_j_;
+    private final ModelRenderer field_239125_k_;
+    private final ModelRenderer field_239126_l_;
 
-   public StriderModel() {
-      this.texWidth = 64;
-      this.texHeight = 128;
-      this.rightLeg = new ModelRenderer(this, 0, 32);
-      this.rightLeg.setPos(-4.0F, 8.0F, 0.0F);
-      this.rightLeg.addBox(-2.0F, 0.0F, -2.0F, 4.0F, 16.0F, 4.0F, 0.0F);
-      this.leftLeg = new ModelRenderer(this, 0, 55);
-      this.leftLeg.setPos(4.0F, 8.0F, 0.0F);
-      this.leftLeg.addBox(-2.0F, 0.0F, -2.0F, 4.0F, 16.0F, 4.0F, 0.0F);
-      this.body = new ModelRenderer(this, 0, 0);
-      this.body.setPos(0.0F, 1.0F, 0.0F);
-      this.body.addBox(-8.0F, -6.0F, -8.0F, 16.0F, 14.0F, 16.0F, 0.0F);
-      this.bristle0 = new ModelRenderer(this, 16, 65);
-      this.bristle0.setPos(-8.0F, 4.0F, -8.0F);
-      this.bristle0.addBox(-12.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F, true);
-      this.setRotationAngle(this.bristle0, 0.0F, 0.0F, -1.2217305F);
-      this.bristle1 = new ModelRenderer(this, 16, 49);
-      this.bristle1.setPos(-8.0F, -1.0F, -8.0F);
-      this.bristle1.addBox(-12.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F, true);
-      this.setRotationAngle(this.bristle1, 0.0F, 0.0F, -1.134464F);
-      this.bristle2 = new ModelRenderer(this, 16, 33);
-      this.bristle2.setPos(-8.0F, -5.0F, -8.0F);
-      this.bristle2.addBox(-12.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F, true);
-      this.setRotationAngle(this.bristle2, 0.0F, 0.0F, -0.87266463F);
-      this.bristle3 = new ModelRenderer(this, 16, 33);
-      this.bristle3.setPos(8.0F, -6.0F, -8.0F);
-      this.bristle3.addBox(0.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F);
-      this.setRotationAngle(this.bristle3, 0.0F, 0.0F, 0.87266463F);
-      this.bristle4 = new ModelRenderer(this, 16, 49);
-      this.bristle4.setPos(8.0F, -2.0F, -8.0F);
-      this.bristle4.addBox(0.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F);
-      this.setRotationAngle(this.bristle4, 0.0F, 0.0F, 1.134464F);
-      this.bristle5 = new ModelRenderer(this, 16, 65);
-      this.bristle5.setPos(8.0F, 3.0F, -8.0F);
-      this.bristle5.addBox(0.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F);
-      this.setRotationAngle(this.bristle5, 0.0F, 0.0F, 1.2217305F);
-      this.body.addChild(this.bristle0);
-      this.body.addChild(this.bristle1);
-      this.body.addChild(this.bristle2);
-      this.body.addChild(this.bristle3);
-      this.body.addChild(this.bristle4);
-      this.body.addChild(this.bristle5);
-   }
+    public StriderModel()
+    {
+        this.textureWidth = 64;
+        this.textureHeight = 128;
+        this.field_239118_a_ = new ModelRenderer(this, 0, 32);
+        this.field_239118_a_.setRotationPoint(-4.0F, 8.0F, 0.0F);
+        this.field_239118_a_.addBox(-2.0F, 0.0F, -2.0F, 4.0F, 16.0F, 4.0F, 0.0F);
+        this.field_239119_b_ = new ModelRenderer(this, 0, 55);
+        this.field_239119_b_.setRotationPoint(4.0F, 8.0F, 0.0F);
+        this.field_239119_b_.addBox(-2.0F, 0.0F, -2.0F, 4.0F, 16.0F, 4.0F, 0.0F);
+        this.field_239120_f_ = new ModelRenderer(this, 0, 0);
+        this.field_239120_f_.setRotationPoint(0.0F, 1.0F, 0.0F);
+        this.field_239120_f_.addBox(-8.0F, -6.0F, -8.0F, 16.0F, 14.0F, 16.0F, 0.0F);
+        this.field_239121_g_ = new ModelRenderer(this, 16, 65);
+        this.field_239121_g_.setRotationPoint(-8.0F, 4.0F, -8.0F);
+        this.field_239121_g_.addBox(-12.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F, true);
+        this.func_239127_a_(this.field_239121_g_, 0.0F, 0.0F, -1.2217305F);
+        this.field_239122_h_ = new ModelRenderer(this, 16, 49);
+        this.field_239122_h_.setRotationPoint(-8.0F, -1.0F, -8.0F);
+        this.field_239122_h_.addBox(-12.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F, true);
+        this.func_239127_a_(this.field_239122_h_, 0.0F, 0.0F, -1.134464F);
+        this.field_239123_i_ = new ModelRenderer(this, 16, 33);
+        this.field_239123_i_.setRotationPoint(-8.0F, -5.0F, -8.0F);
+        this.field_239123_i_.addBox(-12.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F, true);
+        this.func_239127_a_(this.field_239123_i_, 0.0F, 0.0F, -0.87266463F);
+        this.field_239124_j_ = new ModelRenderer(this, 16, 33);
+        this.field_239124_j_.setRotationPoint(8.0F, -6.0F, -8.0F);
+        this.field_239124_j_.addBox(0.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F);
+        this.func_239127_a_(this.field_239124_j_, 0.0F, 0.0F, 0.87266463F);
+        this.field_239125_k_ = new ModelRenderer(this, 16, 49);
+        this.field_239125_k_.setRotationPoint(8.0F, -2.0F, -8.0F);
+        this.field_239125_k_.addBox(0.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F);
+        this.func_239127_a_(this.field_239125_k_, 0.0F, 0.0F, 1.134464F);
+        this.field_239126_l_ = new ModelRenderer(this, 16, 65);
+        this.field_239126_l_.setRotationPoint(8.0F, 3.0F, -8.0F);
+        this.field_239126_l_.addBox(0.0F, 0.0F, 0.0F, 12.0F, 0.0F, 16.0F, 0.0F);
+        this.func_239127_a_(this.field_239126_l_, 0.0F, 0.0F, 1.2217305F);
+        this.field_239120_f_.addChild(this.field_239121_g_);
+        this.field_239120_f_.addChild(this.field_239122_h_);
+        this.field_239120_f_.addChild(this.field_239123_i_);
+        this.field_239120_f_.addChild(this.field_239124_j_);
+        this.field_239120_f_.addChild(this.field_239125_k_);
+        this.field_239120_f_.addChild(this.field_239126_l_);
+    }
 
-   public void setupAnim(StriderEntity p_225597_1_, float p_225597_2_, float p_225597_3_, float p_225597_4_, float p_225597_5_, float p_225597_6_) {
-      p_225597_3_ = Math.min(0.25F, p_225597_3_);
-      if (p_225597_1_.getPassengers().size() <= 0) {
-         this.body.xRot = p_225597_6_ * ((float)Math.PI / 180F);
-         this.body.yRot = p_225597_5_ * ((float)Math.PI / 180F);
-      } else {
-         this.body.xRot = 0.0F;
-         this.body.yRot = 0.0F;
-      }
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setRotationAngles(StriderEntity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        limbSwingAmount = Math.min(0.25F, limbSwingAmount);
 
-      float f = 1.5F;
-      this.body.zRot = 0.1F * MathHelper.sin(p_225597_2_ * 1.5F) * 4.0F * p_225597_3_;
-      this.body.y = 2.0F;
-      this.body.y -= 2.0F * MathHelper.cos(p_225597_2_ * 1.5F) * 2.0F * p_225597_3_;
-      this.leftLeg.xRot = MathHelper.sin(p_225597_2_ * 1.5F * 0.5F) * 2.0F * p_225597_3_;
-      this.rightLeg.xRot = MathHelper.sin(p_225597_2_ * 1.5F * 0.5F + (float)Math.PI) * 2.0F * p_225597_3_;
-      this.leftLeg.zRot = 0.17453292F * MathHelper.cos(p_225597_2_ * 1.5F * 0.5F) * p_225597_3_;
-      this.rightLeg.zRot = 0.17453292F * MathHelper.cos(p_225597_2_ * 1.5F * 0.5F + (float)Math.PI) * p_225597_3_;
-      this.leftLeg.y = 8.0F + 2.0F * MathHelper.sin(p_225597_2_ * 1.5F * 0.5F + (float)Math.PI) * 2.0F * p_225597_3_;
-      this.rightLeg.y = 8.0F + 2.0F * MathHelper.sin(p_225597_2_ * 1.5F * 0.5F) * 2.0F * p_225597_3_;
-      this.bristle0.zRot = -1.2217305F;
-      this.bristle1.zRot = -1.134464F;
-      this.bristle2.zRot = -0.87266463F;
-      this.bristle3.zRot = 0.87266463F;
-      this.bristle4.zRot = 1.134464F;
-      this.bristle5.zRot = 1.2217305F;
-      float f1 = MathHelper.cos(p_225597_2_ * 1.5F + (float)Math.PI) * p_225597_3_;
-      this.bristle0.zRot += f1 * 1.3F;
-      this.bristle1.zRot += f1 * 1.2F;
-      this.bristle2.zRot += f1 * 0.6F;
-      this.bristle3.zRot += f1 * 0.6F;
-      this.bristle4.zRot += f1 * 1.2F;
-      this.bristle5.zRot += f1 * 1.3F;
-      float f2 = 1.0F;
-      float f3 = 1.0F;
-      this.bristle0.zRot += 0.05F * MathHelper.sin(p_225597_4_ * 1.0F * -0.4F);
-      this.bristle1.zRot += 0.1F * MathHelper.sin(p_225597_4_ * 1.0F * 0.2F);
-      this.bristle2.zRot += 0.1F * MathHelper.sin(p_225597_4_ * 1.0F * 0.4F);
-      this.bristle3.zRot += 0.1F * MathHelper.sin(p_225597_4_ * 1.0F * 0.4F);
-      this.bristle4.zRot += 0.1F * MathHelper.sin(p_225597_4_ * 1.0F * 0.2F);
-      this.bristle5.zRot += 0.05F * MathHelper.sin(p_225597_4_ * 1.0F * -0.4F);
-   }
+        if (entityIn.getPassengers().size() <= 0)
+        {
+            this.field_239120_f_.rotateAngleX = headPitch * ((float)Math.PI / 180F);
+            this.field_239120_f_.rotateAngleY = netHeadYaw * ((float)Math.PI / 180F);
+        }
+        else
+        {
+            this.field_239120_f_.rotateAngleX = 0.0F;
+            this.field_239120_f_.rotateAngleY = 0.0F;
+        }
 
-   public void setRotationAngle(ModelRenderer p_239127_1_, float p_239127_2_, float p_239127_3_, float p_239127_4_) {
-      p_239127_1_.xRot = p_239127_2_;
-      p_239127_1_.yRot = p_239127_3_;
-      p_239127_1_.zRot = p_239127_4_;
-   }
+        float f = 1.5F;
+        this.field_239120_f_.rotateAngleZ = 0.1F * MathHelper.sin(limbSwing * 1.5F) * 4.0F * limbSwingAmount;
+        this.field_239120_f_.rotationPointY = 2.0F;
+        this.field_239120_f_.rotationPointY -= 2.0F * MathHelper.cos(limbSwing * 1.5F) * 2.0F * limbSwingAmount;
+        this.field_239119_b_.rotateAngleX = MathHelper.sin(limbSwing * 1.5F * 0.5F) * 2.0F * limbSwingAmount;
+        this.field_239118_a_.rotateAngleX = MathHelper.sin(limbSwing * 1.5F * 0.5F + (float)Math.PI) * 2.0F * limbSwingAmount;
+        this.field_239119_b_.rotateAngleZ = 0.17453292F * MathHelper.cos(limbSwing * 1.5F * 0.5F) * limbSwingAmount;
+        this.field_239118_a_.rotateAngleZ = 0.17453292F * MathHelper.cos(limbSwing * 1.5F * 0.5F + (float)Math.PI) * limbSwingAmount;
+        this.field_239119_b_.rotationPointY = 8.0F + 2.0F * MathHelper.sin(limbSwing * 1.5F * 0.5F + (float)Math.PI) * 2.0F * limbSwingAmount;
+        this.field_239118_a_.rotationPointY = 8.0F + 2.0F * MathHelper.sin(limbSwing * 1.5F * 0.5F) * 2.0F * limbSwingAmount;
+        this.field_239121_g_.rotateAngleZ = -1.2217305F;
+        this.field_239122_h_.rotateAngleZ = -1.134464F;
+        this.field_239123_i_.rotateAngleZ = -0.87266463F;
+        this.field_239124_j_.rotateAngleZ = 0.87266463F;
+        this.field_239125_k_.rotateAngleZ = 1.134464F;
+        this.field_239126_l_.rotateAngleZ = 1.2217305F;
+        float f1 = MathHelper.cos(limbSwing * 1.5F + (float)Math.PI) * limbSwingAmount;
+        this.field_239121_g_.rotateAngleZ += f1 * 1.3F;
+        this.field_239122_h_.rotateAngleZ += f1 * 1.2F;
+        this.field_239123_i_.rotateAngleZ += f1 * 0.6F;
+        this.field_239124_j_.rotateAngleZ += f1 * 0.6F;
+        this.field_239125_k_.rotateAngleZ += f1 * 1.2F;
+        this.field_239126_l_.rotateAngleZ += f1 * 1.3F;
+        float f2 = 1.0F;
+        float f3 = 1.0F;
+        this.field_239121_g_.rotateAngleZ += 0.05F * MathHelper.sin(ageInTicks * 1.0F * -0.4F);
+        this.field_239122_h_.rotateAngleZ += 0.1F * MathHelper.sin(ageInTicks * 1.0F * 0.2F);
+        this.field_239123_i_.rotateAngleZ += 0.1F * MathHelper.sin(ageInTicks * 1.0F * 0.4F);
+        this.field_239124_j_.rotateAngleZ += 0.1F * MathHelper.sin(ageInTicks * 1.0F * 0.4F);
+        this.field_239125_k_.rotateAngleZ += 0.1F * MathHelper.sin(ageInTicks * 1.0F * 0.2F);
+        this.field_239126_l_.rotateAngleZ += 0.05F * MathHelper.sin(ageInTicks * 1.0F * -0.4F);
+    }
 
-   public Iterable<ModelRenderer> parts() {
-      return ImmutableList.of(this.body, this.leftLeg, this.rightLeg);
-   }
+    public void func_239127_a_(ModelRenderer p_239127_1_, float p_239127_2_, float p_239127_3_, float p_239127_4_)
+    {
+        p_239127_1_.rotateAngleX = p_239127_2_;
+        p_239127_1_.rotateAngleY = p_239127_3_;
+        p_239127_1_.rotateAngleZ = p_239127_4_;
+    }
+
+    public Iterable<ModelRenderer> getParts()
+    {
+        return ImmutableList.of(this.field_239120_f_, this.field_239119_b_, this.field_239118_a_);
+    }
 }

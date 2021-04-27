@@ -5,24 +5,38 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.IContainerListener;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class CreativeCraftingListener implements IContainerListener {
-   private final Minecraft minecraft;
+public class CreativeCraftingListener implements IContainerListener
+{
+    private final Minecraft mc;
 
-   public CreativeCraftingListener(Minecraft p_i46314_1_) {
-      this.minecraft = p_i46314_1_;
-   }
+    public CreativeCraftingListener(Minecraft mc)
+    {
+        this.mc = mc;
+    }
 
-   public void refreshContainer(Container p_71110_1_, NonNullList<ItemStack> p_71110_2_) {
-   }
+    /**
+     * update the crafting window inventory with the items in the list
+     */
+    public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList)
+    {
+    }
 
-   public void slotChanged(Container p_71111_1_, int p_71111_2_, ItemStack p_71111_3_) {
-      this.minecraft.gameMode.handleCreativeModeItemAdd(p_71111_3_, p_71111_2_);
-   }
+    /**
+     * Sends the contents of an inventory slot to the client-side Container. This doesn't have to match the actual
+     * contents of that slot.
+     */
+    public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack)
+    {
+        this.mc.playerController.sendSlotPacket(stack, slotInd);
+    }
 
-   public void setContainerData(Container p_71112_1_, int p_71112_2_, int p_71112_3_) {
-   }
+    /**
+     * Sends two ints to the client-side Container. Used for furnace burning time, smelting progress, brewing progress,
+     * and enchanting level. Normally the first int identifies which variable to update, and the second contains the new
+     * value. Both are truncated to shorts in non-local SMP.
+     */
+    public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue)
+    {
+    }
 }

@@ -2,63 +2,73 @@ package net.minecraft.client.audio;
 
 import java.util.concurrent.locks.LockSupport;
 import net.minecraft.util.concurrent.ThreadTaskExecutor;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SoundEngineExecutor extends ThreadTaskExecutor<Runnable> {
-   private Thread thread = this.createThread();
-   private volatile boolean shutdown;
+public class SoundEngineExecutor extends ThreadTaskExecutor<Runnable>
+{
+    private Thread executionThread = this.createExecutionThread();
+    private volatile boolean stopped;
 
-   public SoundEngineExecutor() {
-      super("Sound executor");
-   }
+    public SoundEngineExecutor()
+    {
+        super("Sound executor");
+    }
 
-   private Thread createThread() {
-      Thread thread = new Thread(this::run);
-      thread.setDaemon(true);
-      thread.setName("Sound engine");
-      thread.start();
-      return thread;
-   }
+    private Thread createExecutionThread()
+    {
+        Thread thread = new Thread(this::run);
+        thread.setDaemon(true);
+        thread.setName("Sound engine");
+        thread.start();
+        return thread;
+    }
 
-   protected Runnable wrapRunnable(Runnable p_212875_1_) {
-      return p_212875_1_;
-   }
+    protected Runnable wrapTask(Runnable runnable)
+    {
+        return runnable;
+    }
 
-   protected boolean shouldRun(Runnable p_212874_1_) {
-      return !this.shutdown;
-   }
+    protected boolean canRun(Runnable runnable)
+    {
+        return !this.stopped;
+    }
 
-   protected Thread getRunningThread() {
-      return this.thread;
-   }
+    protected Thread getExecutionThread()
+    {
+        return this.executionThread;
+    }
 
-   private void run() {
-      while(!this.shutdown) {
-         this.managedBlock(() -> {
-            return this.shutdown;
-         });
-      }
+    private void run()
+    {
+        while (!this.stopped)
+        {
+            this.driveUntil(() ->
+            {
+                return this.stopped;
+            });
+        }
+    }
 
-   }
+    protected void threadYieldPark()
+    {
+        LockSupport.park("waiting for tasks");
+    }
 
-   protected void waitForTasks() {
-      LockSupport.park("waiting for tasks");
-   }
+    public void restart()
+    {
+        this.stopped = true;
+        this.executionThread.interrupt();
 
-   public void flush() {
-      this.shutdown = true;
-      this.thread.interrupt();
+        try
+        {
+            this.executionThread.join();
+        }
+        catch (InterruptedException interruptedexception)
+        {
+            Thread.currentThread().interrupt();
+        }
 
-      try {
-         this.thread.join();
-      } catch (InterruptedException interruptedexception) {
-         Thread.currentThread().interrupt();
-      }
-
-      this.dropAllTasks();
-      this.shutdown = false;
-      this.thread = this.createThread();
-   }
+        this.dropTasks();
+        this.stopped = false;
+        this.executionThread = this.createExecutionThread();
+    }
 }

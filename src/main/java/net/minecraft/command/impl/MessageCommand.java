@@ -16,35 +16,46 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class MessageCommand {
-   public static void register(CommandDispatcher<CommandSource> p_198537_0_) {
-      LiteralCommandNode<CommandSource> literalcommandnode = p_198537_0_.register(Commands.literal("msg").then(Commands.argument("targets", EntityArgument.players()).then(Commands.argument("message", MessageArgument.message()).executes((p_198539_0_) -> {
-         return sendMessage(p_198539_0_.getSource(), EntityArgument.getPlayers(p_198539_0_, "targets"), MessageArgument.getMessage(p_198539_0_, "message"));
-      }))));
-      p_198537_0_.register(Commands.literal("tell").redirect(literalcommandnode));
-      p_198537_0_.register(Commands.literal("w").redirect(literalcommandnode));
-   }
+public class MessageCommand
+{
+    public static void register(CommandDispatcher<CommandSource> dispatcher)
+    {
+        LiteralCommandNode<CommandSource> literalcommandnode = dispatcher.register(Commands.literal("msg").then(Commands.argument("targets", EntityArgument.players()).then(Commands.argument("message", MessageArgument.message()).executes((p_198539_0_) ->
+        {
+            return sendPrivateMessage(p_198539_0_.getSource(), EntityArgument.getPlayers(p_198539_0_, "targets"), MessageArgument.getMessage(p_198539_0_, "message"));
+        }))));
+        dispatcher.register(Commands.literal("tell").redirect(literalcommandnode));
+        dispatcher.register(Commands.literal("w").redirect(literalcommandnode));
+    }
 
-   private static int sendMessage(CommandSource p_198538_0_, Collection<ServerPlayerEntity> p_198538_1_, ITextComponent p_198538_2_) {
-      UUID uuid = p_198538_0_.getEntity() == null ? Util.NIL_UUID : p_198538_0_.getEntity().getUUID();
-      Entity entity = p_198538_0_.getEntity();
-      Consumer<ITextComponent> consumer;
-      if (entity instanceof ServerPlayerEntity) {
-         ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entity;
-         consumer = (p_244374_2_) -> {
-            serverplayerentity.sendMessage((new TranslationTextComponent("commands.message.display.outgoing", p_244374_2_, p_198538_2_)).withStyle(new TextFormatting[]{TextFormatting.GRAY, TextFormatting.ITALIC}), serverplayerentity.getUUID());
-         };
-      } else {
-         consumer = (p_244375_2_) -> {
-            p_198538_0_.sendSuccess((new TranslationTextComponent("commands.message.display.outgoing", p_244375_2_, p_198538_2_)).withStyle(new TextFormatting[]{TextFormatting.GRAY, TextFormatting.ITALIC}), false);
-         };
-      }
+    private static int sendPrivateMessage(CommandSource source, Collection<ServerPlayerEntity> recipients, ITextComponent message)
+    {
+        UUID uuid = source.getEntity() == null ? Util.DUMMY_UUID : source.getEntity().getUniqueID();
+        Entity entity = source.getEntity();
+        Consumer<ITextComponent> consumer;
 
-      for(ServerPlayerEntity serverplayerentity1 : p_198538_1_) {
-         consumer.accept(serverplayerentity1.getDisplayName());
-         serverplayerentity1.sendMessage((new TranslationTextComponent("commands.message.display.incoming", p_198538_0_.getDisplayName(), p_198538_2_)).withStyle(new TextFormatting[]{TextFormatting.GRAY, TextFormatting.ITALIC}), uuid);
-      }
+        if (entity instanceof ServerPlayerEntity)
+        {
+            ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entity;
+            consumer = (p_244374_2_) ->
+            {
+                serverplayerentity.sendMessage((new TranslationTextComponent("commands.message.display.outgoing", p_244374_2_, message)).mergeStyle(new TextFormatting[]{TextFormatting.GRAY, TextFormatting.ITALIC}), serverplayerentity.getUniqueID());
+            };
+        }
+        else
+        {
+            consumer = (p_244375_2_) ->
+            {
+                source.sendFeedback((new TranslationTextComponent("commands.message.display.outgoing", p_244375_2_, message)).mergeStyle(new TextFormatting[]{TextFormatting.GRAY, TextFormatting.ITALIC}), false);
+            };
+        }
 
-      return p_198538_1_.size();
-   }
+        for (ServerPlayerEntity serverplayerentity1 : recipients)
+        {
+            consumer.accept(serverplayerentity1.getDisplayName());
+            serverplayerentity1.sendMessage((new TranslationTextComponent("commands.message.display.incoming", source.getDisplayName(), message)).mergeStyle(new TextFormatting[] {TextFormatting.GRAY, TextFormatting.ITALIC}), uuid);
+        }
+
+        return recipients.size();
+    }
 }

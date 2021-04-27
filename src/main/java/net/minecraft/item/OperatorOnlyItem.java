@@ -5,14 +5,17 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 
-public class OperatorOnlyItem extends BlockItem {
-   public OperatorOnlyItem(Block p_i48491_1_, Item.Properties p_i48491_2_) {
-      super(p_i48491_1_, p_i48491_2_);
-   }
+public class OperatorOnlyItem extends BlockItem
+{
+    public OperatorOnlyItem(Block blockIn, Item.Properties builder)
+    {
+        super(blockIn, builder);
+    }
 
-   @Nullable
-   protected BlockState getPlacementState(BlockItemUseContext p_195945_1_) {
-      PlayerEntity playerentity = p_195945_1_.getPlayer();
-      return playerentity != null && !playerentity.canUseGameMasterBlocks() ? null : super.getPlacementState(p_195945_1_);
-   }
+    @Nullable
+    protected BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        PlayerEntity playerentity = context.getPlayer();
+        return playerentity != null && !playerentity.canUseCommandBlock() ? null : super.getStateForPlacement(context);
+    }
 }

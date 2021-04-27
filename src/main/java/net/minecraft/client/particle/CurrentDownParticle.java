@@ -5,62 +5,71 @@ import net.minecraft.particles.BasicParticleType;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class CurrentDownParticle extends SpriteTexturedParticle {
-   private float angle;
+public class CurrentDownParticle extends SpriteTexturedParticle
+{
+    private float motionAngle;
 
-   private CurrentDownParticle(ClientWorld p_i232456_1_, double p_i232456_2_, double p_i232456_4_, double p_i232456_6_) {
-      super(p_i232456_1_, p_i232456_2_, p_i232456_4_, p_i232456_6_);
-      this.lifetime = (int)(Math.random() * 60.0D) + 30;
-      this.hasPhysics = false;
-      this.xd = 0.0D;
-      this.yd = -0.05D;
-      this.zd = 0.0D;
-      this.setSize(0.02F, 0.02F);
-      this.quadSize *= this.random.nextFloat() * 0.6F + 0.2F;
-      this.gravity = 0.002F;
-   }
+    private CurrentDownParticle(ClientWorld world, double x, double y, double z)
+    {
+        super(world, x, y, z);
+        this.maxAge = (int)(Math.random() * 60.0D) + 30;
+        this.canCollide = false;
+        this.motionX = 0.0D;
+        this.motionY = -0.05D;
+        this.motionZ = 0.0D;
+        this.setSize(0.02F, 0.02F);
+        this.particleScale *= this.rand.nextFloat() * 0.6F + 0.2F;
+        this.particleGravity = 0.002F;
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         float f = 0.6F;
-         this.xd += (double)(0.6F * MathHelper.cos(this.angle));
-         this.zd += (double)(0.6F * MathHelper.sin(this.angle));
-         this.xd *= 0.07D;
-         this.zd *= 0.07D;
-         this.move(this.xd, this.yd, this.zd);
-         if (!this.level.getFluidState(new BlockPos(this.x, this.y, this.z)).is(FluidTags.WATER) || this.onGround) {
-            this.remove();
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-         this.angle = (float)((double)this.angle + 0.08D);
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            float f = 0.6F;
+            this.motionX += (double)(0.6F * MathHelper.cos(this.motionAngle));
+            this.motionZ += (double)(0.6F * MathHelper.sin(this.motionAngle));
+            this.motionX *= 0.07D;
+            this.motionZ *= 0.07D;
+            this.move(this.motionX, this.motionY, this.motionZ);
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+            if (!this.world.getFluidState(new BlockPos(this.posX, this.posY, this.posZ)).isTagged(FluidTags.WATER) || this.onGround)
+            {
+                this.setExpired();
+            }
 
-      public Factory(IAnimatedSprite p_i50972_1_) {
-         this.sprite = p_i50972_1_;
-      }
+            this.motionAngle = (float)((double)this.motionAngle + 0.08D);
+        }
+    }
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         CurrentDownParticle currentdownparticle = new CurrentDownParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_);
-         currentdownparticle.pickSprite(this.sprite);
-         return currentdownparticle;
-      }
-   }
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
+
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            CurrentDownParticle currentdownparticle = new CurrentDownParticle(worldIn, x, y, z);
+            currentdownparticle.selectSpriteRandomly(this.spriteSet);
+            return currentdownparticle;
+        }
+    }
 }

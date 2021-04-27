@@ -51,433 +51,563 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class LlamaEntity extends AbstractChestedHorseEntity implements IRangedAttackMob {
-   private static final Ingredient FOOD_ITEMS = Ingredient.of(Items.WHEAT, Blocks.HAY_BLOCK.asItem());
-   private static final DataParameter<Integer> DATA_STRENGTH_ID = EntityDataManager.defineId(LlamaEntity.class, DataSerializers.INT);
-   private static final DataParameter<Integer> DATA_SWAG_ID = EntityDataManager.defineId(LlamaEntity.class, DataSerializers.INT);
-   private static final DataParameter<Integer> DATA_VARIANT_ID = EntityDataManager.defineId(LlamaEntity.class, DataSerializers.INT);
-   private boolean didSpit;
-   @Nullable
-   private LlamaEntity caravanHead;
-   @Nullable
-   private LlamaEntity caravanTail;
+public class LlamaEntity extends AbstractChestedHorseEntity implements IRangedAttackMob
+{
+    private static final Ingredient field_234243_bC_ = Ingredient.fromItems(Items.WHEAT, Blocks.HAY_BLOCK.asItem());
+    private static final DataParameter<Integer> DATA_STRENGTH_ID = EntityDataManager.createKey(LlamaEntity.class, DataSerializers.VARINT);
+    private static final DataParameter<Integer> DATA_COLOR_ID = EntityDataManager.createKey(LlamaEntity.class, DataSerializers.VARINT);
+    private static final DataParameter<Integer> DATA_VARIANT_ID = EntityDataManager.createKey(LlamaEntity.class, DataSerializers.VARINT);
+    private boolean didSpit;
+    @Nullable
+    private LlamaEntity caravanHead;
+    @Nullable
+    private LlamaEntity caravanTail;
 
-   public LlamaEntity(EntityType<? extends LlamaEntity> p_i50237_1_, World p_i50237_2_) {
-      super(p_i50237_1_, p_i50237_2_);
-   }
+    public LlamaEntity(EntityType <? extends LlamaEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isTraderLlama() {
-      return false;
-   }
+    public boolean isTraderLlama()
+    {
+        return false;
+    }
 
-   private void setStrength(int p_190706_1_) {
-      this.entityData.set(DATA_STRENGTH_ID, Math.max(1, Math.min(5, p_190706_1_)));
-   }
+    private void setStrength(int strengthIn)
+    {
+        this.dataManager.set(DATA_STRENGTH_ID, Math.max(1, Math.min(5, strengthIn)));
+    }
 
-   private void setRandomStrength() {
-      int i = this.random.nextFloat() < 0.04F ? 5 : 3;
-      this.setStrength(1 + this.random.nextInt(i));
-   }
+    private void setRandomStrength()
+    {
+        int i = this.rand.nextFloat() < 0.04F ? 5 : 3;
+        this.setStrength(1 + this.rand.nextInt(i));
+    }
 
-   public int getStrength() {
-      return this.entityData.get(DATA_STRENGTH_ID);
-   }
+    public int getStrength()
+    {
+        return this.dataManager.get(DATA_STRENGTH_ID);
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putInt("Variant", this.getVariant());
-      p_213281_1_.putInt("Strength", this.getStrength());
-      if (!this.inventory.getItem(1).isEmpty()) {
-         p_213281_1_.put("DecorItem", this.inventory.getItem(1).save(new CompoundNBT()));
-      }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putInt("Variant", this.getVariant());
+        compound.putInt("Strength", this.getStrength());
 
-   }
+        if (!this.horseChest.getStackInSlot(1).isEmpty())
+        {
+            compound.put("DecorItem", this.horseChest.getStackInSlot(1).write(new CompoundNBT()));
+        }
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      this.setStrength(p_70037_1_.getInt("Strength"));
-      super.readAdditionalSaveData(p_70037_1_);
-      this.setVariant(p_70037_1_.getInt("Variant"));
-      if (p_70037_1_.contains("DecorItem", 10)) {
-         this.inventory.setItem(1, ItemStack.of(p_70037_1_.getCompound("DecorItem")));
-      }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        this.setStrength(compound.getInt("Strength"));
+        super.readAdditional(compound);
+        this.setVariant(compound.getInt("Variant"));
 
-      this.updateContainerEquipment();
-   }
+        if (compound.contains("DecorItem", 10))
+        {
+            this.horseChest.setInventorySlotContents(1, ItemStack.read(compound.getCompound("DecorItem")));
+        }
 
-   protected void registerGoals() {
-      this.goalSelector.addGoal(0, new SwimGoal(this));
-      this.goalSelector.addGoal(1, new RunAroundLikeCrazyGoal(this, 1.2D));
-      this.goalSelector.addGoal(2, new LlamaFollowCaravanGoal(this, (double)2.1F));
-      this.goalSelector.addGoal(3, new RangedAttackGoal(this, 1.25D, 40, 20.0F));
-      this.goalSelector.addGoal(3, new PanicGoal(this, 1.2D));
-      this.goalSelector.addGoal(4, new BreedGoal(this, 1.0D));
-      this.goalSelector.addGoal(5, new FollowParentGoal(this, 1.0D));
-      this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 0.7D));
-      this.goalSelector.addGoal(7, new LookAtGoal(this, PlayerEntity.class, 6.0F));
-      this.goalSelector.addGoal(8, new LookRandomlyGoal(this));
-      this.targetSelector.addGoal(1, new LlamaEntity.HurtByTargetGoal(this));
-      this.targetSelector.addGoal(2, new LlamaEntity.DefendTargetGoal(this));
-   }
+        this.func_230275_fc_();
+    }
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return createBaseChestedHorseAttributes().add(Attributes.FOLLOW_RANGE, 40.0D);
-   }
+    protected void registerGoals()
+    {
+        this.goalSelector.addGoal(0, new SwimGoal(this));
+        this.goalSelector.addGoal(1, new RunAroundLikeCrazyGoal(this, 1.2D));
+        this.goalSelector.addGoal(2, new LlamaFollowCaravanGoal(this, (double)2.1F));
+        this.goalSelector.addGoal(3, new RangedAttackGoal(this, 1.25D, 40, 20.0F));
+        this.goalSelector.addGoal(3, new PanicGoal(this, 1.2D));
+        this.goalSelector.addGoal(4, new BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(5, new FollowParentGoal(this, 1.0D));
+        this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 0.7D));
+        this.goalSelector.addGoal(7, new LookAtGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.addGoal(8, new LookRandomlyGoal(this));
+        this.targetSelector.addGoal(1, new LlamaEntity.HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new LlamaEntity.DefendTargetGoal(this));
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_STRENGTH_ID, 0);
-      this.entityData.define(DATA_SWAG_ID, -1);
-      this.entityData.define(DATA_VARIANT_ID, 0);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234244_fu_()
+    {
+        return func_234234_eJ_().createMutableAttribute(Attributes.FOLLOW_RANGE, 40.0D);
+    }
 
-   public int getVariant() {
-      return MathHelper.clamp(this.entityData.get(DATA_VARIANT_ID), 0, 3);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(DATA_STRENGTH_ID, 0);
+        this.dataManager.register(DATA_COLOR_ID, -1);
+        this.dataManager.register(DATA_VARIANT_ID, 0);
+    }
 
-   public void setVariant(int p_190710_1_) {
-      this.entityData.set(DATA_VARIANT_ID, p_190710_1_);
-   }
+    public int getVariant()
+    {
+        return MathHelper.clamp(this.dataManager.get(DATA_VARIANT_ID), 0, 3);
+    }
 
-   protected int getInventorySize() {
-      return this.hasChest() ? 2 + 3 * this.getInventoryColumns() : super.getInventorySize();
-   }
+    public void setVariant(int variantIn)
+    {
+        this.dataManager.set(DATA_VARIANT_ID, variantIn);
+    }
 
-   public void positionRider(Entity p_184232_1_) {
-      if (this.hasPassenger(p_184232_1_)) {
-         float f = MathHelper.cos(this.yBodyRot * ((float)Math.PI / 180F));
-         float f1 = MathHelper.sin(this.yBodyRot * ((float)Math.PI / 180F));
-         float f2 = 0.3F;
-         p_184232_1_.setPos(this.getX() + (double)(0.3F * f1), this.getY() + this.getPassengersRidingOffset() + p_184232_1_.getMyRidingOffset(), this.getZ() - (double)(0.3F * f));
-      }
-   }
+    protected int getInventorySize()
+    {
+        return this.hasChest() ? 2 + 3 * this.getInventoryColumns() : super.getInventorySize();
+    }
 
-   public double getPassengersRidingOffset() {
-      return (double)this.getBbHeight() * 0.67D;
-   }
+    public void updatePassenger(Entity passenger)
+    {
+        if (this.isPassenger(passenger))
+        {
+            float f = MathHelper.cos(this.renderYawOffset * ((float)Math.PI / 180F));
+            float f1 = MathHelper.sin(this.renderYawOffset * ((float)Math.PI / 180F));
+            float f2 = 0.3F;
+            passenger.setPosition(this.getPosX() + (double)(0.3F * f1), this.getPosY() + this.getMountedYOffset() + passenger.getYOffset(), this.getPosZ() - (double)(0.3F * f));
+        }
+    }
 
-   public boolean canBeControlledByRider() {
-      return false;
-   }
+    /**
+     * Returns the Y offset from the entity's position for any entity riding this one.
+     */
+    public double getMountedYOffset()
+    {
+        return (double)this.getHeight() * 0.67D;
+    }
 
-   public boolean isFood(ItemStack p_70877_1_) {
-      return FOOD_ITEMS.test(p_70877_1_);
-   }
+    /**
+     * returns true if all the conditions for steering the entity are met. For pigs, this is true if it is being ridden
+     * by a player and the player is holding a carrot-on-a-stick
+     */
+    public boolean canBeSteered()
+    {
+        return false;
+    }
 
-   protected boolean handleEating(PlayerEntity p_190678_1_, ItemStack p_190678_2_) {
-      int i = 0;
-      int j = 0;
-      float f = 0.0F;
-      boolean flag = false;
-      Item item = p_190678_2_.getItem();
-      if (item == Items.WHEAT) {
-         i = 10;
-         j = 3;
-         f = 2.0F;
-      } else if (item == Blocks.HAY_BLOCK.asItem()) {
-         i = 90;
-         j = 6;
-         f = 10.0F;
-         if (this.isTamed() && this.getAge() == 0 && this.canFallInLove()) {
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on
+     * the animal type)
+     */
+    public boolean isBreedingItem(ItemStack stack)
+    {
+        return field_234243_bC_.test(stack);
+    }
+
+    protected boolean handleEating(PlayerEntity player, ItemStack stack)
+    {
+        int i = 0;
+        int j = 0;
+        float f = 0.0F;
+        boolean flag = false;
+        Item item = stack.getItem();
+
+        if (item == Items.WHEAT)
+        {
+            i = 10;
+            j = 3;
+            f = 2.0F;
+        }
+        else if (item == Blocks.HAY_BLOCK.asItem())
+        {
+            i = 90;
+            j = 6;
+            f = 10.0F;
+
+            if (this.isTame() && this.getGrowingAge() == 0 && this.canFallInLove())
+            {
+                flag = true;
+                this.setInLove(player);
+            }
+        }
+
+        if (this.getHealth() < this.getMaxHealth() && f > 0.0F)
+        {
+            this.heal(f);
             flag = true;
-            this.setInLove(p_190678_1_);
-         }
-      }
+        }
 
-      if (this.getHealth() < this.getMaxHealth() && f > 0.0F) {
-         this.heal(f);
-         flag = true;
-      }
+        if (this.isChild() && i > 0)
+        {
+            this.world.addParticle(ParticleTypes.HAPPY_VILLAGER, this.getPosXRandom(1.0D), this.getPosYRandom() + 0.5D, this.getPosZRandom(1.0D), 0.0D, 0.0D, 0.0D);
 
-      if (this.isBaby() && i > 0) {
-         this.level.addParticle(ParticleTypes.HAPPY_VILLAGER, this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), 0.0D, 0.0D, 0.0D);
-         if (!this.level.isClientSide) {
-            this.ageUp(i);
-         }
-
-         flag = true;
-      }
-
-      if (j > 0 && (flag || !this.isTamed()) && this.getTemper() < this.getMaxTemper()) {
-         flag = true;
-         if (!this.level.isClientSide) {
-            this.modifyTemper(j);
-         }
-      }
-
-      if (flag && !this.isSilent()) {
-         SoundEvent soundevent = this.getEatingSound();
-         if (soundevent != null) {
-            this.level.playSound((PlayerEntity)null, this.getX(), this.getY(), this.getZ(), this.getEatingSound(), this.getSoundSource(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-         }
-      }
-
-      return flag;
-   }
-
-   protected boolean isImmobile() {
-      return this.isDeadOrDying() || this.isEating();
-   }
-
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      this.setRandomStrength();
-      int i;
-      if (p_213386_4_ instanceof LlamaEntity.LlamaData) {
-         i = ((LlamaEntity.LlamaData)p_213386_4_).variant;
-      } else {
-         i = this.random.nextInt(4);
-         p_213386_4_ = new LlamaEntity.LlamaData(i);
-      }
-
-      this.setVariant(i);
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
-
-   protected SoundEvent getAngrySound() {
-      return SoundEvents.LLAMA_ANGRY;
-   }
-
-   protected SoundEvent getAmbientSound() {
-      return SoundEvents.LLAMA_AMBIENT;
-   }
-
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.LLAMA_HURT;
-   }
-
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.LLAMA_DEATH;
-   }
-
-   @Nullable
-   protected SoundEvent getEatingSound() {
-      return SoundEvents.LLAMA_EAT;
-   }
-
-   protected void playStepSound(BlockPos p_180429_1_, BlockState p_180429_2_) {
-      this.playSound(SoundEvents.LLAMA_STEP, 0.15F, 1.0F);
-   }
-
-   protected void playChestEquipsSound() {
-      this.playSound(SoundEvents.LLAMA_CHEST, 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
-   }
-
-   public void makeMad() {
-      SoundEvent soundevent = this.getAngrySound();
-      if (soundevent != null) {
-         this.playSound(soundevent, this.getSoundVolume(), this.getVoicePitch());
-      }
-
-   }
-
-   public int getInventoryColumns() {
-      return this.getStrength();
-   }
-
-   public boolean canWearArmor() {
-      return true;
-   }
-
-   public boolean isWearingArmor() {
-      return !this.inventory.getItem(1).isEmpty();
-   }
-
-   public boolean isArmor(ItemStack p_190682_1_) {
-      Item item = p_190682_1_.getItem();
-      return ItemTags.CARPETS.contains(item);
-   }
-
-   public boolean isSaddleable() {
-      return false;
-   }
-
-   public void containerChanged(IInventory p_76316_1_) {
-      DyeColor dyecolor = this.getSwag();
-      super.containerChanged(p_76316_1_);
-      DyeColor dyecolor1 = this.getSwag();
-      if (this.tickCount > 20 && dyecolor1 != null && dyecolor1 != dyecolor) {
-         this.playSound(SoundEvents.LLAMA_SWAG, 0.5F, 1.0F);
-      }
-
-   }
-
-   protected void updateContainerEquipment() {
-      if (!this.level.isClientSide) {
-         super.updateContainerEquipment();
-         this.setSwag(getDyeColor(this.inventory.getItem(1)));
-      }
-   }
-
-   private void setSwag(@Nullable DyeColor p_190711_1_) {
-      this.entityData.set(DATA_SWAG_ID, p_190711_1_ == null ? -1 : p_190711_1_.getId());
-   }
-
-   @Nullable
-   private static DyeColor getDyeColor(ItemStack p_195403_0_) {
-      Block block = Block.byItem(p_195403_0_.getItem());
-      return block instanceof CarpetBlock ? ((CarpetBlock)block).getColor() : null;
-   }
-
-   @Nullable
-   public DyeColor getSwag() {
-      int i = this.entityData.get(DATA_SWAG_ID);
-      return i == -1 ? null : DyeColor.byId(i);
-   }
-
-   public int getMaxTemper() {
-      return 30;
-   }
-
-   public boolean canMate(AnimalEntity p_70878_1_) {
-      return p_70878_1_ != this && p_70878_1_ instanceof LlamaEntity && this.canParent() && ((LlamaEntity)p_70878_1_).canParent();
-   }
-
-   public LlamaEntity getBreedOffspring(ServerWorld p_241840_1_, AgeableEntity p_241840_2_) {
-      LlamaEntity llamaentity = this.makeBabyLlama();
-      this.setOffspringAttributes(p_241840_2_, llamaentity);
-      LlamaEntity llamaentity1 = (LlamaEntity)p_241840_2_;
-      int i = this.random.nextInt(Math.max(this.getStrength(), llamaentity1.getStrength())) + 1;
-      if (this.random.nextFloat() < 0.03F) {
-         ++i;
-      }
-
-      llamaentity.setStrength(i);
-      llamaentity.setVariant(this.random.nextBoolean() ? this.getVariant() : llamaentity1.getVariant());
-      return llamaentity;
-   }
-
-   protected LlamaEntity makeBabyLlama() {
-      return EntityType.LLAMA.create(this.level);
-   }
-
-   private void spit(LivingEntity p_190713_1_) {
-      LlamaSpitEntity llamaspitentity = new LlamaSpitEntity(this.level, this);
-      double d0 = p_190713_1_.getX() - this.getX();
-      double d1 = p_190713_1_.getY(0.3333333333333333D) - llamaspitentity.getY();
-      double d2 = p_190713_1_.getZ() - this.getZ();
-      float f = MathHelper.sqrt(d0 * d0 + d2 * d2) * 0.2F;
-      llamaspitentity.shoot(d0, d1 + (double)f, d2, 1.5F, 10.0F);
-      if (!this.isSilent()) {
-         this.level.playSound((PlayerEntity)null, this.getX(), this.getY(), this.getZ(), SoundEvents.LLAMA_SPIT, this.getSoundSource(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
-      }
-
-      this.level.addFreshEntity(llamaspitentity);
-      this.didSpit = true;
-   }
-
-   private void setDidSpit(boolean p_190714_1_) {
-      this.didSpit = p_190714_1_;
-   }
-
-   public boolean causeFallDamage(float p_225503_1_, float p_225503_2_) {
-      int i = this.calculateFallDamage(p_225503_1_, p_225503_2_);
-      if (i <= 0) {
-         return false;
-      } else {
-         if (p_225503_1_ >= 6.0F) {
-            this.hurt(DamageSource.FALL, (float)i);
-            if (this.isVehicle()) {
-               for(Entity entity : this.getIndirectPassengers()) {
-                  entity.hurt(DamageSource.FALL, (float)i);
-               }
+            if (!this.world.isRemote)
+            {
+                this.addGrowth(i);
             }
-         }
 
-         this.playBlockFallSound();
-         return true;
-      }
-   }
+            flag = true;
+        }
 
-   public void leaveCaravan() {
-      if (this.caravanHead != null) {
-         this.caravanHead.caravanTail = null;
-      }
+        if (j > 0 && (flag || !this.isTame()) && this.getTemper() < this.getMaxTemper())
+        {
+            flag = true;
 
-      this.caravanHead = null;
-   }
-
-   public void joinCaravan(LlamaEntity p_190715_1_) {
-      this.caravanHead = p_190715_1_;
-      this.caravanHead.caravanTail = this;
-   }
-
-   public boolean hasCaravanTail() {
-      return this.caravanTail != null;
-   }
-
-   public boolean inCaravan() {
-      return this.caravanHead != null;
-   }
-
-   @Nullable
-   public LlamaEntity getCaravanHead() {
-      return this.caravanHead;
-   }
-
-   protected double followLeashSpeed() {
-      return 2.0D;
-   }
-
-   protected void followMommy() {
-      if (!this.inCaravan() && this.isBaby()) {
-         super.followMommy();
-      }
-
-   }
-
-   public boolean canEatGrass() {
-      return false;
-   }
-
-   public void performRangedAttack(LivingEntity p_82196_1_, float p_82196_2_) {
-      this.spit(p_82196_1_);
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public Vector3d getLeashOffset() {
-      return new Vector3d(0.0D, 0.75D * (double)this.getEyeHeight(), (double)this.getBbWidth() * 0.5D);
-   }
-
-   static class DefendTargetGoal extends NearestAttackableTargetGoal<WolfEntity> {
-      public DefendTargetGoal(LlamaEntity p_i47285_1_) {
-         super(p_i47285_1_, WolfEntity.class, 16, false, true, (p_220789_0_) -> {
-            return !((WolfEntity)p_220789_0_).isTame();
-         });
-      }
-
-      protected double getFollowDistance() {
-         return super.getFollowDistance() * 0.25D;
-      }
-   }
-
-   static class HurtByTargetGoal extends net.minecraft.entity.ai.goal.HurtByTargetGoal {
-      public HurtByTargetGoal(LlamaEntity p_i47282_1_) {
-         super(p_i47282_1_);
-      }
-
-      public boolean canContinueToUse() {
-         if (this.mob instanceof LlamaEntity) {
-            LlamaEntity llamaentity = (LlamaEntity)this.mob;
-            if (llamaentity.didSpit) {
-               llamaentity.setDidSpit(false);
-               return false;
+            if (!this.world.isRemote)
+            {
+                this.increaseTemper(j);
             }
-         }
+        }
 
-         return super.canContinueToUse();
-      }
-   }
+        if (flag && !this.isSilent())
+        {
+            SoundEvent soundevent = this.func_230274_fe_();
 
-   static class LlamaData extends AgeableEntity.AgeableData {
-      public final int variant;
+            if (soundevent != null)
+            {
+                this.world.playSound((PlayerEntity)null, this.getPosX(), this.getPosY(), this.getPosZ(), this.func_230274_fe_(), this.getSoundCategory(), 1.0F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
+            }
+        }
 
-      private LlamaData(int p_i47283_1_) {
-         super(true);
-         this.variant = p_i47283_1_;
-      }
-   }
+        return flag;
+    }
+
+    /**
+     * Dead and sleeping entities cannot move
+     */
+    protected boolean isMovementBlocked()
+    {
+        return this.getShouldBeDead() || this.isEatingHaystack();
+    }
+
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        this.setRandomStrength();
+        int i;
+
+        if (spawnDataIn instanceof LlamaEntity.LlamaData)
+        {
+            i = ((LlamaEntity.LlamaData)spawnDataIn).variant;
+        }
+        else
+        {
+            i = this.rand.nextInt(4);
+            spawnDataIn = new LlamaEntity.LlamaData(i);
+        }
+
+        this.setVariant(i);
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
+
+    protected SoundEvent getAngrySound()
+    {
+        return SoundEvents.ENTITY_LLAMA_ANGRY;
+    }
+
+    protected SoundEvent getAmbientSound()
+    {
+        return SoundEvents.ENTITY_LLAMA_AMBIENT;
+    }
+
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_LLAMA_HURT;
+    }
+
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_LLAMA_DEATH;
+    }
+
+    @Nullable
+    protected SoundEvent func_230274_fe_()
+    {
+        return SoundEvents.ENTITY_LLAMA_EAT;
+    }
+
+    protected void playStepSound(BlockPos pos, BlockState blockIn)
+    {
+        this.playSound(SoundEvents.ENTITY_LLAMA_STEP, 0.15F, 1.0F);
+    }
+
+    protected void playChestEquipSound()
+    {
+        this.playSound(SoundEvents.ENTITY_LLAMA_CHEST, 1.0F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+    }
+
+    public void makeMad()
+    {
+        SoundEvent soundevent = this.getAngrySound();
+
+        if (soundevent != null)
+        {
+            this.playSound(soundevent, this.getSoundVolume(), this.getSoundPitch());
+        }
+    }
+
+    public int getInventoryColumns()
+    {
+        return this.getStrength();
+    }
+
+    public boolean func_230276_fq_()
+    {
+        return true;
+    }
+
+    public boolean func_230277_fr_()
+    {
+        return !this.horseChest.getStackInSlot(1).isEmpty();
+    }
+
+    public boolean isArmor(ItemStack stack)
+    {
+        Item item = stack.getItem();
+        return ItemTags.CARPETS.contains(item);
+    }
+
+    public boolean func_230264_L__()
+    {
+        return false;
+    }
+
+    /**
+     * Called by InventoryBasic.onInventoryChanged() on a array that is never filled.
+     */
+    public void onInventoryChanged(IInventory invBasic)
+    {
+        DyeColor dyecolor = this.getColor();
+        super.onInventoryChanged(invBasic);
+        DyeColor dyecolor1 = this.getColor();
+
+        if (this.ticksExisted > 20 && dyecolor1 != null && dyecolor1 != dyecolor)
+        {
+            this.playSound(SoundEvents.ENTITY_LLAMA_SWAG, 0.5F, 1.0F);
+        }
+    }
+
+    protected void func_230275_fc_()
+    {
+        if (!this.world.isRemote)
+        {
+            super.func_230275_fc_();
+            this.setColor(getCarpetColor(this.horseChest.getStackInSlot(1)));
+        }
+    }
+
+    private void setColor(@Nullable DyeColor color)
+    {
+        this.dataManager.set(DATA_COLOR_ID, color == null ? -1 : color.getId());
+    }
+
+    @Nullable
+    private static DyeColor getCarpetColor(ItemStack p_195403_0_)
+    {
+        Block block = Block.getBlockFromItem(p_195403_0_.getItem());
+        return block instanceof CarpetBlock ? ((CarpetBlock)block).getColor() : null;
+    }
+
+    @Nullable
+    public DyeColor getColor()
+    {
+        int i = this.dataManager.get(DATA_COLOR_ID);
+        return i == -1 ? null : DyeColor.byId(i);
+    }
+
+    public int getMaxTemper()
+    {
+        return 30;
+    }
+
+    /**
+     * Returns true if the mob is currently able to mate with the specified mob.
+     */
+    public boolean canMateWith(AnimalEntity otherAnimal)
+    {
+        return otherAnimal != this && otherAnimal instanceof LlamaEntity && this.canMate() && ((LlamaEntity)otherAnimal).canMate();
+    }
+
+    public LlamaEntity func_241840_a(ServerWorld p_241840_1_, AgeableEntity p_241840_2_)
+    {
+        LlamaEntity llamaentity = this.createChild();
+        this.setOffspringAttributes(p_241840_2_, llamaentity);
+        LlamaEntity llamaentity1 = (LlamaEntity)p_241840_2_;
+        int i = this.rand.nextInt(Math.max(this.getStrength(), llamaentity1.getStrength())) + 1;
+
+        if (this.rand.nextFloat() < 0.03F)
+        {
+            ++i;
+        }
+
+        llamaentity.setStrength(i);
+        llamaentity.setVariant(this.rand.nextBoolean() ? this.getVariant() : llamaentity1.getVariant());
+        return llamaentity;
+    }
+
+    protected LlamaEntity createChild()
+    {
+        return EntityType.LLAMA.create(this.world);
+    }
+
+    private void spit(LivingEntity target)
+    {
+        LlamaSpitEntity llamaspitentity = new LlamaSpitEntity(this.world, this);
+        double d0 = target.getPosX() - this.getPosX();
+        double d1 = target.getPosYHeight(0.3333333333333333D) - llamaspitentity.getPosY();
+        double d2 = target.getPosZ() - this.getPosZ();
+        float f = MathHelper.sqrt(d0 * d0 + d2 * d2) * 0.2F;
+        llamaspitentity.shoot(d0, d1 + (double)f, d2, 1.5F, 10.0F);
+
+        if (!this.isSilent())
+        {
+            this.world.playSound((PlayerEntity)null, this.getPosX(), this.getPosY(), this.getPosZ(), SoundEvents.ENTITY_LLAMA_SPIT, this.getSoundCategory(), 1.0F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
+        }
+
+        this.world.addEntity(llamaspitentity);
+        this.didSpit = true;
+    }
+
+    private void setDidSpit(boolean didSpitIn)
+    {
+        this.didSpit = didSpitIn;
+    }
+
+    public boolean onLivingFall(float distance, float damageMultiplier)
+    {
+        int i = this.calculateFallDamage(distance, damageMultiplier);
+
+        if (i <= 0)
+        {
+            return false;
+        }
+        else
+        {
+            if (distance >= 6.0F)
+            {
+                this.attackEntityFrom(DamageSource.FALL, (float)i);
+
+                if (this.isBeingRidden())
+                {
+                    for (Entity entity : this.getRecursivePassengers())
+                    {
+                        entity.attackEntityFrom(DamageSource.FALL, (float)i);
+                    }
+                }
+            }
+
+            this.playFallSound();
+            return true;
+        }
+    }
+
+    public void leaveCaravan()
+    {
+        if (this.caravanHead != null)
+        {
+            this.caravanHead.caravanTail = null;
+        }
+
+        this.caravanHead = null;
+    }
+
+    public void joinCaravan(LlamaEntity caravanHeadIn)
+    {
+        this.caravanHead = caravanHeadIn;
+        this.caravanHead.caravanTail = this;
+    }
+
+    public boolean hasCaravanTrail()
+    {
+        return this.caravanTail != null;
+    }
+
+    public boolean inCaravan()
+    {
+        return this.caravanHead != null;
+    }
+
+    @Nullable
+    public LlamaEntity getCaravanHead()
+    {
+        return this.caravanHead;
+    }
+
+    protected double followLeashSpeed()
+    {
+        return 2.0D;
+    }
+
+    protected void followMother()
+    {
+        if (!this.inCaravan() && this.isChild())
+        {
+            super.followMother();
+        }
+    }
+
+    public boolean canEatGrass()
+    {
+        return false;
+    }
+
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
+    public void attackEntityWithRangedAttack(LivingEntity target, float distanceFactor)
+    {
+        this.spit(target);
+    }
+
+    public Vector3d func_241205_ce_()
+    {
+        return new Vector3d(0.0D, 0.75D * (double)this.getEyeHeight(), (double)this.getWidth() * 0.5D);
+    }
+
+    static class DefendTargetGoal extends NearestAttackableTargetGoal<WolfEntity>
+    {
+        public DefendTargetGoal(LlamaEntity llama)
+        {
+            super(llama, WolfEntity.class, 16, false, true, (p_220789_0_) ->
+            {
+                return !((WolfEntity)p_220789_0_).isTamed();
+            });
+        }
+
+        protected double getTargetDistance()
+        {
+            return super.getTargetDistance() * 0.25D;
+        }
+    }
+
+    static class HurtByTargetGoal extends net.minecraft.entity.ai.goal.HurtByTargetGoal
+    {
+        public HurtByTargetGoal(LlamaEntity llama)
+        {
+            super(llama);
+        }
+
+        public boolean shouldContinueExecuting()
+        {
+            if (this.goalOwner instanceof LlamaEntity)
+            {
+                LlamaEntity llamaentity = (LlamaEntity)this.goalOwner;
+
+                if (llamaentity.didSpit)
+                {
+                    llamaentity.setDidSpit(false);
+                    return false;
+                }
+            }
+
+            return super.shouldContinueExecuting();
+        }
+    }
+
+    static class LlamaData extends AgeableEntity.AgeableData
+    {
+        public final int variant;
+
+        private LlamaData(int variantIn)
+        {
+            super(true);
+            this.variant = variantIn;
+        }
+    }
 }

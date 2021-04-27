@@ -10,34 +10,41 @@ import net.minecraft.item.ShootableItem;
 import net.minecraft.util.Hand;
 import net.minecraft.world.server.ServerWorld;
 
-public class AttackTargetTask extends Task<MobEntity> {
-   private final int cooldownBetweenAttacks;
+public class AttackTargetTask extends Task<MobEntity>
+{
+    private final int cooldown;
 
-   public AttackTargetTask(int p_i231523_1_) {
-      super(ImmutableMap.of(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED, MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleStatus.VALUE_ABSENT));
-      this.cooldownBetweenAttacks = p_i231523_1_;
-   }
+    public AttackTargetTask(int cooldown)
+    {
+        super(ImmutableMap.of(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED, MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleStatus.VALUE_ABSENT));
+        this.cooldown = cooldown;
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, MobEntity p_212832_2_) {
-      LivingEntity livingentity = this.getAttackTarget(p_212832_2_);
-      return !this.isHoldingUsableProjectileWeapon(p_212832_2_) && BrainUtil.canSee(p_212832_2_, livingentity) && BrainUtil.isWithinMeleeAttackRange(p_212832_2_, livingentity);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, MobEntity owner)
+    {
+        LivingEntity livingentity = this.getAttackTarget(owner);
+        return !this.isRanged(owner) && BrainUtil.isMobVisible(owner, livingentity) && BrainUtil.canAttackTarget(owner, livingentity);
+    }
 
-   private boolean isHoldingUsableProjectileWeapon(MobEntity p_233921_1_) {
-      return p_233921_1_.isHolding((p_233922_1_) -> {
-         return p_233922_1_ instanceof ShootableItem && p_233921_1_.canFireProjectileWeapon((ShootableItem)p_233922_1_);
-      });
-   }
+    private boolean isRanged(MobEntity mob)
+    {
+        return mob.func_233634_a_((item) ->
+        {
+            return item instanceof ShootableItem && mob.func_230280_a_((ShootableItem)item);
+        });
+    }
 
-   protected void start(ServerWorld p_212831_1_, MobEntity p_212831_2_, long p_212831_3_) {
-      LivingEntity livingentity = this.getAttackTarget(p_212831_2_);
-      BrainUtil.lookAtEntity(p_212831_2_, livingentity);
-      p_212831_2_.swing(Hand.MAIN_HAND);
-      p_212831_2_.doHurtTarget(livingentity);
-      p_212831_2_.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN, true, (long)this.cooldownBetweenAttacks);
-   }
+    protected void startExecuting(ServerWorld worldIn, MobEntity entityIn, long gameTimeIn)
+    {
+        LivingEntity livingentity = this.getAttackTarget(entityIn);
+        BrainUtil.lookAt(entityIn, livingentity);
+        entityIn.swingArm(Hand.MAIN_HAND);
+        entityIn.attackEntityAsMob(livingentity);
+        entityIn.getBrain().replaceMemory(MemoryModuleType.ATTACK_COOLING_DOWN, true, (long)this.cooldown);
+    }
 
-   private LivingEntity getAttackTarget(MobEntity p_233923_1_) {
-      return p_233923_1_.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).get();
-   }
+    private LivingEntity getAttackTarget(MobEntity mob)
+    {
+        return mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).get();
+    }
 }

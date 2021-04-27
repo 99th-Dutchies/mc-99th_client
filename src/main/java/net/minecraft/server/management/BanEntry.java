@@ -7,67 +7,81 @@ import java.util.Date;
 import javax.annotation.Nullable;
 import net.minecraft.util.text.ITextComponent;
 
-public abstract class BanEntry<T> extends UserListEntry<T> {
-   public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-   protected final Date created;
-   protected final String source;
-   protected final Date expires;
-   protected final String reason;
+public abstract class BanEntry<T> extends UserListEntry<T>
+{
+    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+    protected final Date banStartDate;
+    protected final String bannedBy;
+    protected final Date banEndDate;
+    protected final String reason;
 
-   public BanEntry(T p_i46334_1_, @Nullable Date p_i46334_2_, @Nullable String p_i46334_3_, @Nullable Date p_i46334_4_, @Nullable String p_i46334_5_) {
-      super(p_i46334_1_);
-      this.created = p_i46334_2_ == null ? new Date() : p_i46334_2_;
-      this.source = p_i46334_3_ == null ? "(Unknown)" : p_i46334_3_;
-      this.expires = p_i46334_4_;
-      this.reason = p_i46334_5_ == null ? "Banned by an operator." : p_i46334_5_;
-   }
+    public BanEntry(T valueIn, @Nullable Date startDate, @Nullable String banner, @Nullable Date endDate, @Nullable String banReason)
+    {
+        super(valueIn);
+        this.banStartDate = startDate == null ? new Date() : startDate;
+        this.bannedBy = banner == null ? "(Unknown)" : banner;
+        this.banEndDate = endDate;
+        this.reason = banReason == null ? "Banned by an operator." : banReason;
+    }
 
-   protected BanEntry(T p_i1174_1_, JsonObject p_i1174_2_) {
-      super(p_i1174_1_);
+    protected BanEntry(T valueIn, JsonObject json)
+    {
+        super(valueIn);
+        Date date;
 
-      Date date;
-      try {
-         date = p_i1174_2_.has("created") ? DATE_FORMAT.parse(p_i1174_2_.get("created").getAsString()) : new Date();
-      } catch (ParseException parseexception1) {
-         date = new Date();
-      }
+        try
+        {
+            date = json.has("created") ? DATE_FORMAT.parse(json.get("created").getAsString()) : new Date();
+        }
+        catch (ParseException parseexception1)
+        {
+            date = new Date();
+        }
 
-      this.created = date;
-      this.source = p_i1174_2_.has("source") ? p_i1174_2_.get("source").getAsString() : "(Unknown)";
+        this.banStartDate = date;
+        this.bannedBy = json.has("source") ? json.get("source").getAsString() : "(Unknown)";
+        Date date1;
 
-      Date date1;
-      try {
-         date1 = p_i1174_2_.has("expires") ? DATE_FORMAT.parse(p_i1174_2_.get("expires").getAsString()) : null;
-      } catch (ParseException parseexception) {
-         date1 = null;
-      }
+        try
+        {
+            date1 = json.has("expires") ? DATE_FORMAT.parse(json.get("expires").getAsString()) : null;
+        }
+        catch (ParseException parseexception)
+        {
+            date1 = null;
+        }
 
-      this.expires = date1;
-      this.reason = p_i1174_2_.has("reason") ? p_i1174_2_.get("reason").getAsString() : "Banned by an operator.";
-   }
+        this.banEndDate = date1;
+        this.reason = json.has("reason") ? json.get("reason").getAsString() : "Banned by an operator.";
+    }
 
-   public String getSource() {
-      return this.source;
-   }
+    public String getBannedBy()
+    {
+        return this.bannedBy;
+    }
 
-   public Date getExpires() {
-      return this.expires;
-   }
+    public Date getBanEndDate()
+    {
+        return this.banEndDate;
+    }
 
-   public String getReason() {
-      return this.reason;
-   }
+    public String getBanReason()
+    {
+        return this.reason;
+    }
 
-   public abstract ITextComponent getDisplayName();
+    public abstract ITextComponent getDisplayName();
 
-   boolean hasExpired() {
-      return this.expires == null ? false : this.expires.before(new Date());
-   }
+    boolean hasBanExpired()
+    {
+        return this.banEndDate == null ? false : this.banEndDate.before(new Date());
+    }
 
-   protected void serialize(JsonObject p_152641_1_) {
-      p_152641_1_.addProperty("created", DATE_FORMAT.format(this.created));
-      p_152641_1_.addProperty("source", this.source);
-      p_152641_1_.addProperty("expires", this.expires == null ? "forever" : DATE_FORMAT.format(this.expires));
-      p_152641_1_.addProperty("reason", this.reason);
-   }
+    protected void onSerialization(JsonObject data)
+    {
+        data.addProperty("created", DATE_FORMAT.format(this.banStartDate));
+        data.addProperty("source", this.bannedBy);
+        data.addProperty("expires", this.banEndDate == null ? "forever" : DATE_FORMAT.format(this.banEndDate));
+        data.addProperty("reason", this.reason);
+    }
 }

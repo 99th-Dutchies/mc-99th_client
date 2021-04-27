@@ -4,33 +4,46 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.status.IServerStatusNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CPingPacket implements IPacket<IServerStatusNetHandler> {
-   private long time;
+public class CPingPacket implements IPacket<IServerStatusNetHandler>
+{
+    private long clientTime;
 
-   public CPingPacket() {
-   }
+    public CPingPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CPingPacket(long p_i46842_1_) {
-      this.time = p_i46842_1_;
-   }
+    public CPingPacket(long clientTimeIn)
+    {
+        this.clientTime = clientTimeIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.time = p_148837_1_.readLong();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.clientTime = buf.readLong();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeLong(this.time);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeLong(this.clientTime);
+    }
 
-   public void handle(IServerStatusNetHandler p_148833_1_) {
-      p_148833_1_.handlePingRequest(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerStatusNetHandler handler)
+    {
+        handler.processPing(this);
+    }
 
-   public long getTime() {
-      return this.time;
-   }
+    public long getClientTime()
+    {
+        return this.clientTime;
+    }
 }

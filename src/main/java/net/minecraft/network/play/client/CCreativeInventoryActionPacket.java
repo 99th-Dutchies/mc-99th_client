@@ -5,41 +5,55 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CCreativeInventoryActionPacket implements IPacket<IServerPlayNetHandler> {
-   private int slotNum;
-   private ItemStack itemStack = ItemStack.EMPTY;
+public class CCreativeInventoryActionPacket implements IPacket<IServerPlayNetHandler>
+{
+    private int slotId;
+    private ItemStack stack = ItemStack.EMPTY;
 
-   public CCreativeInventoryActionPacket() {
-   }
+    public CCreativeInventoryActionPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CCreativeInventoryActionPacket(int p_i46862_1_, ItemStack p_i46862_2_) {
-      this.slotNum = p_i46862_1_;
-      this.itemStack = p_i46862_2_.copy();
-   }
+    public CCreativeInventoryActionPacket(int slotIdIn, ItemStack stackIn)
+    {
+        this.slotId = slotIdIn;
+        this.stack = stackIn.copy();
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetCreativeModeSlot(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processCreativeInventoryAction(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.slotNum = p_148837_1_.readShort();
-      this.itemStack = p_148837_1_.readItem();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.slotId = buf.readShort();
+        this.stack = buf.readItemStack();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeShort(this.slotNum);
-      p_148840_1_.writeItem(this.itemStack);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeShort(this.slotId);
+        buf.writeItemStack(this.stack);
+    }
 
-   public int getSlotNum() {
-      return this.slotNum;
-   }
+    public int getSlotId()
+    {
+        return this.slotId;
+    }
 
-   public ItemStack getItem() {
-      return this.itemStack;
-   }
+    public ItemStack getStack()
+    {
+        return this.stack;
+    }
 }

@@ -24,176 +24,230 @@ import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.lighting.WorldLightManager;
 
-public class ChunkPrimerWrapper extends ChunkPrimer {
-   private final Chunk wrapped;
+public class ChunkPrimerWrapper extends ChunkPrimer
+{
+    private final Chunk chunk;
 
-   public ChunkPrimerWrapper(Chunk p_i49948_1_) {
-      super(p_i49948_1_.getPos(), UpgradeData.EMPTY);
-      this.wrapped = p_i49948_1_;
-   }
+    public ChunkPrimerWrapper(Chunk chunk)
+    {
+        super(chunk.getPos(), UpgradeData.EMPTY);
+        this.chunk = chunk;
+    }
 
-   @Nullable
-   public TileEntity getBlockEntity(BlockPos p_175625_1_) {
-      return this.wrapped.getBlockEntity(p_175625_1_);
-   }
+    @Nullable
+    public TileEntity getTileEntity(BlockPos pos)
+    {
+        return this.chunk.getTileEntity(pos);
+    }
 
-   @Nullable
-   public BlockState getBlockState(BlockPos p_180495_1_) {
-      return this.wrapped.getBlockState(p_180495_1_);
-   }
+    @Nullable
+    public BlockState getBlockState(BlockPos pos)
+    {
+        return this.chunk.getBlockState(pos);
+    }
 
-   public FluidState getFluidState(BlockPos p_204610_1_) {
-      return this.wrapped.getFluidState(p_204610_1_);
-   }
+    public FluidState getFluidState(BlockPos pos)
+    {
+        return this.chunk.getFluidState(pos);
+    }
 
-   public int getMaxLightLevel() {
-      return this.wrapped.getMaxLightLevel();
-   }
+    public int getMaxLightLevel()
+    {
+        return this.chunk.getMaxLightLevel();
+    }
 
-   @Nullable
-   public BlockState setBlockState(BlockPos p_177436_1_, BlockState p_177436_2_, boolean p_177436_3_) {
-      return null;
-   }
+    @Nullable
+    public BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving)
+    {
+        return null;
+    }
 
-   public void setBlockEntity(BlockPos p_177426_1_, TileEntity p_177426_2_) {
-   }
+    public void addTileEntity(BlockPos pos, TileEntity tileEntityIn)
+    {
+    }
 
-   public void addEntity(Entity p_76612_1_) {
-   }
+    /**
+     * Adds an entity to the chunk.
+     */
+    public void addEntity(Entity entityIn)
+    {
+    }
 
-   public void setStatus(ChunkStatus p_201574_1_) {
-   }
+    public void setStatus(ChunkStatus status)
+    {
+    }
 
-   public ChunkSection[] getSections() {
-      return this.wrapped.getSections();
-   }
+    public ChunkSection[] getSections()
+    {
+        return this.chunk.getSections();
+    }
 
-   @Nullable
-   public WorldLightManager getLightEngine() {
-      return this.wrapped.getLightEngine();
-   }
+    @Nullable
+    public WorldLightManager getWorldLightManager()
+    {
+        return this.chunk.getWorldLightManager();
+    }
 
-   public void setHeightmap(Heightmap.Type p_201607_1_, long[] p_201607_2_) {
-   }
+    public void setHeightmap(Heightmap.Type type, long[] data)
+    {
+    }
 
-   private Heightmap.Type fixType(Heightmap.Type p_209532_1_) {
-      if (p_209532_1_ == Heightmap.Type.WORLD_SURFACE_WG) {
-         return Heightmap.Type.WORLD_SURFACE;
-      } else {
-         return p_209532_1_ == Heightmap.Type.OCEAN_FLOOR_WG ? Heightmap.Type.OCEAN_FLOOR : p_209532_1_;
-      }
-   }
+    private Heightmap.Type func_209532_c(Heightmap.Type type)
+    {
+        if (type == Heightmap.Type.WORLD_SURFACE_WG)
+        {
+            return Heightmap.Type.WORLD_SURFACE;
+        }
+        else
+        {
+            return type == Heightmap.Type.OCEAN_FLOOR_WG ? Heightmap.Type.OCEAN_FLOOR : type;
+        }
+    }
 
-   public int getHeight(Heightmap.Type p_201576_1_, int p_201576_2_, int p_201576_3_) {
-      return this.wrapped.getHeight(this.fixType(p_201576_1_), p_201576_2_, p_201576_3_);
-   }
+    public int getTopBlockY(Heightmap.Type heightmapType, int x, int z)
+    {
+        return this.chunk.getTopBlockY(this.func_209532_c(heightmapType), x, z);
+    }
 
-   public ChunkPos getPos() {
-      return this.wrapped.getPos();
-   }
+    /**
+     * Gets a {@link ChunkPos} representing the x and z coordinates of this chunk.
+     */
+    public ChunkPos getPos()
+    {
+        return this.chunk.getPos();
+    }
 
-   public void setLastSaveTime(long p_177432_1_) {
-   }
+    public void setLastSaveTime(long saveTime)
+    {
+    }
 
-   @Nullable
-   public StructureStart<?> getStartForFeature(Structure<?> p_230342_1_) {
-      return this.wrapped.getStartForFeature(p_230342_1_);
-   }
+    @Nullable
+    public StructureStart<?> func_230342_a_(Structure<?> p_230342_1_)
+    {
+        return this.chunk.func_230342_a_(p_230342_1_);
+    }
 
-   public void setStartForFeature(Structure<?> p_230344_1_, StructureStart<?> p_230344_2_) {
-   }
+    public void func_230344_a_(Structure<?> p_230344_1_, StructureStart<?> p_230344_2_)
+    {
+    }
 
-   public Map<Structure<?>, StructureStart<?>> getAllStarts() {
-      return this.wrapped.getAllStarts();
-   }
+    public Map < Structure<?>, StructureStart<? >> getStructureStarts()
+    {
+        return this.chunk.getStructureStarts();
+    }
 
-   public void setAllStarts(Map<Structure<?>, StructureStart<?>> p_201612_1_) {
-   }
+    public void setStructureStarts(Map < Structure<?>, StructureStart<? >> structureStartsIn)
+    {
+    }
 
-   public LongSet getReferencesForFeature(Structure<?> p_230346_1_) {
-      return this.wrapped.getReferencesForFeature(p_230346_1_);
-   }
+    public LongSet func_230346_b_(Structure<?> p_230346_1_)
+    {
+        return this.chunk.func_230346_b_(p_230346_1_);
+    }
 
-   public void addReferenceForFeature(Structure<?> p_230343_1_, long p_230343_2_) {
-   }
+    public void func_230343_a_(Structure<?> p_230343_1_, long p_230343_2_)
+    {
+    }
 
-   public Map<Structure<?>, LongSet> getAllReferences() {
-      return this.wrapped.getAllReferences();
-   }
+    public Map < Structure<?>, LongSet > getStructureReferences()
+    {
+        return this.chunk.getStructureReferences();
+    }
 
-   public void setAllReferences(Map<Structure<?>, LongSet> p_201606_1_) {
-   }
+    public void setStructureReferences(Map < Structure<?>, LongSet > structureReferences)
+    {
+    }
 
-   public BiomeContainer getBiomes() {
-      return this.wrapped.getBiomes();
-   }
+    public BiomeContainer getBiomes()
+    {
+        return this.chunk.getBiomes();
+    }
 
-   public void setUnsaved(boolean p_177427_1_) {
-   }
+    public void setModified(boolean modified)
+    {
+    }
 
-   public boolean isUnsaved() {
-      return false;
-   }
+    public boolean isModified()
+    {
+        return false;
+    }
 
-   public ChunkStatus getStatus() {
-      return this.wrapped.getStatus();
-   }
+    public ChunkStatus getStatus()
+    {
+        return this.chunk.getStatus();
+    }
 
-   public void removeBlockEntity(BlockPos p_177425_1_) {
-   }
+    public void removeTileEntity(BlockPos pos)
+    {
+    }
 
-   public void markPosForPostprocessing(BlockPos p_201594_1_) {
-   }
+    public void markBlockForPostprocessing(BlockPos pos)
+    {
+    }
 
-   public void setBlockEntityNbt(CompoundNBT p_201591_1_) {
-   }
+    public void addTileEntity(CompoundNBT nbt)
+    {
+    }
 
-   @Nullable
-   public CompoundNBT getBlockEntityNbt(BlockPos p_201579_1_) {
-      return this.wrapped.getBlockEntityNbt(p_201579_1_);
-   }
+    @Nullable
+    public CompoundNBT getDeferredTileEntity(BlockPos pos)
+    {
+        return this.chunk.getDeferredTileEntity(pos);
+    }
 
-   @Nullable
-   public CompoundNBT getBlockEntityNbtForSaving(BlockPos p_223134_1_) {
-      return this.wrapped.getBlockEntityNbtForSaving(p_223134_1_);
-   }
+    @Nullable
+    public CompoundNBT getTileEntityNBT(BlockPos pos)
+    {
+        return this.chunk.getTileEntityNBT(pos);
+    }
 
-   public void setBiomes(BiomeContainer p_225548_1_) {
-   }
+    public void setBiomes(BiomeContainer biomes)
+    {
+    }
 
-   public Stream<BlockPos> getLights() {
-      return this.wrapped.getLights();
-   }
+    public Stream<BlockPos> getLightSources()
+    {
+        return this.chunk.getLightSources();
+    }
 
-   public ChunkPrimerTickList<Block> getBlockTicks() {
-      return new ChunkPrimerTickList<>((p_209219_0_) -> {
-         return p_209219_0_.defaultBlockState().isAir();
-      }, this.getPos());
-   }
+    public ChunkPrimerTickList<Block> getBlocksToBeTicked()
+    {
+        return new ChunkPrimerTickList<>((block) ->
+        {
+            return block.getDefaultState().isAir();
+        }, this.getPos());
+    }
 
-   public ChunkPrimerTickList<Fluid> getLiquidTicks() {
-      return new ChunkPrimerTickList<>((p_209218_0_) -> {
-         return p_209218_0_ == Fluids.EMPTY;
-      }, this.getPos());
-   }
+    public ChunkPrimerTickList<Fluid> getFluidsToBeTicked()
+    {
+        return new ChunkPrimerTickList<>((fluid) ->
+        {
+            return fluid == Fluids.EMPTY;
+        }, this.getPos());
+    }
 
-   public BitSet getCarvingMask(GenerationStage.Carving p_205749_1_) {
-      throw (UnsupportedOperationException)Util.pauseInIde(new UnsupportedOperationException("Meaningless in this context"));
-   }
+    public BitSet getCarvingMask(GenerationStage.Carving type)
+    {
+        throw(UnsupportedOperationException)Util.pauseDevMode(new UnsupportedOperationException("Meaningless in this context"));
+    }
 
-   public BitSet getOrCreateCarvingMask(GenerationStage.Carving p_230345_1_) {
-      throw (UnsupportedOperationException)Util.pauseInIde(new UnsupportedOperationException("Meaningless in this context"));
-   }
+    public BitSet getOrAddCarvingMask(GenerationStage.Carving type)
+    {
+        throw(UnsupportedOperationException)Util.pauseDevMode(new UnsupportedOperationException("Meaningless in this context"));
+    }
 
-   public Chunk getWrapped() {
-      return this.wrapped;
-   }
+    public Chunk getChunk()
+    {
+        return this.chunk;
+    }
 
-   public boolean isLightCorrect() {
-      return this.wrapped.isLightCorrect();
-   }
+    public boolean hasLight()
+    {
+        return this.chunk.hasLight();
+    }
 
-   public void setLightCorrect(boolean p_217305_1_) {
-      this.wrapped.setLightCorrect(p_217305_1_);
-   }
+    public void setLight(boolean lightCorrectIn)
+    {
+        this.chunk.setLight(lightCorrectIn);
+    }
 }

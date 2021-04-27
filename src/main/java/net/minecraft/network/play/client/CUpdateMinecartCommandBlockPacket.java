@@ -9,51 +9,66 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 import net.minecraft.tileentity.CommandBlockLogic;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CUpdateMinecartCommandBlockPacket implements IPacket<IServerPlayNetHandler> {
-   private int entity;
-   private String command;
-   private boolean trackOutput;
+public class CUpdateMinecartCommandBlockPacket implements IPacket<IServerPlayNetHandler>
+{
+    private int entityId;
+    private String command;
+    private boolean trackOutput;
 
-   public CUpdateMinecartCommandBlockPacket() {
-   }
+    public CUpdateMinecartCommandBlockPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CUpdateMinecartCommandBlockPacket(int p_i49542_1_, String p_i49542_2_, boolean p_i49542_3_) {
-      this.entity = p_i49542_1_;
-      this.command = p_i49542_2_;
-      this.trackOutput = p_i49542_3_;
-   }
+    public CUpdateMinecartCommandBlockPacket(int entityIdIn, String commandIn, boolean trackOutputIn)
+    {
+        this.entityId = entityIdIn;
+        this.command = commandIn;
+        this.trackOutput = trackOutputIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.entity = p_148837_1_.readVarInt();
-      this.command = p_148837_1_.readUtf(32767);
-      this.trackOutput = p_148837_1_.readBoolean();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.command = buf.readString(32767);
+        this.trackOutput = buf.readBoolean();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.entity);
-      p_148840_1_.writeUtf(this.command);
-      p_148840_1_.writeBoolean(this.trackOutput);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeString(this.command);
+        buf.writeBoolean(this.trackOutput);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetCommandMinecart(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processUpdateCommandMinecart(this);
+    }
 
-   @Nullable
-   public CommandBlockLogic getCommandBlock(World p_210371_1_) {
-      Entity entity = p_210371_1_.getEntity(this.entity);
-      return entity instanceof CommandBlockMinecartEntity ? ((CommandBlockMinecartEntity)entity).getCommandBlock() : null;
-   }
+    @Nullable
+    public CommandBlockLogic getCommandBlock(World worldIn)
+    {
+        Entity entity = worldIn.getEntityByID(this.entityId);
+        return entity instanceof CommandBlockMinecartEntity ? ((CommandBlockMinecartEntity)entity).getCommandBlockLogic() : null;
+    }
 
-   public String getCommand() {
-      return this.command;
-   }
+    public String getCommand()
+    {
+        return this.command;
+    }
 
-   public boolean isTrackOutput() {
-      return this.trackOutput;
-   }
+    public boolean shouldTrackOutput()
+    {
+        return this.trackOutput;
+    }
 }

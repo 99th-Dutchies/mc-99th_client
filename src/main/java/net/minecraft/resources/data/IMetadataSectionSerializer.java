@@ -2,8 +2,12 @@ package net.minecraft.resources.data;
 
 import com.google.gson.JsonObject;
 
-public interface IMetadataSectionSerializer<T> {
-   String getMetadataSectionName();
+public interface IMetadataSectionSerializer<T>
+{
+    /**
+     * The name of this section type as it appears in JSON.
+     */
+    String getSectionName();
 
-   T fromJson(JsonObject p_195812_1_);
+    T deserialize(JsonObject json);
 }

@@ -13,106 +13,124 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SAdvancementInfoPacket implements IPacket<IClientPlayNetHandler> {
-   private boolean reset;
-   private Map<ResourceLocation, Advancement.Builder> added;
-   private Set<ResourceLocation> removed;
-   private Map<ResourceLocation, AdvancementProgress> progress;
+public class SAdvancementInfoPacket implements IPacket<IClientPlayNetHandler>
+{
+    private boolean firstSync;
+    private Map<ResourceLocation, Advancement.Builder> advancementsToAdd;
+    private Set<ResourceLocation> advancementsToRemove;
+    private Map<ResourceLocation, AdvancementProgress> progressUpdates;
 
-   public SAdvancementInfoPacket() {
-   }
+    public SAdvancementInfoPacket()
+    {
+    }
 
-   public SAdvancementInfoPacket(boolean p_i47519_1_, Collection<Advancement> p_i47519_2_, Set<ResourceLocation> p_i47519_3_, Map<ResourceLocation, AdvancementProgress> p_i47519_4_) {
-      this.reset = p_i47519_1_;
-      this.added = Maps.newHashMap();
+    public SAdvancementInfoPacket(boolean p_i47519_1_, Collection<Advancement> p_i47519_2_, Set<ResourceLocation> p_i47519_3_, Map<ResourceLocation, AdvancementProgress> p_i47519_4_)
+    {
+        this.firstSync = p_i47519_1_;
+        this.advancementsToAdd = Maps.newHashMap();
 
-      for(Advancement advancement : p_i47519_2_) {
-         this.added.put(advancement.getId(), advancement.deconstruct());
-      }
+        for (Advancement advancement : p_i47519_2_)
+        {
+            this.advancementsToAdd.put(advancement.getId(), advancement.copy());
+        }
 
-      this.removed = p_i47519_3_;
-      this.progress = Maps.newHashMap(p_i47519_4_);
-   }
+        this.advancementsToRemove = p_i47519_3_;
+        this.progressUpdates = Maps.newHashMap(p_i47519_4_);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleUpdateAdvancementsPacket(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleAdvancementInfo(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.reset = p_148837_1_.readBoolean();
-      this.added = Maps.newHashMap();
-      this.removed = Sets.newLinkedHashSet();
-      this.progress = Maps.newHashMap();
-      int i = p_148837_1_.readVarInt();
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.firstSync = buf.readBoolean();
+        this.advancementsToAdd = Maps.newHashMap();
+        this.advancementsToRemove = Sets.newLinkedHashSet();
+        this.progressUpdates = Maps.newHashMap();
+        int i = buf.readVarInt();
 
-      for(int j = 0; j < i; ++j) {
-         ResourceLocation resourcelocation = p_148837_1_.readResourceLocation();
-         Advancement.Builder advancement$builder = Advancement.Builder.fromNetwork(p_148837_1_);
-         this.added.put(resourcelocation, advancement$builder);
-      }
+        for (int j = 0; j < i; ++j)
+        {
+            ResourceLocation resourcelocation = buf.readResourceLocation();
+            Advancement.Builder advancement$builder = Advancement.Builder.readFrom(buf);
+            this.advancementsToAdd.put(resourcelocation, advancement$builder);
+        }
 
-      i = p_148837_1_.readVarInt();
+        i = buf.readVarInt();
 
-      for(int k = 0; k < i; ++k) {
-         ResourceLocation resourcelocation1 = p_148837_1_.readResourceLocation();
-         this.removed.add(resourcelocation1);
-      }
+        for (int k = 0; k < i; ++k)
+        {
+            ResourceLocation resourcelocation1 = buf.readResourceLocation();
+            this.advancementsToRemove.add(resourcelocation1);
+        }
 
-      i = p_148837_1_.readVarInt();
+        i = buf.readVarInt();
 
-      for(int l = 0; l < i; ++l) {
-         ResourceLocation resourcelocation2 = p_148837_1_.readResourceLocation();
-         this.progress.put(resourcelocation2, AdvancementProgress.fromNetwork(p_148837_1_));
-      }
+        for (int l = 0; l < i; ++l)
+        {
+            ResourceLocation resourcelocation2 = buf.readResourceLocation();
+            this.progressUpdates.put(resourcelocation2, AdvancementProgress.fromNetwork(buf));
+        }
+    }
 
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeBoolean(this.firstSync);
+        buf.writeVarInt(this.advancementsToAdd.size());
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeBoolean(this.reset);
-      p_148840_1_.writeVarInt(this.added.size());
+        for (Entry<ResourceLocation, Advancement.Builder> entry : this.advancementsToAdd.entrySet())
+        {
+            ResourceLocation resourcelocation = entry.getKey();
+            Advancement.Builder advancement$builder = entry.getValue();
+            buf.writeResourceLocation(resourcelocation);
+            advancement$builder.writeTo(buf);
+        }
 
-      for(Entry<ResourceLocation, Advancement.Builder> entry : this.added.entrySet()) {
-         ResourceLocation resourcelocation = entry.getKey();
-         Advancement.Builder advancement$builder = entry.getValue();
-         p_148840_1_.writeResourceLocation(resourcelocation);
-         advancement$builder.serializeToNetwork(p_148840_1_);
-      }
+        buf.writeVarInt(this.advancementsToRemove.size());
 
-      p_148840_1_.writeVarInt(this.removed.size());
+        for (ResourceLocation resourcelocation1 : this.advancementsToRemove)
+        {
+            buf.writeResourceLocation(resourcelocation1);
+        }
 
-      for(ResourceLocation resourcelocation1 : this.removed) {
-         p_148840_1_.writeResourceLocation(resourcelocation1);
-      }
+        buf.writeVarInt(this.progressUpdates.size());
 
-      p_148840_1_.writeVarInt(this.progress.size());
+        for (Entry<ResourceLocation, AdvancementProgress> entry1 : this.progressUpdates.entrySet())
+        {
+            buf.writeResourceLocation(entry1.getKey());
+            entry1.getValue().serializeToNetwork(buf);
+        }
+    }
 
-      for(Entry<ResourceLocation, AdvancementProgress> entry1 : this.progress.entrySet()) {
-         p_148840_1_.writeResourceLocation(entry1.getKey());
-         entry1.getValue().serializeToNetwork(p_148840_1_);
-      }
+    public Map<ResourceLocation, Advancement.Builder> getAdvancementsToAdd()
+    {
+        return this.advancementsToAdd;
+    }
 
-   }
+    public Set<ResourceLocation> getAdvancementsToRemove()
+    {
+        return this.advancementsToRemove;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Map<ResourceLocation, Advancement.Builder> getAdded() {
-      return this.added;
-   }
+    public Map<ResourceLocation, AdvancementProgress> getProgressUpdates()
+    {
+        return this.progressUpdates;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Set<ResourceLocation> getRemoved() {
-      return this.removed;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public Map<ResourceLocation, AdvancementProgress> getProgress() {
-      return this.progress;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean shouldReset() {
-      return this.reset;
-   }
+    public boolean isFirstSync()
+    {
+        return this.firstSync;
+    }
 }

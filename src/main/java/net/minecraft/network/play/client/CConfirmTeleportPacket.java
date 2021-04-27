@@ -4,33 +4,46 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CConfirmTeleportPacket implements IPacket<IServerPlayNetHandler> {
-   private int id;
+public class CConfirmTeleportPacket implements IPacket<IServerPlayNetHandler>
+{
+    private int telportId;
 
-   public CConfirmTeleportPacket() {
-   }
+    public CConfirmTeleportPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CConfirmTeleportPacket(int p_i46889_1_) {
-      this.id = p_i46889_1_;
-   }
+    public CConfirmTeleportPacket(int teleportIdIn)
+    {
+        this.telportId = teleportIdIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readVarInt();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.telportId = buf.readVarInt();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.id);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.telportId);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleAcceptTeleportPacket(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processConfirmTeleport(this);
+    }
 
-   public int getId() {
-      return this.id;
-   }
+    public int getTeleportId()
+    {
+        return this.telportId;
+    }
 }

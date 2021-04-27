@@ -5,22 +5,31 @@ import java.util.Random;
 import java.util.stream.Stream;
 import net.minecraft.util.math.BlockPos;
 
-public class EndIsland extends SimplePlacement<NoPlacementConfig> {
-   public EndIsland(Codec<NoPlacementConfig> p_i232085_1_) {
-      super(p_i232085_1_);
-   }
+public class EndIsland extends SimplePlacement<NoPlacementConfig>
+{
+    public EndIsland(Codec<NoPlacementConfig> p_i232085_1_)
+    {
+        super(p_i232085_1_);
+    }
 
-   public Stream<BlockPos> place(Random p_212852_1_, NoPlacementConfig p_212852_2_, BlockPos p_212852_3_) {
-      Stream<BlockPos> stream = Stream.empty();
-      if (p_212852_1_.nextInt(14) == 0) {
-         stream = Stream.concat(stream, Stream.of(p_212852_3_.offset(p_212852_1_.nextInt(16), 55 + p_212852_1_.nextInt(16), p_212852_1_.nextInt(16))));
-         if (p_212852_1_.nextInt(4) == 0) {
-            stream = Stream.concat(stream, Stream.of(p_212852_3_.offset(p_212852_1_.nextInt(16), 55 + p_212852_1_.nextInt(16), p_212852_1_.nextInt(16))));
-         }
+    public Stream<BlockPos> getPositions(Random random, NoPlacementConfig p_212852_2_, BlockPos pos)
+    {
+        Stream<BlockPos> stream = Stream.empty();
 
-         return stream;
-      } else {
-         return Stream.empty();
-      }
-   }
+        if (random.nextInt(14) == 0)
+        {
+            stream = Stream.concat(stream, Stream.of(pos.add(random.nextInt(16), 55 + random.nextInt(16), random.nextInt(16))));
+
+            if (random.nextInt(4) == 0)
+            {
+                stream = Stream.concat(stream, Stream.of(pos.add(random.nextInt(16), 55 + random.nextInt(16), random.nextInt(16))));
+            }
+
+            return stream;
+        }
+        else
+        {
+            return Stream.empty();
+        }
+    }
 }

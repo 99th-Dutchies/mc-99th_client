@@ -15,205 +15,288 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class ChorusFlowerBlock extends Block {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_5;
-   private final ChorusPlantBlock plant;
+public class ChorusFlowerBlock extends Block
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_5;
+    private final ChorusPlantBlock plantBlock;
 
-   protected ChorusFlowerBlock(ChorusPlantBlock p_i48429_1_, AbstractBlock.Properties p_i48429_2_) {
-      super(p_i48429_2_);
-      this.plant = p_i48429_1_;
-      this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
-   }
+    protected ChorusFlowerBlock(ChorusPlantBlock plantBlock, AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.plantBlock = plantBlock;
+        this.setDefaultState(this.stateContainer.getBaseState().with(AGE, Integer.valueOf(0)));
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!p_225534_1_.canSurvive(p_225534_2_, p_225534_3_)) {
-         p_225534_2_.destroyBlock(p_225534_3_, true);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!state.isValidPosition(worldIn, pos))
+        {
+            worldIn.destroyBlock(pos, true);
+        }
+    }
 
-   }
+    /**
+     * Returns whether or not this block is of a type that needs random ticking. Called for ref-counting purposes by
+     * ExtendedBlockStorage in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
+    public boolean ticksRandomly(BlockState state)
+    {
+        return state.get(AGE) < 5;
+    }
 
-   public boolean isRandomlyTicking(BlockState p_149653_1_) {
-      return p_149653_1_.getValue(AGE) < 5;
-   }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        BlockPos blockpos = pos.up();
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      BlockPos blockpos = p_225542_3_.above();
-      if (p_225542_2_.isEmptyBlock(blockpos) && blockpos.getY() < 256) {
-         int i = p_225542_1_.getValue(AGE);
-         if (i < 5) {
-            boolean flag = false;
-            boolean flag1 = false;
-            BlockState blockstate = p_225542_2_.getBlockState(p_225542_3_.below());
-            Block block = blockstate.getBlock();
-            if (block == Blocks.END_STONE) {
-               flag = true;
-            } else if (block == this.plant) {
-               int j = 1;
+        if (worldIn.isAirBlock(blockpos) && blockpos.getY() < 256)
+        {
+            int i = state.get(AGE);
 
-               for(int k = 0; k < 4; ++k) {
-                  Block block1 = p_225542_2_.getBlockState(p_225542_3_.below(j + 1)).getBlock();
-                  if (block1 != this.plant) {
-                     if (block1 == Blocks.END_STONE) {
-                        flag1 = true;
-                     }
-                     break;
-                  }
+            if (i < 5)
+            {
+                boolean flag = false;
+                boolean flag1 = false;
+                BlockState blockstate = worldIn.getBlockState(pos.down());
+                Block block = blockstate.getBlock();
 
-                  ++j;
-               }
+                if (block == Blocks.END_STONE)
+                {
+                    flag = true;
+                }
+                else if (block == this.plantBlock)
+                {
+                    int j = 1;
 
-               if (j < 2 || j <= p_225542_4_.nextInt(flag1 ? 5 : 4)) {
-                  flag = true;
-               }
-            } else if (blockstate.isAir()) {
-               flag = true;
+                    for (int k = 0; k < 4; ++k)
+                    {
+                        Block block1 = worldIn.getBlockState(pos.down(j + 1)).getBlock();
+
+                        if (block1 != this.plantBlock)
+                        {
+                            if (block1 == Blocks.END_STONE)
+                            {
+                                flag1 = true;
+                            }
+
+                            break;
+                        }
+
+                        ++j;
+                    }
+
+                    if (j < 2 || j <= random.nextInt(flag1 ? 5 : 4))
+                    {
+                        flag = true;
+                    }
+                }
+                else if (blockstate.isAir())
+                {
+                    flag = true;
+                }
+
+                if (flag && areAllNeighborsEmpty(worldIn, blockpos, (Direction)null) && worldIn.isAirBlock(pos.up(2)))
+                {
+                    worldIn.setBlockState(pos, this.plantBlock.makeConnections(worldIn, pos), 2);
+                    this.placeGrownFlower(worldIn, blockpos, i);
+                }
+                else if (i < 4)
+                {
+                    int l = random.nextInt(4);
+
+                    if (flag1)
+                    {
+                        ++l;
+                    }
+
+                    boolean flag2 = false;
+
+                    for (int i1 = 0; i1 < l; ++i1)
+                    {
+                        Direction direction = Direction.Plane.HORIZONTAL.random(random);
+                        BlockPos blockpos1 = pos.offset(direction);
+
+                        if (worldIn.isAirBlock(blockpos1) && worldIn.isAirBlock(blockpos1.down()) && areAllNeighborsEmpty(worldIn, blockpos1, direction.getOpposite()))
+                        {
+                            this.placeGrownFlower(worldIn, blockpos1, i + 1);
+                            flag2 = true;
+                        }
+                    }
+
+                    if (flag2)
+                    {
+                        worldIn.setBlockState(pos, this.plantBlock.makeConnections(worldIn, pos), 2);
+                    }
+                    else
+                    {
+                        this.placeDeadFlower(worldIn, pos);
+                    }
+                }
+                else
+                {
+                    this.placeDeadFlower(worldIn, pos);
+                }
+            }
+        }
+    }
+
+    private void placeGrownFlower(World worldIn, BlockPos pos, int age)
+    {
+        worldIn.setBlockState(pos, this.getDefaultState().with(AGE, Integer.valueOf(age)), 2);
+        worldIn.playEvent(1033, pos, 0);
+    }
+
+    private void placeDeadFlower(World worldIn, BlockPos pos)
+    {
+        worldIn.setBlockState(pos, this.getDefaultState().with(AGE, Integer.valueOf(5)), 2);
+        worldIn.playEvent(1034, pos, 0);
+    }
+
+    private static boolean areAllNeighborsEmpty(IWorldReader worldIn, BlockPos pos, @Nullable Direction excludingSide)
+    {
+        for (Direction direction : Direction.Plane.HORIZONTAL)
+        {
+            if (direction != excludingSide && !worldIn.isAirBlock(pos.offset(direction)))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (facing != Direction.UP && !stateIn.isValidPosition(worldIn, currentPos))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+        }
+
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
+
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockState blockstate = worldIn.getBlockState(pos.down());
+
+        if (blockstate.getBlock() != this.plantBlock && !blockstate.isIn(Blocks.END_STONE))
+        {
+            if (!blockstate.isAir())
+            {
+                return false;
+            }
+            else
+            {
+                boolean flag = false;
+
+                for (Direction direction : Direction.Plane.HORIZONTAL)
+                {
+                    BlockState blockstate1 = worldIn.getBlockState(pos.offset(direction));
+
+                    if (blockstate1.isIn(this.plantBlock))
+                    {
+                        if (flag)
+                        {
+                            return false;
+                        }
+
+                        flag = true;
+                    }
+                    else if (!blockstate1.isAir())
+                    {
+                        return false;
+                    }
+                }
+
+                return flag;
+            }
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
+
+    public static void generatePlant(IWorld worldIn, BlockPos pos, Random rand, int maxHorizontalDistance)
+    {
+        worldIn.setBlockState(pos, ((ChorusPlantBlock)Blocks.CHORUS_PLANT).makeConnections(worldIn, pos), 2);
+        growTreeRecursive(worldIn, pos, rand, pos, maxHorizontalDistance, 0);
+    }
+
+    private static void growTreeRecursive(IWorld worldIn, BlockPos branchPos, Random rand, BlockPos originalBranchPos, int maxHorizontalDistance, int iterations)
+    {
+        ChorusPlantBlock chorusplantblock = (ChorusPlantBlock)Blocks.CHORUS_PLANT;
+        int i = rand.nextInt(4) + 1;
+
+        if (iterations == 0)
+        {
+            ++i;
+        }
+
+        for (int j = 0; j < i; ++j)
+        {
+            BlockPos blockpos = branchPos.up(j + 1);
+
+            if (!areAllNeighborsEmpty(worldIn, blockpos, (Direction)null))
+            {
+                return;
             }
 
-            if (flag && allNeighborsEmpty(p_225542_2_, blockpos, (Direction)null) && p_225542_2_.isEmptyBlock(p_225542_3_.above(2))) {
-               p_225542_2_.setBlock(p_225542_3_, this.plant.getStateForPlacement(p_225542_2_, p_225542_3_), 2);
-               this.placeGrownFlower(p_225542_2_, blockpos, i);
-            } else if (i < 4) {
-               int l = p_225542_4_.nextInt(4);
-               if (flag1) {
-                  ++l;
-               }
+            worldIn.setBlockState(blockpos, chorusplantblock.makeConnections(worldIn, blockpos), 2);
+            worldIn.setBlockState(blockpos.down(), chorusplantblock.makeConnections(worldIn, blockpos.down()), 2);
+        }
 
-               boolean flag2 = false;
+        boolean flag = false;
 
-               for(int i1 = 0; i1 < l; ++i1) {
-                  Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_225542_4_);
-                  BlockPos blockpos1 = p_225542_3_.relative(direction);
-                  if (p_225542_2_.isEmptyBlock(blockpos1) && p_225542_2_.isEmptyBlock(blockpos1.below()) && allNeighborsEmpty(p_225542_2_, blockpos1, direction.getOpposite())) {
-                     this.placeGrownFlower(p_225542_2_, blockpos1, i + 1);
-                     flag2 = true;
-                  }
-               }
+        if (iterations < 4)
+        {
+            int l = rand.nextInt(4);
 
-               if (flag2) {
-                  p_225542_2_.setBlock(p_225542_3_, this.plant.getStateForPlacement(p_225542_2_, p_225542_3_), 2);
-               } else {
-                  this.placeDeadFlower(p_225542_2_, p_225542_3_);
-               }
-            } else {
-               this.placeDeadFlower(p_225542_2_, p_225542_3_);
+            if (iterations == 0)
+            {
+                ++l;
             }
 
-         }
-      }
-   }
+            for (int k = 0; k < l; ++k)
+            {
+                Direction direction = Direction.Plane.HORIZONTAL.random(rand);
+                BlockPos blockpos1 = branchPos.up(i).offset(direction);
 
-   private void placeGrownFlower(World p_185602_1_, BlockPos p_185602_2_, int p_185602_3_) {
-      p_185602_1_.setBlock(p_185602_2_, this.defaultBlockState().setValue(AGE, Integer.valueOf(p_185602_3_)), 2);
-      p_185602_1_.levelEvent(1033, p_185602_2_, 0);
-   }
-
-   private void placeDeadFlower(World p_185605_1_, BlockPos p_185605_2_) {
-      p_185605_1_.setBlock(p_185605_2_, this.defaultBlockState().setValue(AGE, Integer.valueOf(5)), 2);
-      p_185605_1_.levelEvent(1034, p_185605_2_, 0);
-   }
-
-   private static boolean allNeighborsEmpty(IWorldReader p_185604_0_, BlockPos p_185604_1_, @Nullable Direction p_185604_2_) {
-      for(Direction direction : Direction.Plane.HORIZONTAL) {
-         if (direction != p_185604_2_ && !p_185604_0_.isEmptyBlock(p_185604_1_.relative(direction))) {
-            return false;
-         }
-      }
-
-      return true;
-   }
-
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_2_ != Direction.UP && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 1);
-      }
-
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
-
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockState blockstate = p_196260_2_.getBlockState(p_196260_3_.below());
-      if (blockstate.getBlock() != this.plant && !blockstate.is(Blocks.END_STONE)) {
-         if (!blockstate.isAir()) {
-            return false;
-         } else {
-            boolean flag = false;
-
-            for(Direction direction : Direction.Plane.HORIZONTAL) {
-               BlockState blockstate1 = p_196260_2_.getBlockState(p_196260_3_.relative(direction));
-               if (blockstate1.is(this.plant)) {
-                  if (flag) {
-                     return false;
-                  }
-
-                  flag = true;
-               } else if (!blockstate1.isAir()) {
-                  return false;
-               }
+                if (Math.abs(blockpos1.getX() - originalBranchPos.getX()) < maxHorizontalDistance && Math.abs(blockpos1.getZ() - originalBranchPos.getZ()) < maxHorizontalDistance && worldIn.isAirBlock(blockpos1) && worldIn.isAirBlock(blockpos1.down()) && areAllNeighborsEmpty(worldIn, blockpos1, direction.getOpposite()))
+                {
+                    flag = true;
+                    worldIn.setBlockState(blockpos1, chorusplantblock.makeConnections(worldIn, blockpos1), 2);
+                    worldIn.setBlockState(blockpos1.offset(direction.getOpposite()), chorusplantblock.makeConnections(worldIn, blockpos1.offset(direction.getOpposite())), 2);
+                    growTreeRecursive(worldIn, blockpos1, rand, originalBranchPos, maxHorizontalDistance, iterations + 1);
+                }
             }
+        }
 
-            return flag;
-         }
-      } else {
-         return true;
-      }
-   }
+        if (!flag)
+        {
+            worldIn.setBlockState(branchPos.up(i), Blocks.CHORUS_FLOWER.getDefaultState().with(AGE, Integer.valueOf(5)), 2);
+        }
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
-
-   public static void generatePlant(IWorld p_185603_0_, BlockPos p_185603_1_, Random p_185603_2_, int p_185603_3_) {
-      p_185603_0_.setBlock(p_185603_1_, ((ChorusPlantBlock)Blocks.CHORUS_PLANT).getStateForPlacement(p_185603_0_, p_185603_1_), 2);
-      growTreeRecursive(p_185603_0_, p_185603_1_, p_185603_2_, p_185603_1_, p_185603_3_, 0);
-   }
-
-   private static void growTreeRecursive(IWorld p_185601_0_, BlockPos p_185601_1_, Random p_185601_2_, BlockPos p_185601_3_, int p_185601_4_, int p_185601_5_) {
-      ChorusPlantBlock chorusplantblock = (ChorusPlantBlock)Blocks.CHORUS_PLANT;
-      int i = p_185601_2_.nextInt(4) + 1;
-      if (p_185601_5_ == 0) {
-         ++i;
-      }
-
-      for(int j = 0; j < i; ++j) {
-         BlockPos blockpos = p_185601_1_.above(j + 1);
-         if (!allNeighborsEmpty(p_185601_0_, blockpos, (Direction)null)) {
-            return;
-         }
-
-         p_185601_0_.setBlock(blockpos, chorusplantblock.getStateForPlacement(p_185601_0_, blockpos), 2);
-         p_185601_0_.setBlock(blockpos.below(), chorusplantblock.getStateForPlacement(p_185601_0_, blockpos.below()), 2);
-      }
-
-      boolean flag = false;
-      if (p_185601_5_ < 4) {
-         int l = p_185601_2_.nextInt(4);
-         if (p_185601_5_ == 0) {
-            ++l;
-         }
-
-         for(int k = 0; k < l; ++k) {
-            Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_185601_2_);
-            BlockPos blockpos1 = p_185601_1_.above(i).relative(direction);
-            if (Math.abs(blockpos1.getX() - p_185601_3_.getX()) < p_185601_4_ && Math.abs(blockpos1.getZ() - p_185601_3_.getZ()) < p_185601_4_ && p_185601_0_.isEmptyBlock(blockpos1) && p_185601_0_.isEmptyBlock(blockpos1.below()) && allNeighborsEmpty(p_185601_0_, blockpos1, direction.getOpposite())) {
-               flag = true;
-               p_185601_0_.setBlock(blockpos1, chorusplantblock.getStateForPlacement(p_185601_0_, blockpos1), 2);
-               p_185601_0_.setBlock(blockpos1.relative(direction.getOpposite()), chorusplantblock.getStateForPlacement(p_185601_0_, blockpos1.relative(direction.getOpposite())), 2);
-               growTreeRecursive(p_185601_0_, blockpos1, p_185601_2_, p_185601_3_, p_185601_4_, p_185601_5_ + 1);
-            }
-         }
-      }
-
-      if (!flag) {
-         p_185601_0_.setBlock(p_185601_1_.above(i), Blocks.CHORUS_FLOWER.defaultBlockState().setValue(AGE, Integer.valueOf(5)), 2);
-      }
-
-   }
-
-   public void onProjectileHit(World p_220066_1_, BlockState p_220066_2_, BlockRayTraceResult p_220066_3_, ProjectileEntity p_220066_4_) {
-      if (p_220066_4_.getType().is(EntityTypeTags.IMPACT_PROJECTILES)) {
-         BlockPos blockpos = p_220066_3_.getBlockPos();
-         p_220066_1_.destroyBlock(blockpos, true, p_220066_4_);
-      }
-
-   }
+    public void onProjectileCollision(World worldIn, BlockState state, BlockRayTraceResult hit, ProjectileEntity projectile)
+    {
+        if (projectile.getType().isContained(EntityTypeTags.IMPACT_PROJECTILES))
+        {
+            BlockPos blockpos = hit.getPos();
+            worldIn.destroyBlock(blockpos, true, projectile);
+        }
+    }
 }

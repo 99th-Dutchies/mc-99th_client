@@ -4,219 +4,236 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.passive.horse.AbstractHorseEntity;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class HorseModel<T extends AbstractHorseEntity> extends AgeableModel<T> {
-   protected final ModelRenderer body;
-   protected final ModelRenderer headParts;
-   private final ModelRenderer leg1;
-   private final ModelRenderer leg2;
-   private final ModelRenderer leg3;
-   private final ModelRenderer leg4;
-   private final ModelRenderer babyLeg1;
-   private final ModelRenderer babyLeg2;
-   private final ModelRenderer babyLeg3;
-   private final ModelRenderer babyLeg4;
-   private final ModelRenderer tail;
-   private final ModelRenderer[] saddleParts;
-   private final ModelRenderer[] ridingParts;
+public class HorseModel<T extends AbstractHorseEntity> extends AgeableModel<T>
+{
+    protected final ModelRenderer body;
+    protected final ModelRenderer head;
+    private final ModelRenderer field_228262_f_;
+    private final ModelRenderer field_228263_g_;
+    private final ModelRenderer field_228264_h_;
+    private final ModelRenderer field_228265_i_;
+    private final ModelRenderer field_228266_j_;
+    private final ModelRenderer field_228267_k_;
+    private final ModelRenderer field_228268_l_;
+    private final ModelRenderer field_228269_m_;
+    private final ModelRenderer field_217133_j;
+    private final ModelRenderer[] field_217134_k;
+    private final ModelRenderer[] field_217135_l;
 
-   public HorseModel(float p_i51065_1_) {
-      super(true, 16.2F, 1.36F, 2.7272F, 2.0F, 20.0F);
-      this.texWidth = 64;
-      this.texHeight = 64;
-      this.body = new ModelRenderer(this, 0, 32);
-      this.body.addBox(-5.0F, -8.0F, -17.0F, 10.0F, 10.0F, 22.0F, 0.05F);
-      this.body.setPos(0.0F, 11.0F, 5.0F);
-      this.headParts = new ModelRenderer(this, 0, 35);
-      this.headParts.addBox(-2.05F, -6.0F, -2.0F, 4.0F, 12.0F, 7.0F);
-      this.headParts.xRot = ((float)Math.PI / 6F);
-      ModelRenderer modelrenderer = new ModelRenderer(this, 0, 13);
-      modelrenderer.addBox(-3.0F, -11.0F, -2.0F, 6.0F, 5.0F, 7.0F, p_i51065_1_);
-      ModelRenderer modelrenderer1 = new ModelRenderer(this, 56, 36);
-      modelrenderer1.addBox(-1.0F, -11.0F, 5.01F, 2.0F, 16.0F, 2.0F, p_i51065_1_);
-      ModelRenderer modelrenderer2 = new ModelRenderer(this, 0, 25);
-      modelrenderer2.addBox(-2.0F, -11.0F, -7.0F, 4.0F, 5.0F, 5.0F, p_i51065_1_);
-      this.headParts.addChild(modelrenderer);
-      this.headParts.addChild(modelrenderer1);
-      this.headParts.addChild(modelrenderer2);
-      this.addEarModels(this.headParts);
-      this.leg1 = new ModelRenderer(this, 48, 21);
-      this.leg1.mirror = true;
-      this.leg1.addBox(-3.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
-      this.leg1.setPos(4.0F, 14.0F, 7.0F);
-      this.leg2 = new ModelRenderer(this, 48, 21);
-      this.leg2.addBox(-1.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
-      this.leg2.setPos(-4.0F, 14.0F, 7.0F);
-      this.leg3 = new ModelRenderer(this, 48, 21);
-      this.leg3.mirror = true;
-      this.leg3.addBox(-3.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
-      this.leg3.setPos(4.0F, 6.0F, -12.0F);
-      this.leg4 = new ModelRenderer(this, 48, 21);
-      this.leg4.addBox(-1.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
-      this.leg4.setPos(-4.0F, 6.0F, -12.0F);
-      float f = 5.5F;
-      this.babyLeg1 = new ModelRenderer(this, 48, 21);
-      this.babyLeg1.mirror = true;
-      this.babyLeg1.addBox(-3.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
-      this.babyLeg1.setPos(4.0F, 14.0F, 7.0F);
-      this.babyLeg2 = new ModelRenderer(this, 48, 21);
-      this.babyLeg2.addBox(-1.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
-      this.babyLeg2.setPos(-4.0F, 14.0F, 7.0F);
-      this.babyLeg3 = new ModelRenderer(this, 48, 21);
-      this.babyLeg3.mirror = true;
-      this.babyLeg3.addBox(-3.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
-      this.babyLeg3.setPos(4.0F, 6.0F, -12.0F);
-      this.babyLeg4 = new ModelRenderer(this, 48, 21);
-      this.babyLeg4.addBox(-1.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
-      this.babyLeg4.setPos(-4.0F, 6.0F, -12.0F);
-      this.tail = new ModelRenderer(this, 42, 36);
-      this.tail.addBox(-1.5F, 0.0F, 0.0F, 3.0F, 14.0F, 4.0F, p_i51065_1_);
-      this.tail.setPos(0.0F, -5.0F, 2.0F);
-      this.tail.xRot = ((float)Math.PI / 6F);
-      this.body.addChild(this.tail);
-      ModelRenderer modelrenderer3 = new ModelRenderer(this, 26, 0);
-      modelrenderer3.addBox(-5.0F, -8.0F, -9.0F, 10.0F, 9.0F, 9.0F, 0.5F);
-      this.body.addChild(modelrenderer3);
-      ModelRenderer modelrenderer4 = new ModelRenderer(this, 29, 5);
-      modelrenderer4.addBox(2.0F, -9.0F, -6.0F, 1.0F, 2.0F, 2.0F, p_i51065_1_);
-      this.headParts.addChild(modelrenderer4);
-      ModelRenderer modelrenderer5 = new ModelRenderer(this, 29, 5);
-      modelrenderer5.addBox(-3.0F, -9.0F, -6.0F, 1.0F, 2.0F, 2.0F, p_i51065_1_);
-      this.headParts.addChild(modelrenderer5);
-      ModelRenderer modelrenderer6 = new ModelRenderer(this, 32, 2);
-      modelrenderer6.addBox(3.1F, -6.0F, -8.0F, 0.0F, 3.0F, 16.0F, p_i51065_1_);
-      modelrenderer6.xRot = (-(float)Math.PI / 6F);
-      this.headParts.addChild(modelrenderer6);
-      ModelRenderer modelrenderer7 = new ModelRenderer(this, 32, 2);
-      modelrenderer7.addBox(-3.1F, -6.0F, -8.0F, 0.0F, 3.0F, 16.0F, p_i51065_1_);
-      modelrenderer7.xRot = (-(float)Math.PI / 6F);
-      this.headParts.addChild(modelrenderer7);
-      ModelRenderer modelrenderer8 = new ModelRenderer(this, 1, 1);
-      modelrenderer8.addBox(-3.0F, -11.0F, -1.9F, 6.0F, 5.0F, 6.0F, 0.2F);
-      this.headParts.addChild(modelrenderer8);
-      ModelRenderer modelrenderer9 = new ModelRenderer(this, 19, 0);
-      modelrenderer9.addBox(-2.0F, -11.0F, -4.0F, 4.0F, 5.0F, 2.0F, 0.2F);
-      this.headParts.addChild(modelrenderer9);
-      this.saddleParts = new ModelRenderer[]{modelrenderer3, modelrenderer4, modelrenderer5, modelrenderer8, modelrenderer9};
-      this.ridingParts = new ModelRenderer[]{modelrenderer6, modelrenderer7};
-   }
+    public HorseModel(float p_i51065_1_)
+    {
+        super(true, 16.2F, 1.36F, 2.7272F, 2.0F, 20.0F);
+        this.textureWidth = 64;
+        this.textureHeight = 64;
+        this.body = new ModelRenderer(this, 0, 32);
+        this.body.addBox(-5.0F, -8.0F, -17.0F, 10.0F, 10.0F, 22.0F, 0.05F);
+        this.body.setRotationPoint(0.0F, 11.0F, 5.0F);
+        this.head = new ModelRenderer(this, 0, 35);
+        this.head.addBox(-2.05F, -6.0F, -2.0F, 4.0F, 12.0F, 7.0F);
+        this.head.rotateAngleX = ((float)Math.PI / 6F);
+        ModelRenderer modelrenderer = new ModelRenderer(this, 0, 13);
+        modelrenderer.addBox(-3.0F, -11.0F, -2.0F, 6.0F, 5.0F, 7.0F, p_i51065_1_);
+        ModelRenderer modelrenderer1 = new ModelRenderer(this, 56, 36);
+        modelrenderer1.addBox(-1.0F, -11.0F, 5.01F, 2.0F, 16.0F, 2.0F, p_i51065_1_);
+        ModelRenderer modelrenderer2 = new ModelRenderer(this, 0, 25);
+        modelrenderer2.addBox(-2.0F, -11.0F, -7.0F, 4.0F, 5.0F, 5.0F, p_i51065_1_);
+        this.head.addChild(modelrenderer);
+        this.head.addChild(modelrenderer1);
+        this.head.addChild(modelrenderer2);
+        this.func_199047_a(this.head);
+        this.field_228262_f_ = new ModelRenderer(this, 48, 21);
+        this.field_228262_f_.mirror = true;
+        this.field_228262_f_.addBox(-3.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
+        this.field_228262_f_.setRotationPoint(4.0F, 14.0F, 7.0F);
+        this.field_228263_g_ = new ModelRenderer(this, 48, 21);
+        this.field_228263_g_.addBox(-1.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
+        this.field_228263_g_.setRotationPoint(-4.0F, 14.0F, 7.0F);
+        this.field_228264_h_ = new ModelRenderer(this, 48, 21);
+        this.field_228264_h_.mirror = true;
+        this.field_228264_h_.addBox(-3.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
+        this.field_228264_h_.setRotationPoint(4.0F, 6.0F, -12.0F);
+        this.field_228265_i_ = new ModelRenderer(this, 48, 21);
+        this.field_228265_i_.addBox(-1.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_);
+        this.field_228265_i_.setRotationPoint(-4.0F, 6.0F, -12.0F);
+        float f = 5.5F;
+        this.field_228266_j_ = new ModelRenderer(this, 48, 21);
+        this.field_228266_j_.mirror = true;
+        this.field_228266_j_.addBox(-3.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
+        this.field_228266_j_.setRotationPoint(4.0F, 14.0F, 7.0F);
+        this.field_228267_k_ = new ModelRenderer(this, 48, 21);
+        this.field_228267_k_.addBox(-1.0F, -1.01F, -1.0F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
+        this.field_228267_k_.setRotationPoint(-4.0F, 14.0F, 7.0F);
+        this.field_228268_l_ = new ModelRenderer(this, 48, 21);
+        this.field_228268_l_.mirror = true;
+        this.field_228268_l_.addBox(-3.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
+        this.field_228268_l_.setRotationPoint(4.0F, 6.0F, -12.0F);
+        this.field_228269_m_ = new ModelRenderer(this, 48, 21);
+        this.field_228269_m_.addBox(-1.0F, -1.01F, -1.9F, 4.0F, 11.0F, 4.0F, p_i51065_1_, p_i51065_1_ + 5.5F, p_i51065_1_);
+        this.field_228269_m_.setRotationPoint(-4.0F, 6.0F, -12.0F);
+        this.field_217133_j = new ModelRenderer(this, 42, 36);
+        this.field_217133_j.addBox(-1.5F, 0.0F, 0.0F, 3.0F, 14.0F, 4.0F, p_i51065_1_);
+        this.field_217133_j.setRotationPoint(0.0F, -5.0F, 2.0F);
+        this.field_217133_j.rotateAngleX = ((float)Math.PI / 6F);
+        this.body.addChild(this.field_217133_j);
+        ModelRenderer modelrenderer3 = new ModelRenderer(this, 26, 0);
+        modelrenderer3.addBox(-5.0F, -8.0F, -9.0F, 10.0F, 9.0F, 9.0F, 0.5F);
+        this.body.addChild(modelrenderer3);
+        ModelRenderer modelrenderer4 = new ModelRenderer(this, 29, 5);
+        modelrenderer4.addBox(2.0F, -9.0F, -6.0F, 1.0F, 2.0F, 2.0F, p_i51065_1_);
+        this.head.addChild(modelrenderer4);
+        ModelRenderer modelrenderer5 = new ModelRenderer(this, 29, 5);
+        modelrenderer5.addBox(-3.0F, -9.0F, -6.0F, 1.0F, 2.0F, 2.0F, p_i51065_1_);
+        this.head.addChild(modelrenderer5);
+        ModelRenderer modelrenderer6 = new ModelRenderer(this, 32, 2);
+        modelrenderer6.addBox(3.1F, -6.0F, -8.0F, 0.0F, 3.0F, 16.0F, p_i51065_1_);
+        modelrenderer6.rotateAngleX = (-(float)Math.PI / 6F);
+        this.head.addChild(modelrenderer6);
+        ModelRenderer modelrenderer7 = new ModelRenderer(this, 32, 2);
+        modelrenderer7.addBox(-3.1F, -6.0F, -8.0F, 0.0F, 3.0F, 16.0F, p_i51065_1_);
+        modelrenderer7.rotateAngleX = (-(float)Math.PI / 6F);
+        this.head.addChild(modelrenderer7);
+        ModelRenderer modelrenderer8 = new ModelRenderer(this, 1, 1);
+        modelrenderer8.addBox(-3.0F, -11.0F, -1.9F, 6.0F, 5.0F, 6.0F, 0.2F);
+        this.head.addChild(modelrenderer8);
+        ModelRenderer modelrenderer9 = new ModelRenderer(this, 19, 0);
+        modelrenderer9.addBox(-2.0F, -11.0F, -4.0F, 4.0F, 5.0F, 2.0F, 0.2F);
+        this.head.addChild(modelrenderer9);
+        this.field_217134_k = new ModelRenderer[] {modelrenderer3, modelrenderer4, modelrenderer5, modelrenderer8, modelrenderer9};
+        this.field_217135_l = new ModelRenderer[] {modelrenderer6, modelrenderer7};
+    }
 
-   protected void addEarModels(ModelRenderer p_199047_1_) {
-      ModelRenderer modelrenderer = new ModelRenderer(this, 19, 16);
-      modelrenderer.addBox(0.55F, -13.0F, 4.0F, 2.0F, 3.0F, 1.0F, -0.001F);
-      ModelRenderer modelrenderer1 = new ModelRenderer(this, 19, 16);
-      modelrenderer1.addBox(-2.55F, -13.0F, 4.0F, 2.0F, 3.0F, 1.0F, -0.001F);
-      p_199047_1_.addChild(modelrenderer);
-      p_199047_1_.addChild(modelrenderer1);
-   }
+    protected void func_199047_a(ModelRenderer p_199047_1_)
+    {
+        ModelRenderer modelrenderer = new ModelRenderer(this, 19, 16);
+        modelrenderer.addBox(0.55F, -13.0F, 4.0F, 2.0F, 3.0F, 1.0F, -0.001F);
+        ModelRenderer modelrenderer1 = new ModelRenderer(this, 19, 16);
+        modelrenderer1.addBox(-2.55F, -13.0F, 4.0F, 2.0F, 3.0F, 1.0F, -0.001F);
+        p_199047_1_.addChild(modelrenderer);
+        p_199047_1_.addChild(modelrenderer1);
+    }
 
-   public void setupAnim(T p_225597_1_, float p_225597_2_, float p_225597_3_, float p_225597_4_, float p_225597_5_, float p_225597_6_) {
-      boolean flag = p_225597_1_.isSaddled();
-      boolean flag1 = p_225597_1_.isVehicle();
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setRotationAngles(T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        boolean flag = entityIn.isHorseSaddled();
+        boolean flag1 = entityIn.isBeingRidden();
 
-      for(ModelRenderer modelrenderer : this.saddleParts) {
-         modelrenderer.visible = flag;
-      }
+        for (ModelRenderer modelrenderer : this.field_217134_k)
+        {
+            modelrenderer.showModel = flag;
+        }
 
-      for(ModelRenderer modelrenderer1 : this.ridingParts) {
-         modelrenderer1.visible = flag1 && flag;
-      }
+        for (ModelRenderer modelrenderer1 : this.field_217135_l)
+        {
+            modelrenderer1.showModel = flag1 && flag;
+        }
 
-      this.body.y = 11.0F;
-   }
+        this.body.rotationPointY = 11.0F;
+    }
 
-   public Iterable<ModelRenderer> headParts() {
-      return ImmutableList.of(this.headParts);
-   }
+    public Iterable<ModelRenderer> getHeadParts()
+    {
+        return ImmutableList.of(this.head);
+    }
 
-   protected Iterable<ModelRenderer> bodyParts() {
-      return ImmutableList.of(this.body, this.leg1, this.leg2, this.leg3, this.leg4, this.babyLeg1, this.babyLeg2, this.babyLeg3, this.babyLeg4);
-   }
+    protected Iterable<ModelRenderer> getBodyParts()
+    {
+        return ImmutableList.of(this.body, this.field_228262_f_, this.field_228263_g_, this.field_228264_h_, this.field_228265_i_, this.field_228266_j_, this.field_228267_k_, this.field_228268_l_, this.field_228269_m_);
+    }
 
-   public void prepareMobModel(T p_212843_1_, float p_212843_2_, float p_212843_3_, float p_212843_4_) {
-      super.prepareMobModel(p_212843_1_, p_212843_2_, p_212843_3_, p_212843_4_);
-      float f = MathHelper.rotlerp(p_212843_1_.yBodyRotO, p_212843_1_.yBodyRot, p_212843_4_);
-      float f1 = MathHelper.rotlerp(p_212843_1_.yHeadRotO, p_212843_1_.yHeadRot, p_212843_4_);
-      float f2 = MathHelper.lerp(p_212843_4_, p_212843_1_.xRotO, p_212843_1_.xRot);
-      float f3 = f1 - f;
-      float f4 = f2 * ((float)Math.PI / 180F);
-      if (f3 > 20.0F) {
-         f3 = 20.0F;
-      }
+    public void setLivingAnimations(T entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+    {
+        super.setLivingAnimations(entityIn, limbSwing, limbSwingAmount, partialTick);
+        float f = MathHelper.rotLerp(entityIn.prevRenderYawOffset, entityIn.renderYawOffset, partialTick);
+        float f1 = MathHelper.rotLerp(entityIn.prevRotationYawHead, entityIn.rotationYawHead, partialTick);
+        float f2 = MathHelper.lerp(partialTick, entityIn.prevRotationPitch, entityIn.rotationPitch);
+        float f3 = f1 - f;
+        float f4 = f2 * ((float)Math.PI / 180F);
 
-      if (f3 < -20.0F) {
-         f3 = -20.0F;
-      }
+        if (f3 > 20.0F)
+        {
+            f3 = 20.0F;
+        }
 
-      if (p_212843_3_ > 0.2F) {
-         f4 += MathHelper.cos(p_212843_2_ * 0.4F) * 0.15F * p_212843_3_;
-      }
+        if (f3 < -20.0F)
+        {
+            f3 = -20.0F;
+        }
 
-      float f5 = p_212843_1_.getEatAnim(p_212843_4_);
-      float f6 = p_212843_1_.getStandAnim(p_212843_4_);
-      float f7 = 1.0F - f6;
-      float f8 = p_212843_1_.getMouthAnim(p_212843_4_);
-      boolean flag = p_212843_1_.tailCounter != 0;
-      float f9 = (float)p_212843_1_.tickCount + p_212843_4_;
-      this.headParts.y = 4.0F;
-      this.headParts.z = -12.0F;
-      this.body.xRot = 0.0F;
-      this.headParts.xRot = ((float)Math.PI / 6F) + f4;
-      this.headParts.yRot = f3 * ((float)Math.PI / 180F);
-      float f10 = p_212843_1_.isInWater() ? 0.2F : 1.0F;
-      float f11 = MathHelper.cos(f10 * p_212843_2_ * 0.6662F + (float)Math.PI);
-      float f12 = f11 * 0.8F * p_212843_3_;
-      float f13 = (1.0F - Math.max(f6, f5)) * (((float)Math.PI / 6F) + f4 + f8 * MathHelper.sin(f9) * 0.05F);
-      this.headParts.xRot = f6 * (0.2617994F + f4) + f5 * (2.1816616F + MathHelper.sin(f9) * 0.05F) + f13;
-      this.headParts.yRot = f6 * f3 * ((float)Math.PI / 180F) + (1.0F - Math.max(f6, f5)) * this.headParts.yRot;
-      this.headParts.y = f6 * -4.0F + f5 * 11.0F + (1.0F - Math.max(f6, f5)) * this.headParts.y;
-      this.headParts.z = f6 * -4.0F + f5 * -12.0F + (1.0F - Math.max(f6, f5)) * this.headParts.z;
-      this.body.xRot = f6 * (-(float)Math.PI / 4F) + f7 * this.body.xRot;
-      float f14 = 0.2617994F * f6;
-      float f15 = MathHelper.cos(f9 * 0.6F + (float)Math.PI);
-      this.leg3.y = 2.0F * f6 + 14.0F * f7;
-      this.leg3.z = -6.0F * f6 - 10.0F * f7;
-      this.leg4.y = this.leg3.y;
-      this.leg4.z = this.leg3.z;
-      float f16 = ((-(float)Math.PI / 3F) + f15) * f6 + f12 * f7;
-      float f17 = ((-(float)Math.PI / 3F) - f15) * f6 - f12 * f7;
-      this.leg1.xRot = f14 - f11 * 0.5F * p_212843_3_ * f7;
-      this.leg2.xRot = f14 + f11 * 0.5F * p_212843_3_ * f7;
-      this.leg3.xRot = f16;
-      this.leg4.xRot = f17;
-      this.tail.xRot = ((float)Math.PI / 6F) + p_212843_3_ * 0.75F;
-      this.tail.y = -5.0F + p_212843_3_;
-      this.tail.z = 2.0F + p_212843_3_ * 2.0F;
-      if (flag) {
-         this.tail.yRot = MathHelper.cos(f9 * 0.7F);
-      } else {
-         this.tail.yRot = 0.0F;
-      }
+        if (limbSwingAmount > 0.2F)
+        {
+            f4 += MathHelper.cos(limbSwing * 0.4F) * 0.15F * limbSwingAmount;
+        }
 
-      this.babyLeg1.y = this.leg1.y;
-      this.babyLeg1.z = this.leg1.z;
-      this.babyLeg1.xRot = this.leg1.xRot;
-      this.babyLeg2.y = this.leg2.y;
-      this.babyLeg2.z = this.leg2.z;
-      this.babyLeg2.xRot = this.leg2.xRot;
-      this.babyLeg3.y = this.leg3.y;
-      this.babyLeg3.z = this.leg3.z;
-      this.babyLeg3.xRot = this.leg3.xRot;
-      this.babyLeg4.y = this.leg4.y;
-      this.babyLeg4.z = this.leg4.z;
-      this.babyLeg4.xRot = this.leg4.xRot;
-      boolean flag1 = p_212843_1_.isBaby();
-      this.leg1.visible = !flag1;
-      this.leg2.visible = !flag1;
-      this.leg3.visible = !flag1;
-      this.leg4.visible = !flag1;
-      this.babyLeg1.visible = flag1;
-      this.babyLeg2.visible = flag1;
-      this.babyLeg3.visible = flag1;
-      this.babyLeg4.visible = flag1;
-      this.body.y = flag1 ? 10.8F : 0.0F;
-   }
+        float f5 = entityIn.getGrassEatingAmount(partialTick);
+        float f6 = entityIn.getRearingAmount(partialTick);
+        float f7 = 1.0F - f6;
+        float f8 = entityIn.getMouthOpennessAngle(partialTick);
+        boolean flag = entityIn.tailCounter != 0;
+        float f9 = (float)entityIn.ticksExisted + partialTick;
+        this.head.rotationPointY = 4.0F;
+        this.head.rotationPointZ = -12.0F;
+        this.body.rotateAngleX = 0.0F;
+        this.head.rotateAngleX = ((float)Math.PI / 6F) + f4;
+        this.head.rotateAngleY = f3 * ((float)Math.PI / 180F);
+        float f10 = entityIn.isInWater() ? 0.2F : 1.0F;
+        float f11 = MathHelper.cos(f10 * limbSwing * 0.6662F + (float)Math.PI);
+        float f12 = f11 * 0.8F * limbSwingAmount;
+        float f13 = (1.0F - Math.max(f6, f5)) * (((float)Math.PI / 6F) + f4 + f8 * MathHelper.sin(f9) * 0.05F);
+        this.head.rotateAngleX = f6 * (0.2617994F + f4) + f5 * (2.1816616F + MathHelper.sin(f9) * 0.05F) + f13;
+        this.head.rotateAngleY = f6 * f3 * ((float)Math.PI / 180F) + (1.0F - Math.max(f6, f5)) * this.head.rotateAngleY;
+        this.head.rotationPointY = f6 * -4.0F + f5 * 11.0F + (1.0F - Math.max(f6, f5)) * this.head.rotationPointY;
+        this.head.rotationPointZ = f6 * -4.0F + f5 * -12.0F + (1.0F - Math.max(f6, f5)) * this.head.rotationPointZ;
+        this.body.rotateAngleX = f6 * (-(float)Math.PI / 4F) + f7 * this.body.rotateAngleX;
+        float f14 = 0.2617994F * f6;
+        float f15 = MathHelper.cos(f9 * 0.6F + (float)Math.PI);
+        this.field_228264_h_.rotationPointY = 2.0F * f6 + 14.0F * f7;
+        this.field_228264_h_.rotationPointZ = -6.0F * f6 - 10.0F * f7;
+        this.field_228265_i_.rotationPointY = this.field_228264_h_.rotationPointY;
+        this.field_228265_i_.rotationPointZ = this.field_228264_h_.rotationPointZ;
+        float f16 = ((-(float)Math.PI / 3F) + f15) * f6 + f12 * f7;
+        float f17 = ((-(float)Math.PI / 3F) - f15) * f6 - f12 * f7;
+        this.field_228262_f_.rotateAngleX = f14 - f11 * 0.5F * limbSwingAmount * f7;
+        this.field_228263_g_.rotateAngleX = f14 + f11 * 0.5F * limbSwingAmount * f7;
+        this.field_228264_h_.rotateAngleX = f16;
+        this.field_228265_i_.rotateAngleX = f17;
+        this.field_217133_j.rotateAngleX = ((float)Math.PI / 6F) + limbSwingAmount * 0.75F;
+        this.field_217133_j.rotationPointY = -5.0F + limbSwingAmount;
+        this.field_217133_j.rotationPointZ = 2.0F + limbSwingAmount * 2.0F;
+
+        if (flag)
+        {
+            this.field_217133_j.rotateAngleY = MathHelper.cos(f9 * 0.7F);
+        }
+        else
+        {
+            this.field_217133_j.rotateAngleY = 0.0F;
+        }
+
+        this.field_228266_j_.rotationPointY = this.field_228262_f_.rotationPointY;
+        this.field_228266_j_.rotationPointZ = this.field_228262_f_.rotationPointZ;
+        this.field_228266_j_.rotateAngleX = this.field_228262_f_.rotateAngleX;
+        this.field_228267_k_.rotationPointY = this.field_228263_g_.rotationPointY;
+        this.field_228267_k_.rotationPointZ = this.field_228263_g_.rotationPointZ;
+        this.field_228267_k_.rotateAngleX = this.field_228263_g_.rotateAngleX;
+        this.field_228268_l_.rotationPointY = this.field_228264_h_.rotationPointY;
+        this.field_228268_l_.rotationPointZ = this.field_228264_h_.rotationPointZ;
+        this.field_228268_l_.rotateAngleX = this.field_228264_h_.rotateAngleX;
+        this.field_228269_m_.rotationPointY = this.field_228265_i_.rotationPointY;
+        this.field_228269_m_.rotationPointZ = this.field_228265_i_.rotationPointZ;
+        this.field_228269_m_.rotateAngleX = this.field_228265_i_.rotateAngleX;
+        boolean flag1 = entityIn.isChild();
+        this.field_228262_f_.showModel = !flag1;
+        this.field_228263_g_.showModel = !flag1;
+        this.field_228264_h_.showModel = !flag1;
+        this.field_228265_i_.showModel = !flag1;
+        this.field_228266_j_.showModel = flag1;
+        this.field_228267_k_.showModel = flag1;
+        this.field_228268_l_.showModel = flag1;
+        this.field_228269_m_.showModel = flag1;
+        this.body.rotationPointY = flag1 ? 10.8F : 0.0F;
+    }
 }

@@ -6,31 +6,40 @@ import java.util.function.BiFunction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public interface IWorldPosCallable {
-   IWorldPosCallable NULL = new IWorldPosCallable() {
-      public <T> Optional<T> evaluate(BiFunction<World, BlockPos, T> p_221484_1_) {
-         return Optional.empty();
-      }
-   };
+public interface IWorldPosCallable
+{
+    IWorldPosCallable DUMMY = new IWorldPosCallable()
+    {
+        public <T> Optional<T> apply(BiFunction<World, BlockPos, T> worldPosConsumer)
+        {
+            return Optional.empty();
+        }
+    };
 
-   static IWorldPosCallable create(final World p_221488_0_, final BlockPos p_221488_1_) {
-      return new IWorldPosCallable() {
-         public <T> Optional<T> evaluate(BiFunction<World, BlockPos, T> p_221484_1_) {
-            return Optional.of(p_221484_1_.apply(p_221488_0_, p_221488_1_));
-         }
-      };
-   }
+    static IWorldPosCallable of(final World world, final BlockPos pos)
+    {
+        return new IWorldPosCallable()
+        {
+            public <T> Optional<T> apply(BiFunction<World, BlockPos, T> worldPosConsumer)
+            {
+                return Optional.of(worldPosConsumer.apply(world, pos));
+            }
+        };
+    }
 
-   <T> Optional<T> evaluate(BiFunction<World, BlockPos, T> p_221484_1_);
+    <T> Optional<T> apply(BiFunction<World, BlockPos, T> worldPosConsumer);
 
-   default <T> T evaluate(BiFunction<World, BlockPos, T> p_221485_1_, T p_221485_2_) {
-      return this.evaluate(p_221485_1_).orElse(p_221485_2_);
-   }
+default <T> T applyOrElse(BiFunction<World, BlockPos, T> worldPosConsumer, T defaultValue)
+    {
+        return this.apply(worldPosConsumer).orElse(defaultValue);
+    }
 
-   default void execute(BiConsumer<World, BlockPos> p_221486_1_) {
-      this.evaluate((p_221487_1_, p_221487_2_) -> {
-         p_221486_1_.accept(p_221487_1_, p_221487_2_);
-         return Optional.empty();
-      });
-   }
+default void consume(BiConsumer<World, BlockPos> worldPosConsumer)
+    {
+        this.apply((world, pos) ->
+        {
+            worldPosConsumer.accept(world, pos);
+            return Optional.empty();
+        });
+    }
 }

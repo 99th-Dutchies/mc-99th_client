@@ -11,72 +11,94 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.gen.OctavesNoiseGenerator;
 
-public class NetherForestsSurfaceBuilder extends SurfaceBuilder<SurfaceBuilderConfig> {
-   private static final BlockState AIR = Blocks.CAVE_AIR.defaultBlockState();
-   protected long seed;
-   private OctavesNoiseGenerator decorationNoise;
+public class NetherForestsSurfaceBuilder extends SurfaceBuilder<SurfaceBuilderConfig>
+{
+    private static final BlockState field_237178_b_ = Blocks.CAVE_AIR.getDefaultState();
+    protected long field_237177_a_;
+    private OctavesNoiseGenerator field_237179_c_;
 
-   public NetherForestsSurfaceBuilder(Codec<SurfaceBuilderConfig> p_i232131_1_) {
-      super(p_i232131_1_);
-   }
+    public NetherForestsSurfaceBuilder(Codec<SurfaceBuilderConfig> p_i232131_1_)
+    {
+        super(p_i232131_1_);
+    }
 
-   public void apply(Random p_205610_1_, IChunk p_205610_2_, Biome p_205610_3_, int p_205610_4_, int p_205610_5_, int p_205610_6_, double p_205610_7_, BlockState p_205610_9_, BlockState p_205610_10_, int p_205610_11_, long p_205610_12_, SurfaceBuilderConfig p_205610_14_) {
-      int i = p_205610_11_;
-      int j = p_205610_4_ & 15;
-      int k = p_205610_5_ & 15;
-      double d0 = this.decorationNoise.getValue((double)p_205610_4_ * 0.1D, (double)p_205610_11_, (double)p_205610_5_ * 0.1D);
-      boolean flag = d0 > 0.15D + p_205610_1_.nextDouble() * 0.35D;
-      double d1 = this.decorationNoise.getValue((double)p_205610_4_ * 0.1D, 109.0D, (double)p_205610_5_ * 0.1D);
-      boolean flag1 = d1 > 0.25D + p_205610_1_.nextDouble() * 0.9D;
-      int l = (int)(p_205610_7_ / 3.0D + 3.0D + p_205610_1_.nextDouble() * 0.25D);
-      BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
-      int i1 = -1;
-      BlockState blockstate = p_205610_14_.getUnderMaterial();
+    public void buildSurface(Random random, IChunk chunkIn, Biome biomeIn, int x, int z, int startHeight, double noise, BlockState defaultBlock, BlockState defaultFluid, int seaLevel, long seed, SurfaceBuilderConfig config)
+    {
+        int i = seaLevel;
+        int j = x & 15;
+        int k = z & 15;
+        double d0 = this.field_237179_c_.func_205563_a((double)x * 0.1D, (double)seaLevel, (double)z * 0.1D);
+        boolean flag = d0 > 0.15D + random.nextDouble() * 0.35D;
+        double d1 = this.field_237179_c_.func_205563_a((double)x * 0.1D, 109.0D, (double)z * 0.1D);
+        boolean flag1 = d1 > 0.25D + random.nextDouble() * 0.9D;
+        int l = (int)(noise / 3.0D + 3.0D + random.nextDouble() * 0.25D);
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+        int i1 = -1;
+        BlockState blockstate = config.getUnder();
 
-      for(int j1 = 127; j1 >= 0; --j1) {
-         blockpos$mutable.set(j, j1, k);
-         BlockState blockstate1 = p_205610_14_.getTopMaterial();
-         BlockState blockstate2 = p_205610_2_.getBlockState(blockpos$mutable);
-         if (blockstate2.isAir()) {
-            i1 = -1;
-         } else if (blockstate2.is(p_205610_9_.getBlock())) {
-            if (i1 == -1) {
-               boolean flag2 = false;
-               if (l <= 0) {
-                  flag2 = true;
-                  blockstate = p_205610_14_.getUnderMaterial();
-               }
+        for (int j1 = 127; j1 >= 0; --j1)
+        {
+            blockpos$mutable.setPos(j, j1, k);
+            BlockState blockstate1 = config.getTop();
+            BlockState blockstate2 = chunkIn.getBlockState(blockpos$mutable);
 
-               if (flag) {
-                  blockstate1 = p_205610_14_.getUnderMaterial();
-               } else if (flag1) {
-                  blockstate1 = p_205610_14_.getUnderwaterMaterial();
-               }
-
-               if (j1 < i && flag2) {
-                  blockstate1 = p_205610_10_;
-               }
-
-               i1 = l;
-               if (j1 >= i - 1) {
-                  p_205610_2_.setBlockState(blockpos$mutable, blockstate1, false);
-               } else {
-                  p_205610_2_.setBlockState(blockpos$mutable, blockstate, false);
-               }
-            } else if (i1 > 0) {
-               --i1;
-               p_205610_2_.setBlockState(blockpos$mutable, blockstate, false);
+            if (blockstate2.isAir())
+            {
+                i1 = -1;
             }
-         }
-      }
+            else if (blockstate2.isIn(defaultBlock.getBlock()))
+            {
+                if (i1 == -1)
+                {
+                    boolean flag2 = false;
 
-   }
+                    if (l <= 0)
+                    {
+                        flag2 = true;
+                        blockstate = config.getUnder();
+                    }
 
-   public void initNoise(long p_205548_1_) {
-      if (this.seed != p_205548_1_ || this.decorationNoise == null) {
-         this.decorationNoise = new OctavesNoiseGenerator(new SharedSeedRandom(p_205548_1_), ImmutableList.of(0));
-      }
+                    if (flag)
+                    {
+                        blockstate1 = config.getUnder();
+                    }
+                    else if (flag1)
+                    {
+                        blockstate1 = config.getUnderWaterMaterial();
+                    }
 
-      this.seed = p_205548_1_;
-   }
+                    if (j1 < i && flag2)
+                    {
+                        blockstate1 = defaultFluid;
+                    }
+
+                    i1 = l;
+
+                    if (j1 >= i - 1)
+                    {
+                        chunkIn.setBlockState(blockpos$mutable, blockstate1, false);
+                    }
+                    else
+                    {
+                        chunkIn.setBlockState(blockpos$mutable, blockstate, false);
+                    }
+                }
+                else if (i1 > 0)
+                {
+                    --i1;
+                    chunkIn.setBlockState(blockpos$mutable, blockstate, false);
+                }
+            }
+        }
+    }
+
+    public void setSeed(long seed)
+    {
+        if (this.field_237177_a_ != seed || this.field_237179_c_ == null)
+        {
+            this.field_237179_c_ = new OctavesNoiseGenerator(new SharedSeedRandom(seed), ImmutableList.of(0));
+        }
+
+        this.field_237177_a_ = seed;
+    }
 }

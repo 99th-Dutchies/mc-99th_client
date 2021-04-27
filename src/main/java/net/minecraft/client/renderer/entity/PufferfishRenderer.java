@@ -9,45 +9,57 @@ import net.minecraft.client.renderer.entity.model.PufferFishSmallModel;
 import net.minecraft.entity.passive.fish.PufferfishEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class PufferfishRenderer extends MobRenderer<PufferfishEntity, EntityModel<PufferfishEntity>> {
-   private static final ResourceLocation PUFFER_LOCATION = new ResourceLocation("textures/entity/fish/pufferfish.png");
-   private int puffStateO;
-   private final PufferFishSmallModel<PufferfishEntity> small = new PufferFishSmallModel<>();
-   private final PufferFishMediumModel<PufferfishEntity> mid = new PufferFishMediumModel<>();
-   private final PufferFishBigModel<PufferfishEntity> big = new PufferFishBigModel<>();
+public class PufferfishRenderer extends MobRenderer<PufferfishEntity, EntityModel<PufferfishEntity>>
+{
+    private static final ResourceLocation PUFFERFISH_TEXTURES = new ResourceLocation("textures/entity/fish/pufferfish.png");
+    private int lastPuffState;
+    private final PufferFishSmallModel<PufferfishEntity> modelSmall = new PufferFishSmallModel<>();
+    private final PufferFishMediumModel<PufferfishEntity> modelMedium = new PufferFishMediumModel<>();
+    private final PufferFishBigModel<PufferfishEntity> modelLarge = new PufferFishBigModel<>();
 
-   public PufferfishRenderer(EntityRendererManager p_i48863_1_) {
-      super(p_i48863_1_, new PufferFishBigModel<>(), 0.2F);
-      this.puffStateO = 3;
-   }
+    public PufferfishRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn, new PufferFishBigModel<>(), 0.2F);
+        this.lastPuffState = 3;
+    }
 
-   public ResourceLocation getTextureLocation(PufferfishEntity p_110775_1_) {
-      return PUFFER_LOCATION;
-   }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(PufferfishEntity entity)
+    {
+        return PUFFERFISH_TEXTURES;
+    }
 
-   public void render(PufferfishEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      int i = p_225623_1_.getPuffState();
-      if (i != this.puffStateO) {
-         if (i == 0) {
-            this.model = this.small;
-         } else if (i == 1) {
-            this.model = this.mid;
-         } else {
-            this.model = this.big;
-         }
-      }
+    public void render(PufferfishEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        int i = entityIn.getPuffState();
 
-      this.puffStateO = i;
-      this.shadowRadius = 0.1F + 0.1F * (float)i;
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+        if (i != this.lastPuffState)
+        {
+            if (i == 0)
+            {
+                this.entityModel = this.modelSmall;
+            }
+            else if (i == 1)
+            {
+                this.entityModel = this.modelMedium;
+            }
+            else
+            {
+                this.entityModel = this.modelLarge;
+            }
+        }
 
-   protected void setupRotations(PufferfishEntity p_225621_1_, MatrixStack p_225621_2_, float p_225621_3_, float p_225621_4_, float p_225621_5_) {
-      p_225621_2_.translate(0.0D, (double)(MathHelper.cos(p_225621_3_ * 0.05F) * 0.08F), 0.0D);
-      super.setupRotations(p_225621_1_, p_225621_2_, p_225621_3_, p_225621_4_, p_225621_5_);
-   }
+        this.lastPuffState = i;
+        this.shadowSize = 0.1F + 0.1F * (float)i;
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
+
+    protected void applyRotations(PufferfishEntity entityLiving, MatrixStack matrixStackIn, float ageInTicks, float rotationYaw, float partialTicks)
+    {
+        matrixStackIn.translate(0.0D, (double)(MathHelper.cos(ageInTicks * 0.05F) * 0.08F), 0.0D);
+        super.applyRotations(entityLiving, matrixStackIn, ageInTicks, rotationYaw, partialTicks);
+    }
 }

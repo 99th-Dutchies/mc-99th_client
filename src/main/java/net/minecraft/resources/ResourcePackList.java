@@ -14,90 +14,110 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-public class ResourcePackList implements AutoCloseable {
-   private final Set<IPackFinder> sources;
-   private Map<String, ResourcePackInfo> available = ImmutableMap.of();
-   private List<ResourcePackInfo> selected = ImmutableList.of();
-   private final ResourcePackInfo.IFactory constructor;
+public class ResourcePackList implements AutoCloseable
+{
+    private final Set<IPackFinder> packFinders;
+    private Map<String, ResourcePackInfo> packNameToInfo = ImmutableMap.of();
+    private List<ResourcePackInfo> enabled = ImmutableList.of();
+    private final ResourcePackInfo.IFactory packInfoFactory;
 
-   public ResourcePackList(ResourcePackInfo.IFactory p_i231423_1_, IPackFinder... p_i231423_2_) {
-      this.constructor = p_i231423_1_;
-      this.sources = ImmutableSet.copyOf(p_i231423_2_);
-   }
+    public ResourcePackList(ResourcePackInfo.IFactory p_i231423_1_, IPackFinder... p_i231423_2_)
+    {
+        this.packInfoFactory = p_i231423_1_;
+        this.packFinders = ImmutableSet.copyOf(p_i231423_2_);
+    }
 
-   public ResourcePackList(IPackFinder... p_i241886_1_) {
-      this(ResourcePackInfo::new, p_i241886_1_);
-   }
+    public ResourcePackList(IPackFinder... p_i241886_1_)
+    {
+        this(ResourcePackInfo::new, p_i241886_1_);
+    }
 
-   public void reload() {
-      List<String> list = this.selected.stream().map(ResourcePackInfo::getId).collect(ImmutableList.toImmutableList());
-      this.close();
-      this.available = this.discoverAvailable();
-      this.selected = this.rebuildSelected(list);
-   }
+    public void reloadPacksFromFinders()
+    {
+        List<String> list = this.enabled.stream().map(ResourcePackInfo::getName).collect(ImmutableList.toImmutableList());
+        this.close();
+        this.packNameToInfo = this.func_232624_g_();
+        this.enabled = this.func_232618_b_(list);
+    }
 
-   private Map<String, ResourcePackInfo> discoverAvailable() {
-      Map<String, ResourcePackInfo> map = Maps.newTreeMap();
+    private Map<String, ResourcePackInfo> func_232624_g_()
+    {
+        Map<String, ResourcePackInfo> map = Maps.newTreeMap();
 
-      for(IPackFinder ipackfinder : this.sources) {
-         ipackfinder.loadPacks((p_232615_1_) -> {
-            ResourcePackInfo resourcepackinfo = map.put(p_232615_1_.getId(), p_232615_1_);
-         }, this.constructor);
-      }
+        for (IPackFinder ipackfinder : this.packFinders)
+        {
+            ipackfinder.findPacks((p_232615_1_) ->
+            {
+                ResourcePackInfo resourcepackinfo = map.put(p_232615_1_.getName(), p_232615_1_);
+            }, this.packInfoFactory);
+        }
 
-      return ImmutableMap.copyOf(map);
-   }
+        return ImmutableMap.copyOf(map);
+    }
 
-   public void setSelected(Collection<String> p_198985_1_) {
-      this.selected = this.rebuildSelected(p_198985_1_);
-   }
+    public void setEnabledPacks(Collection<String> p_198985_1_)
+    {
+        this.enabled = this.func_232618_b_(p_198985_1_);
+    }
 
-   private List<ResourcePackInfo> rebuildSelected(Collection<String> p_232618_1_) {
-      List<ResourcePackInfo> list = this.getAvailablePacks(p_232618_1_).collect(Collectors.toList());
+    private List<ResourcePackInfo> func_232618_b_(Collection<String> p_232618_1_)
+    {
+        List<ResourcePackInfo> list = this.func_232620_c_(p_232618_1_).collect(Collectors.toList());
 
-      for(ResourcePackInfo resourcepackinfo : this.available.values()) {
-         if (resourcepackinfo.isRequired() && !list.contains(resourcepackinfo)) {
-            resourcepackinfo.getDefaultPosition().insert(list, resourcepackinfo, Functions.identity(), false);
-         }
-      }
+        for (ResourcePackInfo resourcepackinfo : this.packNameToInfo.values())
+        {
+            if (resourcepackinfo.isAlwaysEnabled() && !list.contains(resourcepackinfo))
+            {
+                resourcepackinfo.getPriority().insert(list, resourcepackinfo, Functions.identity(), false);
+            }
+        }
 
-      return ImmutableList.copyOf(list);
-   }
+        return ImmutableList.copyOf(list);
+    }
 
-   private Stream<ResourcePackInfo> getAvailablePacks(Collection<String> p_232620_1_) {
-      return p_232620_1_.stream().map(this.available::get).filter(Objects::nonNull);
-   }
+    private Stream<ResourcePackInfo> func_232620_c_(Collection<String> p_232620_1_)
+    {
+        return p_232620_1_.stream().map(this.packNameToInfo::get).filter(Objects::nonNull);
+    }
 
-   public Collection<String> getAvailableIds() {
-      return this.available.keySet();
-   }
+    public Collection<String> func_232616_b_()
+    {
+        return this.packNameToInfo.keySet();
+    }
 
-   public Collection<ResourcePackInfo> getAvailablePacks() {
-      return this.available.values();
-   }
+    public Collection<ResourcePackInfo> getAllPacks()
+    {
+        return this.packNameToInfo.values();
+    }
 
-   public Collection<String> getSelectedIds() {
-      return this.selected.stream().map(ResourcePackInfo::getId).collect(ImmutableSet.toImmutableSet());
-   }
+    public Collection<String> func_232621_d_()
+    {
+        return this.enabled.stream().map(ResourcePackInfo::getName).collect(ImmutableSet.toImmutableSet());
+    }
 
-   public Collection<ResourcePackInfo> getSelectedPacks() {
-      return this.selected;
-   }
+    public Collection<ResourcePackInfo> getEnabledPacks()
+    {
+        return this.enabled;
+    }
 
-   @Nullable
-   public ResourcePackInfo getPack(String p_198981_1_) {
-      return this.available.get(p_198981_1_);
-   }
+    @Nullable
+    public ResourcePackInfo getPackInfo(String name)
+    {
+        return this.packNameToInfo.get(name);
+    }
 
-   public void close() {
-      this.available.values().forEach(ResourcePackInfo::close);
-   }
+    public void close()
+    {
+        this.packNameToInfo.values().forEach(ResourcePackInfo::close);
+    }
 
-   public boolean isAvailable(String p_232617_1_) {
-      return this.available.containsKey(p_232617_1_);
-   }
+    public boolean func_232617_b_(String p_232617_1_)
+    {
+        return this.packNameToInfo.containsKey(p_232617_1_);
+    }
 
-   public List<IResourcePack> openAllSelected() {
-      return this.selected.stream().map(ResourcePackInfo::open).collect(ImmutableList.toImmutableList());
-   }
+    public List<IResourcePack> func_232623_f_()
+    {
+        return this.enabled.stream().map(ResourcePackInfo::getResourcePack).collect(ImmutableList.toImmutableList());
+    }
 }

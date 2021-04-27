@@ -5,40 +5,53 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SWorldSpawnChangedPacket implements IPacket<IClientPlayNetHandler> {
-   private BlockPos pos;
-   private float angle;
+public class SWorldSpawnChangedPacket implements IPacket<IClientPlayNetHandler>
+{
+    private BlockPos field_240831_a_;
+    private float field_244312_b;
 
-   public SWorldSpawnChangedPacket() {
-   }
+    public SWorldSpawnChangedPacket()
+    {
+    }
 
-   public SWorldSpawnChangedPacket(BlockPos p_i242086_1_, float p_i242086_2_) {
-      this.pos = p_i242086_1_;
-      this.angle = p_i242086_2_;
-   }
+    public SWorldSpawnChangedPacket(BlockPos p_i242086_1_, float p_i242086_2_)
+    {
+        this.field_240831_a_ = p_i242086_1_;
+        this.field_244312_b = p_i242086_2_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.pos = p_148837_1_.readBlockPos();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.field_240831_a_ = buf.readBlockPos();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeBlockPos(this.pos);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeBlockPos(this.field_240831_a_);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetSpawn(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.func_230488_a_(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    public BlockPos func_240832_b_()
+    {
+        return this.field_240831_a_;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getAngle() {
-      return this.angle;
-   }
+    public float func_244313_c()
+    {
+        return this.field_244312_b;
+    }
 }

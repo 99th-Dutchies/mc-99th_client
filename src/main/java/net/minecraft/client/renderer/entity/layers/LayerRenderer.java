@@ -10,39 +10,42 @@ import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class LayerRenderer<T extends Entity, M extends EntityModel<T>> {
-   private final IEntityRenderer<T, M> renderer;
+public abstract class LayerRenderer<T extends Entity, M extends EntityModel<T>>
+{
+    private final IEntityRenderer<T, M> entityRenderer;
 
-   public LayerRenderer(IEntityRenderer<T, M> p_i50926_1_) {
-      this.renderer = p_i50926_1_;
-   }
+    public LayerRenderer(IEntityRenderer<T, M> entityRendererIn)
+    {
+        this.entityRenderer = entityRendererIn;
+    }
 
-   protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(EntityModel<T> p_229140_0_, EntityModel<T> p_229140_1_, ResourceLocation p_229140_2_, MatrixStack p_229140_3_, IRenderTypeBuffer p_229140_4_, int p_229140_5_, T p_229140_6_, float p_229140_7_, float p_229140_8_, float p_229140_9_, float p_229140_10_, float p_229140_11_, float p_229140_12_, float p_229140_13_, float p_229140_14_, float p_229140_15_) {
-      if (!p_229140_6_.isInvisible()) {
-         p_229140_0_.copyPropertiesTo(p_229140_1_);
-         p_229140_1_.prepareMobModel(p_229140_6_, p_229140_7_, p_229140_8_, p_229140_12_);
-         p_229140_1_.setupAnim(p_229140_6_, p_229140_7_, p_229140_8_, p_229140_9_, p_229140_10_, p_229140_11_);
-         renderColoredCutoutModel(p_229140_1_, p_229140_2_, p_229140_3_, p_229140_4_, p_229140_5_, p_229140_6_, p_229140_13_, p_229140_14_, p_229140_15_);
-      }
+    protected static <T extends LivingEntity> void renderCopyCutoutModel(EntityModel<T> modelParentIn, EntityModel<T> modelIn, ResourceLocation textureLocationIn, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float partialTicks, float red, float green, float blue)
+    {
+        if (!entityIn.isInvisible())
+        {
+            modelParentIn.copyModelAttributesTo(modelIn);
+            modelIn.setLivingAnimations(entityIn, limbSwing, limbSwingAmount, partialTicks);
+            modelIn.setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+            renderCutoutModel(modelIn, textureLocationIn, matrixStackIn, bufferIn, packedLightIn, entityIn, red, green, blue);
+        }
+    }
 
-   }
+    protected static <T extends LivingEntity> void renderCutoutModel(EntityModel<T> modelIn, ResourceLocation textureLocationIn, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entityIn, float red, float green, float blue)
+    {
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getEntityCutoutNoCull(textureLocationIn));
+        modelIn.render(matrixStackIn, ivertexbuilder, packedLightIn, LivingRenderer.getPackedOverlay(entityIn, 0.0F), red, green, blue, 1.0F);
+    }
 
-   protected static <T extends LivingEntity> void renderColoredCutoutModel(EntityModel<T> p_229141_0_, ResourceLocation p_229141_1_, MatrixStack p_229141_2_, IRenderTypeBuffer p_229141_3_, int p_229141_4_, T p_229141_5_, float p_229141_6_, float p_229141_7_, float p_229141_8_) {
-      IVertexBuilder ivertexbuilder = p_229141_3_.getBuffer(RenderType.entityCutoutNoCull(p_229141_1_));
-      p_229141_0_.renderToBuffer(p_229141_2_, ivertexbuilder, p_229141_4_, LivingRenderer.getOverlayCoords(p_229141_5_, 0.0F), p_229141_6_, p_229141_7_, p_229141_8_, 1.0F);
-   }
+    public M getEntityModel()
+    {
+        return this.entityRenderer.getEntityModel();
+    }
 
-   public M getParentModel() {
-      return this.renderer.getModel();
-   }
+    protected ResourceLocation getEntityTexture(T entityIn)
+    {
+        return this.entityRenderer.getEntityTexture(entityIn);
+    }
 
-   protected ResourceLocation getTextureLocation(T p_229139_1_) {
-      return this.renderer.getTextureLocation(p_229139_1_);
-   }
-
-   public abstract void render(MatrixStack p_225628_1_, IRenderTypeBuffer p_225628_2_, int p_225628_3_, T p_225628_4_, float p_225628_5_, float p_225628_6_, float p_225628_7_, float p_225628_8_, float p_225628_9_, float p_225628_10_);
+    public abstract void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch);
 }

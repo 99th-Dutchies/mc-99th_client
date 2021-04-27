@@ -1,21 +1,19 @@
 package com.mojang.blaze3d.vertex;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public abstract class DefaultColorVertexBuilder implements IVertexBuilder
+{
+    protected boolean defaultColor = false;
+    protected int defaultRed = 255;
+    protected int defaultGreen = 255;
+    protected int defaultBlue = 255;
+    protected int defaultAlpha = 255;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class DefaultColorVertexBuilder implements IVertexBuilder {
-   protected boolean defaultColorSet = false;
-   protected int defaultR = 255;
-   protected int defaultG = 255;
-   protected int defaultB = 255;
-   protected int defaultA = 255;
-
-   public void defaultColor(int p_225611_1_, int p_225611_2_, int p_225611_3_, int p_225611_4_) {
-      this.defaultR = p_225611_1_;
-      this.defaultG = p_225611_2_;
-      this.defaultB = p_225611_3_;
-      this.defaultA = p_225611_4_;
-      this.defaultColorSet = true;
-   }
+    public void setDefaultColor(int red, int green, int blue, int alpha)
+    {
+        this.defaultRed = red;
+        this.defaultGreen = green;
+        this.defaultBlue = blue;
+        this.defaultAlpha = alpha;
+        this.defaultColor = true;
+    }
 }

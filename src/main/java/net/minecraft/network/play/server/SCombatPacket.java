@@ -9,73 +9,99 @@ import net.minecraft.util.CombatTracker;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 
-public class SCombatPacket implements IPacket<IClientPlayNetHandler> {
-   public SCombatPacket.Event event;
-   public int playerId;
-   public int killerId;
-   public int duration;
-   public ITextComponent message;
+public class SCombatPacket implements IPacket<IClientPlayNetHandler>
+{
+    public SCombatPacket.Event eventType;
+    public int playerId;
+    public int entityId;
+    public int duration;
+    public ITextComponent deathMessage;
 
-   public SCombatPacket() {
-   }
+    public SCombatPacket()
+    {
+    }
 
-   public SCombatPacket(CombatTracker p_i46931_1_, SCombatPacket.Event p_i46931_2_) {
-      this(p_i46931_1_, p_i46931_2_, StringTextComponent.EMPTY);
-   }
+    public SCombatPacket(CombatTracker tracker, SCombatPacket.Event eventIn)
+    {
+        this(tracker, eventIn, StringTextComponent.EMPTY);
+    }
 
-   public SCombatPacket(CombatTracker p_i49825_1_, SCombatPacket.Event p_i49825_2_, ITextComponent p_i49825_3_) {
-      this.event = p_i49825_2_;
-      LivingEntity livingentity = p_i49825_1_.getKiller();
-      switch(p_i49825_2_) {
-      case END_COMBAT:
-         this.duration = p_i49825_1_.getCombatDuration();
-         this.killerId = livingentity == null ? -1 : livingentity.getId();
-         break;
-      case ENTITY_DIED:
-         this.playerId = p_i49825_1_.getMob().getId();
-         this.killerId = livingentity == null ? -1 : livingentity.getId();
-         this.message = p_i49825_3_;
-      }
+    public SCombatPacket(CombatTracker p_i49825_1_, SCombatPacket.Event p_i49825_2_, ITextComponent p_i49825_3_)
+    {
+        this.eventType = p_i49825_2_;
+        LivingEntity livingentity = p_i49825_1_.getBestAttacker();
 
-   }
+        switch (p_i49825_2_)
+        {
+            case END_COMBAT:
+                this.duration = p_i49825_1_.getCombatDuration();
+                this.entityId = livingentity == null ? -1 : livingentity.getEntityId();
+                break;
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.event = p_148837_1_.readEnum(SCombatPacket.Event.class);
-      if (this.event == SCombatPacket.Event.END_COMBAT) {
-         this.duration = p_148837_1_.readVarInt();
-         this.killerId = p_148837_1_.readInt();
-      } else if (this.event == SCombatPacket.Event.ENTITY_DIED) {
-         this.playerId = p_148837_1_.readVarInt();
-         this.killerId = p_148837_1_.readInt();
-         this.message = p_148837_1_.readComponent();
-      }
+            case ENTITY_DIED:
+                this.playerId = p_i49825_1_.getFighter().getEntityId();
+                this.entityId = livingentity == null ? -1 : livingentity.getEntityId();
+                this.deathMessage = p_i49825_3_;
+        }
+    }
 
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.eventType = buf.readEnumValue(SCombatPacket.Event.class);
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeEnum(this.event);
-      if (this.event == SCombatPacket.Event.END_COMBAT) {
-         p_148840_1_.writeVarInt(this.duration);
-         p_148840_1_.writeInt(this.killerId);
-      } else if (this.event == SCombatPacket.Event.ENTITY_DIED) {
-         p_148840_1_.writeVarInt(this.playerId);
-         p_148840_1_.writeInt(this.killerId);
-         p_148840_1_.writeComponent(this.message);
-      }
+        if (this.eventType == SCombatPacket.Event.END_COMBAT)
+        {
+            this.duration = buf.readVarInt();
+            this.entityId = buf.readInt();
+        }
+        else if (this.eventType == SCombatPacket.Event.ENTITY_DIED)
+        {
+            this.playerId = buf.readVarInt();
+            this.entityId = buf.readInt();
+            this.deathMessage = buf.readTextComponent();
+        }
+    }
 
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeEnumValue(this.eventType);
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handlePlayerCombat(this);
-   }
+        if (this.eventType == SCombatPacket.Event.END_COMBAT)
+        {
+            buf.writeVarInt(this.duration);
+            buf.writeInt(this.entityId);
+        }
+        else if (this.eventType == SCombatPacket.Event.ENTITY_DIED)
+        {
+            buf.writeVarInt(this.playerId);
+            buf.writeInt(this.entityId);
+            buf.writeTextComponent(this.deathMessage);
+        }
+    }
 
-   public boolean isSkippable() {
-      return this.event == SCombatPacket.Event.ENTITY_DIED;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleCombatEvent(this);
+    }
 
-   public static enum Event {
-      ENTER_COMBAT,
-      END_COMBAT,
-      ENTITY_DIED;
-   }
+    public boolean shouldSkipErrors()
+    {
+        return this.eventType == SCombatPacket.Event.ENTITY_DIED;
+    }
+
+    public static enum Event
+    {
+        ENTER_COMBAT,
+        END_COMBAT,
+        ENTITY_DIED;
+    }
 }

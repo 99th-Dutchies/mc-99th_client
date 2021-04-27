@@ -35,109 +35,160 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class EnderChestBlock extends AbstractChestBlock<EnderChestTileEntity> implements IWaterLoggable {
-   public static final DirectionProperty FACING = HorizontalBlock.FACING;
-   public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-   protected static final VoxelShape SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 14.0D, 15.0D);
-   private static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.enderchest");
+public class EnderChestBlock extends AbstractChestBlock<EnderChestTileEntity> implements IWaterLoggable
+{
+    public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 14.0D, 15.0D);
+    private static final ITextComponent CONTAINER_NAME = new TranslationTextComponent("container.enderchest");
 
-   protected EnderChestBlock(AbstractBlock.Properties p_i48403_1_) {
-      super(p_i48403_1_, () -> {
-         return TileEntityType.ENDER_CHEST;
-      });
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, Boolean.valueOf(false)));
-   }
+    protected EnderChestBlock(AbstractBlock.Properties builder)
+    {
+        super(builder, () ->
+        {
+            return TileEntityType.ENDER_CHEST;
+        });
+        this.setDefaultState(this.stateContainer.getBaseState().with(FACING, Direction.NORTH).with(WATERLOGGED, Boolean.valueOf(false)));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public TileEntityMerger.ICallbackWrapper<? extends ChestTileEntity> combine(BlockState p_225536_1_, World p_225536_2_, BlockPos p_225536_3_, boolean p_225536_4_) {
-      return TileEntityMerger.ICallback::acceptNone;
-   }
+    public TileEntityMerger.ICallbackWrapper <? extends ChestTileEntity > combine(BlockState state, World world, BlockPos pos, boolean override)
+    {
+        return TileEntityMerger.ICallback::func_225537_b_;
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.ENTITYBLOCK_ANIMATED;
-   }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.ENTITYBLOCK_ANIMATED;
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      FluidState fluidstate = p_196258_1_.getLevel().getFluidState(p_196258_1_.getClickedPos());
-      return this.defaultBlockState().setValue(FACING, p_196258_1_.getHorizontalDirection().getOpposite()).setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
-   }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        FluidState fluidstate = context.getWorld().getFluidState(context.getPos());
+        return this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing().getOpposite()).with(WATERLOGGED, Boolean.valueOf(fluidstate.getFluid() == Fluids.WATER));
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      EnderChestInventory enderchestinventory = p_225533_4_.getEnderChestInventory();
-      TileEntity tileentity = p_225533_2_.getBlockEntity(p_225533_3_);
-      if (enderchestinventory != null && tileentity instanceof EnderChestTileEntity) {
-         BlockPos blockpos = p_225533_3_.above();
-         if (p_225533_2_.getBlockState(blockpos).isRedstoneConductor(p_225533_2_, blockpos)) {
-            return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-         } else if (p_225533_2_.isClientSide) {
-            return ActionResultType.SUCCESS;
-         } else {
-            EnderChestTileEntity enderchesttileentity = (EnderChestTileEntity)tileentity;
-            enderchestinventory.setActiveChest(enderchesttileentity);
-            p_225533_4_.openMenu(new SimpleNamedContainerProvider((p_226928_1_, p_226928_2_, p_226928_3_) -> {
-               return ChestContainer.threeRows(p_226928_1_, p_226928_2_, enderchestinventory);
-            }, CONTAINER_TITLE));
-            p_225533_4_.awardStat(Stats.OPEN_ENDERCHEST);
-            PiglinTasks.angerNearbyPiglins(p_225533_4_, true);
-            return ActionResultType.CONSUME;
-         }
-      } else {
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      }
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        EnderChestInventory enderchestinventory = player.getInventoryEnderChest();
+        TileEntity tileentity = worldIn.getTileEntity(pos);
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new EnderChestTileEntity();
-   }
+        if (enderchestinventory != null && tileentity instanceof EnderChestTileEntity)
+        {
+            BlockPos blockpos = pos.up();
 
-   @OnlyIn(Dist.CLIENT)
-   public void animateTick(BlockState p_180655_1_, World p_180655_2_, BlockPos p_180655_3_, Random p_180655_4_) {
-      for(int i = 0; i < 3; ++i) {
-         int j = p_180655_4_.nextInt(2) * 2 - 1;
-         int k = p_180655_4_.nextInt(2) * 2 - 1;
-         double d0 = (double)p_180655_3_.getX() + 0.5D + 0.25D * (double)j;
-         double d1 = (double)((float)p_180655_3_.getY() + p_180655_4_.nextFloat());
-         double d2 = (double)p_180655_3_.getZ() + 0.5D + 0.25D * (double)k;
-         double d3 = (double)(p_180655_4_.nextFloat() * (float)j);
-         double d4 = ((double)p_180655_4_.nextFloat() - 0.5D) * 0.125D;
-         double d5 = (double)(p_180655_4_.nextFloat() * (float)k);
-         p_180655_2_.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
-      }
+            if (worldIn.getBlockState(blockpos).isNormalCube(worldIn, blockpos))
+            {
+                return ActionResultType.func_233537_a_(worldIn.isRemote);
+            }
+            else if (worldIn.isRemote)
+            {
+                return ActionResultType.SUCCESS;
+            }
+            else
+            {
+                EnderChestTileEntity enderchesttileentity = (EnderChestTileEntity)tileentity;
+                enderchestinventory.setChestTileEntity(enderchesttileentity);
+                player.openContainer(new SimpleNamedContainerProvider((id, inventory, playerIn) ->
+                {
+                    return ChestContainer.createGeneric9X3(id, inventory, enderchestinventory);
+                }, CONTAINER_NAME));
+                player.addStat(Stats.OPEN_ENDERCHEST);
+                PiglinTasks.func_234478_a_(player, true);
+                return ActionResultType.CONSUME;
+            }
+        }
+        else
+        {
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+    }
 
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new EnderChestTileEntity();
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      return p_185499_1_.setValue(FACING, p_185499_2_.rotate(p_185499_1_.getValue(FACING)));
-   }
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles). Note that
+     * this method is unrelated to {@link randomTick} and {@link #needsRandomTick}, and will always be called regardless
+     * of whether the block can receive random update ticks
+     */
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            int j = rand.nextInt(2) * 2 - 1;
+            int k = rand.nextInt(2) * 2 - 1;
+            double d0 = (double)pos.getX() + 0.5D + 0.25D * (double)j;
+            double d1 = (double)((float)pos.getY() + rand.nextFloat());
+            double d2 = (double)pos.getZ() + 0.5D + 0.25D * (double)k;
+            double d3 = (double)(rand.nextFloat() * (float)j);
+            double d4 = ((double)rand.nextFloat() - 0.5D) * 0.125D;
+            double d5 = (double)(rand.nextFloat() * (float)k);
+            worldIn.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
+        }
+    }
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      return p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        return state.with(FACING, rot.rotate(state.get(FACING)));
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, WATERLOGGED);
-   }
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        return state.rotate(mirrorIn.toRotation(state.get(FACING)));
+    }
 
-   public FluidState getFluidState(BlockState p_204507_1_) {
-      return p_204507_1_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_204507_1_);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(FACING, WATERLOGGED);
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_1_.getValue(WATERLOGGED)) {
-         p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
-      }
+    public FluidState getFluidState(BlockState state)
+    {
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStillFluidState(false) : super.getFluidState(state);
+    }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (stateIn.get(WATERLOGGED))
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+        }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
+
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

@@ -12,109 +12,144 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 
-public abstract class AbstractGroupFishEntity extends AbstractFishEntity {
-   private AbstractGroupFishEntity leader;
-   private int schoolSize = 1;
+public abstract class AbstractGroupFishEntity extends AbstractFishEntity
+{
+    private AbstractGroupFishEntity groupLeader;
+    private int groupSize = 1;
 
-   public AbstractGroupFishEntity(EntityType<? extends AbstractGroupFishEntity> p_i49856_1_, World p_i49856_2_) {
-      super(p_i49856_1_, p_i49856_2_);
-   }
+    public AbstractGroupFishEntity(EntityType <? extends AbstractGroupFishEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   protected void registerGoals() {
-      super.registerGoals();
-      this.goalSelector.addGoal(5, new FollowSchoolLeaderGoal(this));
-   }
+    protected void registerGoals()
+    {
+        super.registerGoals();
+        this.goalSelector.addGoal(5, new FollowSchoolLeaderGoal(this));
+    }
 
-   public int getMaxSpawnClusterSize() {
-      return this.getMaxSchoolSize();
-   }
+    /**
+     * Will return how many at most can spawn in a chunk at once.
+     */
+    public int getMaxSpawnedInChunk()
+    {
+        return this.getMaxGroupSize();
+    }
 
-   public int getMaxSchoolSize() {
-      return super.getMaxSpawnClusterSize();
-   }
+    public int getMaxGroupSize()
+    {
+        return super.getMaxSpawnedInChunk();
+    }
 
-   protected boolean canRandomSwim() {
-      return !this.isFollower();
-   }
+    protected boolean func_212800_dy()
+    {
+        return !this.hasGroupLeader();
+    }
 
-   public boolean isFollower() {
-      return this.leader != null && this.leader.isAlive();
-   }
+    public boolean hasGroupLeader()
+    {
+        return this.groupLeader != null && this.groupLeader.isAlive();
+    }
 
-   public AbstractGroupFishEntity startFollowing(AbstractGroupFishEntity p_212803_1_) {
-      this.leader = p_212803_1_;
-      p_212803_1_.addFollower();
-      return p_212803_1_;
-   }
+    public AbstractGroupFishEntity func_212803_a(AbstractGroupFishEntity groupLeaderIn)
+    {
+        this.groupLeader = groupLeaderIn;
+        groupLeaderIn.increaseGroupSize();
+        return groupLeaderIn;
+    }
 
-   public void stopFollowing() {
-      this.leader.removeFollower();
-      this.leader = null;
-   }
+    public void leaveGroup()
+    {
+        this.groupLeader.decreaseGroupSize();
+        this.groupLeader = null;
+    }
 
-   private void addFollower() {
-      ++this.schoolSize;
-   }
+    private void increaseGroupSize()
+    {
+        ++this.groupSize;
+    }
 
-   private void removeFollower() {
-      --this.schoolSize;
-   }
+    private void decreaseGroupSize()
+    {
+        --this.groupSize;
+    }
 
-   public boolean canBeFollowed() {
-      return this.hasFollowers() && this.schoolSize < this.getMaxSchoolSize();
-   }
+    public boolean canGroupGrow()
+    {
+        return this.isGroupLeader() && this.groupSize < this.getMaxGroupSize();
+    }
 
-   public void tick() {
-      super.tick();
-      if (this.hasFollowers() && this.level.random.nextInt(200) == 1) {
-         List<AbstractFishEntity> list = this.level.getEntitiesOfClass(this.getClass(), this.getBoundingBox().inflate(8.0D, 8.0D, 8.0D));
-         if (list.size() <= 1) {
-            this.schoolSize = 1;
-         }
-      }
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void tick()
+    {
+        super.tick();
 
-   }
+        if (this.isGroupLeader() && this.world.rand.nextInt(200) == 1)
+        {
+            List<AbstractFishEntity> list = this.world.getEntitiesWithinAABB(this.getClass(), this.getBoundingBox().grow(8.0D, 8.0D, 8.0D));
 
-   public boolean hasFollowers() {
-      return this.schoolSize > 1;
-   }
+            if (list.size() <= 1)
+            {
+                this.groupSize = 1;
+            }
+        }
+    }
 
-   public boolean inRangeOfLeader() {
-      return this.distanceToSqr(this.leader) <= 121.0D;
-   }
+    public boolean isGroupLeader()
+    {
+        return this.groupSize > 1;
+    }
 
-   public void pathToLeader() {
-      if (this.isFollower()) {
-         this.getNavigation().moveTo(this.leader, 1.0D);
-      }
+    public boolean inRangeOfGroupLeader()
+    {
+        return this.getDistanceSq(this.groupLeader) <= 121.0D;
+    }
 
-   }
+    public void moveToGroupLeader()
+    {
+        if (this.hasGroupLeader())
+        {
+            this.getNavigator().tryMoveToEntityLiving(this.groupLeader, 1.0D);
+        }
+    }
 
-   public void addFollowers(Stream<AbstractGroupFishEntity> p_212810_1_) {
-      p_212810_1_.limit((long)(this.getMaxSchoolSize() - this.schoolSize)).filter((p_212801_1_) -> {
-         return p_212801_1_ != this;
-      }).forEach((p_212804_1_) -> {
-         p_212804_1_.startFollowing(this);
-      });
-   }
+    public void func_212810_a(Stream<AbstractGroupFishEntity> p_212810_1_)
+    {
+        p_212810_1_.limit((long)(this.getMaxGroupSize() - this.groupSize)).filter((p_212801_1_) ->
+        {
+            return p_212801_1_ != this;
+        }).forEach((p_212804_1_) ->
+        {
+            p_212804_1_.func_212803_a(this);
+        });
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-      if (p_213386_4_ == null) {
-         p_213386_4_ = new AbstractGroupFishEntity.GroupData(this);
-      } else {
-         this.startFollowing(((AbstractGroupFishEntity.GroupData)p_213386_4_).leader);
-      }
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
 
-      return p_213386_4_;
-   }
+        if (spawnDataIn == null)
+        {
+            spawnDataIn = new AbstractGroupFishEntity.GroupData(this);
+        }
+        else
+        {
+            this.func_212803_a(((AbstractGroupFishEntity.GroupData)spawnDataIn).groupLeader);
+        }
 
-   public static class GroupData implements ILivingEntityData {
-      public final AbstractGroupFishEntity leader;
+        return spawnDataIn;
+    }
 
-      public GroupData(AbstractGroupFishEntity p_i49858_1_) {
-         this.leader = p_i49858_1_;
-      }
-   }
+    public static class GroupData implements ILivingEntityData
+    {
+        public final AbstractGroupFishEntity groupLeader;
+
+        public GroupData(AbstractGroupFishEntity groupLeaderIn)
+        {
+            this.groupLeader = groupLeaderIn;
+        }
+    }
 }

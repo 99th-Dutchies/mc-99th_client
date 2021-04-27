@@ -14,35 +14,48 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
-public class SpawnPointCommand {
-   public static void register(CommandDispatcher<CommandSource> p_198695_0_) {
-      p_198695_0_.register(Commands.literal("spawnpoint").requires((p_198699_0_) -> {
-         return p_198699_0_.hasPermission(2);
-      }).executes((p_198697_0_) -> {
-         return setSpawn(p_198697_0_.getSource(), Collections.singleton(p_198697_0_.getSource().getPlayerOrException()), new BlockPos(p_198697_0_.getSource().getPosition()), 0.0F);
-      }).then(Commands.argument("targets", EntityArgument.players()).executes((p_198694_0_) -> {
-         return setSpawn(p_198694_0_.getSource(), EntityArgument.getPlayers(p_198694_0_, "targets"), new BlockPos(p_198694_0_.getSource().getPosition()), 0.0F);
-      }).then(Commands.argument("pos", BlockPosArgument.blockPos()).executes((p_198698_0_) -> {
-         return setSpawn(p_198698_0_.getSource(), EntityArgument.getPlayers(p_198698_0_, "targets"), BlockPosArgument.getOrLoadBlockPos(p_198698_0_, "pos"), 0.0F);
-      }).then(Commands.argument("angle", AngleArgument.angle()).executes((p_244376_0_) -> {
-         return setSpawn(p_244376_0_.getSource(), EntityArgument.getPlayers(p_244376_0_, "targets"), BlockPosArgument.getOrLoadBlockPos(p_244376_0_, "pos"), AngleArgument.getAngle(p_244376_0_, "angle"));
-      })))));
-   }
+public class SpawnPointCommand
+{
+    public static void register(CommandDispatcher<CommandSource> dispatcher)
+    {
+        dispatcher.register(Commands.literal("spawnpoint").requires((p_198699_0_) ->
+        {
+            return p_198699_0_.hasPermissionLevel(2);
+        }).executes((p_198697_0_) ->
+        {
+            return setSpawnPoint(p_198697_0_.getSource(), Collections.singleton(p_198697_0_.getSource().asPlayer()), new BlockPos(p_198697_0_.getSource().getPos()), 0.0F);
+        }).then(Commands.argument("targets", EntityArgument.players()).executes((p_198694_0_) ->
+        {
+            return setSpawnPoint(p_198694_0_.getSource(), EntityArgument.getPlayers(p_198694_0_, "targets"), new BlockPos(p_198694_0_.getSource().getPos()), 0.0F);
+        }).then(Commands.argument("pos", BlockPosArgument.blockPos()).executes((p_198698_0_) ->
+        {
+            return setSpawnPoint(p_198698_0_.getSource(), EntityArgument.getPlayers(p_198698_0_, "targets"), BlockPosArgument.getBlockPos(p_198698_0_, "pos"), 0.0F);
+        }).then(Commands.argument("angle", AngleArgument.func_242991_a()).executes((p_244376_0_) ->
+        {
+            return setSpawnPoint(p_244376_0_.getSource(), EntityArgument.getPlayers(p_244376_0_, "targets"), BlockPosArgument.getBlockPos(p_244376_0_, "pos"), AngleArgument.func_242992_a(p_244376_0_, "angle"));
+        })))));
+    }
 
-   private static int setSpawn(CommandSource p_198696_0_, Collection<ServerPlayerEntity> p_198696_1_, BlockPos p_198696_2_, float p_198696_3_) {
-      RegistryKey<World> registrykey = p_198696_0_.getLevel().dimension();
+    private static int setSpawnPoint(CommandSource source, Collection<ServerPlayerEntity> targets, BlockPos pos, float p_198696_3_)
+    {
+        RegistryKey<World> registrykey = source.getWorld().getDimensionKey();
 
-      for(ServerPlayerEntity serverplayerentity : p_198696_1_) {
-         serverplayerentity.setRespawnPosition(registrykey, p_198696_2_, p_198696_3_, true, false);
-      }
+        for (ServerPlayerEntity serverplayerentity : targets)
+        {
+            serverplayerentity.func_242111_a(registrykey, pos, p_198696_3_, true, false);
+        }
 
-      String s = registrykey.location().toString();
-      if (p_198696_1_.size() == 1) {
-         p_198696_0_.sendSuccess(new TranslationTextComponent("commands.spawnpoint.success.single", p_198696_2_.getX(), p_198696_2_.getY(), p_198696_2_.getZ(), p_198696_3_, s, p_198696_1_.iterator().next().getDisplayName()), true);
-      } else {
-         p_198696_0_.sendSuccess(new TranslationTextComponent("commands.spawnpoint.success.multiple", p_198696_2_.getX(), p_198696_2_.getY(), p_198696_2_.getZ(), p_198696_3_, s, p_198696_1_.size()), true);
-      }
+        String s = registrykey.getLocation().toString();
 
-      return p_198696_1_.size();
-   }
+        if (targets.size() == 1)
+        {
+            source.sendFeedback(new TranslationTextComponent("commands.spawnpoint.success.single", pos.getX(), pos.getY(), pos.getZ(), p_198696_3_, s, targets.iterator().next().getDisplayName()), true);
+        }
+        else
+        {
+            source.sendFeedback(new TranslationTextComponent("commands.spawnpoint.success.multiple", pos.getX(), pos.getY(), pos.getZ(), p_198696_3_, s, targets.size()), true);
+        }
+
+        return targets.size();
+    }
 }

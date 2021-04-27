@@ -19,116 +19,150 @@ import net.minecraft.potion.Effects;
 import net.minecraft.util.GroundPathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class AbstractPiglinEntity extends MonsterEntity {
-   protected static final DataParameter<Boolean> DATA_IMMUNE_TO_ZOMBIFICATION = EntityDataManager.defineId(AbstractPiglinEntity.class, DataSerializers.BOOLEAN);
-   protected int timeInOverworld = 0;
+public abstract class AbstractPiglinEntity extends MonsterEntity
+{
+    protected static final DataParameter<Boolean> field_242333_b = EntityDataManager.createKey(AbstractPiglinEntity.class, DataSerializers.BOOLEAN);
+    protected int field_242334_c = 0;
 
-   public AbstractPiglinEntity(EntityType<? extends AbstractPiglinEntity> p_i241915_1_, World p_i241915_2_) {
-      super(p_i241915_1_, p_i241915_2_);
-      this.setCanPickUpLoot(true);
-      this.applyOpenDoorsAbility();
-      this.setPathfindingMalus(PathNodeType.DANGER_FIRE, 16.0F);
-      this.setPathfindingMalus(PathNodeType.DAMAGE_FIRE, -1.0F);
-   }
+    public AbstractPiglinEntity(EntityType <? extends AbstractPiglinEntity > p_i241915_1_, World p_i241915_2_)
+    {
+        super(p_i241915_1_, p_i241915_2_);
+        this.setCanPickUpLoot(true);
+        this.func_242339_eS();
+        this.setPathPriority(PathNodeType.DANGER_FIRE, 16.0F);
+        this.setPathPriority(PathNodeType.DAMAGE_FIRE, -1.0F);
+    }
 
-   private void applyOpenDoorsAbility() {
-      if (GroundPathHelper.hasGroundPathNavigation(this)) {
-         ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
-      }
+    private void func_242339_eS()
+    {
+        if (GroundPathHelper.isGroundNavigator(this))
+        {
+            ((GroundPathNavigator)this.getNavigator()).setBreakDoors(true);
+        }
+    }
 
-   }
+    protected abstract boolean func_234422_eK_();
 
-   protected abstract boolean canHunt();
+    public void func_242340_t(boolean p_242340_1_)
+    {
+        this.getDataManager().set(field_242333_b, p_242340_1_);
+    }
 
-   public void setImmuneToZombification(boolean p_242340_1_) {
-      this.getEntityData().set(DATA_IMMUNE_TO_ZOMBIFICATION, p_242340_1_);
-   }
+    protected boolean func_242335_eK()
+    {
+        return this.getDataManager().get(field_242333_b);
+    }
 
-   protected boolean isImmuneToZombification() {
-      return this.getEntityData().get(DATA_IMMUNE_TO_ZOMBIFICATION);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(field_242333_b, false);
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_IMMUNE_TO_ZOMBIFICATION, false);
-   }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      if (this.isImmuneToZombification()) {
-         p_213281_1_.putBoolean("IsImmuneToZombification", true);
-      }
+        if (this.func_242335_eK())
+        {
+            compound.putBoolean("IsImmuneToZombification", true);
+        }
 
-      p_213281_1_.putInt("TimeInOverworld", this.timeInOverworld);
-   }
+        compound.putInt("TimeInOverworld", this.field_242334_c);
+    }
 
-   public double getMyRidingOffset() {
-      return this.isBaby() ? -0.05D : -0.45D;
-   }
+    /**
+     * Returns the Y Offset of this entity.
+     */
+    public double getYOffset()
+    {
+        return this.isChild() ? -0.05D : -0.45D;
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.setImmuneToZombification(p_70037_1_.getBoolean("IsImmuneToZombification"));
-      this.timeInOverworld = p_70037_1_.getInt("TimeInOverworld");
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.func_242340_t(compound.getBoolean("IsImmuneToZombification"));
+        this.field_242334_c = compound.getInt("TimeInOverworld");
+    }
 
-   protected void customServerAiStep() {
-      super.customServerAiStep();
-      if (this.isConverting()) {
-         ++this.timeInOverworld;
-      } else {
-         this.timeInOverworld = 0;
-      }
+    protected void updateAITasks()
+    {
+        super.updateAITasks();
 
-      if (this.timeInOverworld > 300) {
-         this.playConvertedSound();
-         this.finishConversion((ServerWorld)this.level);
-      }
+        if (this.func_242336_eL())
+        {
+            ++this.field_242334_c;
+        }
+        else
+        {
+            this.field_242334_c = 0;
+        }
 
-   }
+        if (this.field_242334_c > 300)
+        {
+            this.func_241848_eP();
+            this.func_234416_a_((ServerWorld)this.world);
+        }
+    }
 
-   public boolean isConverting() {
-      return !this.level.dimensionType().piglinSafe() && !this.isImmuneToZombification() && !this.isNoAi();
-   }
+    public boolean func_242336_eL()
+    {
+        return !this.world.getDimensionType().isPiglinSafe() && !this.func_242335_eK() && !this.isAIDisabled();
+    }
 
-   protected void finishConversion(ServerWorld p_234416_1_) {
-      ZombifiedPiglinEntity zombifiedpiglinentity = this.convertTo(EntityType.ZOMBIFIED_PIGLIN, true);
-      if (zombifiedpiglinentity != null) {
-         zombifiedpiglinentity.addEffect(new EffectInstance(Effects.CONFUSION, 200, 0));
-      }
+    protected void func_234416_a_(ServerWorld p_234416_1_)
+    {
+        ZombifiedPiglinEntity zombifiedpiglinentity = this.func_233656_b_(EntityType.ZOMBIFIED_PIGLIN, true);
 
-   }
+        if (zombifiedpiglinentity != null)
+        {
+            zombifiedpiglinentity.addPotionEffect(new EffectInstance(Effects.NAUSEA, 200, 0));
+        }
+    }
 
-   public boolean isAdult() {
-      return !this.isBaby();
-   }
+    public boolean func_242337_eM()
+    {
+        return !this.isChild();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public abstract PiglinAction getArmPose();
+    public abstract PiglinAction func_234424_eM_();
 
-   @Nullable
-   public LivingEntity getTarget() {
-      return this.brain.getMemory(MemoryModuleType.ATTACK_TARGET).orElse((LivingEntity)null);
-   }
+    @Nullable
 
-   protected boolean isHoldingMeleeWeapon() {
-      return this.getMainHandItem().getItem() instanceof TieredItem;
-   }
+    /**
+     * Gets the active target the Task system uses for tracking
+     */
+    public LivingEntity getAttackTarget()
+    {
+        return this.brain.getMemory(MemoryModuleType.ATTACK_TARGET).orElse((LivingEntity)null);
+    }
 
-   public void playAmbientSound() {
-      if (PiglinTasks.isIdle(this)) {
-         super.playAmbientSound();
-      }
+    protected boolean func_242338_eO()
+    {
+        return this.getHeldItemMainhand().getItem() instanceof TieredItem;
+    }
 
-   }
+    /**
+     * Plays living's sound at its position
+     */
+    public void playAmbientSound()
+    {
+        if (PiglinTasks.func_234520_i_(this))
+        {
+            super.playAmbientSound();
+        }
+    }
 
-   protected void sendDebugPackets() {
-      super.sendDebugPackets();
-      DebugPacketSender.sendEntityBrain(this);
-   }
+    protected void sendDebugPackets()
+    {
+        super.sendDebugPackets();
+        DebugPacketSender.sendLivingEntity(this);
+    }
 
-   protected abstract void playConvertedSound();
+    protected abstract void func_241848_eP();
 }

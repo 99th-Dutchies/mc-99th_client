@@ -2,96 +2,148 @@ package net.minecraft.client;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.renderer.VideoMode;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.util.VideoModeComparator;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWVidMode.Buffer;
 
-@OnlyIn(Dist.CLIENT)
-public final class Monitor {
-   private final long monitor;
-   private final List<VideoMode> videoModes;
-   private VideoMode currentMode;
-   private int x;
-   private int y;
+public final class Monitor
+{
+    private final long monitorPointer;
+    private final List<VideoMode> videoModes;
+    private VideoMode defaultVideoMode;
+    private int virtualPosX;
+    private int virtualPosY;
 
-   public Monitor(long p_i51795_1_) {
-      this.monitor = p_i51795_1_;
-      this.videoModes = Lists.newArrayList();
-      this.refreshVideoModes();
-   }
+    public Monitor(long pointerIn)
+    {
+        this.monitorPointer = pointerIn;
+        this.videoModes = Lists.newArrayList();
+        this.setup();
+    }
 
-   public void refreshVideoModes() {
-      RenderSystem.assertThread(RenderSystem::isInInitPhase);
-      this.videoModes.clear();
-      Buffer buffer = GLFW.glfwGetVideoModes(this.monitor);
+    public void setup()
+    {
+        RenderSystem.assertThread(RenderSystem::isInInitPhase);
+        this.videoModes.clear();
+        Buffer buffer = GLFW.glfwGetVideoModes(this.monitorPointer);
+        GLFWVidMode glfwvidmode = GLFW.glfwGetVideoMode(this.monitorPointer);
+        VideoMode videomode = new VideoMode(glfwvidmode);
+        List<VideoMode> list = new ArrayList<>();
 
-      for(int i = buffer.limit() - 1; i >= 0; --i) {
-         buffer.position(i);
-         VideoMode videomode = new VideoMode(buffer);
-         if (videomode.getRedBits() >= 8 && videomode.getGreenBits() >= 8 && videomode.getBlueBits() >= 8) {
-            this.videoModes.add(videomode);
-         }
-      }
+        for (int i = buffer.limit() - 1; i >= 0; --i)
+        {
+            buffer.position(i);
+            VideoMode videomode1 = new VideoMode(buffer);
 
-      int[] aint = new int[1];
-      int[] aint1 = new int[1];
-      GLFW.glfwGetMonitorPos(this.monitor, aint, aint1);
-      this.x = aint[0];
-      this.y = aint1[0];
-      GLFWVidMode glfwvidmode = GLFW.glfwGetVideoMode(this.monitor);
-      this.currentMode = new VideoMode(glfwvidmode);
-   }
-
-   public VideoMode getPreferredVidMode(Optional<VideoMode> p_197992_1_) {
-      RenderSystem.assertThread(RenderSystem::isInInitPhase);
-      if (p_197992_1_.isPresent()) {
-         VideoMode videomode = p_197992_1_.get();
-
-         for(VideoMode videomode1 : this.videoModes) {
-            if (videomode1.equals(videomode)) {
-               return videomode1;
+            if (videomode1.getRedBits() >= 8 && videomode1.getGreenBits() >= 8 && videomode1.getBlueBits() >= 8)
+            {
+                if (videomode1.getRefreshRate() < videomode.getRefreshRate())
+                {
+                    list.add(videomode1);
+                }
+                else
+                {
+                    this.videoModes.add(videomode1);
+                }
             }
-         }
-      }
+        }
 
-      return this.getCurrentMode();
-   }
+        list.sort((new VideoModeComparator()).reversed());
 
-   public int getVideoModeIndex(VideoMode p_224794_1_) {
-      RenderSystem.assertThread(RenderSystem::isInInitPhase);
-      return this.videoModes.indexOf(p_224794_1_);
-   }
+        for (VideoMode videomode2 : list)
+        {
+            if (getVideoMode(this.videoModes, videomode2.getWidth(), videomode2.getHeight()) == null)
+            {
+                this.videoModes.add(videomode2);
+            }
+        }
 
-   public VideoMode getCurrentMode() {
-      return this.currentMode;
-   }
+        this.videoModes.sort(new VideoModeComparator());
+        int[] aint = new int[1];
+        int[] aint1 = new int[1];
+        GLFW.glfwGetMonitorPos(this.monitorPointer, aint, aint1);
+        this.virtualPosX = aint[0];
+        this.virtualPosY = aint1[0];
+        GLFWVidMode glfwvidmode1 = GLFW.glfwGetVideoMode(this.monitorPointer);
+        this.defaultVideoMode = new VideoMode(glfwvidmode1);
+    }
 
-   public int getX() {
-      return this.x;
-   }
+    public VideoMode getVideoModeOrDefault(Optional<VideoMode> optionalVideoMode)
+    {
+        RenderSystem.assertThread(RenderSystem::isInInitPhase);
 
-   public int getY() {
-      return this.y;
-   }
+        if (optionalVideoMode.isPresent())
+        {
+            VideoMode videomode = optionalVideoMode.get();
 
-   public VideoMode getMode(int p_197991_1_) {
-      return this.videoModes.get(p_197991_1_);
-   }
+            for (VideoMode videomode1 : this.videoModes)
+            {
+                if (videomode1.equals(videomode))
+                {
+                    return videomode1;
+                }
+            }
+        }
 
-   public int getModeCount() {
-      return this.videoModes.size();
-   }
+        return this.getDefaultVideoMode();
+    }
 
-   public long getMonitor() {
-      return this.monitor;
-   }
+    public int getVideoModeIndex(VideoMode modeIn)
+    {
+        RenderSystem.assertThread(RenderSystem::isInInitPhase);
+        return this.videoModes.indexOf(modeIn);
+    }
 
-   public String toString() {
-      return String.format("Monitor[%s %sx%s %s]", this.monitor, this.x, this.y, this.currentMode);
-   }
+    public VideoMode getDefaultVideoMode()
+    {
+        return this.defaultVideoMode;
+    }
+
+    public int getVirtualPosX()
+    {
+        return this.virtualPosX;
+    }
+
+    public int getVirtualPosY()
+    {
+        return this.virtualPosY;
+    }
+
+    public VideoMode getVideoModeFromIndex(int index)
+    {
+        return this.videoModes.get(index);
+    }
+
+    public int getVideoModeCount()
+    {
+        return this.videoModes.size();
+    }
+
+    public long getMonitorPointer()
+    {
+        return this.monitorPointer;
+    }
+
+    public String toString()
+    {
+        return String.format("Monitor[%s %sx%s %s]", this.monitorPointer, this.virtualPosX, this.virtualPosY, this.defaultVideoMode);
+    }
+
+    public static VideoMode getVideoMode(List<VideoMode> p_getVideoMode_0_, int p_getVideoMode_1_, int p_getVideoMode_2_)
+    {
+        for (VideoMode videomode : p_getVideoMode_0_)
+        {
+            if (videomode.getWidth() == p_getVideoMode_1_ && videomode.getHeight() == p_getVideoMode_2_)
+            {
+                return videomode;
+            }
+        }
+
+        return null;
+    }
 }

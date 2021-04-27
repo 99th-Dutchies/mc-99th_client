@@ -10,56 +10,64 @@ import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.OptionButton;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class BooleanOption extends AbstractOption {
-   private final Predicate<GameSettings> getter;
-   private final BiConsumer<GameSettings, Boolean> setter;
-   @Nullable
-   private final ITextComponent tooltipText;
+public class BooleanOption extends AbstractOption
+{
+    private final Predicate<GameSettings> getter;
+    private final BiConsumer<GameSettings, Boolean> setter;
+    @Nullable
+    private final ITextComponent field_244785_aa;
 
-   public BooleanOption(String p_i51167_1_, Predicate<GameSettings> p_i51167_2_, BiConsumer<GameSettings, Boolean> p_i51167_3_) {
-      this(p_i51167_1_, (ITextComponent)null, p_i51167_2_, p_i51167_3_);
-   }
+    public BooleanOption(String translationKeyIn, Predicate<GameSettings> getter, BiConsumer<GameSettings, Boolean> setter)
+    {
+        this(translationKeyIn, (ITextComponent)null, getter, setter);
+    }
 
-   public BooleanOption(String p_i244779_1_, @Nullable ITextComponent p_i244779_2_, Predicate<GameSettings> p_i244779_3_, BiConsumer<GameSettings, Boolean> p_i244779_4_) {
-      super(p_i244779_1_);
-      this.getter = p_i244779_3_;
-      this.setter = p_i244779_4_;
-      this.tooltipText = p_i244779_2_;
-   }
+    public BooleanOption(String p_i242130_1_, @Nullable ITextComponent p_i242130_2_, Predicate<GameSettings> p_i242130_3_, BiConsumer<GameSettings, Boolean> p_i242130_4_)
+    {
+        super(p_i242130_1_);
+        this.getter = p_i242130_3_;
+        this.setter = p_i242130_4_;
+        this.field_244785_aa = p_i242130_2_;
+    }
 
-   public void set(GameSettings p_216742_1_, String p_216742_2_) {
-      this.set(p_216742_1_, "true".equals(p_216742_2_));
-   }
+    public void set(GameSettings options, String valueIn)
+    {
+        this.set(options, "true".equals(valueIn));
+    }
 
-   public void toggle(GameSettings p_216740_1_) {
-      this.set(p_216740_1_, !this.get(p_216740_1_));
-      p_216740_1_.save();
-   }
+    public void nextValue(GameSettings options)
+    {
+        this.set(options, !this.get(options));
+        options.saveOptions();
+    }
 
-   private void set(GameSettings p_216744_1_, boolean p_216744_2_) {
-      this.setter.accept(p_216744_1_, p_216744_2_);
-   }
+    private void set(GameSettings options, boolean valueIn)
+    {
+        this.setter.accept(options, valueIn);
+    }
 
-   public boolean get(GameSettings p_216741_1_) {
-      return this.getter.test(p_216741_1_);
-   }
+    public boolean get(GameSettings options)
+    {
+        return this.getter.test(options);
+    }
 
-   public Widget createButton(GameSettings p_216586_1_, int p_216586_2_, int p_216586_3_, int p_216586_4_) {
-      if (this.tooltipText != null) {
-         this.setTooltip(Minecraft.getInstance().font.split(this.tooltipText, 200));
-      }
+    public Widget createWidget(GameSettings options, int xIn, int yIn, int widthIn)
+    {
+        if (this.field_244785_aa != null)
+        {
+            this.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(this.field_244785_aa, 200));
+        }
 
-      return new OptionButton(p_216586_2_, p_216586_3_, p_216586_4_, 20, this, this.getMessage(p_216586_1_), (p_216745_2_) -> {
-         this.toggle(p_216586_1_);
-         p_216745_2_.setMessage(this.getMessage(p_216586_1_));
-      });
-   }
+        return new OptionButton(xIn, yIn, widthIn, 20, this, this.func_238152_c_(options), (p_216745_2_) ->
+        {
+            this.nextValue(options);
+            p_216745_2_.setMessage(this.func_238152_c_(options));
+        });
+    }
 
-   public ITextComponent getMessage(GameSettings p_238152_1_) {
-      return DialogTexts.optionStatus(this.getCaption(), this.get(p_238152_1_));
-   }
+    public ITextComponent func_238152_c_(GameSettings p_238152_1_)
+    {
+        return DialogTexts.getComposedOptionMessage(this.getBaseMessageTranslation(), this.get(p_238152_1_));
+    }
 }

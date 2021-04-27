@@ -4,49 +4,65 @@ import java.io.IOException;
 import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SUpdateTimePacket implements IPacket<IClientPlayNetHandler> {
-   private long gameTime;
-   private long dayTime;
+public class SUpdateTimePacket implements IPacket<IClientPlayNetHandler>
+{
+    private long totalWorldTime;
+    private long worldTime;
 
-   public SUpdateTimePacket() {
-   }
+    public SUpdateTimePacket()
+    {
+    }
 
-   public SUpdateTimePacket(long p_i46902_1_, long p_i46902_3_, boolean p_i46902_5_) {
-      this.gameTime = p_i46902_1_;
-      this.dayTime = p_i46902_3_;
-      if (!p_i46902_5_) {
-         this.dayTime = -this.dayTime;
-         if (this.dayTime == 0L) {
-            this.dayTime = -1L;
-         }
-      }
+    public SUpdateTimePacket(long totalWorldTimeIn, long worldTimeIn, boolean doDaylightCycle)
+    {
+        this.totalWorldTime = totalWorldTimeIn;
+        this.worldTime = worldTimeIn;
 
-   }
+        if (!doDaylightCycle)
+        {
+            this.worldTime = -this.worldTime;
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.gameTime = p_148837_1_.readLong();
-      this.dayTime = p_148837_1_.readLong();
-   }
+            if (this.worldTime == 0L)
+            {
+                this.worldTime = -1L;
+            }
+        }
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeLong(this.gameTime);
-      p_148840_1_.writeLong(this.dayTime);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.totalWorldTime = buf.readLong();
+        this.worldTime = buf.readLong();
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetTime(this);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeLong(this.totalWorldTime);
+        buf.writeLong(this.worldTime);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public long getGameTime() {
-      return this.gameTime;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleTimeUpdate(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public long getDayTime() {
-      return this.dayTime;
-   }
+    public long getTotalWorldTime()
+    {
+        return this.totalWorldTime;
+    }
+
+    public long getWorldTime()
+    {
+        return this.worldTime;
+    }
 }

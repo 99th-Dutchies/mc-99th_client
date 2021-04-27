@@ -1,0 +1,11 @@
+--- net/optifine/shaders/SVertexBuilder.java
++++ net/optifine/shaders/SVertexBuilder.java
+@@ -8,6 +8,8 @@
+ import net.minecraft.block.BlockState;
+ import net.minecraft.client.renderer.BufferBuilder;
+ import net.minecraft.client.renderer.vertex.VertexFormat;
++
++import org.lwjgl.opengl.GL11;
+ import org.lwjgl.opengl.GL20;
+ 
+ public class SVertexBuilder

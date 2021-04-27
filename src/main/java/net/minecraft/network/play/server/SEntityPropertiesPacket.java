@@ -13,99 +13,119 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SEntityPropertiesPacket implements IPacket<IClientPlayNetHandler> {
-   private int entityId;
-   private final List<SEntityPropertiesPacket.Snapshot> attributes = Lists.newArrayList();
+public class SEntityPropertiesPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private final List<SEntityPropertiesPacket.Snapshot> snapshots = Lists.newArrayList();
 
-   public SEntityPropertiesPacket() {
-   }
+    public SEntityPropertiesPacket()
+    {
+    }
 
-   public SEntityPropertiesPacket(int p_i46892_1_, Collection<ModifiableAttributeInstance> p_i46892_2_) {
-      this.entityId = p_i46892_1_;
+    public SEntityPropertiesPacket(int entityIdIn, Collection<ModifiableAttributeInstance> instances)
+    {
+        this.entityId = entityIdIn;
 
-      for(ModifiableAttributeInstance modifiableattributeinstance : p_i46892_2_) {
-         this.attributes.add(new SEntityPropertiesPacket.Snapshot(modifiableattributeinstance.getAttribute(), modifiableattributeinstance.getBaseValue(), modifiableattributeinstance.getModifiers()));
-      }
+        for (ModifiableAttributeInstance modifiableattributeinstance : instances)
+        {
+            this.snapshots.add(new SEntityPropertiesPacket.Snapshot(modifiableattributeinstance.getAttribute(), modifiableattributeinstance.getBaseValue(), modifiableattributeinstance.getModifierListCopy()));
+        }
+    }
 
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        int i = buf.readInt();
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.entityId = p_148837_1_.readVarInt();
-      int i = p_148837_1_.readInt();
+        for (int j = 0; j < i; ++j)
+        {
+            ResourceLocation resourcelocation = buf.readResourceLocation();
+            Attribute attribute = Registry.ATTRIBUTE.getOrDefault(resourcelocation);
+            double d0 = buf.readDouble();
+            List<AttributeModifier> list = Lists.newArrayList();
+            int k = buf.readVarInt();
 
-      for(int j = 0; j < i; ++j) {
-         ResourceLocation resourcelocation = p_148837_1_.readResourceLocation();
-         Attribute attribute = Registry.ATTRIBUTE.get(resourcelocation);
-         double d0 = p_148837_1_.readDouble();
-         List<AttributeModifier> list = Lists.newArrayList();
-         int k = p_148837_1_.readVarInt();
+            for (int l = 0; l < k; ++l)
+            {
+                UUID uuid = buf.readUniqueId();
+                list.add(new AttributeModifier(uuid, "Unknown synced attribute modifier", buf.readDouble(), AttributeModifier.Operation.byId(buf.readByte())));
+            }
 
-         for(int l = 0; l < k; ++l) {
-            UUID uuid = p_148837_1_.readUUID();
-            list.add(new AttributeModifier(uuid, "Unknown synced attribute modifier", p_148837_1_.readDouble(), AttributeModifier.Operation.fromValue(p_148837_1_.readByte())));
-         }
+            this.snapshots.add(new SEntityPropertiesPacket.Snapshot(attribute, d0, list));
+        }
+    }
 
-         this.attributes.add(new SEntityPropertiesPacket.Snapshot(attribute, d0, list));
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeInt(this.snapshots.size());
 
-   }
+        for (SEntityPropertiesPacket.Snapshot sentitypropertiespacket$snapshot : this.snapshots)
+        {
+            buf.writeResourceLocation(Registry.ATTRIBUTE.getKey(sentitypropertiespacket$snapshot.func_240834_a_()));
+            buf.writeDouble(sentitypropertiespacket$snapshot.getBaseValue());
+            buf.writeVarInt(sentitypropertiespacket$snapshot.getModifiers().size());
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.entityId);
-      p_148840_1_.writeInt(this.attributes.size());
+            for (AttributeModifier attributemodifier : sentitypropertiespacket$snapshot.getModifiers())
+            {
+                buf.writeUniqueId(attributemodifier.getID());
+                buf.writeDouble(attributemodifier.getAmount());
+                buf.writeByte(attributemodifier.getOperation().getId());
+            }
+        }
+    }
 
-      for(SEntityPropertiesPacket.Snapshot sentitypropertiespacket$snapshot : this.attributes) {
-         p_148840_1_.writeResourceLocation(Registry.ATTRIBUTE.getKey(sentitypropertiespacket$snapshot.getAttribute()));
-         p_148840_1_.writeDouble(sentitypropertiespacket$snapshot.getBase());
-         p_148840_1_.writeVarInt(sentitypropertiespacket$snapshot.getModifiers().size());
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleEntityProperties(this);
+    }
 
-         for(AttributeModifier attributemodifier : sentitypropertiespacket$snapshot.getModifiers()) {
-            p_148840_1_.writeUUID(attributemodifier.getId());
-            p_148840_1_.writeDouble(attributemodifier.getAmount());
-            p_148840_1_.writeByte(attributemodifier.getOperation().toValue());
-         }
-      }
+    public int getEntityId()
+    {
+        return this.entityId;
+    }
 
-   }
+    public List<SEntityPropertiesPacket.Snapshot> getSnapshots()
+    {
+        return this.snapshots;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleUpdateAttributes(this);
-   }
+    public class Snapshot
+    {
+        private final Attribute field_240833_b_;
+        private final double baseValue;
+        private final Collection<AttributeModifier> modifiers;
 
-   @OnlyIn(Dist.CLIENT)
-   public int getEntityId() {
-      return this.entityId;
-   }
+        public Snapshot(Attribute p_i232582_2_, double p_i232582_3_, Collection<AttributeModifier> p_i232582_5_)
+        {
+            this.field_240833_b_ = p_i232582_2_;
+            this.baseValue = p_i232582_3_;
+            this.modifiers = p_i232582_5_;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public List<SEntityPropertiesPacket.Snapshot> getValues() {
-      return this.attributes;
-   }
+        public Attribute func_240834_a_()
+        {
+            return this.field_240833_b_;
+        }
 
-   public class Snapshot {
-      private final Attribute attribute;
-      private final double base;
-      private final Collection<AttributeModifier> modifiers;
+        public double getBaseValue()
+        {
+            return this.baseValue;
+        }
 
-      public Snapshot(Attribute p_i232582_2_, double p_i232582_3_, Collection<AttributeModifier> p_i232582_5_) {
-         this.attribute = p_i232582_2_;
-         this.base = p_i232582_3_;
-         this.modifiers = p_i232582_5_;
-      }
-
-      public Attribute getAttribute() {
-         return this.attribute;
-      }
-
-      public double getBase() {
-         return this.base;
-      }
-
-      public Collection<AttributeModifier> getModifiers() {
-         return this.modifiers;
-      }
-   }
+        public Collection<AttributeModifier> getModifiers()
+        {
+            return this.modifiers;
+        }
+    }
 }

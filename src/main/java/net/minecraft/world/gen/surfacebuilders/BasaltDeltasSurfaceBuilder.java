@@ -5,26 +5,31 @@ import com.mojang.serialization.Codec;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 
-public class BasaltDeltasSurfaceBuilder extends ValleySurfaceBuilder {
-   private static final BlockState BASALT = Blocks.BASALT.defaultBlockState();
-   private static final BlockState BLACKSTONE = Blocks.BLACKSTONE.defaultBlockState();
-   private static final BlockState GRAVEL = Blocks.GRAVEL.defaultBlockState();
-   private static final ImmutableList<BlockState> FLOOR_BLOCK_STATES = ImmutableList.of(BASALT, BLACKSTONE);
-   private static final ImmutableList<BlockState> CEILING_BLOCK_STATES = ImmutableList.of(BASALT);
+public class BasaltDeltasSurfaceBuilder extends ValleySurfaceBuilder
+{
+    private static final BlockState field_237163_a_ = Blocks.BASALT.getDefaultState();
+    private static final BlockState field_237164_b_ = Blocks.BLACKSTONE.getDefaultState();
+    private static final BlockState field_237165_c_ = Blocks.GRAVEL.getDefaultState();
+    private static final ImmutableList<BlockState> field_237166_d_ = ImmutableList.of(field_237163_a_, field_237164_b_);
+    private static final ImmutableList<BlockState> field_237167_e_ = ImmutableList.of(field_237163_a_);
 
-   public BasaltDeltasSurfaceBuilder(Codec<SurfaceBuilderConfig> p_i232123_1_) {
-      super(p_i232123_1_);
-   }
+    public BasaltDeltasSurfaceBuilder(Codec<SurfaceBuilderConfig> p_i232123_1_)
+    {
+        super(p_i232123_1_);
+    }
 
-   protected ImmutableList<BlockState> getFloorBlockStates() {
-      return FLOOR_BLOCK_STATES;
-   }
+    protected ImmutableList<BlockState> func_230387_a_()
+    {
+        return field_237166_d_;
+    }
 
-   protected ImmutableList<BlockState> getCeilingBlockStates() {
-      return CEILING_BLOCK_STATES;
-   }
+    protected ImmutableList<BlockState> func_230388_b_()
+    {
+        return field_237167_e_;
+    }
 
-   protected BlockState getPatchBlockState() {
-      return GRAVEL;
-   }
+    protected BlockState func_230389_c_()
+    {
+        return field_237165_c_;
+    }
 }

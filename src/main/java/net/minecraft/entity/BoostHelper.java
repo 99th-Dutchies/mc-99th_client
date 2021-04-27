@@ -5,51 +5,62 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.EntityDataManager;
 
-public class BoostHelper {
-   private final EntityDataManager entityData;
-   private final DataParameter<Integer> boostTimeAccessor;
-   private final DataParameter<Boolean> hasSaddleAccessor;
-   public boolean boosting;
-   public int boostTime;
-   public int boostTimeTotal;
+public class BoostHelper
+{
+    private final EntityDataManager manager;
+    private final DataParameter<Integer> boostTime;
+    private final DataParameter<Boolean> saddled;
+    public boolean saddledRaw;
+    public int field_233611_b_;
+    public int boostTimeRaw;
 
-   public BoostHelper(EntityDataManager p_i231490_1_, DataParameter<Integer> p_i231490_2_, DataParameter<Boolean> p_i231490_3_) {
-      this.entityData = p_i231490_1_;
-      this.boostTimeAccessor = p_i231490_2_;
-      this.hasSaddleAccessor = p_i231490_3_;
-   }
+    public BoostHelper(EntityDataManager manager, DataParameter<Integer> boostTime, DataParameter<Boolean> saddled)
+    {
+        this.manager = manager;
+        this.boostTime = boostTime;
+        this.saddled = saddled;
+    }
 
-   public void onSynced() {
-      this.boosting = true;
-      this.boostTime = 0;
-      this.boostTimeTotal = this.entityData.get(this.boostTimeAccessor);
-   }
+    public void updateData()
+    {
+        this.saddledRaw = true;
+        this.field_233611_b_ = 0;
+        this.boostTimeRaw = this.manager.get(this.boostTime);
+    }
 
-   public boolean boost(Random p_233617_1_) {
-      if (this.boosting) {
-         return false;
-      } else {
-         this.boosting = true;
-         this.boostTime = 0;
-         this.boostTimeTotal = p_233617_1_.nextInt(841) + 140;
-         this.entityData.set(this.boostTimeAccessor, this.boostTimeTotal);
-         return true;
-      }
-   }
+    public boolean boost(Random rand)
+    {
+        if (this.saddledRaw)
+        {
+            return false;
+        }
+        else
+        {
+            this.saddledRaw = true;
+            this.field_233611_b_ = 0;
+            this.boostTimeRaw = rand.nextInt(841) + 140;
+            this.manager.set(this.boostTime, this.boostTimeRaw);
+            return true;
+        }
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_233618_1_) {
-      p_233618_1_.putBoolean("Saddle", this.hasSaddle());
-   }
+    public void setSaddledToNBT(CompoundNBT nbt)
+    {
+        nbt.putBoolean("Saddle", this.getSaddled());
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_233621_1_) {
-      this.setSaddle(p_233621_1_.getBoolean("Saddle"));
-   }
+    public void setSaddledFromNBT(CompoundNBT nbt)
+    {
+        this.setSaddledFromBoolean(nbt.getBoolean("Saddle"));
+    }
 
-   public void setSaddle(boolean p_233619_1_) {
-      this.entityData.set(this.hasSaddleAccessor, p_233619_1_);
-   }
+    public void setSaddledFromBoolean(boolean saddled)
+    {
+        this.manager.set(this.saddled, saddled);
+    }
 
-   public boolean hasSaddle() {
-      return this.entityData.get(this.hasSaddleAccessor);
-   }
+    public boolean getSaddled()
+    {
+        return this.manager.get(this.saddled);
+    }
 }

@@ -6,27 +6,29 @@ import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class AbstractSkullBlock extends ContainerBlock implements IArmorVanishable {
-   private final SkullBlock.ISkullType type;
+public abstract class AbstractSkullBlock extends ContainerBlock implements IArmorVanishable
+{
+    private final SkullBlock.ISkullType skullType;
 
-   public AbstractSkullBlock(SkullBlock.ISkullType p_i48452_1_, AbstractBlock.Properties p_i48452_2_) {
-      super(p_i48452_2_);
-      this.type = p_i48452_1_;
-   }
+    public AbstractSkullBlock(SkullBlock.ISkullType iSkullType, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.skullType = iSkullType;
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new SkullTileEntity();
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new SkullTileEntity();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public SkullBlock.ISkullType getType() {
-      return this.type;
-   }
+    public SkullBlock.ISkullType getSkullType()
+    {
+        return this.skullType;
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

@@ -6,49 +6,64 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CPlaceRecipePacket implements IPacket<IServerPlayNetHandler> {
-   private int containerId;
-   private ResourceLocation recipe;
-   private boolean shiftDown;
+public class CPlaceRecipePacket implements IPacket<IServerPlayNetHandler>
+{
+    private int windowId;
+    private ResourceLocation recipeId;
+    private boolean placeAll;
 
-   public CPlaceRecipePacket() {
-   }
+    public CPlaceRecipePacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CPlaceRecipePacket(int p_i47614_1_, IRecipe<?> p_i47614_2_, boolean p_i47614_3_) {
-      this.containerId = p_i47614_1_;
-      this.recipe = p_i47614_2_.getId();
-      this.shiftDown = p_i47614_3_;
-   }
+    public CPlaceRecipePacket(int p_i47614_1_, IRecipe<?> p_i47614_2_, boolean p_i47614_3_)
+    {
+        this.windowId = p_i47614_1_;
+        this.recipeId = p_i47614_2_.getId();
+        this.placeAll = p_i47614_3_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.containerId = p_148837_1_.readByte();
-      this.recipe = p_148837_1_.readResourceLocation();
-      this.shiftDown = p_148837_1_.readBoolean();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.windowId = buf.readByte();
+        this.recipeId = buf.readResourceLocation();
+        this.placeAll = buf.readBoolean();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.containerId);
-      p_148840_1_.writeResourceLocation(this.recipe);
-      p_148840_1_.writeBoolean(this.shiftDown);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.windowId);
+        buf.writeResourceLocation(this.recipeId);
+        buf.writeBoolean(this.placeAll);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handlePlaceRecipe(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processPlaceRecipe(this);
+    }
 
-   public int getContainerId() {
-      return this.containerId;
-   }
+    public int getWindowId()
+    {
+        return this.windowId;
+    }
 
-   public ResourceLocation getRecipe() {
-      return this.recipe;
-   }
+    public ResourceLocation getRecipeId()
+    {
+        return this.recipeId;
+    }
 
-   public boolean isShiftDown() {
-      return this.shiftDown;
-   }
+    public boolean shouldPlaceAll()
+    {
+        return this.placeAll;
+    }
 }

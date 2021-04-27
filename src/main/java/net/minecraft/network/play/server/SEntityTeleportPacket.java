@@ -5,87 +5,100 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SEntityTeleportPacket implements IPacket<IClientPlayNetHandler> {
-   private int id;
-   private double x;
-   private double y;
-   private double z;
-   private byte yRot;
-   private byte xRot;
-   private boolean onGround;
+public class SEntityTeleportPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private double posX;
+    private double posY;
+    private double posZ;
+    private byte yaw;
+    private byte pitch;
+    private boolean onGround;
 
-   public SEntityTeleportPacket() {
-   }
+    public SEntityTeleportPacket()
+    {
+    }
 
-   public SEntityTeleportPacket(Entity p_i46893_1_) {
-      this.id = p_i46893_1_.getId();
-      this.x = p_i46893_1_.getX();
-      this.y = p_i46893_1_.getY();
-      this.z = p_i46893_1_.getZ();
-      this.yRot = (byte)((int)(p_i46893_1_.yRot * 256.0F / 360.0F));
-      this.xRot = (byte)((int)(p_i46893_1_.xRot * 256.0F / 360.0F));
-      this.onGround = p_i46893_1_.isOnGround();
-   }
+    public SEntityTeleportPacket(Entity entityIn)
+    {
+        this.entityId = entityIn.getEntityId();
+        this.posX = entityIn.getPosX();
+        this.posY = entityIn.getPosY();
+        this.posZ = entityIn.getPosZ();
+        this.yaw = (byte)((int)(entityIn.rotationYaw * 256.0F / 360.0F));
+        this.pitch = (byte)((int)(entityIn.rotationPitch * 256.0F / 360.0F));
+        this.onGround = entityIn.isOnGround();
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readVarInt();
-      this.x = p_148837_1_.readDouble();
-      this.y = p_148837_1_.readDouble();
-      this.z = p_148837_1_.readDouble();
-      this.yRot = p_148837_1_.readByte();
-      this.xRot = p_148837_1_.readByte();
-      this.onGround = p_148837_1_.readBoolean();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.posX = buf.readDouble();
+        this.posY = buf.readDouble();
+        this.posZ = buf.readDouble();
+        this.yaw = buf.readByte();
+        this.pitch = buf.readByte();
+        this.onGround = buf.readBoolean();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.id);
-      p_148840_1_.writeDouble(this.x);
-      p_148840_1_.writeDouble(this.y);
-      p_148840_1_.writeDouble(this.z);
-      p_148840_1_.writeByte(this.yRot);
-      p_148840_1_.writeByte(this.xRot);
-      p_148840_1_.writeBoolean(this.onGround);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeDouble(this.posX);
+        buf.writeDouble(this.posY);
+        buf.writeDouble(this.posZ);
+        buf.writeByte(this.yaw);
+        buf.writeByte(this.pitch);
+        buf.writeBoolean(this.onGround);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleTeleportEntity(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleEntityTeleport(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int getEntityId()
+    {
+        return this.entityId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getX() {
-      return this.x;
-   }
+    public double getX()
+    {
+        return this.posX;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getY() {
-      return this.y;
-   }
+    public double getY()
+    {
+        return this.posY;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ()
+    {
+        return this.posZ;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getyRot() {
-      return this.yRot;
-   }
+    public byte getYaw()
+    {
+        return this.yaw;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getxRot() {
-      return this.xRot;
-   }
+    public byte getPitch()
+    {
+        return this.pitch;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isOnGround() {
-      return this.onGround;
-   }
+    public boolean isOnGround()
+    {
+        return this.onGround;
+    }
 }

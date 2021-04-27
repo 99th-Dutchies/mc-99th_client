@@ -18,42 +18,57 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 
-public class CaveSpiderEntity extends SpiderEntity {
-   public CaveSpiderEntity(EntityType<? extends CaveSpiderEntity> p_i50214_1_, World p_i50214_2_) {
-      super(p_i50214_1_, p_i50214_2_);
-   }
+public class CaveSpiderEntity extends SpiderEntity
+{
+    public CaveSpiderEntity(EntityType <? extends CaveSpiderEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   public static AttributeModifierMap.MutableAttribute createCaveSpider() {
-      return SpiderEntity.createAttributes().add(Attributes.MAX_HEALTH, 12.0D);
-   }
+    public static AttributeModifierMap.MutableAttribute registerAttributes()
+    {
+        return SpiderEntity.func_234305_eI_().createMutableAttribute(Attributes.MAX_HEALTH, 12.0D);
+    }
 
-   public boolean doHurtTarget(Entity p_70652_1_) {
-      if (super.doHurtTarget(p_70652_1_)) {
-         if (p_70652_1_ instanceof LivingEntity) {
-            int i = 0;
-            if (this.level.getDifficulty() == Difficulty.NORMAL) {
-               i = 7;
-            } else if (this.level.getDifficulty() == Difficulty.HARD) {
-               i = 15;
+    public boolean attackEntityAsMob(Entity entityIn)
+    {
+        if (super.attackEntityAsMob(entityIn))
+        {
+            if (entityIn instanceof LivingEntity)
+            {
+                int i = 0;
+
+                if (this.world.getDifficulty() == Difficulty.NORMAL)
+                {
+                    i = 7;
+                }
+                else if (this.world.getDifficulty() == Difficulty.HARD)
+                {
+                    i = 15;
+                }
+
+                if (i > 0)
+                {
+                    ((LivingEntity)entityIn).addPotionEffect(new EffectInstance(Effects.POISON, i * 20, 0));
+                }
             }
 
-            if (i > 0) {
-               ((LivingEntity)p_70652_1_).addEffect(new EffectInstance(Effects.POISON, i * 20, 0));
-            }
-         }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-         return true;
-      } else {
-         return false;
-      }
-   }
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        return spawnDataIn;
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      return p_213386_4_;
-   }
-
-   protected float getStandingEyeHeight(Pose p_213348_1_, EntitySize p_213348_2_) {
-      return 0.45F;
-   }
+    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return 0.45F;
+    }
 }

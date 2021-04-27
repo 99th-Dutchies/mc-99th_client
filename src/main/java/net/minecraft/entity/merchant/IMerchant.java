@@ -11,48 +11,56 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IMerchant {
-   void setTradingPlayer(@Nullable PlayerEntity p_70932_1_);
+public interface IMerchant
+{
+    void setCustomer(@Nullable PlayerEntity player);
 
-   @Nullable
-   PlayerEntity getTradingPlayer();
+    @Nullable
+    PlayerEntity getCustomer();
 
-   MerchantOffers getOffers();
+    MerchantOffers getOffers();
 
-   @OnlyIn(Dist.CLIENT)
-   void overrideOffers(@Nullable MerchantOffers p_213703_1_);
+    void setClientSideOffers(@Nullable MerchantOffers offers);
 
-   void notifyTrade(MerchantOffer p_213704_1_);
+    void onTrade(MerchantOffer offer);
 
-   void notifyTradeUpdated(ItemStack p_110297_1_);
+    /**
+     * Notifies the merchant of a possible merchantrecipe being fulfilled or not. Usually, this is just a sound byte
+     * being played depending if the suggested itemstack is not null.
+     */
+    void verifySellingItem(ItemStack stack);
 
-   World getLevel();
+    World getWorld();
 
-   int getVillagerXp();
+    int getXp();
 
-   void overrideXp(int p_213702_1_);
+    void setXP(int xpIn);
 
-   boolean showProgressBar();
+    boolean hasXPBar();
 
-   SoundEvent getNotifyTradeSound();
+    SoundEvent getYesSound();
 
-   default boolean canRestock() {
-      return false;
-   }
+default boolean canRestockTrades()
+    {
+        return false;
+    }
 
-   default void openTradingScreen(PlayerEntity p_213707_1_, ITextComponent p_213707_2_, int p_213707_3_) {
-      OptionalInt optionalint = p_213707_1_.openMenu(new SimpleNamedContainerProvider((p_213701_1_, p_213701_2_, p_213701_3_) -> {
-         return new MerchantContainer(p_213701_1_, p_213701_2_, this);
-      }, p_213707_2_));
-      if (optionalint.isPresent()) {
-         MerchantOffers merchantoffers = this.getOffers();
-         if (!merchantoffers.isEmpty()) {
-            p_213707_1_.sendMerchantOffers(optionalint.getAsInt(), merchantoffers, p_213707_3_, this.getVillagerXp(), this.showProgressBar(), this.canRestock());
-         }
-      }
+default void openMerchantContainer(PlayerEntity player, ITextComponent displayName, int level)
+    {
+        OptionalInt optionalint = player.openContainer(new SimpleNamedContainerProvider((id, playerInventory, player2) ->
+        {
+            return new MerchantContainer(id, playerInventory, this);
+        }, displayName));
 
-   }
+        if (optionalint.isPresent())
+        {
+            MerchantOffers merchantoffers = this.getOffers();
+
+            if (!merchantoffers.isEmpty())
+            {
+                player.openMerchantContainer(optionalint.getAsInt(), merchantoffers, level, this.getXp(), this.hasXPBar(), this.canRestockTrades());
+            }
+        }
+    }
 }

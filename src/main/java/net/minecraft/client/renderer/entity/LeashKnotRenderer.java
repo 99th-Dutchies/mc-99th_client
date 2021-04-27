@@ -7,29 +7,33 @@ import net.minecraft.client.renderer.entity.model.LeashKnotModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.entity.item.LeashKnotEntity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class LeashKnotRenderer extends EntityRenderer<LeashKnotEntity> {
-   private static final ResourceLocation KNOT_LOCATION = new ResourceLocation("textures/entity/lead_knot.png");
-   private final LeashKnotModel<LeashKnotEntity> model = new LeashKnotModel<>();
+public class LeashKnotRenderer extends EntityRenderer<LeashKnotEntity>
+{
+    private static final ResourceLocation LEASH_KNOT_TEXTURES = new ResourceLocation("textures/entity/lead_knot.png");
+    private final LeashKnotModel<LeashKnotEntity> leashKnotModel = new LeashKnotModel<>();
 
-   public LeashKnotRenderer(EntityRendererManager p_i46158_1_) {
-      super(p_i46158_1_);
-   }
+    public LeashKnotRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn);
+    }
 
-   public void render(LeashKnotEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      p_225623_4_.pushPose();
-      p_225623_4_.scale(-1.0F, -1.0F, 1.0F);
-      this.model.setupAnim(p_225623_1_, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-      IVertexBuilder ivertexbuilder = p_225623_5_.getBuffer(this.model.renderType(KNOT_LOCATION));
-      this.model.renderToBuffer(p_225623_4_, ivertexbuilder, p_225623_6_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-      p_225623_4_.popPose();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+    public void render(LeashKnotEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        matrixStackIn.push();
+        matrixStackIn.scale(-1.0F, -1.0F, 1.0F);
+        this.leashKnotModel.setRotationAngles(entityIn, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(this.leashKnotModel.getRenderType(LEASH_KNOT_TEXTURES));
+        this.leashKnotModel.render(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        matrixStackIn.pop();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
 
-   public ResourceLocation getTextureLocation(LeashKnotEntity p_110775_1_) {
-      return KNOT_LOCATION;
-   }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(LeashKnotEntity entity)
+    {
+        return LEASH_KNOT_TEXTURES;
+    }
 }

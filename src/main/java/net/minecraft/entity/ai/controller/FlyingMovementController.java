@@ -4,52 +4,64 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.util.math.MathHelper;
 
-public class FlyingMovementController extends MovementController {
-   private final int maxTurn;
-   private final boolean hoversInPlace;
+public class FlyingMovementController extends MovementController
+{
+    private final int field_226323_i_;
+    private final boolean field_226324_j_;
 
-   public FlyingMovementController(MobEntity p_i225710_1_, int p_i225710_2_, boolean p_i225710_3_) {
-      super(p_i225710_1_);
-      this.maxTurn = p_i225710_2_;
-      this.hoversInPlace = p_i225710_3_;
-   }
+    public FlyingMovementController(MobEntity p_i225710_1_, int p_i225710_2_, boolean p_i225710_3_)
+    {
+        super(p_i225710_1_);
+        this.field_226323_i_ = p_i225710_2_;
+        this.field_226324_j_ = p_i225710_3_;
+    }
 
-   public void tick() {
-      if (this.operation == MovementController.Action.MOVE_TO) {
-         this.operation = MovementController.Action.WAIT;
-         this.mob.setNoGravity(true);
-         double d0 = this.wantedX - this.mob.getX();
-         double d1 = this.wantedY - this.mob.getY();
-         double d2 = this.wantedZ - this.mob.getZ();
-         double d3 = d0 * d0 + d1 * d1 + d2 * d2;
-         if (d3 < (double)2.5000003E-7F) {
-            this.mob.setYya(0.0F);
-            this.mob.setZza(0.0F);
-            return;
-         }
+    public void tick()
+    {
+        if (this.action == MovementController.Action.MOVE_TO)
+        {
+            this.action = MovementController.Action.WAIT;
+            this.mob.setNoGravity(true);
+            double d0 = this.posX - this.mob.getPosX();
+            double d1 = this.posY - this.mob.getPosY();
+            double d2 = this.posZ - this.mob.getPosZ();
+            double d3 = d0 * d0 + d1 * d1 + d2 * d2;
 
-         float f = (float)(MathHelper.atan2(d2, d0) * (double)(180F / (float)Math.PI)) - 90.0F;
-         this.mob.yRot = this.rotlerp(this.mob.yRot, f, 90.0F);
-         float f1;
-         if (this.mob.isOnGround()) {
-            f1 = (float)(this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED));
-         } else {
-            f1 = (float)(this.speedModifier * this.mob.getAttributeValue(Attributes.FLYING_SPEED));
-         }
+            if (d3 < (double)2.5000003E-7F)
+            {
+                this.mob.setMoveVertical(0.0F);
+                this.mob.setMoveForward(0.0F);
+                return;
+            }
 
-         this.mob.setSpeed(f1);
-         double d4 = (double)MathHelper.sqrt(d0 * d0 + d2 * d2);
-         float f2 = (float)(-(MathHelper.atan2(d1, d4) * (double)(180F / (float)Math.PI)));
-         this.mob.xRot = this.rotlerp(this.mob.xRot, f2, (float)this.maxTurn);
-         this.mob.setYya(d1 > 0.0D ? f1 : -f1);
-      } else {
-         if (!this.hoversInPlace) {
-            this.mob.setNoGravity(false);
-         }
+            float f = (float)(MathHelper.atan2(d2, d0) * (double)(180F / (float)Math.PI)) - 90.0F;
+            this.mob.rotationYaw = this.limitAngle(this.mob.rotationYaw, f, 90.0F);
+            float f1;
 
-         this.mob.setYya(0.0F);
-         this.mob.setZza(0.0F);
-      }
+            if (this.mob.isOnGround())
+            {
+                f1 = (float)(this.speed * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED));
+            }
+            else
+            {
+                f1 = (float)(this.speed * this.mob.getAttributeValue(Attributes.FLYING_SPEED));
+            }
 
-   }
+            this.mob.setAIMoveSpeed(f1);
+            double d4 = (double)MathHelper.sqrt(d0 * d0 + d2 * d2);
+            float f2 = (float)(-(MathHelper.atan2(d1, d4) * (double)(180F / (float)Math.PI)));
+            this.mob.rotationPitch = this.limitAngle(this.mob.rotationPitch, f2, (float)this.field_226323_i_);
+            this.mob.setMoveVertical(d1 > 0.0D ? f1 : -f1);
+        }
+        else
+        {
+            if (!this.field_226324_j_)
+            {
+                this.mob.setNoGravity(false);
+            }
+
+            this.mob.setMoveVertical(0.0F);
+            this.mob.setMoveForward(0.0F);
+        }
+    }
 }

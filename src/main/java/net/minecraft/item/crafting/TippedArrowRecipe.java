@@ -7,58 +7,86 @@ import net.minecraft.item.Items;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class TippedArrowRecipe extends SpecialRecipe {
-   public TippedArrowRecipe(ResourceLocation p_i48184_1_) {
-      super(p_i48184_1_);
-   }
+public class TippedArrowRecipe extends SpecialRecipe
+{
+    public TippedArrowRecipe(ResourceLocation idIn)
+    {
+        super(idIn);
+    }
 
-   public boolean matches(CraftingInventory p_77569_1_, World p_77569_2_) {
-      if (p_77569_1_.getWidth() == 3 && p_77569_1_.getHeight() == 3) {
-         for(int i = 0; i < p_77569_1_.getWidth(); ++i) {
-            for(int j = 0; j < p_77569_1_.getHeight(); ++j) {
-               ItemStack itemstack = p_77569_1_.getItem(i + j * p_77569_1_.getWidth());
-               if (itemstack.isEmpty()) {
-                  return false;
-               }
+    /**
+     * Used to check if a recipe matches current crafting inventory
+     */
+    public boolean matches(CraftingInventory inv, World worldIn)
+    {
+        if (inv.getWidth() == 3 && inv.getHeight() == 3)
+        {
+            for (int i = 0; i < inv.getWidth(); ++i)
+            {
+                for (int j = 0; j < inv.getHeight(); ++j)
+                {
+                    ItemStack itemstack = inv.getStackInSlot(i + j * inv.getWidth());
 
-               Item item = itemstack.getItem();
-               if (i == 1 && j == 1) {
-                  if (item != Items.LINGERING_POTION) {
-                     return false;
-                  }
-               } else if (item != Items.ARROW) {
-                  return false;
-               }
+                    if (itemstack.isEmpty())
+                    {
+                        return false;
+                    }
+
+                    Item item = itemstack.getItem();
+
+                    if (i == 1 && j == 1)
+                    {
+                        if (item != Items.LINGERING_POTION)
+                        {
+                            return false;
+                        }
+                    }
+                    else if (item != Items.ARROW)
+                    {
+                        return false;
+                    }
+                }
             }
-         }
 
-         return true;
-      } else {
-         return false;
-      }
-   }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public ItemStack assemble(CraftingInventory p_77572_1_) {
-      ItemStack itemstack = p_77572_1_.getItem(1 + p_77572_1_.getWidth());
-      if (itemstack.getItem() != Items.LINGERING_POTION) {
-         return ItemStack.EMPTY;
-      } else {
-         ItemStack itemstack1 = new ItemStack(Items.TIPPED_ARROW, 8);
-         PotionUtils.setPotion(itemstack1, PotionUtils.getPotion(itemstack));
-         PotionUtils.setCustomEffects(itemstack1, PotionUtils.getCustomEffects(itemstack));
-         return itemstack1;
-      }
-   }
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    public ItemStack getCraftingResult(CraftingInventory inv)
+    {
+        ItemStack itemstack = inv.getStackInSlot(1 + inv.getWidth());
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean canCraftInDimensions(int p_194133_1_, int p_194133_2_) {
-      return p_194133_1_ >= 2 && p_194133_2_ >= 2;
-   }
+        if (itemstack.getItem() != Items.LINGERING_POTION)
+        {
+            return ItemStack.EMPTY;
+        }
+        else
+        {
+            ItemStack itemstack1 = new ItemStack(Items.TIPPED_ARROW, 8);
+            PotionUtils.addPotionToItemStack(itemstack1, PotionUtils.getPotionFromItem(itemstack));
+            PotionUtils.appendEffects(itemstack1, PotionUtils.getFullEffectsFromItem(itemstack));
+            return itemstack1;
+        }
+    }
 
-   public IRecipeSerializer<?> getSerializer() {
-      return IRecipeSerializer.TIPPED_ARROW;
-   }
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
+    public boolean canFit(int width, int height)
+    {
+        return width >= 2 && height >= 2;
+    }
+
+    public IRecipeSerializer<?> getSerializer()
+    {
+        return IRecipeSerializer.CRAFTING_SPECIAL_TIPPEDARROW;
+    }
 }

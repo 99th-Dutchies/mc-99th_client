@@ -20,83 +20,112 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class TargetBlock extends Block {
-   private static final IntegerProperty OUTPUT_POWER = BlockStateProperties.POWER;
+public class TargetBlock extends Block
+{
+    private static final IntegerProperty POWER = BlockStateProperties.POWER_0_15;
 
-   public TargetBlock(AbstractBlock.Properties p_i241188_1_) {
-      super(p_i241188_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(OUTPUT_POWER, Integer.valueOf(0)));
-   }
+    public TargetBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(POWER, Integer.valueOf(0)));
+    }
 
-   public void onProjectileHit(World p_220066_1_, BlockState p_220066_2_, BlockRayTraceResult p_220066_3_, ProjectileEntity p_220066_4_) {
-      int i = updateRedstoneOutput(p_220066_1_, p_220066_2_, p_220066_3_, p_220066_4_);
-      Entity entity = p_220066_4_.getOwner();
-      if (entity instanceof ServerPlayerEntity) {
-         ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entity;
-         serverplayerentity.awardStat(Stats.TARGET_HIT);
-         CriteriaTriggers.TARGET_BLOCK_HIT.trigger(serverplayerentity, p_220066_4_, p_220066_3_.getLocation(), i);
-      }
+    public void onProjectileCollision(World worldIn, BlockState state, BlockRayTraceResult hit, ProjectileEntity projectile)
+    {
+        int i = getPowerFromHitVec(worldIn, state, hit, projectile);
+        Entity entity = projectile.func_234616_v_();
 
-   }
+        if (entity instanceof ServerPlayerEntity)
+        {
+            ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entity;
+            serverplayerentity.addStat(Stats.field_232863_aD_);
+            CriteriaTriggers.TARGET_HIT.test(serverplayerentity, projectile, hit.getHitVec(), i);
+        }
+    }
 
-   private static int updateRedstoneOutput(IWorld p_235605_0_, BlockState p_235605_1_, BlockRayTraceResult p_235605_2_, Entity p_235605_3_) {
-      int i = getRedstoneStrength(p_235605_2_, p_235605_2_.getLocation());
-      int j = p_235605_3_ instanceof AbstractArrowEntity ? 20 : 8;
-      if (!p_235605_0_.getBlockTicks().hasScheduledTick(p_235605_2_.getBlockPos(), p_235605_1_.getBlock())) {
-         setOutputPower(p_235605_0_, p_235605_1_, i, p_235605_2_.getBlockPos(), j);
-      }
+    private static int getPowerFromHitVec(IWorld world, BlockState state, BlockRayTraceResult result, Entity entity)
+    {
+        int i = getPowerFromHitVec(result, result.getHitVec());
+        int j = entity instanceof AbstractArrowEntity ? 20 : 8;
 
-      return i;
-   }
+        if (!world.getPendingBlockTicks().isTickScheduled(result.getPos(), state.getBlock()))
+        {
+            powerTarget(world, state, i, result.getPos(), j);
+        }
 
-   private static int getRedstoneStrength(BlockRayTraceResult p_235606_0_, Vector3d p_235606_1_) {
-      Direction direction = p_235606_0_.getDirection();
-      double d0 = Math.abs(MathHelper.frac(p_235606_1_.x) - 0.5D);
-      double d1 = Math.abs(MathHelper.frac(p_235606_1_.y) - 0.5D);
-      double d2 = Math.abs(MathHelper.frac(p_235606_1_.z) - 0.5D);
-      Direction.Axis direction$axis = direction.getAxis();
-      double d3;
-      if (direction$axis == Direction.Axis.Y) {
-         d3 = Math.max(d0, d2);
-      } else if (direction$axis == Direction.Axis.Z) {
-         d3 = Math.max(d0, d1);
-      } else {
-         d3 = Math.max(d1, d2);
-      }
+        return i;
+    }
 
-      return Math.max(1, MathHelper.ceil(15.0D * MathHelper.clamp((0.5D - d3) / 0.5D, 0.0D, 1.0D)));
-   }
+    private static int getPowerFromHitVec(BlockRayTraceResult result, Vector3d vector)
+    {
+        Direction direction = result.getFace();
+        double d0 = Math.abs(MathHelper.frac(vector.x) - 0.5D);
+        double d1 = Math.abs(MathHelper.frac(vector.y) - 0.5D);
+        double d2 = Math.abs(MathHelper.frac(vector.z) - 0.5D);
+        Direction.Axis direction$axis = direction.getAxis();
+        double d3;
 
-   private static void setOutputPower(IWorld p_235604_0_, BlockState p_235604_1_, int p_235604_2_, BlockPos p_235604_3_, int p_235604_4_) {
-      p_235604_0_.setBlock(p_235604_3_, p_235604_1_.setValue(OUTPUT_POWER, Integer.valueOf(p_235604_2_)), 3);
-      p_235604_0_.getBlockTicks().scheduleTick(p_235604_3_, p_235604_1_.getBlock(), p_235604_4_);
-   }
+        if (direction$axis == Direction.Axis.Y)
+        {
+            d3 = Math.max(d0, d2);
+        }
+        else if (direction$axis == Direction.Axis.Z)
+        {
+            d3 = Math.max(d0, d1);
+        }
+        else
+        {
+            d3 = Math.max(d1, d2);
+        }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (p_225534_1_.getValue(OUTPUT_POWER) != 0) {
-         p_225534_2_.setBlock(p_225534_3_, p_225534_1_.setValue(OUTPUT_POWER, Integer.valueOf(0)), 3);
-      }
+        return Math.max(1, MathHelper.ceil(15.0D * MathHelper.clamp((0.5D - d3) / 0.5D, 0.0D, 1.0D)));
+    }
 
-   }
+    private static void powerTarget(IWorld world, BlockState state, int power, BlockPos pos, int waitTime)
+    {
+        world.setBlockState(pos, state.with(POWER, Integer.valueOf(power)), 3);
+        world.getPendingBlockTicks().scheduleTick(pos, state.getBlock(), waitTime);
+    }
 
-   public int getSignal(BlockState p_180656_1_, IBlockReader p_180656_2_, BlockPos p_180656_3_, Direction p_180656_4_) {
-      return p_180656_1_.getValue(OUTPUT_POWER);
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (state.get(POWER) != 0)
+        {
+            worldIn.setBlockState(pos, state.with(POWER, Integer.valueOf(0)), 3);
+        }
+    }
 
-   public boolean isSignalSource(BlockState p_149744_1_) {
-      return true;
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getWeakPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return blockState.get(POWER);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(OUTPUT_POWER);
-   }
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     * @deprecated call via {@link IBlockState#canProvidePower()} whenever possible. Implementing/overriding is fine.
+     */
+    public boolean canProvidePower(BlockState state)
+    {
+        return true;
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      if (!p_220082_2_.isClientSide() && !p_220082_1_.is(p_220082_4_.getBlock())) {
-         if (p_220082_1_.getValue(OUTPUT_POWER) > 0 && !p_220082_2_.getBlockTicks().hasScheduledTick(p_220082_3_, this)) {
-            p_220082_2_.setBlock(p_220082_3_, p_220082_1_.setValue(OUTPUT_POWER, Integer.valueOf(0)), 18);
-         }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(POWER);
+    }
 
-      }
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        if (!worldIn.isRemote() && !state.isIn(oldState.getBlock()))
+        {
+            if (state.get(POWER) > 0 && !worldIn.getPendingBlockTicks().isTickScheduled(pos, this))
+            {
+                worldIn.setBlockState(pos, state.with(POWER, Integer.valueOf(0)), 18);
+            }
+        }
+    }
 }

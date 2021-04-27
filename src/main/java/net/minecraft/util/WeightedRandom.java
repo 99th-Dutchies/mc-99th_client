@@ -3,51 +3,68 @@ package net.minecraft.util;
 import java.util.List;
 import java.util.Random;
 
-public class WeightedRandom {
-   public static int getTotalWeight(List<? extends WeightedRandom.Item> p_76272_0_) {
-      int i = 0;
-      int j = 0;
+public class WeightedRandom
+{
+    /**
+     * Returns the total weight of all items in a collection.
+     */
+    public static int getTotalWeight(List <? extends WeightedRandom.Item > collection)
+    {
+        int i = 0;
+        int j = 0;
 
-      for(int k = p_76272_0_.size(); j < k; ++j) {
-         WeightedRandom.Item weightedrandom$item = p_76272_0_.get(j);
-         i += weightedrandom$item.weight;
-      }
+        for (int k = collection.size(); j < k; ++j)
+        {
+            WeightedRandom.Item weightedrandom$item = collection.get(j);
+            i += weightedrandom$item.itemWeight;
+        }
 
-      return i;
-   }
+        return i;
+    }
 
-   public static <T extends WeightedRandom.Item> T getRandomItem(Random p_76273_0_, List<T> p_76273_1_, int p_76273_2_) {
-      if (p_76273_2_ <= 0) {
-         throw (IllegalArgumentException)Util.pauseInIde(new IllegalArgumentException());
-      } else {
-         int i = p_76273_0_.nextInt(p_76273_2_);
-         return getWeightedItem(p_76273_1_, i);
-      }
-   }
+    public static <T extends WeightedRandom.Item> T getRandomItem(Random random, List<T> collection, int totalWeight)
+    {
+        if (totalWeight <= 0)
+        {
+            throw(IllegalArgumentException)Util.pauseDevMode(new IllegalArgumentException());
+        }
+        else
+        {
+            int i = random.nextInt(totalWeight);
+            return getRandomItem(collection, i);
+        }
+    }
 
-   public static <T extends WeightedRandom.Item> T getWeightedItem(List<T> p_180166_0_, int p_180166_1_) {
-      int i = 0;
+    public static <T extends WeightedRandom.Item> T getRandomItem(List<T> collection, int weight)
+    {
+        int i = 0;
 
-      for(int j = p_180166_0_.size(); i < j; ++i) {
-         T t = p_180166_0_.get(i);
-         p_180166_1_ -= t.weight;
-         if (p_180166_1_ < 0) {
-            return t;
-         }
-      }
+        for (int j = collection.size(); i < j; ++i)
+        {
+            T t = collection.get(i);
+            weight -= t.itemWeight;
 
-      return (T)null;
-   }
+            if (weight < 0)
+            {
+                return t;
+            }
+        }
 
-   public static <T extends WeightedRandom.Item> T getRandomItem(Random p_76271_0_, List<T> p_76271_1_) {
-      return getRandomItem(p_76271_0_, p_76271_1_, getTotalWeight(p_76271_1_));
-   }
+        return (T)null;
+    }
 
-   public static class Item {
-      protected final int weight;
+    public static <T extends WeightedRandom.Item> T getRandomItem(Random random, List<T> collection)
+    {
+        return getRandomItem(random, collection, getTotalWeight(collection));
+    }
 
-      public Item(int p_i1556_1_) {
-         this.weight = p_i1556_1_;
-      }
-   }
+    public static class Item
+    {
+        protected final int itemWeight;
+
+        public Item(int itemWeightIn)
+        {
+            this.itemWeight = itemWeightIn;
+        }
+    }
 }

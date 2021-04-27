@@ -9,46 +9,64 @@ import javax.annotation.Nullable;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 
-public class ProfileBanEntry extends BanEntry<GameProfile> {
-   public ProfileBanEntry(GameProfile p_i1134_1_) {
-      this(p_i1134_1_, (Date)null, (String)null, (Date)null, (String)null);
-   }
+public class ProfileBanEntry extends BanEntry<GameProfile>
+{
+    public ProfileBanEntry(GameProfile profile)
+    {
+        this(profile, (Date)null, (String)null, (Date)null, (String)null);
+    }
 
-   public ProfileBanEntry(GameProfile p_i1135_1_, @Nullable Date p_i1135_2_, @Nullable String p_i1135_3_, @Nullable Date p_i1135_4_, @Nullable String p_i1135_5_) {
-      super(p_i1135_1_, p_i1135_2_, p_i1135_3_, p_i1135_4_, p_i1135_5_);
-   }
+    public ProfileBanEntry(GameProfile profile, @Nullable Date startDate, @Nullable String banner, @Nullable Date endDate, @Nullable String banReason)
+    {
+        super(profile, startDate, banner, endDate, banReason);
+    }
 
-   public ProfileBanEntry(JsonObject p_i1136_1_) {
-      super(createGameProfile(p_i1136_1_), p_i1136_1_);
-   }
+    public ProfileBanEntry(JsonObject json)
+    {
+        super(toGameProfile(json), json);
+    }
 
-   protected void serialize(JsonObject p_152641_1_) {
-      if (this.getUser() != null) {
-         p_152641_1_.addProperty("uuid", this.getUser().getId() == null ? "" : this.getUser().getId().toString());
-         p_152641_1_.addProperty("name", this.getUser().getName());
-         super.serialize(p_152641_1_);
-      }
-   }
+    protected void onSerialization(JsonObject data)
+    {
+        if (this.getValue() != null)
+        {
+            data.addProperty("uuid", this.getValue().getId() == null ? "" : this.getValue().getId().toString());
+            data.addProperty("name", this.getValue().getName());
+            super.onSerialization(data);
+        }
+    }
 
-   public ITextComponent getDisplayName() {
-      GameProfile gameprofile = this.getUser();
-      return new StringTextComponent(gameprofile.getName() != null ? gameprofile.getName() : Objects.toString(gameprofile.getId(), "(Unknown)"));
-   }
+    public ITextComponent getDisplayName()
+    {
+        GameProfile gameprofile = this.getValue();
+        return new StringTextComponent(gameprofile.getName() != null ? gameprofile.getName() : Objects.toString(gameprofile.getId(), "(Unknown)"));
+    }
 
-   private static GameProfile createGameProfile(JsonObject p_152648_0_) {
-      if (p_152648_0_.has("uuid") && p_152648_0_.has("name")) {
-         String s = p_152648_0_.get("uuid").getAsString();
+    /**
+     * Convert a {@linkplain com.google.gson.JsonObject JsonObject} into a {@linkplain com.mojang.authlib.GameProfile}.
+     * The json object must have {@code uuid} and {@code name} attributes or {@code null} will be returned.
+     */
+    private static GameProfile toGameProfile(JsonObject json)
+    {
+        if (json.has("uuid") && json.has("name"))
+        {
+            String s = json.get("uuid").getAsString();
+            UUID uuid;
 
-         UUID uuid;
-         try {
-            uuid = UUID.fromString(s);
-         } catch (Throwable throwable) {
+            try
+            {
+                uuid = UUID.fromString(s);
+            }
+            catch (Throwable throwable)
+            {
+                return null;
+            }
+
+            return new GameProfile(uuid, json.get("name").getAsString());
+        }
+        else
+        {
             return null;
-         }
-
-         return new GameProfile(uuid, p_152648_0_.get("name").getAsString());
-      } else {
-         return null;
-      }
-   }
+        }
+    }
 }

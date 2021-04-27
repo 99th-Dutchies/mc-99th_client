@@ -3,104 +3,117 @@ package net.minecraft.client.particle;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class CritParticle extends SpriteTexturedParticle {
-   private CritParticle(ClientWorld p_i232357_1_, double p_i232357_2_, double p_i232357_4_, double p_i232357_6_, double p_i232357_8_, double p_i232357_10_, double p_i232357_12_) {
-      super(p_i232357_1_, p_i232357_2_, p_i232357_4_, p_i232357_6_, 0.0D, 0.0D, 0.0D);
-      this.xd *= (double)0.1F;
-      this.yd *= (double)0.1F;
-      this.zd *= (double)0.1F;
-      this.xd += p_i232357_8_ * 0.4D;
-      this.yd += p_i232357_10_ * 0.4D;
-      this.zd += p_i232357_12_ * 0.4D;
-      float f = (float)(Math.random() * (double)0.3F + (double)0.6F);
-      this.rCol = f;
-      this.gCol = f;
-      this.bCol = f;
-      this.quadSize *= 0.75F;
-      this.lifetime = Math.max((int)(6.0D / (Math.random() * 0.8D + 0.6D)), 1);
-      this.hasPhysics = false;
-      this.tick();
-   }
+public class CritParticle extends SpriteTexturedParticle
+{
+    private CritParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ)
+    {
+        super(world, x, y, z, 0.0D, 0.0D, 0.0D);
+        this.motionX *= (double)0.1F;
+        this.motionY *= (double)0.1F;
+        this.motionZ *= (double)0.1F;
+        this.motionX += motionX * 0.4D;
+        this.motionY += motionY * 0.4D;
+        this.motionZ += motionZ * 0.4D;
+        float f = (float)(Math.random() * (double)0.3F + (double)0.6F);
+        this.particleRed = f;
+        this.particleGreen = f;
+        this.particleBlue = f;
+        this.particleScale *= 0.75F;
+        this.maxAge = Math.max((int)(6.0D / (Math.random() * 0.8D + 0.6D)), 1);
+        this.canCollide = false;
+        this.tick();
+    }
 
-   public float getQuadSize(float p_217561_1_) {
-      return this.quadSize * MathHelper.clamp(((float)this.age + p_217561_1_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
-   }
+    public float getScale(float scaleFactor)
+    {
+        return this.particleScale * MathHelper.clamp(((float)this.age + scaleFactor) / (float)this.maxAge * 32.0F, 0.0F, 1.0F);
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.move(this.xd, this.yd, this.zd);
-         this.gCol = (float)((double)this.gCol * 0.96D);
-         this.bCol = (float)((double)this.bCol * 0.9D);
-         this.xd *= (double)0.7F;
-         this.yd *= (double)0.7F;
-         this.zd *= (double)0.7F;
-         this.yd -= (double)0.02F;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.particleGreen = (float)((double)this.particleGreen * 0.96D);
+            this.particleBlue = (float)((double)this.particleBlue * 0.9D);
+            this.motionX *= (double)0.7F;
+            this.motionY *= (double)0.7F;
+            this.motionZ *= (double)0.7F;
+            this.motionY -= (double)0.02F;
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class DamageIndicatorFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-      public DamageIndicatorFactory(IAnimatedSprite p_i50589_1_) {
-         this.sprite = p_i50589_1_;
-      }
+    public static class DamageIndicatorFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         CritParticle critparticle = new CritParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_ + 1.0D, p_199234_13_);
-         critparticle.setLifetime(20);
-         critparticle.pickSprite(this.sprite);
-         return critparticle;
-      }
-   }
+        public DamageIndicatorFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            CritParticle critparticle = new CritParticle(worldIn, x, y, z, xSpeed, ySpeed + 1.0D, zSpeed);
+            critparticle.setMaxAge(20);
+            critparticle.selectSpriteRandomly(this.spriteSet);
+            return critparticle;
+        }
+    }
 
-      public Factory(IAnimatedSprite p_i50587_1_) {
-         this.sprite = p_i50587_1_;
-      }
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         CritParticle critparticle = new CritParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         critparticle.pickSprite(this.sprite);
-         return critparticle;
-      }
-   }
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class MagicFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            CritParticle critparticle = new CritParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            critparticle.selectSpriteRandomly(this.spriteSet);
+            return critparticle;
+        }
+    }
 
-      public MagicFactory(IAnimatedSprite p_i50588_1_) {
-         this.sprite = p_i50588_1_;
-      }
+    public static class MagicFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         CritParticle critparticle = new CritParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_);
-         critparticle.rCol *= 0.3F;
-         critparticle.gCol *= 0.8F;
-         critparticle.pickSprite(this.sprite);
-         return critparticle;
-      }
-   }
+        public MagicFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            CritParticle critparticle = new CritParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);
+            critparticle.particleRed *= 0.3F;
+            critparticle.particleGreen *= 0.8F;
+            critparticle.selectSpriteRandomly(this.spriteSet);
+            return critparticle;
+        }
+    }
 }

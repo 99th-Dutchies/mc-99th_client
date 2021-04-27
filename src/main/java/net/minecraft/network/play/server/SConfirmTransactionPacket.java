@@ -4,51 +4,64 @@ import java.io.IOException;
 import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SConfirmTransactionPacket implements IPacket<IClientPlayNetHandler> {
-   private int containerId;
-   private short uid;
-   private boolean accepted;
+public class SConfirmTransactionPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int windowId;
+    private short actionNumber;
+    private boolean accepted;
 
-   public SConfirmTransactionPacket() {
-   }
+    public SConfirmTransactionPacket()
+    {
+    }
 
-   public SConfirmTransactionPacket(int p_i46958_1_, short p_i46958_2_, boolean p_i46958_3_) {
-      this.containerId = p_i46958_1_;
-      this.uid = p_i46958_2_;
-      this.accepted = p_i46958_3_;
-   }
+    public SConfirmTransactionPacket(int windowIdIn, short actionNumberIn, boolean acceptedIn)
+    {
+        this.windowId = windowIdIn;
+        this.actionNumber = actionNumberIn;
+        this.accepted = acceptedIn;
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleContainerAck(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleConfirmTransaction(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.containerId = p_148837_1_.readUnsignedByte();
-      this.uid = p_148837_1_.readShort();
-      this.accepted = p_148837_1_.readBoolean();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.windowId = buf.readUnsignedByte();
+        this.actionNumber = buf.readShort();
+        this.accepted = buf.readBoolean();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.containerId);
-      p_148840_1_.writeShort(this.uid);
-      p_148840_1_.writeBoolean(this.accepted);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.windowId);
+        buf.writeShort(this.actionNumber);
+        buf.writeBoolean(this.accepted);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getContainerId() {
-      return this.containerId;
-   }
+    public int getWindowId()
+    {
+        return this.windowId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public short getUid() {
-      return this.uid;
-   }
+    public short getActionNumber()
+    {
+        return this.actionNumber;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isAccepted() {
-      return this.accepted;
-   }
+    public boolean wasAccepted()
+    {
+        return this.accepted;
+    }
 }

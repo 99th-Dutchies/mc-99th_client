@@ -7,24 +7,34 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundCategory;
 
-public class SaddleItem extends Item {
-   public SaddleItem(Item.Properties p_i48474_1_) {
-      super(p_i48474_1_);
-   }
+public class SaddleItem extends Item
+{
+    public SaddleItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ActionResultType interactLivingEntity(ItemStack p_111207_1_, PlayerEntity p_111207_2_, LivingEntity p_111207_3_, Hand p_111207_4_) {
-      if (p_111207_3_ instanceof IEquipable && p_111207_3_.isAlive()) {
-         IEquipable iequipable = (IEquipable)p_111207_3_;
-         if (!iequipable.isSaddled() && iequipable.isSaddleable()) {
-            if (!p_111207_2_.level.isClientSide) {
-               iequipable.equipSaddle(SoundCategory.NEUTRAL);
-               p_111207_1_.shrink(1);
+    /**
+     * Returns true if the item can be used on the given entity, e.g. shears on sheep.
+     */
+    public ActionResultType itemInteractionForEntity(ItemStack stack, PlayerEntity playerIn, LivingEntity target, Hand hand)
+    {
+        if (target instanceof IEquipable && target.isAlive())
+        {
+            IEquipable iequipable = (IEquipable)target;
+
+            if (!iequipable.isHorseSaddled() && iequipable.func_230264_L__())
+            {
+                if (!playerIn.world.isRemote)
+                {
+                    iequipable.func_230266_a_(SoundCategory.NEUTRAL);
+                    stack.shrink(1);
+                }
+
+                return ActionResultType.func_233537_a_(playerIn.world.isRemote);
             }
+        }
 
-            return ActionResultType.sidedSuccess(p_111207_2_.level.isClientSide);
-         }
-      }
-
-      return ActionResultType.PASS;
-   }
+        return ActionResultType.PASS;
+    }
 }

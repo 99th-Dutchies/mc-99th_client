@@ -12,66 +12,98 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.gen.Heightmap;
 import net.minecraft.world.server.ServerWorld;
 
-public class MoveThroughVillageAtNightGoal extends Goal {
-   private final CreatureEntity mob;
-   private final int interval;
-   @Nullable
-   private BlockPos wantedPos;
+public class MoveThroughVillageAtNightGoal extends Goal
+{
+    private final CreatureEntity entity;
+    private final int field_220757_b;
+    @Nullable
+    private BlockPos field_220758_c;
 
-   public MoveThroughVillageAtNightGoal(CreatureEntity p_i50321_1_, int p_i50321_2_) {
-      this.mob = p_i50321_1_;
-      this.interval = p_i50321_2_;
-      this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-   }
+    public MoveThroughVillageAtNightGoal(CreatureEntity entity, int p_i50321_2_)
+    {
+        this.entity = entity;
+        this.field_220757_b = p_i50321_2_;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+    }
 
-   public boolean canUse() {
-      if (this.mob.isVehicle()) {
-         return false;
-      } else if (this.mob.level.isDay()) {
-         return false;
-      } else if (this.mob.getRandom().nextInt(this.interval) != 0) {
-         return false;
-      } else {
-         ServerWorld serverworld = (ServerWorld)this.mob.level;
-         BlockPos blockpos = this.mob.blockPosition();
-         if (!serverworld.isCloseToVillage(blockpos, 6)) {
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        if (this.entity.isBeingRidden())
+        {
             return false;
-         } else {
-            Vector3d vector3d = RandomPositionGenerator.getLandPos(this.mob, 15, 7, (p_220755_1_) -> {
-               return (double)(-serverworld.sectionsToVillage(SectionPos.of(p_220755_1_)));
-            });
-            this.wantedPos = vector3d == null ? null : new BlockPos(vector3d);
-            return this.wantedPos != null;
-         }
-      }
-   }
+        }
+        else if (this.entity.world.isDaytime())
+        {
+            return false;
+        }
+        else if (this.entity.getRNG().nextInt(this.field_220757_b) != 0)
+        {
+            return false;
+        }
+        else
+        {
+            ServerWorld serverworld = (ServerWorld)this.entity.world;
+            BlockPos blockpos = this.entity.getPosition();
 
-   public boolean canContinueToUse() {
-      return this.wantedPos != null && !this.mob.getNavigation().isDone() && this.mob.getNavigation().getTargetPos().equals(this.wantedPos);
-   }
-
-   public void tick() {
-      if (this.wantedPos != null) {
-         PathNavigator pathnavigator = this.mob.getNavigation();
-         if (pathnavigator.isDone() && !this.wantedPos.closerThan(this.mob.position(), 10.0D)) {
-            Vector3d vector3d = Vector3d.atBottomCenterOf(this.wantedPos);
-            Vector3d vector3d1 = this.mob.position();
-            Vector3d vector3d2 = vector3d1.subtract(vector3d);
-            vector3d = vector3d2.scale(0.4D).add(vector3d);
-            Vector3d vector3d3 = vector3d.subtract(vector3d1).normalize().scale(10.0D).add(vector3d1);
-            BlockPos blockpos = new BlockPos(vector3d3);
-            blockpos = this.mob.level.getHeightmapPos(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, blockpos);
-            if (!pathnavigator.moveTo((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0D)) {
-               this.moveRandomly();
+            if (!serverworld.func_241119_a_(blockpos, 6))
+            {
+                return false;
             }
-         }
+            else
+            {
+                Vector3d vector3d = RandomPositionGenerator.func_221024_a(this.entity, 15, 7, (p_220755_1_) ->
+                {
+                    return (double)(-serverworld.sectionsToVillage(SectionPos.from(p_220755_1_)));
+                });
+                this.field_220758_c = vector3d == null ? null : new BlockPos(vector3d);
+                return this.field_220758_c != null;
+            }
+        }
+    }
 
-      }
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        return this.field_220758_c != null && !this.entity.getNavigator().noPath() && this.entity.getNavigator().getTargetPos().equals(this.field_220758_c);
+    }
 
-   private void moveRandomly() {
-      Random random = this.mob.getRandom();
-      BlockPos blockpos = this.mob.level.getHeightmapPos(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, this.mob.blockPosition().offset(-8 + random.nextInt(16), 0, -8 + random.nextInt(16)));
-      this.mob.getNavigation().moveTo((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0D);
-   }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        if (this.field_220758_c != null)
+        {
+            PathNavigator pathnavigator = this.entity.getNavigator();
+
+            if (pathnavigator.noPath() && !this.field_220758_c.withinDistance(this.entity.getPositionVec(), 10.0D))
+            {
+                Vector3d vector3d = Vector3d.copyCenteredHorizontally(this.field_220758_c);
+                Vector3d vector3d1 = this.entity.getPositionVec();
+                Vector3d vector3d2 = vector3d1.subtract(vector3d);
+                vector3d = vector3d2.scale(0.4D).add(vector3d);
+                Vector3d vector3d3 = vector3d.subtract(vector3d1).normalize().scale(10.0D).add(vector3d1);
+                BlockPos blockpos = new BlockPos(vector3d3);
+                blockpos = this.entity.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, blockpos);
+
+                if (!pathnavigator.tryMoveToXYZ((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0D))
+                {
+                    this.func_220754_g();
+                }
+            }
+        }
+    }
+
+    private void func_220754_g()
+    {
+        Random random = this.entity.getRNG();
+        BlockPos blockpos = this.entity.world.getHeight(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, this.entity.getPosition().add(-8 + random.nextInt(16), 0, -8 + random.nextInt(16)));
+        this.entity.getNavigator().tryMoveToXYZ((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0D);
+    }
 }

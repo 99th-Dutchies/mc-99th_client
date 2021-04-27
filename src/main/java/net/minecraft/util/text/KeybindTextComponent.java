@@ -3,64 +3,77 @@ package net.minecraft.util.text;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class KeybindTextComponent extends TextComponent {
-   private static Function<String, Supplier<ITextComponent>> keyResolver = (p_193635_0_) -> {
-      return () -> {
-         return new StringTextComponent(p_193635_0_);
-      };
-   };
-   private final String name;
-   private Supplier<ITextComponent> nameResolver;
+public class KeybindTextComponent extends TextComponent
+{
+    private static Function<String, Supplier<ITextComponent>> displaySupplierFunction = (p_193635_0_) ->
+    {
+        return () -> {
+            return new StringTextComponent(p_193635_0_);
+        };
+    };
+    private final String keybind;
+    private Supplier<ITextComponent> displaySupplier;
 
-   public KeybindTextComponent(String p_i47521_1_) {
-      this.name = p_i47521_1_;
-   }
+    public KeybindTextComponent(String keybind)
+    {
+        this.keybind = keybind;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static void setKeyResolver(Function<String, Supplier<ITextComponent>> p_240696_0_) {
-      keyResolver = p_240696_0_;
-   }
+    public static void func_240696_a_(Function<String, Supplier<ITextComponent>> p_240696_0_)
+    {
+        displaySupplierFunction = p_240696_0_;
+    }
 
-   private ITextComponent getNestedComponent() {
-      if (this.nameResolver == null) {
-         this.nameResolver = keyResolver.apply(this.name);
-      }
+    private ITextComponent func_240698_i_()
+    {
+        if (this.displaySupplier == null)
+        {
+            this.displaySupplier = displaySupplierFunction.apply(this.keybind);
+        }
 
-      return this.nameResolver.get();
-   }
+        return this.displaySupplier.get();
+    }
 
-   public <T> Optional<T> visitSelf(ITextProperties.ITextAcceptor<T> p_230533_1_) {
-      return this.getNestedComponent().visit(p_230533_1_);
-   }
+    public <T> Optional<T> func_230533_b_(ITextProperties.ITextAcceptor<T> acceptor)
+    {
+        return this.func_240698_i_().getComponent(acceptor);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public <T> Optional<T> visitSelf(ITextProperties.IStyledTextAcceptor<T> p_230534_1_, Style p_230534_2_) {
-      return this.getNestedComponent().visit(p_230534_1_, p_230534_2_);
-   }
+    public <T> Optional<T> func_230534_b_(ITextProperties.IStyledTextAcceptor<T> acceptor, Style style)
+    {
+        return this.func_240698_i_().getComponentWithStyle(acceptor, style);
+    }
 
-   public KeybindTextComponent plainCopy() {
-      return new KeybindTextComponent(this.name);
-   }
+    public KeybindTextComponent copyRaw()
+    {
+        return new KeybindTextComponent(this.keybind);
+    }
 
-   public boolean equals(Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else if (!(p_equals_1_ instanceof KeybindTextComponent)) {
-         return false;
-      } else {
-         KeybindTextComponent keybindtextcomponent = (KeybindTextComponent)p_equals_1_;
-         return this.name.equals(keybindtextcomponent.name) && super.equals(p_equals_1_);
-      }
-   }
+    public boolean equals(Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else if (!(p_equals_1_ instanceof KeybindTextComponent))
+        {
+            return false;
+        }
+        else
+        {
+            KeybindTextComponent keybindtextcomponent = (KeybindTextComponent)p_equals_1_;
+            return this.keybind.equals(keybindtextcomponent.keybind) && super.equals(p_equals_1_);
+        }
+    }
 
-   public String toString() {
-      return "KeybindComponent{keybind='" + this.name + '\'' + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
-   }
+    public String toString()
+    {
+        return "KeybindComponent{keybind='" + this.keybind + '\'' + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getKeybind()
+    {
+        return this.keybind;
+    }
 }

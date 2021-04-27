@@ -9,70 +9,99 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class ShulkerBoxColoringRecipe extends SpecialRecipe {
-   public ShulkerBoxColoringRecipe(ResourceLocation p_i48159_1_) {
-      super(p_i48159_1_);
-   }
+public class ShulkerBoxColoringRecipe extends SpecialRecipe
+{
+    public ShulkerBoxColoringRecipe(ResourceLocation idIn)
+    {
+        super(idIn);
+    }
 
-   public boolean matches(CraftingInventory p_77569_1_, World p_77569_2_) {
-      int i = 0;
-      int j = 0;
+    /**
+     * Used to check if a recipe matches current crafting inventory
+     */
+    public boolean matches(CraftingInventory inv, World worldIn)
+    {
+        int i = 0;
+        int j = 0;
 
-      for(int k = 0; k < p_77569_1_.getContainerSize(); ++k) {
-         ItemStack itemstack = p_77569_1_.getItem(k);
-         if (!itemstack.isEmpty()) {
-            if (Block.byItem(itemstack.getItem()) instanceof ShulkerBoxBlock) {
-               ++i;
-            } else {
-               if (!(itemstack.getItem() instanceof DyeItem)) {
-                  return false;
-               }
+        for (int k = 0; k < inv.getSizeInventory(); ++k)
+        {
+            ItemStack itemstack = inv.getStackInSlot(k);
 
-               ++j;
+            if (!itemstack.isEmpty())
+            {
+                if (Block.getBlockFromItem(itemstack.getItem()) instanceof ShulkerBoxBlock)
+                {
+                    ++i;
+                }
+                else
+                {
+                    if (!(itemstack.getItem() instanceof DyeItem))
+                    {
+                        return false;
+                    }
+
+                    ++j;
+                }
+
+                if (j > 1 || i > 1)
+                {
+                    return false;
+                }
             }
+        }
 
-            if (j > 1 || i > 1) {
-               return false;
+        return i == 1 && j == 1;
+    }
+
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    public ItemStack getCraftingResult(CraftingInventory inv)
+    {
+        ItemStack itemstack = ItemStack.EMPTY;
+        DyeItem dyeitem = (DyeItem)Items.WHITE_DYE;
+
+        for (int i = 0; i < inv.getSizeInventory(); ++i)
+        {
+            ItemStack itemstack1 = inv.getStackInSlot(i);
+
+            if (!itemstack1.isEmpty())
+            {
+                Item item = itemstack1.getItem();
+
+                if (Block.getBlockFromItem(item) instanceof ShulkerBoxBlock)
+                {
+                    itemstack = itemstack1;
+                }
+                else if (item instanceof DyeItem)
+                {
+                    dyeitem = (DyeItem)item;
+                }
             }
-         }
-      }
+        }
 
-      return i == 1 && j == 1;
-   }
+        ItemStack itemstack2 = ShulkerBoxBlock.getColoredItemStack(dyeitem.getDyeColor());
 
-   public ItemStack assemble(CraftingInventory p_77572_1_) {
-      ItemStack itemstack = ItemStack.EMPTY;
-      DyeItem dyeitem = (DyeItem)Items.WHITE_DYE;
+        if (itemstack.hasTag())
+        {
+            itemstack2.setTag(itemstack.getTag().copy());
+        }
 
-      for(int i = 0; i < p_77572_1_.getContainerSize(); ++i) {
-         ItemStack itemstack1 = p_77572_1_.getItem(i);
-         if (!itemstack1.isEmpty()) {
-            Item item = itemstack1.getItem();
-            if (Block.byItem(item) instanceof ShulkerBoxBlock) {
-               itemstack = itemstack1;
-            } else if (item instanceof DyeItem) {
-               dyeitem = (DyeItem)item;
-            }
-         }
-      }
+        return itemstack2;
+    }
 
-      ItemStack itemstack2 = ShulkerBoxBlock.getColoredItemStack(dyeitem.getDyeColor());
-      if (itemstack.hasTag()) {
-         itemstack2.setTag(itemstack.getTag().copy());
-      }
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
+    public boolean canFit(int width, int height)
+    {
+        return width * height >= 2;
+    }
 
-      return itemstack2;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean canCraftInDimensions(int p_194133_1_, int p_194133_2_) {
-      return p_194133_1_ * p_194133_2_ >= 2;
-   }
-
-   public IRecipeSerializer<?> getSerializer() {
-      return IRecipeSerializer.SHULKER_BOX_COLORING;
-   }
+    public IRecipeSerializer<?> getSerializer()
+    {
+        return IRecipeSerializer.CRAFTING_SPECIAL_SHULKERBOXCOLORING;
+    }
 }

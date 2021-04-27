@@ -3,20 +3,29 @@ package net.minecraft.world.gen.layer;
 import net.minecraft.world.gen.INoiseRandom;
 import net.minecraft.world.gen.layer.traits.ICastleTransformer;
 
-public enum SmoothLayer implements ICastleTransformer {
-   INSTANCE;
+public enum SmoothLayer implements ICastleTransformer
+{
+    INSTANCE;
 
-   public int apply(INoiseRandom p_202748_1_, int p_202748_2_, int p_202748_3_, int p_202748_4_, int p_202748_5_, int p_202748_6_) {
-      boolean flag = p_202748_3_ == p_202748_5_;
-      boolean flag1 = p_202748_2_ == p_202748_4_;
-      if (flag == flag1) {
-         if (flag) {
-            return p_202748_1_.nextRandom(2) == 0 ? p_202748_5_ : p_202748_2_;
-         } else {
-            return p_202748_6_;
-         }
-      } else {
-         return flag ? p_202748_5_ : p_202748_2_;
-      }
-   }
+    public int apply(INoiseRandom context, int north, int west, int south, int east, int center)
+    {
+        boolean flag = west == east;
+        boolean flag1 = north == south;
+
+        if (flag == flag1)
+        {
+            if (flag)
+            {
+                return context.random(2) == 0 ? east : north;
+            }
+            else
+            {
+                return center;
+            }
+        }
+        else
+        {
+            return flag ? east : north;
+        }
+    }
 }

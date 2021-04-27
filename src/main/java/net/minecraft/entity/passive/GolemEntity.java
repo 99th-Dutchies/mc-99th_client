@@ -7,35 +7,46 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.world.World;
 
-public abstract class GolemEntity extends CreatureEntity {
-   protected GolemEntity(EntityType<? extends GolemEntity> p_i48569_1_, World p_i48569_2_) {
-      super(p_i48569_1_, p_i48569_2_);
-   }
+public abstract class GolemEntity extends CreatureEntity
+{
+    protected GolemEntity(EntityType <? extends GolemEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   public boolean causeFallDamage(float p_225503_1_, float p_225503_2_) {
-      return false;
-   }
+    public boolean onLivingFall(float distance, float damageMultiplier)
+    {
+        return false;
+    }
 
-   @Nullable
-   protected SoundEvent getAmbientSound() {
-      return null;
-   }
+    @Nullable
+    protected SoundEvent getAmbientSound()
+    {
+        return null;
+    }
 
-   @Nullable
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return null;
-   }
+    @Nullable
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return null;
+    }
 
-   @Nullable
-   protected SoundEvent getDeathSound() {
-      return null;
-   }
+    @Nullable
+    protected SoundEvent getDeathSound()
+    {
+        return null;
+    }
 
-   public int getAmbientSoundInterval() {
-      return 120;
-   }
+    /**
+     * Get number of ticks, at least during which the living entity will be silent.
+     */
+    public int getTalkInterval()
+    {
+        return 120;
+    }
 
-   public boolean removeWhenFarAway(double p_213397_1_) {
-      return false;
-   }
+    public boolean canDespawn(double distanceToClosestPlayer)
+    {
+        return false;
+    }
 }

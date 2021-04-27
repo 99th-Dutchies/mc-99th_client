@@ -5,78 +5,91 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.item.MerchantOffers;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SMerchantOffersPacket implements IPacket<IClientPlayNetHandler> {
-   private int containerId;
-   private MerchantOffers offers;
-   private int villagerLevel;
-   private int villagerXp;
-   private boolean showProgress;
-   private boolean canRestock;
+public class SMerchantOffersPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int containerId;
+    private MerchantOffers offers;
+    private int level;
+    private int xp;
+    private boolean field_218740_e;
+    private boolean field_223478_f;
 
-   public SMerchantOffersPacket() {
-   }
+    public SMerchantOffersPacket()
+    {
+    }
 
-   public SMerchantOffersPacket(int p_i51539_1_, MerchantOffers p_i51539_2_, int p_i51539_3_, int p_i51539_4_, boolean p_i51539_5_, boolean p_i51539_6_) {
-      this.containerId = p_i51539_1_;
-      this.offers = p_i51539_2_;
-      this.villagerLevel = p_i51539_3_;
-      this.villagerXp = p_i51539_4_;
-      this.showProgress = p_i51539_5_;
-      this.canRestock = p_i51539_6_;
-   }
+    public SMerchantOffersPacket(int id, MerchantOffers offersIn, int levelIn, int xpIn, boolean p_i51539_5_, boolean p_i51539_6_)
+    {
+        this.containerId = id;
+        this.offers = offersIn;
+        this.level = levelIn;
+        this.xp = xpIn;
+        this.field_218740_e = p_i51539_5_;
+        this.field_223478_f = p_i51539_6_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.containerId = p_148837_1_.readVarInt();
-      this.offers = MerchantOffers.createFromStream(p_148837_1_);
-      this.villagerLevel = p_148837_1_.readVarInt();
-      this.villagerXp = p_148837_1_.readVarInt();
-      this.showProgress = p_148837_1_.readBoolean();
-      this.canRestock = p_148837_1_.readBoolean();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.containerId = buf.readVarInt();
+        this.offers = MerchantOffers.read(buf);
+        this.level = buf.readVarInt();
+        this.xp = buf.readVarInt();
+        this.field_218740_e = buf.readBoolean();
+        this.field_223478_f = buf.readBoolean();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.containerId);
-      this.offers.writeToStream(p_148840_1_);
-      p_148840_1_.writeVarInt(this.villagerLevel);
-      p_148840_1_.writeVarInt(this.villagerXp);
-      p_148840_1_.writeBoolean(this.showProgress);
-      p_148840_1_.writeBoolean(this.canRestock);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.containerId);
+        this.offers.write(buf);
+        buf.writeVarInt(this.level);
+        buf.writeVarInt(this.xp);
+        buf.writeBoolean(this.field_218740_e);
+        buf.writeBoolean(this.field_223478_f);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleMerchantOffers(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleMerchantOffers(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getContainerId() {
-      return this.containerId;
-   }
+    public int getContainerId()
+    {
+        return this.containerId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public MerchantOffers getOffers() {
-      return this.offers;
-   }
+    public MerchantOffers getOffers()
+    {
+        return this.offers;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getVillagerLevel() {
-      return this.villagerLevel;
-   }
+    public int getLevel()
+    {
+        return this.level;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getVillagerXp() {
-      return this.villagerXp;
-   }
+    public int getExp()
+    {
+        return this.xp;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean showProgress() {
-      return this.showProgress;
-   }
+    public boolean func_218735_f()
+    {
+        return this.field_218740_e;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean canRestock() {
-      return this.canRestock;
-   }
+    public boolean func_223477_g()
+    {
+        return this.field_223478_f;
+    }
 }

@@ -1,29 +1,31 @@
 package net.minecraft.client.gui;
 
 import javax.annotation.Nullable;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class FocusableGui extends AbstractGui implements INestedGuiEventHandler {
-   @Nullable
-   private IGuiEventListener focused;
-   private boolean isDragging;
+public abstract class FocusableGui extends AbstractGui implements INestedGuiEventHandler
+{
+    @Nullable
+    private IGuiEventListener field_230699_a_;
+    private boolean isDragging;
 
-   public final boolean isDragging() {
-      return this.isDragging;
-   }
+    public final boolean isDragging()
+    {
+        return this.isDragging;
+    }
 
-   public final void setDragging(boolean p_231037_1_) {
-      this.isDragging = p_231037_1_;
-   }
+    public final void setDragging(boolean dragging)
+    {
+        this.isDragging = dragging;
+    }
 
-   @Nullable
-   public IGuiEventListener getFocused() {
-      return this.focused;
-   }
+    @Nullable
+    public IGuiEventListener getListener()
+    {
+        return this.field_230699_a_;
+    }
 
-   public void setFocused(@Nullable IGuiEventListener p_231035_1_) {
-      this.focused = p_231035_1_;
-   }
+    public void setListener(@Nullable IGuiEventListener listener)
+    {
+        this.field_230699_a_ = listener;
+    }
 }

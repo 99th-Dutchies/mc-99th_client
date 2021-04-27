@@ -11,44 +11,54 @@ import net.minecraft.tileentity.BellTileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class BellTileEntityRenderer extends TileEntityRenderer<BellTileEntity> {
-   public static final RenderMaterial BELL_RESOURCE_LOCATION = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS, new ResourceLocation("entity/bell/bell_body"));
-   private final ModelRenderer bellBody = new ModelRenderer(32, 32, 0, 0);
+public class BellTileEntityRenderer extends TileEntityRenderer<BellTileEntity>
+{
+    public static final RenderMaterial BELL_BODY_TEXTURE = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation("entity/bell/bell_body"));
+    private final ModelRenderer modelRenderer = new ModelRenderer(32, 32, 0, 0);
 
-   public BellTileEntityRenderer(TileEntityRendererDispatcher p_i226005_1_) {
-      super(p_i226005_1_);
-      this.bellBody.addBox(-3.0F, -6.0F, -3.0F, 6.0F, 7.0F, 6.0F);
-      this.bellBody.setPos(8.0F, 12.0F, 8.0F);
-      ModelRenderer modelrenderer = new ModelRenderer(32, 32, 0, 13);
-      modelrenderer.addBox(4.0F, 4.0F, 4.0F, 8.0F, 2.0F, 8.0F);
-      modelrenderer.setPos(-8.0F, -12.0F, -8.0F);
-      this.bellBody.addChild(modelrenderer);
-   }
+    public BellTileEntityRenderer(TileEntityRendererDispatcher p_i226005_1_)
+    {
+        super(p_i226005_1_);
+        this.modelRenderer.addBox(-3.0F, -6.0F, -3.0F, 6.0F, 7.0F, 6.0F);
+        this.modelRenderer.setRotationPoint(8.0F, 12.0F, 8.0F);
+        ModelRenderer modelrenderer = new ModelRenderer(32, 32, 0, 13);
+        modelrenderer.addBox(4.0F, 4.0F, 4.0F, 8.0F, 2.0F, 8.0F);
+        modelrenderer.setRotationPoint(-8.0F, -12.0F, -8.0F);
+        this.modelRenderer.addChild(modelrenderer);
+    }
 
-   public void render(BellTileEntity p_225616_1_, float p_225616_2_, MatrixStack p_225616_3_, IRenderTypeBuffer p_225616_4_, int p_225616_5_, int p_225616_6_) {
-      float f = (float)p_225616_1_.ticks + p_225616_2_;
-      float f1 = 0.0F;
-      float f2 = 0.0F;
-      if (p_225616_1_.shaking) {
-         float f3 = MathHelper.sin(f / (float)Math.PI) / (4.0F + f / 3.0F);
-         if (p_225616_1_.clickDirection == Direction.NORTH) {
-            f1 = -f3;
-         } else if (p_225616_1_.clickDirection == Direction.SOUTH) {
-            f1 = f3;
-         } else if (p_225616_1_.clickDirection == Direction.EAST) {
-            f2 = -f3;
-         } else if (p_225616_1_.clickDirection == Direction.WEST) {
-            f2 = f3;
-         }
-      }
+    public void render(BellTileEntity tileEntityIn, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn)
+    {
+        float f = (float)tileEntityIn.ringingTicks + partialTicks;
+        float f1 = 0.0F;
+        float f2 = 0.0F;
 
-      this.bellBody.xRot = f1;
-      this.bellBody.zRot = f2;
-      IVertexBuilder ivertexbuilder = BELL_RESOURCE_LOCATION.buffer(p_225616_4_, RenderType::entitySolid);
-      this.bellBody.render(p_225616_3_, ivertexbuilder, p_225616_5_, p_225616_6_);
-   }
+        if (tileEntityIn.isRinging)
+        {
+            float f3 = MathHelper.sin(f / (float)Math.PI) / (4.0F + f / 3.0F);
+
+            if (tileEntityIn.ringDirection == Direction.NORTH)
+            {
+                f1 = -f3;
+            }
+            else if (tileEntityIn.ringDirection == Direction.SOUTH)
+            {
+                f1 = f3;
+            }
+            else if (tileEntityIn.ringDirection == Direction.EAST)
+            {
+                f2 = -f3;
+            }
+            else if (tileEntityIn.ringDirection == Direction.WEST)
+            {
+                f2 = f3;
+            }
+        }
+
+        this.modelRenderer.rotateAngleX = f1;
+        this.modelRenderer.rotateAngleZ = f2;
+        IVertexBuilder ivertexbuilder = BELL_BODY_TEXTURE.getBuffer(bufferIn, RenderType::getEntitySolid);
+        this.modelRenderer.render(matrixStackIn, ivertexbuilder, combinedLightIn, combinedOverlayIn);
+    }
 }

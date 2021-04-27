@@ -21,93 +21,130 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class FarmlandBlock extends Block {
-   public static final IntegerProperty MOISTURE = BlockStateProperties.MOISTURE;
-   protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 15.0D, 16.0D);
+public class FarmlandBlock extends Block
+{
+    public static final IntegerProperty MOISTURE = BlockStateProperties.MOISTURE_0_7;
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 15.0D, 16.0D);
 
-   protected FarmlandBlock(AbstractBlock.Properties p_i48400_1_) {
-      super(p_i48400_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(MOISTURE, Integer.valueOf(0)));
-   }
+    protected FarmlandBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(MOISTURE, Integer.valueOf(0)));
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_2_ == Direction.UP && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 1);
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (facing == Direction.UP && !stateIn.isValidPosition(worldIn, currentPos))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+        }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockState blockstate = p_196260_2_.getBlockState(p_196260_3_.above());
-      return !blockstate.getMaterial().isSolid() || blockstate.getBlock() instanceof FenceGateBlock || blockstate.getBlock() instanceof MovingPistonBlock;
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockState blockstate = worldIn.getBlockState(pos.up());
+        return !blockstate.getMaterial().isSolid() || blockstate.getBlock() instanceof FenceGateBlock || blockstate.getBlock() instanceof MovingPistonBlock;
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      return !this.defaultBlockState().canSurvive(p_196258_1_.getLevel(), p_196258_1_.getClickedPos()) ? Blocks.DIRT.defaultBlockState() : super.getStateForPlacement(p_196258_1_);
-   }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        return !this.getDefaultState().isValidPosition(context.getWorld(), context.getPos()) ? Blocks.DIRT.getDefaultState() : super.getStateForPlacement(context);
+    }
 
-   public boolean useShapeForLightOcclusion(BlockState p_220074_1_) {
-      return true;
-   }
+    public boolean isTransparent(BlockState state)
+    {
+        return true;
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!p_225534_1_.canSurvive(p_225534_2_, p_225534_3_)) {
-         turnToDirt(p_225534_1_, p_225534_2_, p_225534_3_);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!state.isValidPosition(worldIn, pos))
+        {
+            turnToDirt(state, worldIn, pos);
+        }
+    }
 
-   }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        int i = state.get(MOISTURE);
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      int i = p_225542_1_.getValue(MOISTURE);
-      if (!isNearWater(p_225542_2_, p_225542_3_) && !p_225542_2_.isRainingAt(p_225542_3_.above())) {
-         if (i > 0) {
-            p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(MOISTURE, Integer.valueOf(i - 1)), 2);
-         } else if (!isUnderCrops(p_225542_2_, p_225542_3_)) {
-            turnToDirt(p_225542_1_, p_225542_2_, p_225542_3_);
-         }
-      } else if (i < 7) {
-         p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(MOISTURE, Integer.valueOf(7)), 2);
-      }
+        if (!hasWater(worldIn, pos) && !worldIn.isRainingAt(pos.up()))
+        {
+            if (i > 0)
+            {
+                worldIn.setBlockState(pos, state.with(MOISTURE, Integer.valueOf(i - 1)), 2);
+            }
+            else if (!hasCrops(worldIn, pos))
+            {
+                turnToDirt(state, worldIn, pos);
+            }
+        }
+        else if (i < 7)
+        {
+            worldIn.setBlockState(pos, state.with(MOISTURE, Integer.valueOf(7)), 2);
+        }
+    }
 
-   }
+    /**
+     * Block's chance to react to a living entity falling on it.
+     */
+    public void onFallenUpon(World worldIn, BlockPos pos, Entity entityIn, float fallDistance)
+    {
+        if (!worldIn.isRemote && worldIn.rand.nextFloat() < fallDistance - 0.5F && entityIn instanceof LivingEntity && (entityIn instanceof PlayerEntity || worldIn.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) && entityIn.getWidth() * entityIn.getWidth() * entityIn.getHeight() > 0.512F)
+        {
+            turnToDirt(worldIn.getBlockState(pos), worldIn, pos);
+        }
 
-   public void fallOn(World p_180658_1_, BlockPos p_180658_2_, Entity p_180658_3_, float p_180658_4_) {
-      if (!p_180658_1_.isClientSide && p_180658_1_.random.nextFloat() < p_180658_4_ - 0.5F && p_180658_3_ instanceof LivingEntity && (p_180658_3_ instanceof PlayerEntity || p_180658_1_.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && p_180658_3_.getBbWidth() * p_180658_3_.getBbWidth() * p_180658_3_.getBbHeight() > 0.512F) {
-         turnToDirt(p_180658_1_.getBlockState(p_180658_2_), p_180658_1_, p_180658_2_);
-      }
+        super.onFallenUpon(worldIn, pos, entityIn, fallDistance);
+    }
 
-      super.fallOn(p_180658_1_, p_180658_2_, p_180658_3_, p_180658_4_);
-   }
+    public static void turnToDirt(BlockState state, World worldIn, BlockPos pos)
+    {
+        worldIn.setBlockState(pos, nudgeEntitiesWithNewState(state, Blocks.DIRT.getDefaultState(), worldIn, pos));
+    }
 
-   public static void turnToDirt(BlockState p_199610_0_, World p_199610_1_, BlockPos p_199610_2_) {
-      p_199610_1_.setBlockAndUpdate(p_199610_2_, pushEntitiesUp(p_199610_0_, Blocks.DIRT.defaultBlockState(), p_199610_1_, p_199610_2_));
-   }
+    private static boolean hasCrops(IBlockReader worldIn, BlockPos pos)
+    {
+        Block block = worldIn.getBlockState(pos.up()).getBlock();
+        return block instanceof CropsBlock || block instanceof StemBlock || block instanceof AttachedStemBlock;
+    }
 
-   private static boolean isUnderCrops(IBlockReader p_176529_0_, BlockPos p_176529_1_) {
-      Block block = p_176529_0_.getBlockState(p_176529_1_.above()).getBlock();
-      return block instanceof CropsBlock || block instanceof StemBlock || block instanceof AttachedStemBlock;
-   }
+    private static boolean hasWater(IWorldReader worldIn, BlockPos pos)
+    {
+        for (BlockPos blockpos : BlockPos.getAllInBoxMutable(pos.add(-4, 0, -4), pos.add(4, 1, 4)))
+        {
+            if (worldIn.getFluidState(blockpos).isTagged(FluidTags.WATER))
+            {
+                return true;
+            }
+        }
 
-   private static boolean isNearWater(IWorldReader p_176530_0_, BlockPos p_176530_1_) {
-      for(BlockPos blockpos : BlockPos.betweenClosed(p_176530_1_.offset(-4, 0, -4), p_176530_1_.offset(4, 1, 4))) {
-         if (p_176530_0_.getFluidState(blockpos).is(FluidTags.WATER)) {
-            return true;
-         }
-      }
+        return false;
+    }
 
-      return false;
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(MOISTURE);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(MOISTURE);
-   }
-
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

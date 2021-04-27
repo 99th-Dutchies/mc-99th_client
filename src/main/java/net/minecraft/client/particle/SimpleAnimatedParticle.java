@@ -1,79 +1,96 @@
 package net.minecraft.client.particle;
 
 import net.minecraft.client.world.ClientWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SimpleAnimatedParticle extends SpriteTexturedParticle {
-   protected final IAnimatedSprite sprites;
-   private final float baseGravity;
-   private float baseAirFriction = 0.91F;
-   private float fadeR;
-   private float fadeG;
-   private float fadeB;
-   private boolean hasFade;
+public class SimpleAnimatedParticle extends SpriteTexturedParticle
+{
+    protected final IAnimatedSprite spriteWithAge;
+    private final float yAccel;
+    private float baseAirFriction = 0.91F;
+    private float fadeTargetRed;
+    private float fadeTargetGreen;
+    private float fadeTargetBlue;
+    private boolean fadingColor;
 
-   protected SimpleAnimatedParticle(ClientWorld p_i232422_1_, double p_i232422_2_, double p_i232422_4_, double p_i232422_6_, IAnimatedSprite p_i232422_8_, float p_i232422_9_) {
-      super(p_i232422_1_, p_i232422_2_, p_i232422_4_, p_i232422_6_);
-      this.sprites = p_i232422_8_;
-      this.baseGravity = p_i232422_9_;
-   }
+    protected SimpleAnimatedParticle(ClientWorld world, double x, double y, double z, IAnimatedSprite spriteWithAge, float yAccel)
+    {
+        super(world, x, y, z);
+        this.spriteWithAge = spriteWithAge;
+        this.yAccel = yAccel;
+    }
 
-   public void setColor(int p_187146_1_) {
-      float f = (float)((p_187146_1_ & 16711680) >> 16) / 255.0F;
-      float f1 = (float)((p_187146_1_ & '\uff00') >> 8) / 255.0F;
-      float f2 = (float)((p_187146_1_ & 255) >> 0) / 255.0F;
-      float f3 = 1.0F;
-      this.setColor(f * 1.0F, f1 * 1.0F, f2 * 1.0F);
-   }
+    public void setColor(int color)
+    {
+        float f = (float)((color & 16711680) >> 16) / 255.0F;
+        float f1 = (float)((color & 65280) >> 8) / 255.0F;
+        float f2 = (float)((color & 255) >> 0) / 255.0F;
+        float f3 = 1.0F;
+        this.setColor(f * 1.0F, f1 * 1.0F, f2 * 1.0F);
+    }
 
-   public void setFadeColor(int p_187145_1_) {
-      this.fadeR = (float)((p_187145_1_ & 16711680) >> 16) / 255.0F;
-      this.fadeG = (float)((p_187145_1_ & '\uff00') >> 8) / 255.0F;
-      this.fadeB = (float)((p_187145_1_ & 255) >> 0) / 255.0F;
-      this.hasFade = true;
-   }
+    /**
+     * sets a color for the particle to drift toward (20% closer each tick, never actually getting very close)
+     */
+    public void setColorFade(int rgb)
+    {
+        this.fadeTargetRed = (float)((rgb & 16711680) >> 16) / 255.0F;
+        this.fadeTargetGreen = (float)((rgb & 65280) >> 8) / 255.0F;
+        this.fadeTargetBlue = (float)((rgb & 255) >> 0) / 255.0F;
+        this.fadingColor = true;
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.setSpriteFromAge(this.sprites);
-         if (this.age > this.lifetime / 2) {
-            this.setAlpha(1.0F - ((float)this.age - (float)(this.lifetime / 2)) / (float)this.lifetime);
-            if (this.hasFade) {
-               this.rCol += (this.fadeR - this.rCol) * 0.2F;
-               this.gCol += (this.fadeG - this.gCol) * 0.2F;
-               this.bCol += (this.fadeB - this.bCol) * 0.2F;
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.selectSpriteWithAge(this.spriteWithAge);
+
+            if (this.age > this.maxAge / 2)
+            {
+                this.setAlphaF(1.0F - ((float)this.age - (float)(this.maxAge / 2)) / (float)this.maxAge);
+
+                if (this.fadingColor)
+                {
+                    this.particleRed += (this.fadeTargetRed - this.particleRed) * 0.2F;
+                    this.particleGreen += (this.fadeTargetGreen - this.particleGreen) * 0.2F;
+                    this.particleBlue += (this.fadeTargetBlue - this.particleBlue) * 0.2F;
+                }
             }
-         }
 
-         this.yd += (double)this.baseGravity;
-         this.move(this.xd, this.yd, this.zd);
-         this.xd *= (double)this.baseAirFriction;
-         this.yd *= (double)this.baseAirFriction;
-         this.zd *= (double)this.baseAirFriction;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+            this.motionY += (double)this.yAccel;
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionX *= (double)this.baseAirFriction;
+            this.motionY *= (double)this.baseAirFriction;
+            this.motionZ *= (double)this.baseAirFriction;
 
-      }
-   }
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 
-   public int getLightColor(float p_189214_1_) {
-      return 15728880;
-   }
+    public int getBrightnessForRender(float partialTick)
+    {
+        return 15728880;
+    }
 
-   protected void setBaseAirFriction(float p_191238_1_) {
-      this.baseAirFriction = p_191238_1_;
-   }
+    protected void setBaseAirFriction(float airFriction)
+    {
+        this.baseAirFriction = airFriction;
+    }
 }

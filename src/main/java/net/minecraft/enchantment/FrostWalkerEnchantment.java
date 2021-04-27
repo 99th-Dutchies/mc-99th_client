@@ -11,51 +11,74 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.world.World;
 
-public class FrostWalkerEnchantment extends Enchantment {
-   public FrostWalkerEnchantment(Enchantment.Rarity p_i46728_1_, EquipmentSlotType... p_i46728_2_) {
-      super(p_i46728_1_, EnchantmentType.ARMOR_FEET, p_i46728_2_);
-   }
+public class FrostWalkerEnchantment extends Enchantment
+{
+    public FrostWalkerEnchantment(Enchantment.Rarity rarityIn, EquipmentSlotType... slots)
+    {
+        super(rarityIn, EnchantmentType.ARMOR_FEET, slots);
+    }
 
-   public int getMinCost(int p_77321_1_) {
-      return p_77321_1_ * 10;
-   }
+    /**
+     * Returns the minimal value of enchantability needed on the enchantment level passed.
+     */
+    public int getMinEnchantability(int enchantmentLevel)
+    {
+        return enchantmentLevel * 10;
+    }
 
-   public int getMaxCost(int p_223551_1_) {
-      return this.getMinCost(p_223551_1_) + 15;
-   }
+    public int getMaxEnchantability(int enchantmentLevel)
+    {
+        return this.getMinEnchantability(enchantmentLevel) + 15;
+    }
 
-   public boolean isTreasureOnly() {
-      return true;
-   }
+    public boolean isTreasureEnchantment()
+    {
+        return true;
+    }
 
-   public int getMaxLevel() {
-      return 2;
-   }
+    /**
+     * Returns the maximum level that the enchantment can have.
+     */
+    public int getMaxLevel()
+    {
+        return 2;
+    }
 
-   public static void onEntityMoved(LivingEntity p_185266_0_, World p_185266_1_, BlockPos p_185266_2_, int p_185266_3_) {
-      if (p_185266_0_.isOnGround()) {
-         BlockState blockstate = Blocks.FROSTED_ICE.defaultBlockState();
-         float f = (float)Math.min(16, 2 + p_185266_3_);
-         BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+    public static void freezeNearby(LivingEntity living, World worldIn, BlockPos pos, int level)
+    {
+        if (living.isOnGround())
+        {
+            BlockState blockstate = Blocks.FROSTED_ICE.getDefaultState();
+            float f = (float)Math.min(16, 2 + level);
+            BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
-         for(BlockPos blockpos : BlockPos.betweenClosed(p_185266_2_.offset((double)(-f), -1.0D, (double)(-f)), p_185266_2_.offset((double)f, -1.0D, (double)f))) {
-            if (blockpos.closerThan(p_185266_0_.position(), (double)f)) {
-               blockpos$mutable.set(blockpos.getX(), blockpos.getY() + 1, blockpos.getZ());
-               BlockState blockstate1 = p_185266_1_.getBlockState(blockpos$mutable);
-               if (blockstate1.isAir()) {
-                  BlockState blockstate2 = p_185266_1_.getBlockState(blockpos);
-                  if (blockstate2.getMaterial() == Material.WATER && blockstate2.getValue(FlowingFluidBlock.LEVEL) == 0 && blockstate.canSurvive(p_185266_1_, blockpos) && p_185266_1_.isUnobstructed(blockstate, blockpos, ISelectionContext.empty())) {
-                     p_185266_1_.setBlockAndUpdate(blockpos, blockstate);
-                     p_185266_1_.getBlockTicks().scheduleTick(blockpos, Blocks.FROSTED_ICE, MathHelper.nextInt(p_185266_0_.getRandom(), 60, 120));
-                  }
-               }
+            for (BlockPos blockpos : BlockPos.getAllInBoxMutable(pos.add((double)(-f), -1.0D, (double)(-f)), pos.add((double)f, -1.0D, (double)f)))
+            {
+                if (blockpos.withinDistance(living.getPositionVec(), (double)f))
+                {
+                    blockpos$mutable.setPos(blockpos.getX(), blockpos.getY() + 1, blockpos.getZ());
+                    BlockState blockstate1 = worldIn.getBlockState(blockpos$mutable);
+
+                    if (blockstate1.isAir())
+                    {
+                        BlockState blockstate2 = worldIn.getBlockState(blockpos);
+
+                        if (blockstate2.getMaterial() == Material.WATER && blockstate2.get(FlowingFluidBlock.LEVEL) == 0 && blockstate.isValidPosition(worldIn, blockpos) && worldIn.placedBlockCollides(blockstate, blockpos, ISelectionContext.dummy()))
+                        {
+                            worldIn.setBlockState(blockpos, blockstate);
+                            worldIn.getPendingBlockTicks().scheduleTick(blockpos, Blocks.FROSTED_ICE, MathHelper.nextInt(living.getRNG(), 60, 120));
+                        }
+                    }
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
-
-   public boolean checkCompatibility(Enchantment p_77326_1_) {
-      return super.checkCompatibility(p_77326_1_) && p_77326_1_ != Enchantments.DEPTH_STRIDER;
-   }
+    /**
+     * Determines if the enchantment passed can be applyied together with this enchantment.
+     */
+    public boolean canApplyTogether(Enchantment ench)
+    {
+        return super.canApplyTogether(ench) && ench != Enchantments.DEPTH_STRIDER;
+    }
 }

@@ -7,186 +7,251 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class PistonBlockStructureHelper {
-   private final World level;
-   private final BlockPos pistonPos;
-   private final boolean extending;
-   private final BlockPos startPos;
-   private final Direction pushDirection;
-   private final List<BlockPos> toPush = Lists.newArrayList();
-   private final List<BlockPos> toDestroy = Lists.newArrayList();
-   private final Direction pistonDirection;
+public class PistonBlockStructureHelper
+{
+    private final World world;
+    private final BlockPos pistonPos;
+    private final boolean extending;
+    private final BlockPos blockToMove;
+    private final Direction moveDirection;
+    private final List<BlockPos> toMove = Lists.newArrayList();
+    private final List<BlockPos> toDestroy = Lists.newArrayList();
+    private final Direction facing;
 
-   public PistonBlockStructureHelper(World p_i45664_1_, BlockPos p_i45664_2_, Direction p_i45664_3_, boolean p_i45664_4_) {
-      this.level = p_i45664_1_;
-      this.pistonPos = p_i45664_2_;
-      this.pistonDirection = p_i45664_3_;
-      this.extending = p_i45664_4_;
-      if (p_i45664_4_) {
-         this.pushDirection = p_i45664_3_;
-         this.startPos = p_i45664_2_.relative(p_i45664_3_);
-      } else {
-         this.pushDirection = p_i45664_3_.getOpposite();
-         this.startPos = p_i45664_2_.relative(p_i45664_3_, 2);
-      }
+    public PistonBlockStructureHelper(World worldIn, BlockPos posIn, Direction pistonFacing, boolean extending)
+    {
+        this.world = worldIn;
+        this.pistonPos = posIn;
+        this.facing = pistonFacing;
+        this.extending = extending;
 
-   }
+        if (extending)
+        {
+            this.moveDirection = pistonFacing;
+            this.blockToMove = posIn.offset(pistonFacing);
+        }
+        else
+        {
+            this.moveDirection = pistonFacing.getOpposite();
+            this.blockToMove = posIn.offset(pistonFacing, 2);
+        }
+    }
 
-   public boolean resolve() {
-      this.toPush.clear();
-      this.toDestroy.clear();
-      BlockState blockstate = this.level.getBlockState(this.startPos);
-      if (!PistonBlock.isPushable(blockstate, this.level, this.startPos, this.pushDirection, false, this.pistonDirection)) {
-         if (this.extending && blockstate.getPistonPushReaction() == PushReaction.DESTROY) {
-            this.toDestroy.add(this.startPos);
+    public boolean canMove()
+    {
+        this.toMove.clear();
+        this.toDestroy.clear();
+        BlockState blockstate = this.world.getBlockState(this.blockToMove);
+
+        if (!PistonBlock.canPush(blockstate, this.world, this.blockToMove, this.moveDirection, false, this.facing))
+        {
+            if (this.extending && blockstate.getPushReaction() == PushReaction.DESTROY)
+            {
+                this.toDestroy.add(this.blockToMove);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if (!this.addBlockLine(this.blockToMove, this.moveDirection))
+        {
+            return false;
+        }
+        else
+        {
+            for (int i = 0; i < this.toMove.size(); ++i)
+            {
+                BlockPos blockpos = this.toMove.get(i);
+
+                if (func_227029_a_(this.world.getBlockState(blockpos).getBlock()) && !this.addBranchingBlocks(blockpos))
+                {
+                    return false;
+                }
+            }
+
             return true;
-         } else {
+        }
+    }
+
+    private static boolean func_227029_a_(Block p_227029_0_)
+    {
+        return p_227029_0_ == Blocks.SLIME_BLOCK || p_227029_0_ == Blocks.HONEY_BLOCK;
+    }
+
+    private static boolean func_227030_a_(Block p_227030_0_, Block p_227030_1_)
+    {
+        if (p_227030_0_ == Blocks.HONEY_BLOCK && p_227030_1_ == Blocks.SLIME_BLOCK)
+        {
             return false;
-         }
-      } else if (!this.addBlockLine(this.startPos, this.pushDirection)) {
-         return false;
-      } else {
-         for(int i = 0; i < this.toPush.size(); ++i) {
-            BlockPos blockpos = this.toPush.get(i);
-            if (isSticky(this.level.getBlockState(blockpos).getBlock()) && !this.addBranchingBlocks(blockpos)) {
-               return false;
-            }
-         }
-
-         return true;
-      }
-   }
-
-   private static boolean isSticky(Block p_227029_0_) {
-      return p_227029_0_ == Blocks.SLIME_BLOCK || p_227029_0_ == Blocks.HONEY_BLOCK;
-   }
-
-   private static boolean canStickToEachOther(Block p_227030_0_, Block p_227030_1_) {
-      if (p_227030_0_ == Blocks.HONEY_BLOCK && p_227030_1_ == Blocks.SLIME_BLOCK) {
-         return false;
-      } else if (p_227030_0_ == Blocks.SLIME_BLOCK && p_227030_1_ == Blocks.HONEY_BLOCK) {
-         return false;
-      } else {
-         return isSticky(p_227030_0_) || isSticky(p_227030_1_);
-      }
-   }
-
-   private boolean addBlockLine(BlockPos p_177251_1_, Direction p_177251_2_) {
-      BlockState blockstate = this.level.getBlockState(p_177251_1_);
-      Block block = blockstate.getBlock();
-      if (blockstate.isAir()) {
-         return true;
-      } else if (!PistonBlock.isPushable(blockstate, this.level, p_177251_1_, this.pushDirection, false, p_177251_2_)) {
-         return true;
-      } else if (p_177251_1_.equals(this.pistonPos)) {
-         return true;
-      } else if (this.toPush.contains(p_177251_1_)) {
-         return true;
-      } else {
-         int i = 1;
-         if (i + this.toPush.size() > 12) {
+        }
+        else if (p_227030_0_ == Blocks.SLIME_BLOCK && p_227030_1_ == Blocks.HONEY_BLOCK)
+        {
             return false;
-         } else {
-            while(isSticky(block)) {
-               BlockPos blockpos = p_177251_1_.relative(this.pushDirection.getOpposite(), i);
-               Block block1 = block;
-               blockstate = this.level.getBlockState(blockpos);
-               block = blockstate.getBlock();
-               if (blockstate.isAir() || !canStickToEachOther(block1, block) || !PistonBlock.isPushable(blockstate, this.level, blockpos, this.pushDirection, false, this.pushDirection.getOpposite()) || blockpos.equals(this.pistonPos)) {
-                  break;
-               }
+        }
+        else
+        {
+            return func_227029_a_(p_227030_0_) || func_227029_a_(p_227030_1_);
+        }
+    }
 
-               ++i;
-               if (i + this.toPush.size() > 12) {
-                  return false;
-               }
+    private boolean addBlockLine(BlockPos origin, Direction facingIn)
+    {
+        BlockState blockstate = this.world.getBlockState(origin);
+        Block block = blockstate.getBlock();
+
+        if (blockstate.isAir())
+        {
+            return true;
+        }
+        else if (!PistonBlock.canPush(blockstate, this.world, origin, this.moveDirection, false, facingIn))
+        {
+            return true;
+        }
+        else if (origin.equals(this.pistonPos))
+        {
+            return true;
+        }
+        else if (this.toMove.contains(origin))
+        {
+            return true;
+        }
+        else
+        {
+            int i = 1;
+
+            if (i + this.toMove.size() > 12)
+            {
+                return false;
             }
+            else
+            {
+                while (func_227029_a_(block))
+                {
+                    BlockPos blockpos = origin.offset(this.moveDirection.getOpposite(), i);
+                    Block block1 = block;
+                    blockstate = this.world.getBlockState(blockpos);
+                    block = blockstate.getBlock();
 
-            int l = 0;
+                    if (blockstate.isAir() || !func_227030_a_(block1, block) || !PistonBlock.canPush(blockstate, this.world, blockpos, this.moveDirection, false, this.moveDirection.getOpposite()) || blockpos.equals(this.pistonPos))
+                    {
+                        break;
+                    }
 
-            for(int i1 = i - 1; i1 >= 0; --i1) {
-               this.toPush.add(p_177251_1_.relative(this.pushDirection.getOpposite(), i1));
-               ++l;
-            }
+                    ++i;
 
-            int j1 = 1;
-
-            while(true) {
-               BlockPos blockpos1 = p_177251_1_.relative(this.pushDirection, j1);
-               int j = this.toPush.indexOf(blockpos1);
-               if (j > -1) {
-                  this.reorderListAtCollision(l, j);
-
-                  for(int k = 0; k <= j + l; ++k) {
-                     BlockPos blockpos2 = this.toPush.get(k);
-                     if (isSticky(this.level.getBlockState(blockpos2).getBlock()) && !this.addBranchingBlocks(blockpos2)) {
+                    if (i + this.toMove.size() > 12)
+                    {
                         return false;
-                     }
-                  }
+                    }
+                }
 
-                  return true;
-               }
+                int l = 0;
 
-               blockstate = this.level.getBlockState(blockpos1);
-               if (blockstate.isAir()) {
-                  return true;
-               }
+                for (int i1 = i - 1; i1 >= 0; --i1)
+                {
+                    this.toMove.add(origin.offset(this.moveDirection.getOpposite(), i1));
+                    ++l;
+                }
 
-               if (!PistonBlock.isPushable(blockstate, this.level, blockpos1, this.pushDirection, true, this.pushDirection) || blockpos1.equals(this.pistonPos)) {
-                  return false;
-               }
+                int j1 = 1;
 
-               if (blockstate.getPistonPushReaction() == PushReaction.DESTROY) {
-                  this.toDestroy.add(blockpos1);
-                  return true;
-               }
+                while (true)
+                {
+                    BlockPos blockpos1 = origin.offset(this.moveDirection, j1);
+                    int j = this.toMove.indexOf(blockpos1);
 
-               if (this.toPush.size() >= 12) {
-                  return false;
-               }
+                    if (j > -1)
+                    {
+                        this.reorderListAtCollision(l, j);
 
-               this.toPush.add(blockpos1);
-               ++l;
-               ++j1;
+                        for (int k = 0; k <= j + l; ++k)
+                        {
+                            BlockPos blockpos2 = this.toMove.get(k);
+
+                            if (func_227029_a_(this.world.getBlockState(blockpos2).getBlock()) && !this.addBranchingBlocks(blockpos2))
+                            {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+
+                    blockstate = this.world.getBlockState(blockpos1);
+
+                    if (blockstate.isAir())
+                    {
+                        return true;
+                    }
+
+                    if (!PistonBlock.canPush(blockstate, this.world, blockpos1, this.moveDirection, true, this.moveDirection) || blockpos1.equals(this.pistonPos))
+                    {
+                        return false;
+                    }
+
+                    if (blockstate.getPushReaction() == PushReaction.DESTROY)
+                    {
+                        this.toDestroy.add(blockpos1);
+                        return true;
+                    }
+
+                    if (this.toMove.size() >= 12)
+                    {
+                        return false;
+                    }
+
+                    this.toMove.add(blockpos1);
+                    ++l;
+                    ++j1;
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
-   private void reorderListAtCollision(int p_177255_1_, int p_177255_2_) {
-      List<BlockPos> list = Lists.newArrayList();
-      List<BlockPos> list1 = Lists.newArrayList();
-      List<BlockPos> list2 = Lists.newArrayList();
-      list.addAll(this.toPush.subList(0, p_177255_2_));
-      list1.addAll(this.toPush.subList(this.toPush.size() - p_177255_1_, this.toPush.size()));
-      list2.addAll(this.toPush.subList(p_177255_2_, this.toPush.size() - p_177255_1_));
-      this.toPush.clear();
-      this.toPush.addAll(list);
-      this.toPush.addAll(list1);
-      this.toPush.addAll(list2);
-   }
+    private void reorderListAtCollision(int offsets, int index)
+    {
+        List<BlockPos> list = Lists.newArrayList();
+        List<BlockPos> list1 = Lists.newArrayList();
+        List<BlockPos> list2 = Lists.newArrayList();
+        list.addAll(this.toMove.subList(0, index));
+        list1.addAll(this.toMove.subList(this.toMove.size() - offsets, this.toMove.size()));
+        list2.addAll(this.toMove.subList(index, this.toMove.size() - offsets));
+        this.toMove.clear();
+        this.toMove.addAll(list);
+        this.toMove.addAll(list1);
+        this.toMove.addAll(list2);
+    }
 
-   private boolean addBranchingBlocks(BlockPos p_177250_1_) {
-      BlockState blockstate = this.level.getBlockState(p_177250_1_);
+    private boolean addBranchingBlocks(BlockPos fromPos)
+    {
+        BlockState blockstate = this.world.getBlockState(fromPos);
 
-      for(Direction direction : Direction.values()) {
-         if (direction.getAxis() != this.pushDirection.getAxis()) {
-            BlockPos blockpos = p_177250_1_.relative(direction);
-            BlockState blockstate1 = this.level.getBlockState(blockpos);
-            if (canStickToEachOther(blockstate1.getBlock(), blockstate.getBlock()) && !this.addBlockLine(blockpos, direction)) {
-               return false;
+        for (Direction direction : Direction.values())
+        {
+            if (direction.getAxis() != this.moveDirection.getAxis())
+            {
+                BlockPos blockpos = fromPos.offset(direction);
+                BlockState blockstate1 = this.world.getBlockState(blockpos);
+
+                if (func_227030_a_(blockstate1.getBlock(), blockstate.getBlock()) && !this.addBlockLine(blockpos, direction))
+                {
+                    return false;
+                }
             }
-         }
-      }
+        }
 
-      return true;
-   }
+        return true;
+    }
 
-   public List<BlockPos> getToPush() {
-      return this.toPush;
-   }
+    public List<BlockPos> getBlocksToMove()
+    {
+        return this.toMove;
+    }
 
-   public List<BlockPos> getToDestroy() {
-      return this.toDestroy;
-   }
+    public List<BlockPos> getBlocksToDestroy()
+    {
+        return this.toDestroy;
+    }
 }

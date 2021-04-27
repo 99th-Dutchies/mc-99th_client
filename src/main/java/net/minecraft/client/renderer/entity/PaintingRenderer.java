@@ -18,117 +18,129 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3f;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class PaintingRenderer extends EntityRenderer<PaintingEntity> {
-   public PaintingRenderer(EntityRendererManager p_i46150_1_) {
-      super(p_i46150_1_);
-   }
+public class PaintingRenderer extends EntityRenderer<PaintingEntity>
+{
+    public PaintingRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn);
+    }
 
-   public void render(PaintingEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      p_225623_4_.pushPose();
-      p_225623_4_.mulPose(Vector3f.YP.rotationDegrees(180.0F - p_225623_2_));
-      PaintingType paintingtype = p_225623_1_.motive;
-      float f = 0.0625F;
-      p_225623_4_.scale(0.0625F, 0.0625F, 0.0625F);
-      IVertexBuilder ivertexbuilder = p_225623_5_.getBuffer(RenderType.entitySolid(this.getTextureLocation(p_225623_1_)));
-      PaintingSpriteUploader paintingspriteuploader = Minecraft.getInstance().getPaintingTextures();
-      this.renderPainting(p_225623_4_, ivertexbuilder, p_225623_1_, paintingtype.getWidth(), paintingtype.getHeight(), paintingspriteuploader.get(paintingtype), paintingspriteuploader.getBackSprite());
-      p_225623_4_.popPose();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+    public void render(PaintingEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        matrixStackIn.push();
+        matrixStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F - entityYaw));
+        PaintingType paintingtype = entityIn.art;
+        float f = 0.0625F;
+        matrixStackIn.scale(0.0625F, 0.0625F, 0.0625F);
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getEntitySolid(this.getEntityTexture(entityIn)));
+        PaintingSpriteUploader paintingspriteuploader = Minecraft.getInstance().getPaintingSpriteUploader();
+        this.func_229122_a_(matrixStackIn, ivertexbuilder, entityIn, paintingtype.getWidth(), paintingtype.getHeight(), paintingspriteuploader.getSpriteForPainting(paintingtype), paintingspriteuploader.getBackSprite());
+        matrixStackIn.pop();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
 
-   public ResourceLocation getTextureLocation(PaintingEntity p_110775_1_) {
-      return Minecraft.getInstance().getPaintingTextures().getBackSprite().atlas().location();
-   }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(PaintingEntity entity)
+    {
+        return Minecraft.getInstance().getPaintingSpriteUploader().getBackSprite().getAtlasTexture().getTextureLocation();
+    }
 
-   private void renderPainting(MatrixStack p_229122_1_, IVertexBuilder p_229122_2_, PaintingEntity p_229122_3_, int p_229122_4_, int p_229122_5_, TextureAtlasSprite p_229122_6_, TextureAtlasSprite p_229122_7_) {
-      MatrixStack.Entry matrixstack$entry = p_229122_1_.last();
-      Matrix4f matrix4f = matrixstack$entry.pose();
-      Matrix3f matrix3f = matrixstack$entry.normal();
-      float f = (float)(-p_229122_4_) / 2.0F;
-      float f1 = (float)(-p_229122_5_) / 2.0F;
-      float f2 = 0.5F;
-      float f3 = p_229122_7_.getU0();
-      float f4 = p_229122_7_.getU1();
-      float f5 = p_229122_7_.getV0();
-      float f6 = p_229122_7_.getV1();
-      float f7 = p_229122_7_.getU0();
-      float f8 = p_229122_7_.getU1();
-      float f9 = p_229122_7_.getV0();
-      float f10 = p_229122_7_.getV(1.0D);
-      float f11 = p_229122_7_.getU0();
-      float f12 = p_229122_7_.getU(1.0D);
-      float f13 = p_229122_7_.getV0();
-      float f14 = p_229122_7_.getV1();
-      int i = p_229122_4_ / 16;
-      int j = p_229122_5_ / 16;
-      double d0 = 16.0D / (double)i;
-      double d1 = 16.0D / (double)j;
+    private void func_229122_a_(MatrixStack p_229122_1_, IVertexBuilder p_229122_2_, PaintingEntity p_229122_3_, int p_229122_4_, int p_229122_5_, TextureAtlasSprite p_229122_6_, TextureAtlasSprite p_229122_7_)
+    {
+        MatrixStack.Entry matrixstack$entry = p_229122_1_.getLast();
+        Matrix4f matrix4f = matrixstack$entry.getMatrix();
+        Matrix3f matrix3f = matrixstack$entry.getNormal();
+        float f = (float)(-p_229122_4_) / 2.0F;
+        float f1 = (float)(-p_229122_5_) / 2.0F;
+        float f2 = 0.5F;
+        float f3 = p_229122_7_.getMinU();
+        float f4 = p_229122_7_.getMaxU();
+        float f5 = p_229122_7_.getMinV();
+        float f6 = p_229122_7_.getMaxV();
+        float f7 = p_229122_7_.getMinU();
+        float f8 = p_229122_7_.getMaxU();
+        float f9 = p_229122_7_.getMinV();
+        float f10 = p_229122_7_.getInterpolatedV(1.0D);
+        float f11 = p_229122_7_.getMinU();
+        float f12 = p_229122_7_.getInterpolatedU(1.0D);
+        float f13 = p_229122_7_.getMinV();
+        float f14 = p_229122_7_.getMaxV();
+        int i = p_229122_4_ / 16;
+        int j = p_229122_5_ / 16;
+        double d0 = 16.0D / (double)i;
+        double d1 = 16.0D / (double)j;
 
-      for(int k = 0; k < i; ++k) {
-         for(int l = 0; l < j; ++l) {
-            float f15 = f + (float)((k + 1) * 16);
-            float f16 = f + (float)(k * 16);
-            float f17 = f1 + (float)((l + 1) * 16);
-            float f18 = f1 + (float)(l * 16);
-            int i1 = MathHelper.floor(p_229122_3_.getX());
-            int j1 = MathHelper.floor(p_229122_3_.getY() + (double)((f17 + f18) / 2.0F / 16.0F));
-            int k1 = MathHelper.floor(p_229122_3_.getZ());
-            Direction direction = p_229122_3_.getDirection();
-            if (direction == Direction.NORTH) {
-               i1 = MathHelper.floor(p_229122_3_.getX() + (double)((f15 + f16) / 2.0F / 16.0F));
+        for (int k = 0; k < i; ++k)
+        {
+            for (int l = 0; l < j; ++l)
+            {
+                float f15 = f + (float)((k + 1) * 16);
+                float f16 = f + (float)(k * 16);
+                float f17 = f1 + (float)((l + 1) * 16);
+                float f18 = f1 + (float)(l * 16);
+                int i1 = MathHelper.floor(p_229122_3_.getPosX());
+                int j1 = MathHelper.floor(p_229122_3_.getPosY() + (double)((f17 + f18) / 2.0F / 16.0F));
+                int k1 = MathHelper.floor(p_229122_3_.getPosZ());
+                Direction direction = p_229122_3_.getHorizontalFacing();
+
+                if (direction == Direction.NORTH)
+                {
+                    i1 = MathHelper.floor(p_229122_3_.getPosX() + (double)((f15 + f16) / 2.0F / 16.0F));
+                }
+
+                if (direction == Direction.WEST)
+                {
+                    k1 = MathHelper.floor(p_229122_3_.getPosZ() - (double)((f15 + f16) / 2.0F / 16.0F));
+                }
+
+                if (direction == Direction.SOUTH)
+                {
+                    i1 = MathHelper.floor(p_229122_3_.getPosX() - (double)((f15 + f16) / 2.0F / 16.0F));
+                }
+
+                if (direction == Direction.EAST)
+                {
+                    k1 = MathHelper.floor(p_229122_3_.getPosZ() + (double)((f15 + f16) / 2.0F / 16.0F));
+                }
+
+                int l1 = WorldRenderer.getCombinedLight(p_229122_3_.world, new BlockPos(i1, j1, k1));
+                float f19 = p_229122_6_.getInterpolatedU(d0 * (double)(i - k));
+                float f20 = p_229122_6_.getInterpolatedU(d0 * (double)(i - (k + 1)));
+                float f21 = p_229122_6_.getInterpolatedV(d1 * (double)(j - l));
+                float f22 = p_229122_6_.getInterpolatedV(d1 * (double)(j - (l + 1)));
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f18, f20, f21, -0.5F, 0, 0, -1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f18, f19, f21, -0.5F, 0, 0, -1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f17, f19, f22, -0.5F, 0, 0, -1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f17, f20, f22, -0.5F, 0, 0, -1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f17, f3, f5, 0.5F, 0, 0, 1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f17, f4, f5, 0.5F, 0, 0, 1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f18, f4, f6, 0.5F, 0, 0, 1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f18, f3, f6, 0.5F, 0, 0, 1, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f17, f7, f9, -0.5F, 0, 1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f17, f8, f9, -0.5F, 0, 1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f17, f8, f10, 0.5F, 0, 1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f17, f7, f10, 0.5F, 0, 1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f18, f7, f9, 0.5F, 0, -1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f18, f8, f9, 0.5F, 0, -1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f18, f8, f10, -0.5F, 0, -1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f18, f7, f10, -0.5F, 0, -1, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f17, f12, f13, 0.5F, -1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f18, f12, f14, 0.5F, -1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f18, f11, f14, -0.5F, -1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f15, f17, f11, f13, -0.5F, -1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f17, f12, f13, -0.5F, 1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f18, f12, f14, -0.5F, 1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f18, f11, f14, 0.5F, 1, 0, 0, l1);
+                this.func_229121_a_(matrix4f, matrix3f, p_229122_2_, f16, f17, f11, f13, 0.5F, 1, 0, 0, l1);
             }
+        }
+    }
 
-            if (direction == Direction.WEST) {
-               k1 = MathHelper.floor(p_229122_3_.getZ() - (double)((f15 + f16) / 2.0F / 16.0F));
-            }
-
-            if (direction == Direction.SOUTH) {
-               i1 = MathHelper.floor(p_229122_3_.getX() - (double)((f15 + f16) / 2.0F / 16.0F));
-            }
-
-            if (direction == Direction.EAST) {
-               k1 = MathHelper.floor(p_229122_3_.getZ() + (double)((f15 + f16) / 2.0F / 16.0F));
-            }
-
-            int l1 = WorldRenderer.getLightColor(p_229122_3_.level, new BlockPos(i1, j1, k1));
-            float f19 = p_229122_6_.getU(d0 * (double)(i - k));
-            float f20 = p_229122_6_.getU(d0 * (double)(i - (k + 1)));
-            float f21 = p_229122_6_.getV(d1 * (double)(j - l));
-            float f22 = p_229122_6_.getV(d1 * (double)(j - (l + 1)));
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f18, f20, f21, -0.5F, 0, 0, -1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f18, f19, f21, -0.5F, 0, 0, -1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f17, f19, f22, -0.5F, 0, 0, -1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f17, f20, f22, -0.5F, 0, 0, -1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f17, f3, f5, 0.5F, 0, 0, 1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f17, f4, f5, 0.5F, 0, 0, 1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f18, f4, f6, 0.5F, 0, 0, 1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f18, f3, f6, 0.5F, 0, 0, 1, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f17, f7, f9, -0.5F, 0, 1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f17, f8, f9, -0.5F, 0, 1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f17, f8, f10, 0.5F, 0, 1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f17, f7, f10, 0.5F, 0, 1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f18, f7, f9, 0.5F, 0, -1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f18, f8, f9, 0.5F, 0, -1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f18, f8, f10, -0.5F, 0, -1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f18, f7, f10, -0.5F, 0, -1, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f17, f12, f13, 0.5F, -1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f18, f12, f14, 0.5F, -1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f18, f11, f14, -0.5F, -1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f15, f17, f11, f13, -0.5F, -1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f17, f12, f13, -0.5F, 1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f18, f12, f14, -0.5F, 1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f18, f11, f14, 0.5F, 1, 0, 0, l1);
-            this.vertex(matrix4f, matrix3f, p_229122_2_, f16, f17, f11, f13, 0.5F, 1, 0, 0, l1);
-         }
-      }
-
-   }
-
-   private void vertex(Matrix4f p_229121_1_, Matrix3f p_229121_2_, IVertexBuilder p_229121_3_, float p_229121_4_, float p_229121_5_, float p_229121_6_, float p_229121_7_, float p_229121_8_, int p_229121_9_, int p_229121_10_, int p_229121_11_, int p_229121_12_) {
-      p_229121_3_.vertex(p_229121_1_, p_229121_4_, p_229121_5_, p_229121_8_).color(255, 255, 255, 255).uv(p_229121_6_, p_229121_7_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(p_229121_12_).normal(p_229121_2_, (float)p_229121_9_, (float)p_229121_10_, (float)p_229121_11_).endVertex();
-   }
+    private void func_229121_a_(Matrix4f p_229121_1_, Matrix3f p_229121_2_, IVertexBuilder p_229121_3_, float p_229121_4_, float p_229121_5_, float p_229121_6_, float p_229121_7_, float p_229121_8_, int p_229121_9_, int p_229121_10_, int p_229121_11_, int p_229121_12_)
+    {
+        p_229121_3_.pos(p_229121_1_, p_229121_4_, p_229121_5_, p_229121_8_).color(255, 255, 255, 255).tex(p_229121_6_, p_229121_7_).overlay(OverlayTexture.NO_OVERLAY).lightmap(p_229121_12_).normal(p_229121_2_, (float)p_229121_9_, (float)p_229121_10_, (float)p_229121_11_).endVertex();
+    }
 }

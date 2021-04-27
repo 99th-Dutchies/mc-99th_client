@@ -9,53 +9,66 @@ import net.minecraft.loot.LootContext;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class TargetHitTrigger extends AbstractCriterionTrigger<TargetHitTrigger.Instance> {
-   private static final ResourceLocation ID = new ResourceLocation("target_hit");
+public class TargetHitTrigger extends AbstractCriterionTrigger<TargetHitTrigger.Instance>
+{
+    private static final ResourceLocation ID = new ResourceLocation("target_hit");
 
-   public ResourceLocation getId() {
-      return ID;
-   }
+    public ResourceLocation getId()
+    {
+        return ID;
+    }
 
-   public TargetHitTrigger.Instance createInstance(JsonObject p_230241_1_, EntityPredicate.AndPredicate p_230241_2_, ConditionArrayParser p_230241_3_) {
-      MinMaxBounds.IntBound minmaxbounds$intbound = MinMaxBounds.IntBound.fromJson(p_230241_1_.get("signal_strength"));
-      EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.fromJson(p_230241_1_, "projectile", p_230241_3_);
-      return new TargetHitTrigger.Instance(p_230241_2_, minmaxbounds$intbound, entitypredicate$andpredicate);
-   }
+    public TargetHitTrigger.Instance deserializeTrigger(JsonObject json, EntityPredicate.AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+    {
+        MinMaxBounds.IntBound minmaxbounds$intbound = MinMaxBounds.IntBound.fromJson(json.get("signal_strength"));
+        EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.deserializeJSONObject(json, "projectile", conditionsParser);
+        return new TargetHitTrigger.Instance(entityPredicate, minmaxbounds$intbound, entitypredicate$andpredicate);
+    }
 
-   public void trigger(ServerPlayerEntity p_236350_1_, Entity p_236350_2_, Vector3d p_236350_3_, int p_236350_4_) {
-      LootContext lootcontext = EntityPredicate.createContext(p_236350_1_, p_236350_2_);
-      this.trigger(p_236350_1_, (p_236349_3_) -> {
-         return p_236349_3_.matches(lootcontext, p_236350_3_, p_236350_4_);
-      });
-   }
+    public void test(ServerPlayerEntity player, Entity projectile, Vector3d vector, int signalStrength)
+    {
+        LootContext lootcontext = EntityPredicate.getLootContext(player, projectile);
+        this.triggerListeners(player, (instance) ->
+        {
+            return instance.test(lootcontext, vector, signalStrength);
+        });
+    }
 
-   public static class Instance extends CriterionInstance {
-      private final MinMaxBounds.IntBound signalStrength;
-      private final EntityPredicate.AndPredicate projectile;
+    public static class Instance extends CriterionInstance
+    {
+        private final MinMaxBounds.IntBound signalStrength;
+        private final EntityPredicate.AndPredicate projectile;
 
-      public Instance(EntityPredicate.AndPredicate p_i231990_1_, MinMaxBounds.IntBound p_i231990_2_, EntityPredicate.AndPredicate p_i231990_3_) {
-         super(TargetHitTrigger.ID, p_i231990_1_);
-         this.signalStrength = p_i231990_2_;
-         this.projectile = p_i231990_3_;
-      }
+        public Instance(EntityPredicate.AndPredicate player, MinMaxBounds.IntBound signalStrength, EntityPredicate.AndPredicate projectile)
+        {
+            super(TargetHitTrigger.ID, player);
+            this.signalStrength = signalStrength;
+            this.projectile = projectile;
+        }
 
-      public static TargetHitTrigger.Instance targetHit(MinMaxBounds.IntBound p_236354_0_, EntityPredicate.AndPredicate p_236354_1_) {
-         return new TargetHitTrigger.Instance(EntityPredicate.AndPredicate.ANY, p_236354_0_, p_236354_1_);
-      }
+        public static TargetHitTrigger.Instance create(MinMaxBounds.IntBound signalStrength, EntityPredicate.AndPredicate projectile)
+        {
+            return new TargetHitTrigger.Instance(EntityPredicate.AndPredicate.ANY_AND, signalStrength, projectile);
+        }
 
-      public JsonObject serializeToJson(ConditionArraySerializer p_230240_1_) {
-         JsonObject jsonobject = super.serializeToJson(p_230240_1_);
-         jsonobject.add("signal_strength", this.signalStrength.serializeToJson());
-         jsonobject.add("projectile", this.projectile.toJson(p_230240_1_));
-         return jsonobject;
-      }
+        public JsonObject serialize(ConditionArraySerializer conditions)
+        {
+            JsonObject jsonobject = super.serialize(conditions);
+            jsonobject.add("signal_strength", this.signalStrength.serialize());
+            jsonobject.add("projectile", this.projectile.serializeConditions(conditions));
+            return jsonobject;
+        }
 
-      public boolean matches(LootContext p_236355_1_, Vector3d p_236355_2_, int p_236355_3_) {
-         if (!this.signalStrength.matches(p_236355_3_)) {
-            return false;
-         } else {
-            return this.projectile.matches(p_236355_1_);
-         }
-      }
-   }
+        public boolean test(LootContext context, Vector3d vector, int signalStrength)
+        {
+            if (!this.signalStrength.test(signalStrength))
+            {
+                return false;
+            }
+            else
+            {
+                return this.projectile.testContext(context);
+            }
+        }
+    }
 }

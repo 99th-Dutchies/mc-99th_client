@@ -42,277 +42,342 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.gen.settings.DimensionGeneratorSettings;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
-@OnlyIn(Dist.CLIENT)
-public class WorldOptionsScreen implements IScreen, IRenderable {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final ITextComponent CUSTOM_WORLD_DESCRIPTION = new TranslationTextComponent("generator.custom");
-   private static final ITextComponent AMPLIFIED_HELP_TEXT = new TranslationTextComponent("generator.amplified.info");
-   private static final ITextComponent MAP_FEATURES_INFO = new TranslationTextComponent("selectWorld.mapFeatures.info");
-   private IBidiRenderer amplifiedWorldInfo = IBidiRenderer.EMPTY;
-   private FontRenderer font;
-   private int width;
-   private TextFieldWidget seedEdit;
-   private Button featuresButton;
-   public Button bonusItemsButton;
-   private Button typeButton;
-   private Button customizeTypeButton;
-   private Button importSettingsButton;
-   private DynamicRegistries.Impl registryHolder;
-   private DimensionGeneratorSettings settings;
-   private Optional<BiomeGeneratorTypeScreens> preset;
-   private OptionalLong seed;
+public class WorldOptionsScreen implements IScreen, IRenderable
+{
+    private static final Logger field_239028_b_ = LogManager.getLogger();
+    private static final ITextComponent field_239029_c_ = new TranslationTextComponent("generator.custom");
+    private static final ITextComponent field_239030_d_ = new TranslationTextComponent("generator.amplified.info");
+    private static final ITextComponent field_243442_e = new TranslationTextComponent("selectWorld.mapFeatures.info");
+    private IBidiRenderer field_243443_f = IBidiRenderer.field_243257_a;
+    private FontRenderer field_239031_e_;
+    private int field_239032_f_;
+    private TextFieldWidget field_239033_g_;
+    private Button field_239034_h_;
+    public Button field_239027_a_;
+    private Button field_239035_i_;
+    private Button field_239036_j_;
+    private Button field_239037_k_;
+    private DynamicRegistries.Impl field_239038_l_;
+    private DimensionGeneratorSettings field_239039_m_;
+    private Optional<BiomeGeneratorTypeScreens> field_239040_n_;
+    private OptionalLong field_243444_q;
 
-   public WorldOptionsScreen(DynamicRegistries.Impl p_i242065_1_, DimensionGeneratorSettings p_i242065_2_, Optional<BiomeGeneratorTypeScreens> p_i242065_3_, OptionalLong p_i242065_4_) {
-      this.registryHolder = p_i242065_1_;
-      this.settings = p_i242065_2_;
-      this.preset = p_i242065_3_;
-      this.seed = p_i242065_4_;
-   }
+    public WorldOptionsScreen(DynamicRegistries.Impl p_i242065_1_, DimensionGeneratorSettings p_i242065_2_, Optional<BiomeGeneratorTypeScreens> p_i242065_3_, OptionalLong p_i242065_4_)
+    {
+        this.field_239038_l_ = p_i242065_1_;
+        this.field_239039_m_ = p_i242065_2_;
+        this.field_239040_n_ = p_i242065_3_;
+        this.field_243444_q = p_i242065_4_;
+    }
 
-   public void init(final CreateWorldScreen p_239048_1_, Minecraft p_239048_2_, FontRenderer p_239048_3_) {
-      this.font = p_239048_3_;
-      this.width = p_239048_1_.width;
-      this.seedEdit = new TextFieldWidget(this.font, this.width / 2 - 100, 60, 200, 20, new TranslationTextComponent("selectWorld.enterSeed"));
-      this.seedEdit.setValue(toString(this.seed));
-      this.seedEdit.setResponder((p_239058_1_) -> {
-         this.seed = this.parseSeed();
-      });
-      p_239048_1_.addWidget(this.seedEdit);
-      int i = this.width / 2 - 155;
-      int j = this.width / 2 + 5;
-      this.featuresButton = p_239048_1_.addButton(new Button(i, 100, 150, 20, new TranslationTextComponent("selectWorld.mapFeatures"), (p_239056_1_) -> {
-         this.settings = this.settings.withFeaturesToggled();
-         p_239056_1_.queueNarration(250);
-      }) {
-         public ITextComponent getMessage() {
-            return DialogTexts.optionStatus(super.getMessage(), WorldOptionsScreen.this.settings.generateFeatures());
-         }
-
-         protected IFormattableTextComponent createNarrationMessage() {
-            return super.createNarrationMessage().append(". ").append(new TranslationTextComponent("selectWorld.mapFeatures.info"));
-         }
-      });
-      this.featuresButton.visible = false;
-      this.typeButton = p_239048_1_.addButton(new Button(j, 100, 150, 20, new TranslationTextComponent("selectWorld.mapType"), (p_239050_2_) -> {
-         while(true) {
-            if (this.preset.isPresent()) {
-               int k = BiomeGeneratorTypeScreens.PRESETS.indexOf(this.preset.get()) + 1;
-               if (k >= BiomeGeneratorTypeScreens.PRESETS.size()) {
-                  k = 0;
-               }
-
-               BiomeGeneratorTypeScreens biomegeneratortypescreens = BiomeGeneratorTypeScreens.PRESETS.get(k);
-               this.preset = Optional.of(biomegeneratortypescreens);
-               this.settings = biomegeneratortypescreens.create(this.registryHolder, this.settings.seed(), this.settings.generateFeatures(), this.settings.generateBonusChest());
-               if (this.settings.isDebug() && !Screen.hasShiftDown()) {
-                  continue;
-               }
+    public void func_239048_a_(final CreateWorldScreen p_239048_1_, Minecraft p_239048_2_, FontRenderer p_239048_3_)
+    {
+        this.field_239031_e_ = p_239048_3_;
+        this.field_239032_f_ = p_239048_1_.width;
+        this.field_239033_g_ = new TextFieldWidget(this.field_239031_e_, this.field_239032_f_ / 2 - 100, 60, 200, 20, new TranslationTextComponent("selectWorld.enterSeed"));
+        this.field_239033_g_.setText(func_243445_a(this.field_243444_q));
+        this.field_239033_g_.setResponder((p_239058_1_) ->
+        {
+            this.field_243444_q = this.func_243449_f();
+        });
+        p_239048_1_.addListener(this.field_239033_g_);
+        int i = this.field_239032_f_ / 2 - 155;
+        int j = this.field_239032_f_ / 2 + 5;
+        this.field_239034_h_ = p_239048_1_.addButton(new Button(i, 100, 150, 20, new TranslationTextComponent("selectWorld.mapFeatures"), (p_239056_1_) ->
+        {
+            this.field_239039_m_ = this.field_239039_m_.func_236231_l_();
+            p_239056_1_.queueNarration(250);
+        })
+        {
+            public ITextComponent getMessage()
+            {
+                return DialogTexts.getComposedOptionMessage(super.getMessage(), WorldOptionsScreen.this.field_239039_m_.doesGenerateFeatures());
             }
-
-            p_239048_1_.updateDisplayOptions();
-            p_239050_2_.queueNarration(250);
-            return;
-         }
-      }) {
-         public ITextComponent getMessage() {
-            return super.getMessage().copy().append(" ").append(WorldOptionsScreen.this.preset.map(BiomeGeneratorTypeScreens::description).orElse(WorldOptionsScreen.CUSTOM_WORLD_DESCRIPTION));
-         }
-
-         protected IFormattableTextComponent createNarrationMessage() {
-            return Objects.equals(WorldOptionsScreen.this.preset, Optional.of(BiomeGeneratorTypeScreens.AMPLIFIED)) ? super.createNarrationMessage().append(". ").append(WorldOptionsScreen.AMPLIFIED_HELP_TEXT) : super.createNarrationMessage();
-         }
-      });
-      this.typeButton.visible = false;
-      this.typeButton.active = this.preset.isPresent();
-      this.customizeTypeButton = p_239048_1_.addButton(new Button(j, 120, 150, 20, new TranslationTextComponent("selectWorld.customizeType"), (p_239044_3_) -> {
-         BiomeGeneratorTypeScreens.IFactory biomegeneratortypescreens$ifactory = BiomeGeneratorTypeScreens.EDITORS.get(this.preset);
-         if (biomegeneratortypescreens$ifactory != null) {
-            p_239048_2_.setScreen(biomegeneratortypescreens$ifactory.createEditScreen(p_239048_1_, this.settings));
-         }
-
-      }));
-      this.customizeTypeButton.visible = false;
-      this.bonusItemsButton = p_239048_1_.addButton(new Button(i, 151, 150, 20, new TranslationTextComponent("selectWorld.bonusItems"), (p_239047_1_) -> {
-         this.settings = this.settings.withBonusChestToggled();
-         p_239047_1_.queueNarration(250);
-      }) {
-         public ITextComponent getMessage() {
-            return DialogTexts.optionStatus(super.getMessage(), WorldOptionsScreen.this.settings.generateBonusChest() && !p_239048_1_.hardCore);
-         }
-      });
-      this.bonusItemsButton.visible = false;
-      this.importSettingsButton = p_239048_1_.addButton(new Button(i, 185, 150, 20, new TranslationTextComponent("selectWorld.import_worldgen_settings"), (p_239049_3_) -> {
-         TranslationTextComponent translationtextcomponent = new TranslationTextComponent("selectWorld.import_worldgen_settings.select_file");
-         String s = TinyFileDialogs.tinyfd_openFileDialog(translationtextcomponent.getString(), (CharSequence)null, (PointerBuffer)null, (CharSequence)null, false);
-         if (s != null) {
-            DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.builtin();
-            ResourcePackList resourcepacklist = new ResourcePackList(new ServerPackFinder(), new FolderPackFinder(p_239048_1_.getTempDataPackDir().toFile(), IPackNameDecorator.WORLD));
-
-            DataPackRegistries datapackregistries;
-            try {
-               MinecraftServer.configurePackRepository(resourcepacklist, p_239048_1_.dataPacks, false);
-               CompletableFuture<DataPackRegistries> completablefuture = DataPackRegistries.loadResources(resourcepacklist.openAllSelected(), Commands.EnvironmentType.INTEGRATED, 2, Util.backgroundExecutor(), p_239048_2_);
-               p_239048_2_.managedBlock(completablefuture::isDone);
-               datapackregistries = completablefuture.get();
-            } catch (ExecutionException | InterruptedException interruptedexception) {
-               LOGGER.error("Error loading data packs when importing world settings", (Throwable)interruptedexception);
-               ITextComponent itextcomponent = new TranslationTextComponent("selectWorld.import_worldgen_settings.failure");
-               ITextComponent itextcomponent1 = new StringTextComponent(interruptedexception.getMessage());
-               p_239048_2_.getToasts().addToast(SystemToast.multiline(p_239048_2_, SystemToast.Type.WORLD_GEN_SETTINGS_TRANSFER, itextcomponent, itextcomponent1));
-               resourcepacklist.close();
-               return;
+            protected IFormattableTextComponent getNarrationMessage()
+            {
+                return super.getNarrationMessage().appendString(". ").append(new TranslationTextComponent("selectWorld.mapFeatures.info"));
             }
+        });
+        this.field_239034_h_.visible = false;
+        this.field_239035_i_ = p_239048_1_.addButton(new Button(j, 100, 150, 20, new TranslationTextComponent("selectWorld.mapType"), (p_239050_2_) ->
+        {
+            while (true)
+            {
+                if (this.field_239040_n_.isPresent())
+                {
+                    int k = BiomeGeneratorTypeScreens.field_239068_c_.indexOf(this.field_239040_n_.get()) + 1;
 
-            WorldSettingsImport<JsonElement> worldsettingsimport = WorldSettingsImport.create(JsonOps.INSTANCE, datapackregistries.getResourceManager(), dynamicregistries$impl);
-            JsonParser jsonparser = new JsonParser();
+                    if (k >= BiomeGeneratorTypeScreens.field_239068_c_.size())
+                    {
+                        k = 0;
+                    }
 
-            DataResult<DimensionGeneratorSettings> dataresult;
-            try (BufferedReader bufferedreader = Files.newBufferedReader(Paths.get(s))) {
-               JsonElement jsonelement = jsonparser.parse(bufferedreader);
-               dataresult = DimensionGeneratorSettings.CODEC.parse(worldsettingsimport, jsonelement);
-            } catch (JsonIOException | JsonSyntaxException | IOException ioexception) {
-               dataresult = DataResult.error("Failed to parse file: " + ioexception.getMessage());
+                    BiomeGeneratorTypeScreens biomegeneratortypescreens = BiomeGeneratorTypeScreens.field_239068_c_.get(k);
+                    this.field_239040_n_ = Optional.of(biomegeneratortypescreens);
+                    this.field_239039_m_ = biomegeneratortypescreens.func_241220_a_(this.field_239038_l_, this.field_239039_m_.getSeed(), this.field_239039_m_.doesGenerateFeatures(), this.field_239039_m_.hasBonusChest());
+
+                    if (this.field_239039_m_.func_236227_h_() && !Screen.hasShiftDown())
+                    {
+                        continue;
+                    }
+                }
+
+                p_239048_1_.func_238955_g_();
+                p_239050_2_.queueNarration(250);
+                return;
             }
-
-            if (dataresult.error().isPresent()) {
-               ITextComponent itextcomponent2 = new TranslationTextComponent("selectWorld.import_worldgen_settings.failure");
-               String s1 = dataresult.error().get().message();
-               LOGGER.error("Error parsing world settings: {}", (Object)s1);
-               ITextComponent itextcomponent3 = new StringTextComponent(s1);
-               p_239048_2_.getToasts().addToast(SystemToast.multiline(p_239048_2_, SystemToast.Type.WORLD_GEN_SETTINGS_TRANSFER, itextcomponent2, itextcomponent3));
+        })
+        {
+            public ITextComponent getMessage()
+            {
+                return super.getMessage().deepCopy().appendString(" ").append(WorldOptionsScreen.this.field_239040_n_.map(BiomeGeneratorTypeScreens::func_239077_a_).orElse(WorldOptionsScreen.field_239029_c_));
             }
+            protected IFormattableTextComponent getNarrationMessage()
+            {
+                return Objects.equals(WorldOptionsScreen.this.field_239040_n_, Optional.of(BiomeGeneratorTypeScreens.field_239067_b_)) ? super.getNarrationMessage().appendString(". ").append(WorldOptionsScreen.field_239030_d_) : super.getNarrationMessage();
+            }
+        });
+        this.field_239035_i_.visible = false;
+        this.field_239035_i_.active = this.field_239040_n_.isPresent();
+        this.field_239036_j_ = p_239048_1_.addButton(new Button(j, 120, 150, 20, new TranslationTextComponent("selectWorld.customizeType"), (p_239044_3_) ->
+        {
+            BiomeGeneratorTypeScreens.IFactory biomegeneratortypescreens$ifactory = BiomeGeneratorTypeScreens.field_239069_d_.get(this.field_239040_n_);
 
-            datapackregistries.close();
-            Lifecycle lifecycle = dataresult.lifecycle();
-            dataresult.resultOrPartial(LOGGER::error).ifPresent((p_239046_5_) -> {
-               BooleanConsumer booleanconsumer = (p_239045_5_) -> {
-                  p_239048_2_.setScreen(p_239048_1_);
-                  if (p_239045_5_) {
-                     this.importSettings(dynamicregistries$impl, p_239046_5_);
-                  }
+            if (biomegeneratortypescreens$ifactory != null)
+            {
+                p_239048_2_.displayGuiScreen(biomegeneratortypescreens$ifactory.createEditScreen(p_239048_1_, this.field_239039_m_));
+            }
+        }));
+        this.field_239036_j_.visible = false;
+        this.field_239027_a_ = p_239048_1_.addButton(new Button(i, 151, 150, 20, new TranslationTextComponent("selectWorld.bonusItems"), (p_239047_1_) ->
+        {
+            this.field_239039_m_ = this.field_239039_m_.func_236232_m_();
+            p_239047_1_.queueNarration(250);
+        })
+        {
+            public ITextComponent getMessage()
+            {
+                return DialogTexts.getComposedOptionMessage(super.getMessage(), WorldOptionsScreen.this.field_239039_m_.hasBonusChest() && !p_239048_1_.hardCoreMode);
+            }
+        });
+        this.field_239027_a_.visible = false;
+        this.field_239037_k_ = p_239048_1_.addButton(new Button(i, 185, 150, 20, new TranslationTextComponent("selectWorld.import_worldgen_settings"), (p_239049_3_) ->
+        {
+            TranslationTextComponent translationtextcomponent = new TranslationTextComponent("selectWorld.import_worldgen_settings.select_file");
+            String s = TinyFileDialogs.tinyfd_openFileDialog(translationtextcomponent.getString(), (CharSequence)null, (PointerBuffer)null, (CharSequence)null, false);
 
-               };
-               if (lifecycle == Lifecycle.stable()) {
-                  this.importSettings(dynamicregistries$impl, p_239046_5_);
-               } else if (lifecycle == Lifecycle.experimental()) {
-                  p_239048_2_.setScreen(new ConfirmScreen(booleanconsumer, new TranslationTextComponent("selectWorld.import_worldgen_settings.experimental.title"), new TranslationTextComponent("selectWorld.import_worldgen_settings.experimental.question")));
-               } else {
-                  p_239048_2_.setScreen(new ConfirmScreen(booleanconsumer, new TranslationTextComponent("selectWorld.import_worldgen_settings.deprecated.title"), new TranslationTextComponent("selectWorld.import_worldgen_settings.deprecated.question")));
-               }
+            if (s != null)
+            {
+                DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.func_239770_b_();
+                ResourcePackList resourcepacklist = new ResourcePackList(new ServerPackFinder(), new FolderPackFinder(p_239048_1_.func_238957_j_().toFile(), IPackNameDecorator.WORLD));
+                DataPackRegistries datapackregistries;
 
-            });
-         }
-      }));
-      this.importSettingsButton.visible = false;
-      this.amplifiedWorldInfo = IBidiRenderer.create(p_239048_3_, AMPLIFIED_HELP_TEXT, this.typeButton.getWidth());
-   }
+                try
+                {
+                    MinecraftServer.func_240772_a_(resourcepacklist, p_239048_1_.field_238933_b_, false);
+                    CompletableFuture<DataPackRegistries> completablefuture = DataPackRegistries.func_240961_a_(resourcepacklist.func_232623_f_(), Commands.EnvironmentType.INTEGRATED, 2, Util.getServerExecutor(), p_239048_2_);
+                    p_239048_2_.driveUntil(completablefuture::isDone);
+                    datapackregistries = completablefuture.get();
+                }
+                catch (ExecutionException | InterruptedException interruptedexception)
+                {
+                    field_239028_b_.error("Error loading data packs when importing world settings", (Throwable)interruptedexception);
+                    ITextComponent itextcomponent = new TranslationTextComponent("selectWorld.import_worldgen_settings.failure");
+                    ITextComponent itextcomponent1 = new StringTextComponent(interruptedexception.getMessage());
+                    p_239048_2_.getToastGui().add(SystemToast.func_238534_a_(p_239048_2_, SystemToast.Type.WORLD_GEN_SETTINGS_TRANSFER, itextcomponent, itextcomponent1));
+                    resourcepacklist.close();
+                    return;
+                }
 
-   private void importSettings(DynamicRegistries.Impl p_239052_1_, DimensionGeneratorSettings p_239052_2_) {
-      this.registryHolder = p_239052_1_;
-      this.settings = p_239052_2_;
-      this.preset = BiomeGeneratorTypeScreens.of(p_239052_2_);
-      this.seed = OptionalLong.of(p_239052_2_.seed());
-      this.seedEdit.setValue(toString(this.seed));
-      this.typeButton.active = this.preset.isPresent();
-   }
+                WorldSettingsImport<JsonElement> worldsettingsimport = WorldSettingsImport.create(JsonOps.INSTANCE, datapackregistries.getResourceManager(), dynamicregistries$impl);
+                JsonParser jsonparser = new JsonParser();
+                DataResult<DimensionGeneratorSettings> dataresult;
 
-   public void tick() {
-      this.seedEdit.tick();
-   }
+                try (BufferedReader bufferedreader = Files.newBufferedReader(Paths.get(s)))
+                {
+                    JsonElement jsonelement = jsonparser.parse(bufferedreader);
+                    dataresult = DimensionGeneratorSettings.field_236201_a_.parse(worldsettingsimport, jsonelement);
+                }
+                catch (JsonIOException | JsonSyntaxException | IOException ioexception)
+                {
+                    dataresult = DataResult.error("Failed to parse file: " + ioexception.getMessage());
+                }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      if (this.featuresButton.visible) {
-         this.font.drawShadow(p_230430_1_, MAP_FEATURES_INFO, (float)(this.width / 2 - 150), 122.0F, -6250336);
-      }
+                if (dataresult.error().isPresent())
+                {
+                    ITextComponent itextcomponent2 = new TranslationTextComponent("selectWorld.import_worldgen_settings.failure");
+                    String s1 = dataresult.error().get().message();
+                    field_239028_b_.error("Error parsing world settings: {}", (Object)s1);
+                    ITextComponent itextcomponent3 = new StringTextComponent(s1);
+                    p_239048_2_.getToastGui().add(SystemToast.func_238534_a_(p_239048_2_, SystemToast.Type.WORLD_GEN_SETTINGS_TRANSFER, itextcomponent2, itextcomponent3));
+                }
 
-      this.seedEdit.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      if (this.preset.equals(Optional.of(BiomeGeneratorTypeScreens.AMPLIFIED))) {
-         this.amplifiedWorldInfo.renderLeftAligned(p_230430_1_, this.typeButton.x + 2, this.typeButton.y + 22, 9, 10526880);
-      }
+                datapackregistries.close();
+                Lifecycle lifecycle = dataresult.lifecycle();
+                dataresult.resultOrPartial(field_239028_b_::error).ifPresent((p_239046_5_) ->
+                {
+                    BooleanConsumer booleanconsumer = (p_239045_5_) -> {
+                        p_239048_2_.displayGuiScreen(p_239048_1_);
 
-   }
+                        if (p_239045_5_)
+                        {
+                            this.func_239052_a_(dynamicregistries$impl, p_239046_5_);
+                        }
+                    };
 
-   protected void updateSettings(DimensionGeneratorSettings p_239043_1_) {
-      this.settings = p_239043_1_;
-   }
+                    if (lifecycle == Lifecycle.stable())
+                    {
+                        this.func_239052_a_(dynamicregistries$impl, p_239046_5_);
+                    }
+                    else if (lifecycle == Lifecycle.experimental())
+                    {
+                        p_239048_2_.displayGuiScreen(new ConfirmScreen(booleanconsumer, new TranslationTextComponent("selectWorld.import_worldgen_settings.experimental.title"), new TranslationTextComponent("selectWorld.import_worldgen_settings.experimental.question")));
+                    }
+                    else {
+                        p_239048_2_.displayGuiScreen(new ConfirmScreen(booleanconsumer, new TranslationTextComponent("selectWorld.import_worldgen_settings.deprecated.title"), new TranslationTextComponent("selectWorld.import_worldgen_settings.deprecated.question")));
+                    }
+                });
+            }
+        }));
+        this.field_239037_k_.visible = false;
+        this.field_243443_f = IBidiRenderer.func_243258_a(p_239048_3_, field_239030_d_, this.field_239035_i_.getWidth());
+    }
 
-   private static String toString(OptionalLong p_243445_0_) {
-      return p_243445_0_.isPresent() ? Long.toString(p_243445_0_.getAsLong()) : "";
-   }
+    private void func_239052_a_(DynamicRegistries.Impl p_239052_1_, DimensionGeneratorSettings p_239052_2_)
+    {
+        this.field_239038_l_ = p_239052_1_;
+        this.field_239039_m_ = p_239052_2_;
+        this.field_239040_n_ = BiomeGeneratorTypeScreens.func_239079_a_(p_239052_2_);
+        this.field_243444_q = OptionalLong.of(p_239052_2_.getSeed());
+        this.field_239033_g_.setText(func_243445_a(this.field_243444_q));
+        this.field_239035_i_.active = this.field_239040_n_.isPresent();
+    }
 
-   private static OptionalLong parseLong(String p_239053_0_) {
-      try {
-         return OptionalLong.of(Long.parseLong(p_239053_0_));
-      } catch (NumberFormatException numberformatexception) {
-         return OptionalLong.empty();
-      }
-   }
+    public void tick()
+    {
+        this.field_239033_g_.tick();
+    }
 
-   public DimensionGeneratorSettings makeSettings(boolean p_239054_1_) {
-      OptionalLong optionallong = this.parseSeed();
-      return this.settings.withSeed(p_239054_1_, optionallong);
-   }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        if (this.field_239034_h_.visible)
+        {
+            this.field_239031_e_.func_243246_a(matrixStack, field_243442_e, (float)(this.field_239032_f_ / 2 - 150), 122.0F, -6250336);
+        }
 
-   private OptionalLong parseSeed() {
-      String s = this.seedEdit.getValue();
-      OptionalLong optionallong;
-      if (StringUtils.isEmpty(s)) {
-         optionallong = OptionalLong.empty();
-      } else {
-         OptionalLong optionallong1 = parseLong(s);
-         if (optionallong1.isPresent() && optionallong1.getAsLong() != 0L) {
-            optionallong = optionallong1;
-         } else {
-            optionallong = OptionalLong.of((long)s.hashCode());
-         }
-      }
+        this.field_239033_g_.render(matrixStack, mouseX, mouseY, partialTicks);
 
-      return optionallong;
-   }
+        if (this.field_239040_n_.equals(Optional.of(BiomeGeneratorTypeScreens.field_239067_b_)))
+        {
+            this.field_243443_f.func_241865_b(matrixStack, this.field_239035_i_.x + 2, this.field_239035_i_.y + 22, 9, 10526880);
+        }
+    }
 
-   public boolean isDebug() {
-      return this.settings.isDebug();
-   }
+    protected void func_239043_a_(DimensionGeneratorSettings p_239043_1_)
+    {
+        this.field_239039_m_ = p_239043_1_;
+    }
 
-   public void setDisplayOptions(boolean p_239059_1_) {
-      this.typeButton.visible = p_239059_1_;
-      if (this.settings.isDebug()) {
-         this.featuresButton.visible = false;
-         this.bonusItemsButton.visible = false;
-         this.customizeTypeButton.visible = false;
-         this.importSettingsButton.visible = false;
-      } else {
-         this.featuresButton.visible = p_239059_1_;
-         this.bonusItemsButton.visible = p_239059_1_;
-         this.customizeTypeButton.visible = p_239059_1_ && BiomeGeneratorTypeScreens.EDITORS.containsKey(this.preset);
-         this.importSettingsButton.visible = p_239059_1_;
-      }
+    private static String func_243445_a(OptionalLong p_243445_0_)
+    {
+        return p_243445_0_.isPresent() ? Long.toString(p_243445_0_.getAsLong()) : "";
+    }
 
-      this.seedEdit.setVisible(p_239059_1_);
-   }
+    private static OptionalLong func_239053_a_(String p_239053_0_)
+    {
+        try
+        {
+            return OptionalLong.of(Long.parseLong(p_239053_0_));
+        }
+        catch (NumberFormatException numberformatexception)
+        {
+            return OptionalLong.empty();
+        }
+    }
 
-   public DynamicRegistries.Impl registryHolder() {
-      return this.registryHolder;
-   }
+    public DimensionGeneratorSettings func_239054_a_(boolean p_239054_1_)
+    {
+        OptionalLong optionallong = this.func_243449_f();
+        return this.field_239039_m_.create(p_239054_1_, optionallong);
+    }
 
-   void updateDataPacks(DataPackRegistries p_243447_1_) {
-      DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.builtin();
-      WorldGenSettingsExport<JsonElement> worldgensettingsexport = WorldGenSettingsExport.create(JsonOps.INSTANCE, this.registryHolder);
-      WorldSettingsImport<JsonElement> worldsettingsimport = WorldSettingsImport.create(JsonOps.INSTANCE, p_243447_1_.getResourceManager(), dynamicregistries$impl);
-      DataResult<DimensionGeneratorSettings> dataresult = DimensionGeneratorSettings.CODEC.encodeStart(worldgensettingsexport, this.settings).flatMap((p_243446_1_) -> {
-         return DimensionGeneratorSettings.CODEC.parse(worldsettingsimport, p_243446_1_);
-      });
-      dataresult.resultOrPartial(Util.prefix("Error parsing worldgen settings after loading data packs: ", LOGGER::error)).ifPresent((p_243448_2_) -> {
-         this.settings = p_243448_2_;
-         this.registryHolder = dynamicregistries$impl;
-      });
-   }
+    private OptionalLong func_243449_f()
+    {
+        String s = this.field_239033_g_.getText();
+        OptionalLong optionallong;
+
+        if (StringUtils.isEmpty(s))
+        {
+            optionallong = OptionalLong.empty();
+        }
+        else
+        {
+            OptionalLong optionallong1 = func_239053_a_(s);
+
+            if (optionallong1.isPresent() && optionallong1.getAsLong() != 0L)
+            {
+                optionallong = optionallong1;
+            }
+            else
+            {
+                optionallong = OptionalLong.of((long)s.hashCode());
+            }
+        }
+
+        return optionallong;
+    }
+
+    public boolean func_239042_a_()
+    {
+        return this.field_239039_m_.func_236227_h_();
+    }
+
+    public void func_239059_b_(boolean p_239059_1_)
+    {
+        this.field_239035_i_.visible = p_239059_1_;
+
+        if (this.field_239039_m_.func_236227_h_())
+        {
+            this.field_239034_h_.visible = false;
+            this.field_239027_a_.visible = false;
+            this.field_239036_j_.visible = false;
+            this.field_239037_k_.visible = false;
+        }
+        else
+        {
+            this.field_239034_h_.visible = p_239059_1_;
+            this.field_239027_a_.visible = p_239059_1_;
+            this.field_239036_j_.visible = p_239059_1_ && BiomeGeneratorTypeScreens.field_239069_d_.containsKey(this.field_239040_n_);
+            this.field_239037_k_.visible = p_239059_1_;
+        }
+
+        this.field_239033_g_.setVisible(p_239059_1_);
+    }
+
+    public DynamicRegistries.Impl func_239055_b_()
+    {
+        return this.field_239038_l_;
+    }
+
+    void func_243447_a(DataPackRegistries p_243447_1_)
+    {
+        DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.func_239770_b_();
+        WorldGenSettingsExport<JsonElement> worldgensettingsexport = WorldGenSettingsExport.create(JsonOps.INSTANCE, this.field_239038_l_);
+        WorldSettingsImport<JsonElement> worldsettingsimport = WorldSettingsImport.create(JsonOps.INSTANCE, p_243447_1_.getResourceManager(), dynamicregistries$impl);
+        DataResult<DimensionGeneratorSettings> dataresult = DimensionGeneratorSettings.field_236201_a_.encodeStart(worldgensettingsexport, this.field_239039_m_).flatMap((p_243446_1_) ->
+        {
+            return DimensionGeneratorSettings.field_236201_a_.parse(worldsettingsimport, p_243446_1_);
+        });
+        dataresult.resultOrPartial(Util.func_240982_a_("Error parsing worldgen settings after loading data packs: ", field_239028_b_::error)).ifPresent((p_243448_2_) ->
+        {
+            this.field_239039_m_ = p_243448_2_;
+            this.field_239038_l_ = dynamicregistries$impl;
+        });
+    }
 }

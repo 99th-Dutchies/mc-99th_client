@@ -1,5 +1,7 @@
 package net.minecraft.client.renderer;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.fluid.FluidState;
@@ -13,161 +15,230 @@ import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.reflect.Reflector;
 
-@OnlyIn(Dist.CLIENT)
-public class ActiveRenderInfo {
-   private boolean initialized;
-   private IBlockReader level;
-   private Entity entity;
-   private Vector3d position = Vector3d.ZERO;
-   private final BlockPos.Mutable blockPosition = new BlockPos.Mutable();
-   private final Vector3f forwards = new Vector3f(0.0F, 0.0F, 1.0F);
-   private final Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F);
-   private final Vector3f left = new Vector3f(1.0F, 0.0F, 0.0F);
-   private float xRot;
-   private float yRot;
-   private final Quaternion rotation = new Quaternion(0.0F, 0.0F, 0.0F, 1.0F);
-   private boolean detached;
-   private boolean mirror;
-   private float eyeHeight;
-   private float eyeHeightOld;
+public class ActiveRenderInfo
+{
+    private boolean valid;
+    private IBlockReader world;
+    private Entity renderViewEntity;
+    private Vector3d pos = Vector3d.ZERO;
+    private final BlockPos.Mutable blockPos = new BlockPos.Mutable();
+    private final Vector3f look = new Vector3f(0.0F, 0.0F, 1.0F);
+    private final Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F);
+    private final Vector3f left = new Vector3f(1.0F, 0.0F, 0.0F);
+    private float pitch;
+    private float yaw;
+    private final Quaternion rotation = new Quaternion(0.0F, 0.0F, 0.0F, 1.0F);
+    private boolean thirdPerson;
+    private boolean thirdPersonReverse;
+    private float height;
+    private float previousHeight;
 
-   public void setup(IBlockReader p_216772_1_, Entity p_216772_2_, boolean p_216772_3_, boolean p_216772_4_, float p_216772_5_) {
-      this.initialized = true;
-      this.level = p_216772_1_;
-      this.entity = p_216772_2_;
-      this.detached = p_216772_3_;
-      this.mirror = p_216772_4_;
-      this.setRotation(p_216772_2_.getViewYRot(p_216772_5_), p_216772_2_.getViewXRot(p_216772_5_));
-      this.setPosition(MathHelper.lerp((double)p_216772_5_, p_216772_2_.xo, p_216772_2_.getX()), MathHelper.lerp((double)p_216772_5_, p_216772_2_.yo, p_216772_2_.getY()) + (double)MathHelper.lerp(p_216772_5_, this.eyeHeightOld, this.eyeHeight), MathHelper.lerp((double)p_216772_5_, p_216772_2_.zo, p_216772_2_.getZ()));
-      if (p_216772_3_) {
-         if (p_216772_4_) {
-            this.setRotation(this.yRot + 180.0F, -this.xRot);
-         }
+    public void update(IBlockReader worldIn, Entity renderViewEntity, boolean thirdPersonIn, boolean thirdPersonReverseIn, float partialTicks)
+    {
+        this.valid = true;
+        this.world = worldIn;
+        this.renderViewEntity = renderViewEntity;
+        this.thirdPerson = thirdPersonIn;
+        this.thirdPersonReverse = thirdPersonReverseIn;
+        this.setDirection(renderViewEntity.getYaw(partialTicks), renderViewEntity.getPitch(partialTicks));
+        this.setPosition(MathHelper.lerp((double)partialTicks, renderViewEntity.prevPosX, renderViewEntity.getPosX()), MathHelper.lerp((double)partialTicks, renderViewEntity.prevPosY, renderViewEntity.getPosY()) + (double)MathHelper.lerp(partialTicks, this.previousHeight, this.height), MathHelper.lerp((double)partialTicks, renderViewEntity.prevPosZ, renderViewEntity.getPosZ()));
 
-         this.move(-this.getMaxZoom(4.0D), 0.0D, 0.0D);
-      } else if (p_216772_2_ instanceof LivingEntity && ((LivingEntity)p_216772_2_).isSleeping()) {
-         Direction direction = ((LivingEntity)p_216772_2_).getBedOrientation();
-         this.setRotation(direction != null ? direction.toYRot() - 180.0F : 0.0F, 0.0F);
-         this.move(0.0D, 0.3D, 0.0D);
-      }
-
-   }
-
-   public void tick() {
-      if (this.entity != null) {
-         this.eyeHeightOld = this.eyeHeight;
-         this.eyeHeight += (this.entity.getEyeHeight() - this.eyeHeight) * 0.5F;
-      }
-
-   }
-
-   private double getMaxZoom(double p_216779_1_) {
-      for(int i = 0; i < 8; ++i) {
-         float f = (float)((i & 1) * 2 - 1);
-         float f1 = (float)((i >> 1 & 1) * 2 - 1);
-         float f2 = (float)((i >> 2 & 1) * 2 - 1);
-         f = f * 0.1F;
-         f1 = f1 * 0.1F;
-         f2 = f2 * 0.1F;
-         Vector3d vector3d = this.position.add((double)f, (double)f1, (double)f2);
-         Vector3d vector3d1 = new Vector3d(this.position.x - (double)this.forwards.x() * p_216779_1_ + (double)f + (double)f2, this.position.y - (double)this.forwards.y() * p_216779_1_ + (double)f1, this.position.z - (double)this.forwards.z() * p_216779_1_ + (double)f2);
-         RayTraceResult raytraceresult = this.level.clip(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.VISUAL, RayTraceContext.FluidMode.NONE, this.entity));
-         if (raytraceresult.getType() != RayTraceResult.Type.MISS) {
-            double d0 = raytraceresult.getLocation().distanceTo(this.position);
-            if (d0 < p_216779_1_) {
-               p_216779_1_ = d0;
+        if (thirdPersonIn)
+        {
+            if (thirdPersonReverseIn)
+            {
+                this.setDirection(this.yaw + 180.0F, -this.pitch);
             }
-         }
-      }
 
-      return p_216779_1_;
-   }
+            this.movePosition(-this.calcCameraDistance(4.0D), 0.0D, 0.0D);
+        }
+        else if (renderViewEntity instanceof LivingEntity && ((LivingEntity)renderViewEntity).isSleeping())
+        {
+            Direction direction = ((LivingEntity)renderViewEntity).getBedDirection();
+            this.setDirection(direction != null ? direction.getHorizontalAngle() - 180.0F : 0.0F, 0.0F);
+            this.movePosition(0.0D, 0.3D, 0.0D);
+        }
+    }
 
-   protected void move(double p_216782_1_, double p_216782_3_, double p_216782_5_) {
-      double d0 = (double)this.forwards.x() * p_216782_1_ + (double)this.up.x() * p_216782_3_ + (double)this.left.x() * p_216782_5_;
-      double d1 = (double)this.forwards.y() * p_216782_1_ + (double)this.up.y() * p_216782_3_ + (double)this.left.y() * p_216782_5_;
-      double d2 = (double)this.forwards.z() * p_216782_1_ + (double)this.up.z() * p_216782_3_ + (double)this.left.z() * p_216782_5_;
-      this.setPosition(new Vector3d(this.position.x + d0, this.position.y + d1, this.position.z + d2));
-   }
+    public void interpolateHeight()
+    {
+        if (this.renderViewEntity != null)
+        {
+            this.previousHeight = this.height;
+            this.height += (this.renderViewEntity.getEyeHeight() - this.height) * 0.5F;
+        }
+    }
 
-   protected void setRotation(float p_216776_1_, float p_216776_2_) {
-      this.xRot = p_216776_2_;
-      this.yRot = p_216776_1_;
-      this.rotation.set(0.0F, 0.0F, 0.0F, 1.0F);
-      this.rotation.mul(Vector3f.YP.rotationDegrees(-p_216776_1_));
-      this.rotation.mul(Vector3f.XP.rotationDegrees(p_216776_2_));
-      this.forwards.set(0.0F, 0.0F, 1.0F);
-      this.forwards.transform(this.rotation);
-      this.up.set(0.0F, 1.0F, 0.0F);
-      this.up.transform(this.rotation);
-      this.left.set(1.0F, 0.0F, 0.0F);
-      this.left.transform(this.rotation);
-   }
+    /**
+     * Checks for collision of the third person camera and returns the distance
+     */
+    private double calcCameraDistance(double startingDistance)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            float f = (float)((i & 1) * 2 - 1);
+            float f1 = (float)((i >> 1 & 1) * 2 - 1);
+            float f2 = (float)((i >> 2 & 1) * 2 - 1);
+            f = f * 0.1F;
+            f1 = f1 * 0.1F;
+            f2 = f2 * 0.1F;
+            Vector3d vector3d = this.pos.add((double)f, (double)f1, (double)f2);
+            Vector3d vector3d1 = new Vector3d(this.pos.x - (double)this.look.getX() * startingDistance + (double)f + (double)f2, this.pos.y - (double)this.look.getY() * startingDistance + (double)f1, this.pos.z - (double)this.look.getZ() * startingDistance + (double)f2);
+            RayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.VISUAL, RayTraceContext.FluidMode.NONE, this.renderViewEntity));
 
-   protected void setPosition(double p_216775_1_, double p_216775_3_, double p_216775_5_) {
-      this.setPosition(new Vector3d(p_216775_1_, p_216775_3_, p_216775_5_));
-   }
+            if (raytraceresult.getType() != RayTraceResult.Type.MISS)
+            {
+                double d0 = raytraceresult.getHitVec().distanceTo(this.pos);
 
-   protected void setPosition(Vector3d p_216774_1_) {
-      this.position = p_216774_1_;
-      this.blockPosition.set(p_216774_1_.x, p_216774_1_.y, p_216774_1_.z);
-   }
+                if (d0 < startingDistance)
+                {
+                    startingDistance = d0;
+                }
+            }
+        }
 
-   public Vector3d getPosition() {
-      return this.position;
-   }
+        return startingDistance;
+    }
 
-   public BlockPos getBlockPosition() {
-      return this.blockPosition;
-   }
+    /**
+     * Moves the render position relative to the view direction, for third person camera
+     */
+    protected void movePosition(double distanceOffset, double verticalOffset, double horizontalOffset)
+    {
+        double d0 = (double)this.look.getX() * distanceOffset + (double)this.up.getX() * verticalOffset + (double)this.left.getX() * horizontalOffset;
+        double d1 = (double)this.look.getY() * distanceOffset + (double)this.up.getY() * verticalOffset + (double)this.left.getY() * horizontalOffset;
+        double d2 = (double)this.look.getZ() * distanceOffset + (double)this.up.getZ() * verticalOffset + (double)this.left.getZ() * horizontalOffset;
+        this.setPosition(new Vector3d(this.pos.x + d0, this.pos.y + d1, this.pos.z + d2));
+    }
 
-   public float getXRot() {
-      return this.xRot;
-   }
+    protected void setDirection(float pitchIn, float yawIn)
+    {
+        this.pitch = yawIn;
+        this.yaw = pitchIn;
+        this.rotation.set(0.0F, 0.0F, 0.0F, 1.0F);
+        this.rotation.multiply(Vector3f.YP.rotationDegrees(-pitchIn));
+        this.rotation.multiply(Vector3f.XP.rotationDegrees(yawIn));
+        this.look.set(0.0F, 0.0F, 1.0F);
+        this.look.transform(this.rotation);
+        this.up.set(0.0F, 1.0F, 0.0F);
+        this.up.transform(this.rotation);
+        this.left.set(1.0F, 0.0F, 0.0F);
+        this.left.transform(this.rotation);
+    }
 
-   public float getYRot() {
-      return this.yRot;
-   }
+    /**
+     * Sets the position and blockpos of the active render
+     */
+    protected void setPosition(double x, double y, double z)
+    {
+        this.setPosition(new Vector3d(x, y, z));
+    }
 
-   public Quaternion rotation() {
-      return this.rotation;
-   }
+    protected void setPosition(Vector3d posIn)
+    {
+        this.pos = posIn;
+        this.blockPos.setPos(posIn.x, posIn.y, posIn.z);
+    }
 
-   public Entity getEntity() {
-      return this.entity;
-   }
+    public Vector3d getProjectedView()
+    {
+        return this.pos;
+    }
 
-   public boolean isInitialized() {
-      return this.initialized;
-   }
+    public BlockPos getBlockPos()
+    {
+        return this.blockPos;
+    }
 
-   public boolean isDetached() {
-      return this.detached;
-   }
+    public float getPitch()
+    {
+        return this.pitch;
+    }
 
-   public FluidState getFluidInCamera() {
-      if (!this.initialized) {
-         return Fluids.EMPTY.defaultFluidState();
-      } else {
-         FluidState fluidstate = this.level.getFluidState(this.blockPosition);
-         return !fluidstate.isEmpty() && this.position.y >= (double)((float)this.blockPosition.getY() + fluidstate.getHeight(this.level, this.blockPosition)) ? Fluids.EMPTY.defaultFluidState() : fluidstate;
-      }
-   }
+    public float getYaw()
+    {
+        return this.yaw;
+    }
 
-   public final Vector3f getLookVector() {
-      return this.forwards;
-   }
+    public Quaternion getRotation()
+    {
+        return this.rotation;
+    }
 
-   public final Vector3f getUpVector() {
-      return this.up;
-   }
+    public Entity getRenderViewEntity()
+    {
+        return this.renderViewEntity;
+    }
 
-   public void reset() {
-      this.level = null;
-      this.entity = null;
-      this.initialized = false;
-   }
+    public boolean isValid()
+    {
+        return this.valid;
+    }
+
+    public boolean isThirdPerson()
+    {
+        return this.thirdPerson;
+    }
+
+    public FluidState getFluidState()
+    {
+        if (!this.valid)
+        {
+            return Fluids.EMPTY.getDefaultState();
+        }
+        else
+        {
+            FluidState fluidstate = this.world.getFluidState(this.blockPos);
+            return !fluidstate.isEmpty() && this.pos.y >= (double)((float)this.blockPos.getY() + fluidstate.getActualHeight(this.world, this.blockPos)) ? Fluids.EMPTY.getDefaultState() : fluidstate;
+        }
+    }
+
+    public BlockState getBlockState()
+    {
+        return !this.valid ? Blocks.AIR.getDefaultState() : this.world.getBlockState(this.blockPos);
+    }
+
+    public void setAnglesInternal(float p_setAnglesInternal_1_, float p_setAnglesInternal_2_)
+    {
+        this.yaw = p_setAnglesInternal_1_;
+        this.pitch = p_setAnglesInternal_2_;
+    }
+
+    public BlockState getBlockAtCamera()
+    {
+        if (!this.valid)
+        {
+            return Blocks.AIR.getDefaultState();
+        }
+        else
+        {
+            BlockState blockstate = this.world.getBlockState(this.blockPos);
+
+            if (Reflector.IForgeBlockState_getStateAtViewpoint.exists())
+            {
+                blockstate = (BlockState)Reflector.call(blockstate, Reflector.IForgeBlockState_getStateAtViewpoint, this.world, this.blockPos, this.pos);
+            }
+
+            return blockstate;
+        }
+    }
+
+    public final Vector3f getViewVector()
+    {
+        return this.look;
+    }
+
+    public final Vector3f getUpVector()
+    {
+        return this.up;
+    }
+
+    public void clear()
+    {
+        this.world = null;
+        this.renderViewEntity = null;
+        this.valid = false;
+    }
 }

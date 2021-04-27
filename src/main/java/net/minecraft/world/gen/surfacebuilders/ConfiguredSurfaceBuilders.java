@@ -3,32 +3,34 @@ package net.minecraft.world.gen.surfacebuilders;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.registry.WorldGenRegistries;
 
-public class ConfiguredSurfaceBuilders {
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> BADLANDS = register("badlands", SurfaceBuilder.BADLANDS.configured(SurfaceBuilder.CONFIG_BADLANDS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> BASALT_DELTAS = register("basalt_deltas", SurfaceBuilder.BASALT_DELTAS.configured(SurfaceBuilder.CONFIG_BASALT_DELTAS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> CRIMSON_FOREST = register("crimson_forest", SurfaceBuilder.NETHER_FOREST.configured(SurfaceBuilder.CONFIG_CRIMSON_FOREST));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> DESERT = register("desert", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_DESERT));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> END = register("end", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_THEEND));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> ERODED_BADLANDS = register("eroded_badlands", SurfaceBuilder.ERODED_BADLANDS.configured(SurfaceBuilder.CONFIG_BADLANDS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> FROZEN_OCEAN = register("frozen_ocean", SurfaceBuilder.FROZEN_OCEAN.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> FULL_SAND = register("full_sand", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_FULL_SAND));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> GIANT_TREE_TAIGA = register("giant_tree_taiga", SurfaceBuilder.GIANT_TREE_TAIGA.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> GRASS = register("grass", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> GRAVELLY_MOUNTAIN = register("gravelly_mountain", SurfaceBuilder.GRAVELLY_MOUNTAIN.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> ICE_SPIKES = register("ice_spikes", SurfaceBuilder.DEFAULT.configured(new SurfaceBuilderConfig(Blocks.SNOW_BLOCK.defaultBlockState(), Blocks.DIRT.defaultBlockState(), Blocks.GRAVEL.defaultBlockState())));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> MOUNTAIN = register("mountain", SurfaceBuilder.MOUNTAIN.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> MYCELIUM = register("mycelium", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_MYCELIUM));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> NETHER = register("nether", SurfaceBuilder.NETHER.configured(SurfaceBuilder.CONFIG_HELL));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> NOPE = register("nope", SurfaceBuilder.NOPE.configured(SurfaceBuilder.CONFIG_STONE));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> OCEAN_SAND = register("ocean_sand", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_OCEAN_SAND));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> SHATTERED_SAVANNA = register("shattered_savanna", SurfaceBuilder.SHATTERED_SAVANNA.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> SOUL_SAND_VALLEY = register("soul_sand_valley", SurfaceBuilder.SOUL_SAND_VALLEY.configured(SurfaceBuilder.CONFIG_SOUL_SAND_VALLEY));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> STONE = register("stone", SurfaceBuilder.DEFAULT.configured(SurfaceBuilder.CONFIG_STONE));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> SWAMP = register("swamp", SurfaceBuilder.SWAMP.configured(SurfaceBuilder.CONFIG_GRASS));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> WARPED_FOREST = register("warped_forest", SurfaceBuilder.NETHER_FOREST.configured(SurfaceBuilder.CONFIG_WARPED_FOREST));
-   public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> WOODED_BADLANDS = register("wooded_badlands", SurfaceBuilder.WOODED_BADLANDS.configured(SurfaceBuilder.CONFIG_BADLANDS));
+public class ConfiguredSurfaceBuilders
+{
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244169_a = func_244192_a("badlands", SurfaceBuilder.BADLANDS.func_242929_a(SurfaceBuilder.RED_SAND_WHITE_TERRACOTTA_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244170_b = func_244192_a("basalt_deltas", SurfaceBuilder.field_237191_af_.func_242929_a(SurfaceBuilder.field_237187_R_));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244171_c = func_244192_a("crimson_forest", SurfaceBuilder.field_237189_ad_.func_242929_a(SurfaceBuilder.field_237185_P_));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244172_d = func_244192_a("desert", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.SAND_SAND_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244173_e = func_244192_a("end", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.END_STONE_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244174_f = func_244192_a("eroded_badlands", SurfaceBuilder.ERODED_BADLANDS.func_242929_a(SurfaceBuilder.RED_SAND_WHITE_TERRACOTTA_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244175_g = func_244192_a("frozen_ocean", SurfaceBuilder.FROZEN_OCEAN.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244176_h = func_244192_a("full_sand", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.SAND_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244177_i = func_244192_a("giant_tree_taiga", SurfaceBuilder.GIANT_TREE_TAIGA.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244178_j = func_244192_a("grass", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244179_k = func_244192_a("gravelly_mountain", SurfaceBuilder.GRAVELLY_MOUNTAIN.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244180_l = func_244192_a("ice_spikes", SurfaceBuilder.DEFAULT.func_242929_a(new SurfaceBuilderConfig(Blocks.SNOW_BLOCK.getDefaultState(), Blocks.DIRT.getDefaultState(), Blocks.GRAVEL.getDefaultState())));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244181_m = func_244192_a("mountain", SurfaceBuilder.MOUNTAIN.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244182_n = func_244192_a("mycelium", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.MYCELIUM_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244183_o = func_244192_a("nether", SurfaceBuilder.NETHER.func_242929_a(SurfaceBuilder.NETHERRACK_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244184_p = func_244192_a("nope", SurfaceBuilder.NOPE.func_242929_a(SurfaceBuilder.STONE_STONE_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244185_q = func_244192_a("ocean_sand", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.GRASS_DIRT_SAND_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244186_r = func_244192_a("shattered_savanna", SurfaceBuilder.SHATTERED_SAVANNA.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244187_s = func_244192_a("soul_sand_valley", SurfaceBuilder.field_237190_ae_.func_242929_a(SurfaceBuilder.field_237184_N_));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244188_t = func_244192_a("stone", SurfaceBuilder.DEFAULT.func_242929_a(SurfaceBuilder.STONE_STONE_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244189_u = func_244192_a("swamp", SurfaceBuilder.SWAMP.func_242929_a(SurfaceBuilder.GRASS_DIRT_GRAVEL_CONFIG));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244190_v = func_244192_a("warped_forest", SurfaceBuilder.field_237189_ad_.func_242929_a(SurfaceBuilder.field_237186_Q_));
+    public static final ConfiguredSurfaceBuilder<SurfaceBuilderConfig> field_244191_w = func_244192_a("wooded_badlands", SurfaceBuilder.WOODED_BADLANDS.func_242929_a(SurfaceBuilder.RED_SAND_WHITE_TERRACOTTA_GRAVEL_CONFIG));
 
-   private static <SC extends ISurfaceBuilderConfig> ConfiguredSurfaceBuilder<SC> register(String p_244192_0_, ConfiguredSurfaceBuilder<SC> p_244192_1_) {
-      return WorldGenRegistries.register(WorldGenRegistries.CONFIGURED_SURFACE_BUILDER, p_244192_0_, p_244192_1_);
-   }
+    private static <SC extends ISurfaceBuilderConfig> ConfiguredSurfaceBuilder<SC> func_244192_a(String p_244192_0_, ConfiguredSurfaceBuilder<SC> p_244192_1_)
+    {
+        return WorldGenRegistries.register(WorldGenRegistries.CONFIGURED_SURFACE_BUILDER, p_244192_0_, p_244192_1_);
+    }
 }

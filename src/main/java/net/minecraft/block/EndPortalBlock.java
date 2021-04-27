@@ -16,51 +16,62 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class EndPortalBlock extends ContainerBlock {
-   protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
+public class EndPortalBlock extends ContainerBlock
+{
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D);
 
-   protected EndPortalBlock(AbstractBlock.Properties p_i48406_1_) {
-      super(p_i48406_1_);
-   }
+    protected EndPortalBlock(AbstractBlock.Properties builder)
+    {
+        super(builder);
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new EndPortalTileEntity();
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new EndPortalTileEntity();
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      if (p_196262_2_ instanceof ServerWorld && !p_196262_4_.isPassenger() && !p_196262_4_.isVehicle() && p_196262_4_.canChangeDimensions() && VoxelShapes.joinIsNotEmpty(VoxelShapes.create(p_196262_4_.getBoundingBox().move((double)(-p_196262_3_.getX()), (double)(-p_196262_3_.getY()), (double)(-p_196262_3_.getZ()))), p_196262_1_.getShape(p_196262_2_, p_196262_3_), IBooleanFunction.AND)) {
-         RegistryKey<World> registrykey = p_196262_2_.dimension() == World.END ? World.OVERWORLD : World.END;
-         ServerWorld serverworld = ((ServerWorld)p_196262_2_).getServer().getLevel(registrykey);
-         if (serverworld == null) {
-            return;
-         }
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        if (worldIn instanceof ServerWorld && !entityIn.isPassenger() && !entityIn.isBeingRidden() && entityIn.isNonBoss() && VoxelShapes.compare(VoxelShapes.create(entityIn.getBoundingBox().offset((double)(-pos.getX()), (double)(-pos.getY()), (double)(-pos.getZ()))), state.getShape(worldIn, pos), IBooleanFunction.AND))
+        {
+            RegistryKey<World> registrykey = worldIn.getDimensionKey() == World.THE_END ? World.OVERWORLD : World.THE_END;
+            ServerWorld serverworld = ((ServerWorld)worldIn).getServer().getWorld(registrykey);
 
-         p_196262_4_.changeDimension(serverworld);
-      }
+            if (serverworld == null)
+            {
+                return;
+            }
 
-   }
+            entityIn.changeDimension(serverworld);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void animateTick(BlockState p_180655_1_, World p_180655_2_, BlockPos p_180655_3_, Random p_180655_4_) {
-      double d0 = (double)p_180655_3_.getX() + p_180655_4_.nextDouble();
-      double d1 = (double)p_180655_3_.getY() + 0.8D;
-      double d2 = (double)p_180655_3_.getZ() + p_180655_4_.nextDouble();
-      p_180655_2_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
-   }
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles). Note that
+     * this method is unrelated to {@link randomTick} and {@link #needsRandomTick}, and will always be called regardless
+     * of whether the block can receive random update ticks
+     */
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand)
+    {
+        double d0 = (double)pos.getX() + rand.nextDouble();
+        double d1 = (double)pos.getY() + 0.8D;
+        double d2 = (double)pos.getZ() + rand.nextDouble();
+        worldIn.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      return ItemStack.EMPTY;
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        return ItemStack.EMPTY;
+    }
 
-   public boolean canBeReplaced(BlockState p_225541_1_, Fluid p_225541_2_) {
-      return false;
-   }
+    public boolean isReplaceable(BlockState state, Fluid fluid)
+    {
+        return false;
+    }
 }

@@ -1,0 +1,507 @@
+package net.minecraft.client.renderer.entity;
+
+import com.google.common.collect.Maps;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.GameSettings;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.Atlases;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.culling.ClippingHelper;
+import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
+import net.minecraft.resources.IReloadableResourceManager;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Quaternion;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.IWorldReader;
+import net.minecraft.world.World;
+import net.optifine.Config;
+import net.optifine.DynamicLights;
+import net.optifine.EmissiveTextures;
+import net.optifine.entity.model.CustomEntityModels;
+import net.optifine.player.PlayerItemsLayer;
+import net.optifine.reflect.Reflector;
+import net.optifine.shaders.Shaders;
+
+public class EntityRendererManager {
+   private static final RenderType field_229082_e_ = RenderType.func_239272_l_(new ResourceLocation("textures/misc/shadow.png"));
+   private final Map<EntityType<?>, EntityRenderer<?>> field_78729_o = Maps.newHashMap();
+   private final Map<String, PlayerRenderer> field_178636_l = Maps.newHashMap();
+   private final PlayerRenderer field_178637_m;
+   private final FontRenderer field_78736_p;
+   public final TextureManager field_78724_e;
+   private World field_78722_g;
+   public ActiveRenderInfo field_217783_c;
+   private Quaternion field_229083_k_;
+   public Entity field_147941_i;
+   public final GameSettings field_78733_k;
+   private boolean field_178638_s = true;
+   private boolean field_85095_o;
+   public EntityRenderer renderRender = null;
+
+   public <E extends Entity> int func_229085_a_(E p_229085_1_, float p_229085_2_) {
+      int i = this.func_78713_a(p_229085_1_).func_229100_c_(p_229085_1_, p_229085_2_);
+      if (Config.isDynamicLights()) {
+         i = DynamicLights.getCombinedLight(p_229085_1_, i);
+      }
+
+      return i;
+   }
+
+   private <T extends Entity> void func_229087_a_(EntityType<T> p_229087_1_, EntityRenderer<? super T> p_229087_2_) {
+      this.field_78729_o.put(p_229087_1_, p_229087_2_);
+   }
+
+   private void func_229097_a_(net.minecraft.client.renderer.ItemRenderer p_229097_1_, IReloadableResourceManager p_229097_2_) {
+      this.func_229087_a_(EntityType.field_200788_b, new AreaEffectCloudRenderer(this));
+      this.func_229087_a_(EntityType.field_200789_c, new ArmorStandRenderer(this));
+      this.func_229087_a_(EntityType.field_200790_d, new TippedArrowRenderer(this));
+      this.func_229087_a_(EntityType.field_200791_e, new BatRenderer(this));
+      this.func_229087_a_(EntityType.field_226289_e_, new BeeRenderer(this));
+      this.func_229087_a_(EntityType.field_200792_f, new BlazeRenderer(this));
+      this.func_229087_a_(EntityType.field_200793_g, new BoatRenderer(this));
+      this.func_229087_a_(EntityType.field_220360_g, new CatRenderer(this));
+      this.func_229087_a_(EntityType.field_200794_h, new CaveSpiderRenderer(this));
+      this.func_229087_a_(EntityType.field_200773_M, new MinecartRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200795_i, new ChickenRenderer(this));
+      this.func_229087_a_(EntityType.field_203780_j, new CodRenderer(this));
+      this.func_229087_a_(EntityType.field_200774_N, new MinecartRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200796_j, new CowRenderer(this));
+      this.func_229087_a_(EntityType.field_200797_k, new CreeperRenderer(this));
+      this.func_229087_a_(EntityType.field_205137_n, new DolphinRenderer(this));
+      this.func_229087_a_(EntityType.field_200798_l, new ChestedHorseRenderer<>(this, 0.87F));
+      this.func_229087_a_(EntityType.field_200799_m, new DragonFireballRenderer(this));
+      this.func_229087_a_(EntityType.field_204724_o, new DrownedRenderer(this));
+      this.func_229087_a_(EntityType.field_200751_aq, new SpriteRenderer<>(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200800_n, new ElderGuardianRenderer(this));
+      this.func_229087_a_(EntityType.field_200801_o, new EnderCrystalRenderer(this));
+      this.func_229087_a_(EntityType.field_200802_p, new EnderDragonRenderer(this));
+      this.func_229087_a_(EntityType.field_200803_q, new EndermanRenderer(this));
+      this.func_229087_a_(EntityType.field_200804_r, new EndermiteRenderer(this));
+      this.func_229087_a_(EntityType.field_200752_ar, new SpriteRenderer<>(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200805_s, new EvokerFangsRenderer(this));
+      this.func_229087_a_(EntityType.field_200806_t, new EvokerRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200753_as, new SpriteRenderer<>(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200807_u, new ExperienceOrbRenderer(this));
+      this.func_229087_a_(EntityType.field_200808_v, new SpriteRenderer<>(this, p_229097_1_, 1.0F, true));
+      this.func_229087_a_(EntityType.field_200809_w, new FallingBlockRenderer(this));
+      this.func_229087_a_(EntityType.field_200767_G, new SpriteRenderer<>(this, p_229097_1_, 3.0F, true));
+      this.func_229087_a_(EntityType.field_200810_x, new FireworkRocketRenderer(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200730_aI, new FishRenderer(this));
+      this.func_229087_a_(EntityType.field_220356_B, new FoxRenderer(this));
+      this.func_229087_a_(EntityType.field_200775_O, new MinecartRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200811_y, new GhastRenderer(this));
+      this.func_229087_a_(EntityType.field_200812_z, new GiantZombieRenderer(this, 6.0F));
+      this.func_229087_a_(EntityType.field_200761_A, new GuardianRenderer(this));
+      this.func_229087_a_(EntityType.field_233588_G_, new HoglinRenderer(this));
+      this.func_229087_a_(EntityType.field_200776_P, new MinecartRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200762_B, new HorseRenderer(this));
+      this.func_229087_a_(EntityType.field_200763_C, new HuskRenderer(this));
+      this.func_229087_a_(EntityType.field_200764_D, new IllusionerRenderer(this));
+      this.func_229087_a_(EntityType.field_200757_aw, new IronGolemRenderer(this));
+      this.func_229087_a_(EntityType.field_200765_E, new ItemRenderer(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200766_F, new ItemFrameRenderer(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200768_H, new LeashKnotRenderer(this));
+      this.func_229087_a_(EntityType.field_200728_aG, new LightningBoltRenderer(this));
+      this.func_229087_a_(EntityType.field_200769_I, new LlamaRenderer(this));
+      this.func_229087_a_(EntityType.field_200770_J, new LlamaSpitRenderer(this));
+      this.func_229087_a_(EntityType.field_200771_K, new MagmaCubeRenderer(this));
+      this.func_229087_a_(EntityType.field_200772_L, new MinecartRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200780_T, new MooshroomRenderer(this));
+      this.func_229087_a_(EntityType.field_200779_S, new ChestedHorseRenderer<>(this, 0.92F));
+      this.func_229087_a_(EntityType.field_200781_U, new OcelotRenderer(this));
+      this.func_229087_a_(EntityType.field_200782_V, new PaintingRenderer(this));
+      this.func_229087_a_(EntityType.field_220353_aa, new PandaRenderer(this));
+      this.func_229087_a_(EntityType.field_200783_W, new ParrotRenderer(this));
+      this.func_229087_a_(EntityType.field_203097_aH, new PhantomRenderer(this));
+      this.func_229087_a_(EntityType.field_200784_X, new PigRenderer(this));
+      this.func_229087_a_(EntityType.field_233591_ai_, new PiglinRenderer(this, false));
+      this.func_229087_a_(EntityType.field_242287_aj, new PiglinRenderer(this, false));
+      this.func_229087_a_(EntityType.field_220350_aJ, new PillagerRenderer(this));
+      this.func_229087_a_(EntityType.field_200786_Z, new PolarBearRenderer(this));
+      this.func_229087_a_(EntityType.field_200754_at, new SpriteRenderer<>(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_203779_Z, new PufferfishRenderer(this));
+      this.func_229087_a_(EntityType.field_200736_ab, new RabbitRenderer(this));
+      this.func_229087_a_(EntityType.field_220352_aU, new RavagerRenderer(this));
+      this.func_229087_a_(EntityType.field_203778_ae, new SalmonRenderer(this));
+      this.func_229087_a_(EntityType.field_200737_ac, new SheepRenderer(this));
+      this.func_229087_a_(EntityType.field_200739_ae, new ShulkerBulletRenderer(this));
+      this.func_229087_a_(EntityType.field_200738_ad, new ShulkerRenderer(this));
+      this.func_229087_a_(EntityType.field_200740_af, new SilverfishRenderer(this));
+      this.func_229087_a_(EntityType.field_200742_ah, new UndeadHorseRenderer(this));
+      this.func_229087_a_(EntityType.field_200741_ag, new SkeletonRenderer(this));
+      this.func_229087_a_(EntityType.field_200743_ai, new SlimeRenderer(this));
+      this.func_229087_a_(EntityType.field_200744_aj, new SpriteRenderer<>(this, p_229097_1_, 0.75F, true));
+      this.func_229087_a_(EntityType.field_200746_al, new SpriteRenderer<>(this, p_229097_1_));
+      this.func_229087_a_(EntityType.field_200745_ak, new SnowManRenderer(this));
+      this.func_229087_a_(EntityType.field_200777_Q, new MinecartRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200747_am, new SpectralArrowRenderer(this));
+      this.func_229087_a_(EntityType.field_200748_an, new SpiderRenderer<>(this));
+      this.func_229087_a_(EntityType.field_200749_ao, new SquidRenderer(this));
+      this.func_229087_a_(EntityType.field_200750_ap, new StrayRenderer(this));
+      this.func_229087_a_(EntityType.field_200778_R, new TNTMinecartRenderer(this));
+      this.func_229087_a_(EntityType.field_200735_aa, new TNTRenderer(this));
+      this.func_229087_a_(EntityType.field_220354_ax, new LlamaRenderer(this));
+      this.func_229087_a_(EntityType.field_203098_aL, new TridentRenderer(this));
+      this.func_229087_a_(EntityType.field_204262_at, new TropicalFishRenderer(this));
+      this.func_229087_a_(EntityType.field_203099_aq, new TurtleRenderer(this));
+      this.func_229087_a_(EntityType.field_200755_au, new VexRenderer(this));
+      this.func_229087_a_(EntityType.field_200756_av, new VillagerRenderer(this, p_229097_2_));
+      this.func_229087_a_(EntityType.field_200758_ax, new VindicatorRenderer(this));
+      this.func_229087_a_(EntityType.field_220351_aK, new WanderingTraderRenderer(this));
+      this.func_229087_a_(EntityType.field_200759_ay, new WitchRenderer(this));
+      this.func_229087_a_(EntityType.field_200760_az, new WitherRenderer(this));
+      this.func_229087_a_(EntityType.field_200722_aA, new WitherSkeletonRenderer(this));
+      this.func_229087_a_(EntityType.field_200723_aB, new WitherSkullRenderer(this));
+      this.func_229087_a_(EntityType.field_200724_aC, new WolfRenderer(this));
+      this.func_229087_a_(EntityType.field_233590_aW_, new ZoglinRenderer(this));
+      this.func_229087_a_(EntityType.field_200726_aE, new UndeadHorseRenderer(this));
+      this.func_229087_a_(EntityType.field_200725_aD, new ZombieRenderer(this));
+      this.func_229087_a_(EntityType.field_233592_ba_, new PiglinRenderer(this, true));
+      this.func_229087_a_(EntityType.field_200727_aF, new ZombieVillagerRenderer(this, p_229097_2_));
+      this.func_229087_a_(EntityType.field_233589_aE_, new StriderRenderer(this));
+   }
+
+   public EntityRendererManager(TextureManager p_i226034_1_, net.minecraft.client.renderer.ItemRenderer p_i226034_2_, IReloadableResourceManager p_i226034_3_, FontRenderer p_i226034_4_, GameSettings p_i226034_5_) {
+      this.field_78724_e = p_i226034_1_;
+      this.field_78736_p = p_i226034_4_;
+      this.field_78733_k = p_i226034_5_;
+      this.func_229097_a_(p_i226034_2_, p_i226034_3_);
+      this.field_178637_m = new PlayerRenderer(this);
+      this.field_178636_l.put("default", this.field_178637_m);
+      this.field_178636_l.put("slim", new PlayerRenderer(this, true));
+      PlayerItemsLayer.register(this.field_178636_l);
+   }
+
+   public void validateRendererExistence() {
+      for(EntityType<?> entitytype : Registry.field_212629_r) {
+         if (entitytype != EntityType.field_200729_aH && !this.field_78729_o.containsKey(entitytype)) {
+            throw new IllegalStateException("No renderer registered for " + Registry.field_212629_r.func_177774_c(entitytype));
+         }
+      }
+
+   }
+
+   public <T extends Entity> EntityRenderer<? super T> func_78713_a(T p_78713_1_) {
+      if (p_78713_1_ instanceof AbstractClientPlayerEntity) {
+         String s = ((AbstractClientPlayerEntity)p_78713_1_).func_175154_l();
+         PlayerRenderer playerrenderer = this.field_178636_l.get(s);
+         return playerrenderer != null ? playerrenderer : this.field_178637_m;
+      } else {
+         return this.field_78729_o.get(p_78713_1_.func_200600_R());
+      }
+   }
+
+   public void func_229088_a_(World p_229088_1_, ActiveRenderInfo p_229088_2_, Entity p_229088_3_) {
+      this.field_78722_g = p_229088_1_;
+      this.field_217783_c = p_229088_2_;
+      this.field_229083_k_ = p_229088_2_.func_227995_f_();
+      this.field_147941_i = p_229088_3_;
+   }
+
+   public void func_229089_a_(Quaternion p_229089_1_) {
+      this.field_229083_k_ = p_229089_1_;
+   }
+
+   public void func_178633_a(boolean p_178633_1_) {
+      this.field_178638_s = p_178633_1_;
+   }
+
+   public void func_178629_b(boolean p_178629_1_) {
+      this.field_85095_o = p_178629_1_;
+   }
+
+   public boolean func_178634_b() {
+      return this.field_85095_o;
+   }
+
+   public <E extends Entity> boolean func_229086_a_(E p_229086_1_, ClippingHelper p_229086_2_, double p_229086_3_, double p_229086_5_, double p_229086_7_) {
+      EntityRenderer<? super E> entityrenderer = this.func_78713_a(p_229086_1_);
+      return entityrenderer.func_225626_a_(p_229086_1_, p_229086_2_, p_229086_3_, p_229086_5_, p_229086_7_);
+   }
+
+   public <E extends Entity> void func_229084_a_(E p_229084_1_, double p_229084_2_, double p_229084_4_, double p_229084_6_, float p_229084_8_, float p_229084_9_, MatrixStack p_229084_10_, IRenderTypeBuffer p_229084_11_, int p_229084_12_) {
+      if (this.field_217783_c != null) {
+         EntityRenderer<? super E> entityrenderer = this.func_78713_a(p_229084_1_);
+
+         try {
+            Vector3d vector3d = entityrenderer.func_225627_b_(p_229084_1_, p_229084_9_);
+            double d2 = p_229084_2_ + vector3d.func_82615_a();
+            double d3 = p_229084_4_ + vector3d.func_82617_b();
+            double d0 = p_229084_6_ + vector3d.func_82616_c();
+            p_229084_10_.func_227860_a_();
+            p_229084_10_.func_227861_a_(d2, d3, d0);
+            if (CustomEntityModels.isActive()) {
+               this.renderRender = entityrenderer;
+            }
+
+            if (EmissiveTextures.isActive()) {
+               EmissiveTextures.beginRender();
+            }
+
+            entityrenderer.func_225623_a_(p_229084_1_, p_229084_8_, p_229084_9_, p_229084_10_, p_229084_11_, p_229084_12_);
+            if (EmissiveTextures.isActive()) {
+               if (EmissiveTextures.hasEmissive()) {
+                  EmissiveTextures.beginRenderEmissive();
+                  entityrenderer.func_225623_a_(p_229084_1_, p_229084_8_, p_229084_9_, p_229084_10_, p_229084_11_, LightTexture.MAX_BRIGHTNESS);
+                  EmissiveTextures.endRenderEmissive();
+               }
+
+               EmissiveTextures.endRender();
+            }
+
+            if (p_229084_1_.func_90999_ad()) {
+               this.func_229095_a_(p_229084_10_, p_229084_11_, p_229084_1_);
+            }
+
+            p_229084_10_.func_227861_a_(-vector3d.func_82615_a(), -vector3d.func_82617_b(), -vector3d.func_82616_c());
+            if (this.field_78733_k.field_181151_V && this.field_178638_s && entityrenderer.field_76989_e > 0.0F && !p_229084_1_.func_82150_aj()) {
+               double d1 = this.func_78714_a(p_229084_1_.func_226277_ct_(), p_229084_1_.func_226278_cu_(), p_229084_1_.func_226281_cx_());
+               float f = (float)((1.0D - d1 / 256.0D) * (double)entityrenderer.field_76987_f);
+               if (f > 0.0F) {
+                  func_229096_a_(p_229084_10_, p_229084_11_, p_229084_1_, f, p_229084_9_, this.field_78722_g, entityrenderer.field_76989_e);
+               }
+            }
+
+            if (this.field_85095_o && !p_229084_1_.func_82150_aj() && !Minecraft.func_71410_x().func_189648_am()) {
+               this.func_229093_a_(p_229084_10_, p_229084_11_.getBuffer(RenderType.func_228659_m_()), p_229084_1_, p_229084_9_);
+            }
+
+            p_229084_10_.func_227865_b_();
+         } catch (Throwable throwable1) {
+            CrashReport crashreport = CrashReport.func_85055_a(throwable1, "Rendering entity in world");
+            CrashReportCategory crashreportcategory = crashreport.func_85058_a("Entity being rendered");
+            p_229084_1_.func_85029_a(crashreportcategory);
+            CrashReportCategory crashreportcategory1 = crashreport.func_85058_a("Renderer details");
+            crashreportcategory1.func_71507_a("Assigned renderer", entityrenderer);
+            crashreportcategory1.func_71507_a("Location", CrashReportCategory.func_85074_a(p_229084_2_, p_229084_4_, p_229084_6_));
+            crashreportcategory1.func_71507_a("Rotation", p_229084_8_);
+            crashreportcategory1.func_71507_a("Delta", p_229084_9_);
+            throw new ReportedException(crashreport);
+         }
+      }
+   }
+
+   private void func_229093_a_(MatrixStack p_229093_1_, IVertexBuilder p_229093_2_, Entity p_229093_3_, float p_229093_4_) {
+      if (!Shaders.isShadowPass) {
+         float f = p_229093_3_.func_213311_cf() / 2.0F;
+         this.func_229094_a_(p_229093_1_, p_229093_2_, p_229093_3_, 1.0F, 1.0F, 1.0F);
+         boolean flag = p_229093_3_ instanceof EnderDragonEntity;
+         if (Reflector.IForgeEntity_isMultipartEntity.exists() && Reflector.IForgeEntity_getParts.exists()) {
+            flag = Reflector.callBoolean(p_229093_3_, Reflector.IForgeEntity_isMultipartEntity);
+         }
+
+         if (flag) {
+            double d0 = -MathHelper.func_219803_d((double)p_229093_4_, p_229093_3_.field_70142_S, p_229093_3_.func_226277_ct_());
+            double d1 = -MathHelper.func_219803_d((double)p_229093_4_, p_229093_3_.field_70137_T, p_229093_3_.func_226278_cu_());
+            double d2 = -MathHelper.func_219803_d((double)p_229093_4_, p_229093_3_.field_70136_U, p_229093_3_.func_226281_cx_());
+            Entity[] aentity = (Entity[])(Reflector.IForgeEntity_getParts.exists() ? (Entity[])Reflector.call(p_229093_3_, Reflector.IForgeEntity_getParts) : ((EnderDragonEntity)p_229093_3_).func_213404_dT());
+
+            for(Entity entity : aentity) {
+               p_229093_1_.func_227860_a_();
+               double d3 = d0 + MathHelper.func_219803_d((double)p_229093_4_, entity.field_70142_S, entity.func_226277_ct_());
+               double d4 = d1 + MathHelper.func_219803_d((double)p_229093_4_, entity.field_70137_T, entity.func_226278_cu_());
+               double d5 = d2 + MathHelper.func_219803_d((double)p_229093_4_, entity.field_70136_U, entity.func_226281_cx_());
+               p_229093_1_.func_227861_a_(d3, d4, d5);
+               this.func_229094_a_(p_229093_1_, p_229093_2_, entity, 0.25F, 1.0F, 0.0F);
+               p_229093_1_.func_227865_b_();
+            }
+         }
+
+         if (p_229093_3_ instanceof LivingEntity) {
+            float f1 = 0.01F;
+            WorldRenderer.func_228427_a_(p_229093_1_, p_229093_2_, (double)(-f), (double)(p_229093_3_.func_70047_e() - 0.01F), (double)(-f), (double)f, (double)(p_229093_3_.func_70047_e() + 0.01F), (double)f, 1.0F, 0.0F, 0.0F, 1.0F);
+         }
+
+         Vector3d vector3d = p_229093_3_.func_70676_i(p_229093_4_);
+         Matrix4f matrix4f = p_229093_1_.func_227866_c_().func_227870_a_();
+         p_229093_2_.func_227888_a_(matrix4f, 0.0F, p_229093_3_.func_70047_e(), 0.0F).func_225586_a_(0, 0, 255, 255).func_181675_d();
+         p_229093_2_.func_227888_a_(matrix4f, (float)(vector3d.field_72450_a * 2.0D), (float)((double)p_229093_3_.func_70047_e() + vector3d.field_72448_b * 2.0D), (float)(vector3d.field_72449_c * 2.0D)).func_225586_a_(0, 0, 255, 255).func_181675_d();
+      }
+   }
+
+   private void func_229094_a_(MatrixStack p_229094_1_, IVertexBuilder p_229094_2_, Entity p_229094_3_, float p_229094_4_, float p_229094_5_, float p_229094_6_) {
+      AxisAlignedBB axisalignedbb = p_229094_3_.func_174813_aQ().func_72317_d(-p_229094_3_.func_226277_ct_(), -p_229094_3_.func_226278_cu_(), -p_229094_3_.func_226281_cx_());
+      WorldRenderer.func_228430_a_(p_229094_1_, p_229094_2_, axisalignedbb, p_229094_4_, p_229094_5_, p_229094_6_, 1.0F);
+   }
+
+   private void func_229095_a_(MatrixStack p_229095_1_, IRenderTypeBuffer p_229095_2_, Entity p_229095_3_) {
+      TextureAtlasSprite textureatlassprite = ModelBakery.field_207763_a.func_229314_c_();
+      TextureAtlasSprite textureatlassprite1 = ModelBakery.field_207764_b.func_229314_c_();
+      p_229095_1_.func_227860_a_();
+      float f = p_229095_3_.func_213311_cf() * 1.4F;
+      p_229095_1_.func_227862_a_(f, f, f);
+      float f1 = 0.5F;
+      float f2 = 0.0F;
+      float f3 = p_229095_3_.func_213302_cg() / f;
+      float f4 = 0.0F;
+      p_229095_1_.func_227863_a_(Vector3f.field_229181_d_.func_229187_a_(-this.field_217783_c.func_216778_f()));
+      p_229095_1_.func_227861_a_(0.0D, 0.0D, (double)(-0.3F + (float)((int)f3) * 0.02F));
+      float f5 = 0.0F;
+      int i = 0;
+      IVertexBuilder ivertexbuilder = p_229095_2_.getBuffer(Atlases.func_228783_h_());
+      if (Config.isMultiTexture()) {
+         ivertexbuilder.setRenderBlocks(true);
+      }
+
+      for(MatrixStack.Entry matrixstack$entry = p_229095_1_.func_227866_c_(); f3 > 0.0F; ++i) {
+         TextureAtlasSprite textureatlassprite2 = i % 2 == 0 ? textureatlassprite : textureatlassprite1;
+         ivertexbuilder.setSprite(textureatlassprite2);
+         float f6 = textureatlassprite2.func_94209_e();
+         float f7 = textureatlassprite2.func_94206_g();
+         float f8 = textureatlassprite2.func_94212_f();
+         float f9 = textureatlassprite2.func_94210_h();
+         if (i / 2 % 2 == 0) {
+            float f10 = f8;
+            f8 = f6;
+            f6 = f10;
+         }
+
+         func_229090_a_(matrixstack$entry, ivertexbuilder, f1 - 0.0F, 0.0F - f4, f5, f8, f9);
+         func_229090_a_(matrixstack$entry, ivertexbuilder, -f1 - 0.0F, 0.0F - f4, f5, f6, f9);
+         func_229090_a_(matrixstack$entry, ivertexbuilder, -f1 - 0.0F, 1.4F - f4, f5, f6, f7);
+         func_229090_a_(matrixstack$entry, ivertexbuilder, f1 - 0.0F, 1.4F - f4, f5, f8, f7);
+         f3 -= 0.45F;
+         f4 -= 0.45F;
+         f1 *= 0.9F;
+         f5 += 0.03F;
+      }
+
+      p_229095_1_.func_227865_b_();
+   }
+
+   private static void func_229090_a_(MatrixStack.Entry p_229090_0_, IVertexBuilder p_229090_1_, float p_229090_2_, float p_229090_3_, float p_229090_4_, float p_229090_5_, float p_229090_6_) {
+      p_229090_1_.func_227888_a_(p_229090_0_.func_227870_a_(), p_229090_2_, p_229090_3_, p_229090_4_).func_225586_a_(255, 255, 255, 255).func_225583_a_(p_229090_5_, p_229090_6_).func_225585_a_(0, 10).func_227886_a_(240).func_227887_a_(p_229090_0_.func_227872_b_(), 0.0F, 1.0F, 0.0F).func_181675_d();
+   }
+
+   private static void func_229096_a_(MatrixStack p_229096_0_, IRenderTypeBuffer p_229096_1_, Entity p_229096_2_, float p_229096_3_, float p_229096_4_, IWorldReader p_229096_5_, float p_229096_6_) {
+      if (!Config.isShaders() || !Shaders.shouldSkipDefaultShadow) {
+         float f = p_229096_6_;
+         if (p_229096_2_ instanceof MobEntity) {
+            MobEntity mobentity = (MobEntity)p_229096_2_;
+            if (mobentity.func_70631_g_()) {
+               f = p_229096_6_ * 0.5F;
+            }
+         }
+
+         double d2 = MathHelper.func_219803_d((double)p_229096_4_, p_229096_2_.field_70142_S, p_229096_2_.func_226277_ct_());
+         double d0 = MathHelper.func_219803_d((double)p_229096_4_, p_229096_2_.field_70137_T, p_229096_2_.func_226278_cu_());
+         double d1 = MathHelper.func_219803_d((double)p_229096_4_, p_229096_2_.field_70136_U, p_229096_2_.func_226281_cx_());
+         int i = MathHelper.func_76128_c(d2 - (double)f);
+         int j = MathHelper.func_76128_c(d2 + (double)f);
+         int k = MathHelper.func_76128_c(d0 - (double)f);
+         int l = MathHelper.func_76128_c(d0);
+         int i1 = MathHelper.func_76128_c(d1 - (double)f);
+         int j1 = MathHelper.func_76128_c(d1 + (double)f);
+         MatrixStack.Entry matrixstack$entry = p_229096_0_.func_227866_c_();
+         IVertexBuilder ivertexbuilder = p_229096_1_.getBuffer(field_229082_e_);
+
+         for(BlockPos blockpos : BlockPos.func_218278_a(new BlockPos(i, k, i1), new BlockPos(j, l, j1))) {
+            func_229092_a_(matrixstack$entry, ivertexbuilder, p_229096_5_, blockpos, d2, d0, d1, f, p_229096_3_);
+         }
+
+      }
+   }
+
+   private static void func_229092_a_(MatrixStack.Entry p_229092_0_, IVertexBuilder p_229092_1_, IWorldReader p_229092_2_, BlockPos p_229092_3_, double p_229092_4_, double p_229092_6_, double p_229092_8_, float p_229092_10_, float p_229092_11_) {
+      BlockPos blockpos = p_229092_3_.func_177977_b();
+      BlockState blockstate = p_229092_2_.func_180495_p(blockpos);
+      if (blockstate.func_185901_i() != BlockRenderType.INVISIBLE && p_229092_2_.func_201696_r(p_229092_3_) > 3 && blockstate.func_235785_r_(p_229092_2_, blockpos)) {
+         VoxelShape voxelshape = blockstate.func_196954_c(p_229092_2_, p_229092_3_.func_177977_b());
+         if (!voxelshape.func_197766_b()) {
+            float f = (float)(((double)p_229092_11_ - (p_229092_6_ - (double)p_229092_3_.func_177956_o()) / 2.0D) * 0.5D * (double)p_229092_2_.func_205052_D(p_229092_3_));
+            if (f >= 0.0F) {
+               if (f > 1.0F) {
+                  f = 1.0F;
+               }
+
+               AxisAlignedBB axisalignedbb = voxelshape.func_197752_a();
+               double d0 = (double)p_229092_3_.func_177958_n() + axisalignedbb.field_72340_a;
+               double d1 = (double)p_229092_3_.func_177958_n() + axisalignedbb.field_72336_d;
+               double d2 = (double)p_229092_3_.func_177956_o() + axisalignedbb.field_72338_b;
+               double d3 = (double)p_229092_3_.func_177952_p() + axisalignedbb.field_72339_c;
+               double d4 = (double)p_229092_3_.func_177952_p() + axisalignedbb.field_72334_f;
+               float f1 = (float)(d0 - p_229092_4_);
+               float f2 = (float)(d1 - p_229092_4_);
+               float f3 = (float)(d2 - p_229092_6_);
+               float f4 = (float)(d3 - p_229092_8_);
+               float f5 = (float)(d4 - p_229092_8_);
+               float f6 = -f1 / 2.0F / p_229092_10_ + 0.5F;
+               float f7 = -f2 / 2.0F / p_229092_10_ + 0.5F;
+               float f8 = -f4 / 2.0F / p_229092_10_ + 0.5F;
+               float f9 = -f5 / 2.0F / p_229092_10_ + 0.5F;
+               func_229091_a_(p_229092_0_, p_229092_1_, f, f1, f3, f4, f6, f8);
+               func_229091_a_(p_229092_0_, p_229092_1_, f, f1, f3, f5, f6, f9);
+               func_229091_a_(p_229092_0_, p_229092_1_, f, f2, f3, f5, f7, f9);
+               func_229091_a_(p_229092_0_, p_229092_1_, f, f2, f3, f4, f7, f8);
+            }
+         }
+      }
+
+   }
+
+   private static void func_229091_a_(MatrixStack.Entry p_229091_0_, IVertexBuilder p_229091_1_, float p_229091_2_, float p_229091_3_, float p_229091_4_, float p_229091_5_, float p_229091_6_, float p_229091_7_) {
+      p_229091_1_.func_227888_a_(p_229091_0_.func_227870_a_(), p_229091_3_, p_229091_4_, p_229091_5_).func_227885_a_(1.0F, 1.0F, 1.0F, p_229091_2_).func_225583_a_(p_229091_6_, p_229091_7_).func_227891_b_(OverlayTexture.field_229196_a_).func_227886_a_(15728880).func_227887_a_(p_229091_0_.func_227872_b_(), 0.0F, 1.0F, 0.0F).func_181675_d();
+   }
+
+   public void func_78717_a(@Nullable World p_78717_1_) {
+      this.field_78722_g = p_78717_1_;
+      if (p_78717_1_ == null) {
+         this.field_217783_c = null;
+      }
+
+   }
+
+   public double func_229099_b_(Entity p_229099_1_) {
+      return this.field_217783_c.func_216785_c().func_72436_e(p_229099_1_.func_213303_ch());
+   }
+
+   public double func_78714_a(double p_78714_1_, double p_78714_3_, double p_78714_5_) {
+      return this.field_217783_c.func_216785_c().func_186679_c(p_78714_1_, p_78714_3_, p_78714_5_);
+   }
+
+   public Quaternion func_229098_b_() {
+      return this.field_229083_k_;
+   }
+
+   public FontRenderer func_78716_a() {
+      return this.field_78736_p;
+   }
+
+   public Map<EntityType, EntityRenderer> getEntityRenderMap() {
+      return this.field_78729_o;
+   }
+
+   public Map<String, PlayerRenderer> getSkinMap() {
+      return Collections.unmodifiableMap(this.field_178636_l);
+   }
+}

@@ -27,93 +27,126 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class MovingPistonBlock extends ContainerBlock {
-   public static final DirectionProperty FACING = PistonHeadBlock.FACING;
-   public static final EnumProperty<PistonType> TYPE = PistonHeadBlock.TYPE;
+public class MovingPistonBlock extends ContainerBlock
+{
+    public static final DirectionProperty FACING = PistonHeadBlock.FACING;
+    public static final EnumProperty<PistonType> TYPE = PistonHeadBlock.TYPE;
 
-   public MovingPistonBlock(AbstractBlock.Properties p_i48282_1_) {
-      super(p_i48282_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TYPE, PistonType.DEFAULT));
-   }
+    public MovingPistonBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(FACING, Direction.NORTH).with(TYPE, PistonType.DEFAULT));
+    }
 
-   @Nullable
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return null;
-   }
+    @Nullable
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return null;
+    }
 
-   public static TileEntity newMovingBlockEntity(BlockState p_196343_0_, Direction p_196343_1_, boolean p_196343_2_, boolean p_196343_3_) {
-      return new PistonTileEntity(p_196343_0_, p_196343_1_, p_196343_2_, p_196343_3_);
-   }
+    public static TileEntity createTilePiston(BlockState state, Direction direction, boolean extending, boolean shouldHeadBeRendered)
+    {
+        return new PistonTileEntity(state, direction, extending, shouldHeadBeRendered);
+    }
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_1_.is(p_196243_4_.getBlock())) {
-         TileEntity tileentity = p_196243_2_.getBlockEntity(p_196243_3_);
-         if (tileentity instanceof PistonTileEntity) {
-            ((PistonTileEntity)tileentity).finalTick();
-         }
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!state.isIn(newState.getBlock()))
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-      }
-   }
+            if (tileentity instanceof PistonTileEntity)
+            {
+                ((PistonTileEntity)tileentity).clearPistonTileEntity();
+            }
+        }
+    }
 
-   public void destroy(IWorld p_176206_1_, BlockPos p_176206_2_, BlockState p_176206_3_) {
-      BlockPos blockpos = p_176206_2_.relative(p_176206_3_.getValue(FACING).getOpposite());
-      BlockState blockstate = p_176206_1_.getBlockState(blockpos);
-      if (blockstate.getBlock() instanceof PistonBlock && blockstate.getValue(PistonBlock.EXTENDED)) {
-         p_176206_1_.removeBlock(blockpos, false);
-      }
+    /**
+     * Called after a player destroys this Block - the posiiton pos may no longer hold the state indicated.
+     */
+    public void onPlayerDestroy(IWorld worldIn, BlockPos pos, BlockState state)
+    {
+        BlockPos blockpos = pos.offset(state.get(FACING).getOpposite());
+        BlockState blockstate = worldIn.getBlockState(blockpos);
 
-   }
+        if (blockstate.getBlock() instanceof PistonBlock && blockstate.get(PistonBlock.EXTENDED))
+        {
+            worldIn.removeBlock(blockpos, false);
+        }
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (!p_225533_2_.isClientSide && p_225533_2_.getBlockEntity(p_225533_3_) == null) {
-         p_225533_2_.removeBlock(p_225533_3_, false);
-         return ActionResultType.CONSUME;
-      } else {
-         return ActionResultType.PASS;
-      }
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (!worldIn.isRemote && worldIn.getTileEntity(pos) == null)
+        {
+            worldIn.removeBlock(pos, false);
+            return ActionResultType.CONSUME;
+        }
+        else
+        {
+            return ActionResultType.PASS;
+        }
+    }
 
-   public List<ItemStack> getDrops(BlockState p_220076_1_, LootContext.Builder p_220076_2_) {
-      PistonTileEntity pistontileentity = this.getBlockEntity(p_220076_2_.getLevel(), new BlockPos(p_220076_2_.getParameter(LootParameters.ORIGIN)));
-      return pistontileentity == null ? Collections.emptyList() : pistontileentity.getMovedState().getDrops(p_220076_2_);
-   }
+    public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder)
+    {
+        PistonTileEntity pistontileentity = this.getTileEntity(builder.getWorld(), new BlockPos(builder.assertPresent(LootParameters.field_237457_g_)));
+        return pistontileentity == null ? Collections.emptyList() : pistontileentity.getPistonState().getDrops(builder);
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return VoxelShapes.empty();
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return VoxelShapes.empty();
+    }
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      PistonTileEntity pistontileentity = this.getBlockEntity(p_220071_2_, p_220071_3_);
-      return pistontileentity != null ? pistontileentity.getCollisionShape(p_220071_2_, p_220071_3_) : VoxelShapes.empty();
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        PistonTileEntity pistontileentity = this.getTileEntity(worldIn, pos);
+        return pistontileentity != null ? pistontileentity.getCollisionShape(worldIn, pos) : VoxelShapes.empty();
+    }
 
-   @Nullable
-   private PistonTileEntity getBlockEntity(IBlockReader p_220170_1_, BlockPos p_220170_2_) {
-      TileEntity tileentity = p_220170_1_.getBlockEntity(p_220170_2_);
-      return tileentity instanceof PistonTileEntity ? (PistonTileEntity)tileentity : null;
-   }
+    @Nullable
+    private PistonTileEntity getTileEntity(IBlockReader blockReader, BlockPos pos)
+    {
+        TileEntity tileentity = blockReader.getTileEntity(pos);
+        return tileentity instanceof PistonTileEntity ? (PistonTileEntity)tileentity : null;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      return ItemStack.EMPTY;
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        return ItemStack.EMPTY;
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      return p_185499_1_.setValue(FACING, p_185499_2_.rotate(p_185499_1_.getValue(FACING)));
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        return state.with(FACING, rot.rotate(state.get(FACING)));
+    }
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      return p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
-   }
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        return state.rotate(mirrorIn.toRotation(state.get(FACING)));
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, TYPE);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(FACING, TYPE);
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

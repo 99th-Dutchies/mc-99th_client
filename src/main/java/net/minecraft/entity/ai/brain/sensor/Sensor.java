@@ -7,35 +7,40 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.world.server.ServerWorld;
 
-public abstract class Sensor<E extends LivingEntity> {
-   private static final Random RANDOM = new Random();
-   private static final EntityPredicate TARGET_CONDITIONS = (new EntityPredicate()).range(16.0D).allowSameTeam().allowNonAttackable();
-   private static final EntityPredicate TARGET_CONDITIONS_IGNORE_INVISIBILITY_TESTING = (new EntityPredicate()).range(16.0D).allowSameTeam().allowNonAttackable().ignoreInvisibilityTesting();
-   private final int scanRate;
-   private long timeToTick;
+public abstract class Sensor<E extends LivingEntity>
+{
+    private static final Random RANDOM = new Random();
+    private static final EntityPredicate FRIENDLY_FIRE_WITH_VISIBILITY_CHECK = (new EntityPredicate()).setDistance(16.0D).allowFriendlyFire().setSkipAttackChecks();
+    private static final EntityPredicate FRIENDLY_FIRE_WITHOUT_VISIBILITY_CHECK = (new EntityPredicate()).setDistance(16.0D).allowFriendlyFire().setSkipAttackChecks().setUseInvisibilityCheck();
+    private final int interval;
+    private long counter;
 
-   public Sensor(int p_i50301_1_) {
-      this.scanRate = p_i50301_1_;
-      this.timeToTick = (long)RANDOM.nextInt(p_i50301_1_);
-   }
+    public Sensor(int interval)
+    {
+        this.interval = interval;
+        this.counter = (long)RANDOM.nextInt(interval);
+    }
 
-   public Sensor() {
-      this(20);
-   }
+    public Sensor()
+    {
+        this(20);
+    }
 
-   public final void tick(ServerWorld p_220973_1_, E p_220973_2_) {
-      if (--this.timeToTick <= 0L) {
-         this.timeToTick = (long)this.scanRate;
-         this.doTick(p_220973_1_, p_220973_2_);
-      }
+    public final void tick(ServerWorld worldIn, E entityIn)
+    {
+        if (--this.counter <= 0L)
+        {
+            this.counter = (long)this.interval;
+            this.update(worldIn, entityIn);
+        }
+    }
 
-   }
+    protected abstract void update(ServerWorld worldIn, E entityIn);
 
-   protected abstract void doTick(ServerWorld p_212872_1_, E p_212872_2_);
+    public abstract Set < MemoryModuleType<? >> getUsedMemories();
 
-   public abstract Set<MemoryModuleType<?>> requires();
-
-   protected static boolean isEntityTargetable(LivingEntity p_242316_0_, LivingEntity p_242316_1_) {
-      return p_242316_0_.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, p_242316_1_) ? TARGET_CONDITIONS_IGNORE_INVISIBILITY_TESTING.test(p_242316_0_, p_242316_1_) : TARGET_CONDITIONS.test(p_242316_0_, p_242316_1_);
-   }
+    protected static boolean canAttackTarget(LivingEntity livingEntity, LivingEntity target)
+    {
+        return livingEntity.getBrain().hasMemory(MemoryModuleType.ATTACK_TARGET, target) ? FRIENDLY_FIRE_WITHOUT_VISIBILITY_CHECK.canTarget(livingEntity, target) : FRIENDLY_FIRE_WITH_VISIBILITY_CHECK.canTarget(livingEntity, target);
+    }
 }

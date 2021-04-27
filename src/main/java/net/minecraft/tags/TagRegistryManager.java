@@ -7,48 +7,60 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class TagRegistryManager {
-   private static final Map<ResourceLocation, TagRegistry<?>> HELPERS = Maps.newHashMap();
+public class TagRegistryManager
+{
+    private static final Map < ResourceLocation, TagRegistry<? >> idToRegistryMap = Maps.newHashMap();
 
-   public static <T> TagRegistry<T> create(ResourceLocation p_242196_0_, Function<ITagCollectionSupplier, ITagCollection<T>> p_242196_1_) {
-      TagRegistry<T> tagregistry = new TagRegistry<>(p_242196_1_);
-      TagRegistry<?> tagregistry1 = HELPERS.putIfAbsent(p_242196_0_, tagregistry);
-      if (tagregistry1 != null) {
-         throw new IllegalStateException("Duplicate entry for static tag collection: " + p_242196_0_);
-      } else {
-         return tagregistry;
-      }
-   }
+    public static <T> TagRegistry<T> create(ResourceLocation id, Function<ITagCollectionSupplier, ITagCollection<T>> supplierToCollectionFunction)
+    {
+        TagRegistry<T> tagregistry = new TagRegistry<>(supplierToCollectionFunction);
+        TagRegistry<?> tagregistry1 = idToRegistryMap.putIfAbsent(id, tagregistry);
 
-   public static void resetAll(ITagCollectionSupplier p_242193_0_) {
-      HELPERS.values().forEach((p_242194_1_) -> {
-         p_242194_1_.reset(p_242193_0_);
-      });
-   }
+        if (tagregistry1 != null)
+        {
+            throw new IllegalStateException("Duplicate entry for static tag collection: " + id);
+        }
+        else
+        {
+            return tagregistry;
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static void resetAllToEmpty() {
-      HELPERS.values().forEach(TagRegistry::resetToEmpty);
-   }
+    public static void fetchTags(ITagCollectionSupplier supplier)
+    {
+        idToRegistryMap.values().forEach((registry) ->
+        {
+            registry.fetchTags(supplier);
+        });
+    }
 
-   public static Multimap<ResourceLocation, ResourceLocation> getAllMissingTags(ITagCollectionSupplier p_242198_0_) {
-      Multimap<ResourceLocation, ResourceLocation> multimap = HashMultimap.create();
-      HELPERS.forEach((p_242195_2_, p_242195_3_) -> {
-         multimap.putAll(p_242195_2_, p_242195_3_.getMissingTags(p_242198_0_));
-      });
-      return multimap;
-   }
+    public static void fetchTags()
+    {
+        idToRegistryMap.values().forEach(TagRegistry::fetchTags);
+    }
 
-   public static void bootStrap() {
-      TagRegistry[] atagregistry = new TagRegistry[]{BlockTags.HELPER, ItemTags.HELPER, FluidTags.HELPER, EntityTypeTags.HELPER};
-      boolean flag = Stream.of(atagregistry).anyMatch((p_242192_0_) -> {
-         return !HELPERS.containsValue(p_242192_0_);
-      });
-      if (flag) {
-         throw new IllegalStateException("Missing helper registrations");
-      }
-   }
+    public static Multimap<ResourceLocation, ResourceLocation> validateTags(ITagCollectionSupplier supplier)
+    {
+        Multimap<ResourceLocation, ResourceLocation> multimap = HashMultimap.create();
+        idToRegistryMap.forEach((id, registry) ->
+        {
+            multimap.putAll(id, registry.getTagIdsFromSupplier(supplier));
+        });
+        return multimap;
+    }
+
+    public static void checkHelperRegistrations()
+    {
+        TagRegistry[] atagregistry = new TagRegistry[] {BlockTags.collection, ItemTags.collection, FluidTags.collection, EntityTypeTags.tagCollection};
+        boolean flag = Stream.of(atagregistry).anyMatch((registry) ->
+        {
+            return !idToRegistryMap.containsValue(registry);
+        });
+
+        if (flag)
+        {
+            throw new IllegalStateException("Missing helper registrations");
+        }
+    }
 }

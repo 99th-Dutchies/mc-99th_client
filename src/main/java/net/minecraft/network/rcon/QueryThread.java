@@ -18,282 +18,384 @@ import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class QueryThread extends RConThread {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private long lastChallengeCheck;
-   private final int port;
-   private final int serverPort;
-   private final int maxPlayers;
-   private final String serverName;
-   private final String worldName;
-   private DatagramSocket socket;
-   private final byte[] buffer = new byte[1460];
-   private String hostIp;
-   private String serverIp;
-   private final Map<SocketAddress, QueryThread.Auth> validChallenges;
-   private final RConOutputStream rulesResponse;
-   private long lastRulesResponse;
-   private final IServer serverInterface;
+public class QueryThread extends RConThread
+{
+    private static final Logger field_232648_d_ = LogManager.getLogger();
+    private long lastAuthCheckTime;
+    private final int queryPort;
+    private final int serverPort;
+    private final int maxPlayers;
+    private final String serverMotd;
+    private final String worldName;
+    private DatagramSocket querySocket;
+    private final byte[] buffer = new byte[1460];
+    private String queryHostname;
+    private String serverHostname;
+    private final Map<SocketAddress, QueryThread.Auth> queryClients;
+    private final RConOutputStream output;
+    private long lastQueryResponseTime;
+    private final IServer field_232649_r_;
 
-   private QueryThread(IServer p_i241890_1_, int p_i241890_2_) {
-      super("Query Listener");
-      this.serverInterface = p_i241890_1_;
-      this.port = p_i241890_2_;
-      this.serverIp = p_i241890_1_.getServerIp();
-      this.serverPort = p_i241890_1_.getServerPort();
-      this.serverName = p_i241890_1_.getServerName();
-      this.maxPlayers = p_i241890_1_.getMaxPlayers();
-      this.worldName = p_i241890_1_.getLevelIdName();
-      this.lastRulesResponse = 0L;
-      this.hostIp = "0.0.0.0";
-      if (!this.serverIp.isEmpty() && !this.hostIp.equals(this.serverIp)) {
-         this.hostIp = this.serverIp;
-      } else {
-         this.serverIp = "0.0.0.0";
+    private QueryThread(IServer p_i241890_1_, int p_i241890_2_)
+    {
+        super("Query Listener");
+        this.field_232649_r_ = p_i241890_1_;
+        this.queryPort = p_i241890_2_;
+        this.serverHostname = p_i241890_1_.getHostname();
+        this.serverPort = p_i241890_1_.getPort();
+        this.serverMotd = p_i241890_1_.getMotd();
+        this.maxPlayers = p_i241890_1_.getMaxPlayers();
+        this.worldName = p_i241890_1_.func_230542_k__();
+        this.lastQueryResponseTime = 0L;
+        this.queryHostname = "0.0.0.0";
 
-         try {
-            InetAddress inetaddress = InetAddress.getLocalHost();
-            this.hostIp = inetaddress.getHostAddress();
-         } catch (UnknownHostException unknownhostexception) {
-            LOGGER.warn("Unable to determine local host IP, please set server-ip in server.properties", (Throwable)unknownhostexception);
-         }
-      }
+        if (!this.serverHostname.isEmpty() && !this.queryHostname.equals(this.serverHostname))
+        {
+            this.queryHostname = this.serverHostname;
+        }
+        else
+        {
+            this.serverHostname = "0.0.0.0";
 
-      this.rulesResponse = new RConOutputStream(1460);
-      this.validChallenges = Maps.newHashMap();
-   }
-
-   @Nullable
-   public static QueryThread create(IServer p_242129_0_) {
-      int i = p_242129_0_.getProperties().queryPort;
-      if (0 < i && 65535 >= i) {
-         QueryThread querythread = new QueryThread(p_242129_0_, i);
-         return !querythread.start() ? null : querythread;
-      } else {
-         LOGGER.warn("Invalid query port {} found in server.properties (queries disabled)", (int)i);
-         return null;
-      }
-   }
-
-   private void sendTo(byte[] p_72620_1_, DatagramPacket p_72620_2_) throws IOException {
-      this.socket.send(new DatagramPacket(p_72620_1_, p_72620_1_.length, p_72620_2_.getSocketAddress()));
-   }
-
-   private boolean processPacket(DatagramPacket p_72621_1_) throws IOException {
-      byte[] abyte = p_72621_1_.getData();
-      int i = p_72621_1_.getLength();
-      SocketAddress socketaddress = p_72621_1_.getSocketAddress();
-      LOGGER.debug("Packet len {} [{}]", i, socketaddress);
-      if (3 <= i && -2 == abyte[0] && -3 == abyte[1]) {
-         LOGGER.debug("Packet '{}' [{}]", RConUtils.toHexString(abyte[2]), socketaddress);
-         switch(abyte[2]) {
-         case 0:
-            if (!this.validChallenge(p_72621_1_)) {
-               LOGGER.debug("Invalid challenge [{}]", (Object)socketaddress);
-               return false;
-            } else if (15 == i) {
-               this.sendTo(this.buildRuleResponse(p_72621_1_), p_72621_1_);
-               LOGGER.debug("Rules [{}]", (Object)socketaddress);
-            } else {
-               RConOutputStream rconoutputstream = new RConOutputStream(1460);
-               rconoutputstream.write(0);
-               rconoutputstream.writeBytes(this.getIdentBytes(p_72621_1_.getSocketAddress()));
-               rconoutputstream.writeString(this.serverName);
-               rconoutputstream.writeString("SMP");
-               rconoutputstream.writeString(this.worldName);
-               rconoutputstream.writeString(Integer.toString(this.serverInterface.getPlayerCount()));
-               rconoutputstream.writeString(Integer.toString(this.maxPlayers));
-               rconoutputstream.writeShort((short)this.serverPort);
-               rconoutputstream.writeString(this.hostIp);
-               this.sendTo(rconoutputstream.toByteArray(), p_72621_1_);
-               LOGGER.debug("Status [{}]", (Object)socketaddress);
+            try
+            {
+                InetAddress inetaddress = InetAddress.getLocalHost();
+                this.queryHostname = inetaddress.getHostAddress();
             }
-         default:
-            return true;
-         case 9:
-            this.sendChallenge(p_72621_1_);
-            LOGGER.debug("Challenge [{}]", (Object)socketaddress);
-            return true;
-         }
-      } else {
-         LOGGER.debug("Invalid packet [{}]", (Object)socketaddress);
-         return false;
-      }
-   }
-
-   private byte[] buildRuleResponse(DatagramPacket p_72624_1_) throws IOException {
-      long i = Util.getMillis();
-      if (i < this.lastRulesResponse + 5000L) {
-         byte[] abyte = this.rulesResponse.toByteArray();
-         byte[] abyte1 = this.getIdentBytes(p_72624_1_.getSocketAddress());
-         abyte[1] = abyte1[0];
-         abyte[2] = abyte1[1];
-         abyte[3] = abyte1[2];
-         abyte[4] = abyte1[3];
-         return abyte;
-      } else {
-         this.lastRulesResponse = i;
-         this.rulesResponse.reset();
-         this.rulesResponse.write(0);
-         this.rulesResponse.writeBytes(this.getIdentBytes(p_72624_1_.getSocketAddress()));
-         this.rulesResponse.writeString("splitnum");
-         this.rulesResponse.write(128);
-         this.rulesResponse.write(0);
-         this.rulesResponse.writeString("hostname");
-         this.rulesResponse.writeString(this.serverName);
-         this.rulesResponse.writeString("gametype");
-         this.rulesResponse.writeString("SMP");
-         this.rulesResponse.writeString("game_id");
-         this.rulesResponse.writeString("MINECRAFT");
-         this.rulesResponse.writeString("version");
-         this.rulesResponse.writeString(this.serverInterface.getServerVersion());
-         this.rulesResponse.writeString("plugins");
-         this.rulesResponse.writeString(this.serverInterface.getPluginNames());
-         this.rulesResponse.writeString("map");
-         this.rulesResponse.writeString(this.worldName);
-         this.rulesResponse.writeString("numplayers");
-         this.rulesResponse.writeString("" + this.serverInterface.getPlayerCount());
-         this.rulesResponse.writeString("maxplayers");
-         this.rulesResponse.writeString("" + this.maxPlayers);
-         this.rulesResponse.writeString("hostport");
-         this.rulesResponse.writeString("" + this.serverPort);
-         this.rulesResponse.writeString("hostip");
-         this.rulesResponse.writeString(this.hostIp);
-         this.rulesResponse.write(0);
-         this.rulesResponse.write(1);
-         this.rulesResponse.writeString("player_");
-         this.rulesResponse.write(0);
-         String[] astring = this.serverInterface.getPlayerNames();
-
-         for(String s : astring) {
-            this.rulesResponse.writeString(s);
-         }
-
-         this.rulesResponse.write(0);
-         return this.rulesResponse.toByteArray();
-      }
-   }
-
-   private byte[] getIdentBytes(SocketAddress p_72625_1_) {
-      return this.validChallenges.get(p_72625_1_).getIdentBytes();
-   }
-
-   private Boolean validChallenge(DatagramPacket p_72627_1_) {
-      SocketAddress socketaddress = p_72627_1_.getSocketAddress();
-      if (!this.validChallenges.containsKey(socketaddress)) {
-         return false;
-      } else {
-         byte[] abyte = p_72627_1_.getData();
-         return this.validChallenges.get(socketaddress).getChallenge() == RConUtils.intFromNetworkByteArray(abyte, 7, p_72627_1_.getLength());
-      }
-   }
-
-   private void sendChallenge(DatagramPacket p_72622_1_) throws IOException {
-      QueryThread.Auth querythread$auth = new QueryThread.Auth(p_72622_1_);
-      this.validChallenges.put(p_72622_1_.getSocketAddress(), querythread$auth);
-      this.sendTo(querythread$auth.getChallengeBytes(), p_72622_1_);
-   }
-
-   private void pruneChallenges() {
-      if (this.running) {
-         long i = Util.getMillis();
-         if (i >= this.lastChallengeCheck + 30000L) {
-            this.lastChallengeCheck = i;
-            this.validChallenges.values().removeIf((p_232650_2_) -> {
-               return p_232650_2_.before(i);
-            });
-         }
-      }
-   }
-
-   public void run() {
-      LOGGER.info("Query running on {}:{}", this.serverIp, this.port);
-      this.lastChallengeCheck = Util.getMillis();
-      DatagramPacket datagrampacket = new DatagramPacket(this.buffer, this.buffer.length);
-
-      try {
-         while(this.running) {
-            try {
-               this.socket.receive(datagrampacket);
-               this.pruneChallenges();
-               this.processPacket(datagrampacket);
-            } catch (SocketTimeoutException sockettimeoutexception) {
-               this.pruneChallenges();
-            } catch (PortUnreachableException portunreachableexception) {
-            } catch (IOException ioexception) {
-               this.recoverSocketError(ioexception);
+            catch (UnknownHostException unknownhostexception)
+            {
+                field_232648_d_.warn("Unable to determine local host IP, please set server-ip in server.properties", (Throwable)unknownhostexception);
             }
-         }
-      } finally {
-         LOGGER.debug("closeSocket: {}:{}", this.serverIp, this.port);
-         this.socket.close();
-      }
+        }
 
-   }
+        this.output = new RConOutputStream(1460);
+        this.queryClients = Maps.newHashMap();
+    }
 
-   public boolean start() {
-      if (this.running) {
-         return true;
-      } else {
-         return !this.initSocket() ? false : super.start();
-      }
-   }
+    @Nullable
+    public static QueryThread func_242129_a(IServer p_242129_0_)
+    {
+        int i = p_242129_0_.getServerProperties().queryPort;
 
-   private void recoverSocketError(Exception p_72623_1_) {
-      if (this.running) {
-         LOGGER.warn("Unexpected exception", (Throwable)p_72623_1_);
-         if (!this.initSocket()) {
-            LOGGER.error("Failed to recover from exception, shutting down!");
-            this.running = false;
-         }
+        if (0 < i && 65535 >= i)
+        {
+            QueryThread querythread = new QueryThread(p_242129_0_, i);
+            return !querythread.func_241832_a() ? null : querythread;
+        }
+        else
+        {
+            field_232648_d_.warn("Invalid query port {} found in server.properties (queries disabled)", (int)i);
+            return null;
+        }
+    }
 
-      }
-   }
+    /**
+     * Sends a byte array as a DatagramPacket response to the client who sent the given DatagramPacket
+     */
+    private void sendResponsePacket(byte[] data, DatagramPacket requestPacket) throws IOException
+    {
+        this.querySocket.send(new DatagramPacket(data, data.length, requestPacket.getSocketAddress()));
+    }
 
-   private boolean initSocket() {
-      try {
-         this.socket = new DatagramSocket(this.port, InetAddress.getByName(this.serverIp));
-         this.socket.setSoTimeout(500);
-         return true;
-      } catch (Exception exception) {
-         LOGGER.warn("Unable to initialise query system on {}:{}", this.serverIp, this.port, exception);
-         return false;
-      }
-   }
+    /**
+     * Parses an incoming DatagramPacket, returning true if the packet was valid
+     */
+    private boolean parseIncomingPacket(DatagramPacket requestPacket) throws IOException
+    {
+        byte[] abyte = requestPacket.getData();
+        int i = requestPacket.getLength();
+        SocketAddress socketaddress = requestPacket.getSocketAddress();
+        field_232648_d_.debug("Packet len {} [{}]", i, socketaddress);
 
-   static class Auth {
-      private final long time = (new Date()).getTime();
-      private final int challenge;
-      private final byte[] identBytes;
-      private final byte[] challengeBytes;
-      private final String ident;
+        if (3 <= i && -2 == abyte[0] && -3 == abyte[1])
+        {
+            field_232648_d_.debug("Packet '{}' [{}]", RConUtils.getByteAsHexString(abyte[2]), socketaddress);
 
-      public Auth(DatagramPacket p_i231427_1_) {
-         byte[] abyte = p_i231427_1_.getData();
-         this.identBytes = new byte[4];
-         this.identBytes[0] = abyte[3];
-         this.identBytes[1] = abyte[4];
-         this.identBytes[2] = abyte[5];
-         this.identBytes[3] = abyte[6];
-         this.ident = new String(this.identBytes, StandardCharsets.UTF_8);
-         this.challenge = (new Random()).nextInt(16777216);
-         this.challengeBytes = String.format("\t%s%d\u0000", this.ident, this.challenge).getBytes(StandardCharsets.UTF_8);
-      }
+            switch (abyte[2])
+            {
+                case 0:
+                    if (!this.verifyClientAuth(requestPacket))
+                    {
+                        field_232648_d_.debug("Invalid challenge [{}]", (Object)socketaddress);
+                        return false;
+                    }
+                    else if (15 == i)
+                    {
+                        this.sendResponsePacket(this.createQueryResponse(requestPacket), requestPacket);
+                        field_232648_d_.debug("Rules [{}]", (Object)socketaddress);
+                    }
+                    else
+                    {
+                        RConOutputStream rconoutputstream = new RConOutputStream(1460);
+                        rconoutputstream.writeInt(0);
+                        rconoutputstream.writeByteArray(this.getRequestID(requestPacket.getSocketAddress()));
+                        rconoutputstream.writeString(this.serverMotd);
+                        rconoutputstream.writeString("SMP");
+                        rconoutputstream.writeString(this.worldName);
+                        rconoutputstream.writeString(Integer.toString(this.field_232649_r_.getCurrentPlayerCount()));
+                        rconoutputstream.writeString(Integer.toString(this.maxPlayers));
+                        rconoutputstream.writeShort((short)this.serverPort);
+                        rconoutputstream.writeString(this.queryHostname);
+                        this.sendResponsePacket(rconoutputstream.toByteArray(), requestPacket);
+                        field_232648_d_.debug("Status [{}]", (Object)socketaddress);
+                    }
 
-      public Boolean before(long p_72593_1_) {
-         return this.time < p_72593_1_;
-      }
+                default:
+                    return true;
 
-      public int getChallenge() {
-         return this.challenge;
-      }
+                case 9:
+                    this.sendAuthChallenge(requestPacket);
+                    field_232648_d_.debug("Challenge [{}]", (Object)socketaddress);
+                    return true;
+            }
+        }
+        else
+        {
+            field_232648_d_.debug("Invalid packet [{}]", (Object)socketaddress);
+            return false;
+        }
+    }
 
-      public byte[] getChallengeBytes() {
-         return this.challengeBytes;
-      }
+    /**
+     * Creates a query response as a byte array for the specified query DatagramPacket
+     */
+    private byte[] createQueryResponse(DatagramPacket requestPacket) throws IOException
+    {
+        long i = Util.milliTime();
 
-      public byte[] getIdentBytes() {
-         return this.identBytes;
-      }
-   }
+        if (i < this.lastQueryResponseTime + 5000L)
+        {
+            byte[] abyte = this.output.toByteArray();
+            byte[] abyte1 = this.getRequestID(requestPacket.getSocketAddress());
+            abyte[1] = abyte1[0];
+            abyte[2] = abyte1[1];
+            abyte[3] = abyte1[2];
+            abyte[4] = abyte1[3];
+            return abyte;
+        }
+        else
+        {
+            this.lastQueryResponseTime = i;
+            this.output.reset();
+            this.output.writeInt(0);
+            this.output.writeByteArray(this.getRequestID(requestPacket.getSocketAddress()));
+            this.output.writeString("splitnum");
+            this.output.writeInt(128);
+            this.output.writeInt(0);
+            this.output.writeString("hostname");
+            this.output.writeString(this.serverMotd);
+            this.output.writeString("gametype");
+            this.output.writeString("SMP");
+            this.output.writeString("game_id");
+            this.output.writeString("MINECRAFT");
+            this.output.writeString("version");
+            this.output.writeString(this.field_232649_r_.getMinecraftVersion());
+            this.output.writeString("plugins");
+            this.output.writeString(this.field_232649_r_.getPlugins());
+            this.output.writeString("map");
+            this.output.writeString(this.worldName);
+            this.output.writeString("numplayers");
+            this.output.writeString("" + this.field_232649_r_.getCurrentPlayerCount());
+            this.output.writeString("maxplayers");
+            this.output.writeString("" + this.maxPlayers);
+            this.output.writeString("hostport");
+            this.output.writeString("" + this.serverPort);
+            this.output.writeString("hostip");
+            this.output.writeString(this.queryHostname);
+            this.output.writeInt(0);
+            this.output.writeInt(1);
+            this.output.writeString("player_");
+            this.output.writeInt(0);
+            String[] astring = this.field_232649_r_.getOnlinePlayerNames();
+
+            for (String s : astring)
+            {
+                this.output.writeString(s);
+            }
+
+            this.output.writeInt(0);
+            return this.output.toByteArray();
+        }
+    }
+
+    /**
+     * Returns the request ID provided by the authorized client
+     */
+    private byte[] getRequestID(SocketAddress address)
+    {
+        return this.queryClients.get(address).getRequestId();
+    }
+
+    /**
+     * Returns true if the client has a valid auth, otherwise false
+     */
+    private Boolean verifyClientAuth(DatagramPacket requestPacket)
+    {
+        SocketAddress socketaddress = requestPacket.getSocketAddress();
+
+        if (!this.queryClients.containsKey(socketaddress))
+        {
+            return false;
+        }
+        else
+        {
+            byte[] abyte = requestPacket.getData();
+            return this.queryClients.get(socketaddress).getRandomChallenge() == RConUtils.getBytesAsBEint(abyte, 7, requestPacket.getLength());
+        }
+    }
+
+    /**
+     * Sends an auth challenge DatagramPacket to the client and adds the client to the queryClients map
+     */
+    private void sendAuthChallenge(DatagramPacket requestPacket) throws IOException
+    {
+        QueryThread.Auth querythread$auth = new QueryThread.Auth(requestPacket);
+        this.queryClients.put(requestPacket.getSocketAddress(), querythread$auth);
+        this.sendResponsePacket(querythread$auth.getChallengeValue(), requestPacket);
+    }
+
+    /**
+     * Removes all clients whose auth is no longer valid
+     */
+    private void cleanQueryClientsMap()
+    {
+        if (this.running)
+        {
+            long i = Util.milliTime();
+
+            if (i >= this.lastAuthCheckTime + 30000L)
+            {
+                this.lastAuthCheckTime = i;
+                this.queryClients.values().removeIf((p_232650_2_) ->
+                {
+                    return p_232650_2_.hasExpired(i);
+                });
+            }
+        }
+    }
+
+    public void run()
+    {
+        field_232648_d_.info("Query running on {}:{}", this.serverHostname, this.queryPort);
+        this.lastAuthCheckTime = Util.milliTime();
+        DatagramPacket datagrampacket = new DatagramPacket(this.buffer, this.buffer.length);
+
+        try
+        {
+            while (this.running)
+            {
+                try
+                {
+                    this.querySocket.receive(datagrampacket);
+                    this.cleanQueryClientsMap();
+                    this.parseIncomingPacket(datagrampacket);
+                }
+                catch (SocketTimeoutException sockettimeoutexception)
+                {
+                    this.cleanQueryClientsMap();
+                }
+                catch (PortUnreachableException portunreachableexception)
+                {
+                }
+                catch (IOException ioexception)
+                {
+                    this.stopWithException(ioexception);
+                }
+            }
+        }
+        finally
+        {
+            field_232648_d_.debug("closeSocket: {}:{}", this.serverHostname, this.queryPort);
+            this.querySocket.close();
+        }
+    }
+
+    public boolean func_241832_a()
+    {
+        if (this.running)
+        {
+            return true;
+        }
+        else
+        {
+            return !this.initQuerySystem() ? false : super.func_241832_a();
+        }
+    }
+
+    /**
+     * Stops the query server and reports the given Exception
+     */
+    private void stopWithException(Exception exception)
+    {
+        if (this.running)
+        {
+            field_232648_d_.warn("Unexpected exception", (Throwable)exception);
+
+            if (!this.initQuerySystem())
+            {
+                field_232648_d_.error("Failed to recover from exception, shutting down!");
+                this.running = false;
+            }
+        }
+    }
+
+    /**
+     * Initializes the query system by binding it to a port
+     */
+    private boolean initQuerySystem()
+    {
+        try
+        {
+            this.querySocket = new DatagramSocket(this.queryPort, InetAddress.getByName(this.serverHostname));
+            this.querySocket.setSoTimeout(500);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            field_232648_d_.warn("Unable to initialise query system on {}:{}", this.serverHostname, this.queryPort, exception);
+            return false;
+        }
+    }
+
+    static class Auth
+    {
+        private final long timestamp = (new Date()).getTime();
+        private final int randomChallenge;
+        private final byte[] requestId;
+        private final byte[] challengeValue;
+        private final String requestIdAsString;
+
+        public Auth(DatagramPacket p_i231427_1_)
+        {
+            byte[] abyte = p_i231427_1_.getData();
+            this.requestId = new byte[4];
+            this.requestId[0] = abyte[3];
+            this.requestId[1] = abyte[4];
+            this.requestId[2] = abyte[5];
+            this.requestId[3] = abyte[6];
+            this.requestIdAsString = new String(this.requestId, StandardCharsets.UTF_8);
+            this.randomChallenge = (new Random()).nextInt(16777216);
+            this.challengeValue = String.format("\t%s%d\u0000", this.requestIdAsString, this.randomChallenge).getBytes(StandardCharsets.UTF_8);
+        }
+
+        public Boolean hasExpired(long currentTime)
+        {
+            return this.timestamp < currentTime;
+        }
+
+        public int getRandomChallenge()
+        {
+            return this.randomChallenge;
+        }
+
+        public byte[] getChallengeValue()
+        {
+            return this.challengeValue;
+        }
+
+        public byte[] getRequestId()
+        {
+            return this.requestId;
+        }
+    }
 }

@@ -15,98 +15,136 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.text.TextComponentUtils;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class TagCommand {
-   private static final SimpleCommandExceptionType ERROR_ADD_FAILED = new SimpleCommandExceptionType(new TranslationTextComponent("commands.tag.add.failed"));
-   private static final SimpleCommandExceptionType ERROR_REMOVE_FAILED = new SimpleCommandExceptionType(new TranslationTextComponent("commands.tag.remove.failed"));
+public class TagCommand
+{
+    private static final SimpleCommandExceptionType ADD_FAILED = new SimpleCommandExceptionType(new TranslationTextComponent("commands.tag.add.failed"));
+    private static final SimpleCommandExceptionType REMOVE_FAILED = new SimpleCommandExceptionType(new TranslationTextComponent("commands.tag.remove.failed"));
 
-   public static void register(CommandDispatcher<CommandSource> p_198743_0_) {
-      p_198743_0_.register(Commands.literal("tag").requires((p_198751_0_) -> {
-         return p_198751_0_.hasPermission(2);
-      }).then(Commands.argument("targets", EntityArgument.entities()).then(Commands.literal("add").then(Commands.argument("name", StringArgumentType.word()).executes((p_198746_0_) -> {
-         return addTag(p_198746_0_.getSource(), EntityArgument.getEntities(p_198746_0_, "targets"), StringArgumentType.getString(p_198746_0_, "name"));
-      }))).then(Commands.literal("remove").then(Commands.argument("name", StringArgumentType.word()).suggests((p_198745_0_, p_198745_1_) -> {
-         return ISuggestionProvider.suggest(getTags(EntityArgument.getEntities(p_198745_0_, "targets")), p_198745_1_);
-      }).executes((p_198742_0_) -> {
-         return removeTag(p_198742_0_.getSource(), EntityArgument.getEntities(p_198742_0_, "targets"), StringArgumentType.getString(p_198742_0_, "name"));
-      }))).then(Commands.literal("list").executes((p_198747_0_) -> {
-         return listTags(p_198747_0_.getSource(), EntityArgument.getEntities(p_198747_0_, "targets"));
-      }))));
-   }
+    public static void register(CommandDispatcher<CommandSource> dispatcher)
+    {
+        dispatcher.register(Commands.literal("tag").requires((p_198751_0_) ->
+        {
+            return p_198751_0_.hasPermissionLevel(2);
+        }).then(Commands.argument("targets", EntityArgument.entities()).then(Commands.literal("add").then(Commands.argument("name", StringArgumentType.word()).executes((p_198746_0_) ->
+        {
+            return addTag(p_198746_0_.getSource(), EntityArgument.getEntities(p_198746_0_, "targets"), StringArgumentType.getString(p_198746_0_, "name"));
+        }))).then(Commands.literal("remove").then(Commands.argument("name", StringArgumentType.word()).suggests((p_198745_0_, p_198745_1_) ->
+        {
+            return ISuggestionProvider.suggest(getAllTags(EntityArgument.getEntities(p_198745_0_, "targets")), p_198745_1_);
+        }).executes((p_198742_0_) ->
+        {
+            return removeTag(p_198742_0_.getSource(), EntityArgument.getEntities(p_198742_0_, "targets"), StringArgumentType.getString(p_198742_0_, "name"));
+        }))).then(Commands.literal("list").executes((p_198747_0_) ->
+        {
+            return listTags(p_198747_0_.getSource(), EntityArgument.getEntities(p_198747_0_, "targets"));
+        }))));
+    }
 
-   private static Collection<String> getTags(Collection<? extends Entity> p_198748_0_) {
-      Set<String> set = Sets.newHashSet();
+    private static Collection<String> getAllTags(Collection <? extends Entity > entities)
+    {
+        Set<String> set = Sets.newHashSet();
 
-      for(Entity entity : p_198748_0_) {
-         set.addAll(entity.getTags());
-      }
+        for (Entity entity : entities)
+        {
+            set.addAll(entity.getTags());
+        }
 
-      return set;
-   }
+        return set;
+    }
 
-   private static int addTag(CommandSource p_198749_0_, Collection<? extends Entity> p_198749_1_, String p_198749_2_) throws CommandSyntaxException {
-      int i = 0;
+    private static int addTag(CommandSource source, Collection <? extends Entity > entities, String tagName) throws CommandSyntaxException
+    {
+        int i = 0;
 
-      for(Entity entity : p_198749_1_) {
-         if (entity.addTag(p_198749_2_)) {
-            ++i;
-         }
-      }
+        for (Entity entity : entities)
+        {
+            if (entity.addTag(tagName))
+            {
+                ++i;
+            }
+        }
 
-      if (i == 0) {
-         throw ERROR_ADD_FAILED.create();
-      } else {
-         if (p_198749_1_.size() == 1) {
-            p_198749_0_.sendSuccess(new TranslationTextComponent("commands.tag.add.success.single", p_198749_2_, p_198749_1_.iterator().next().getDisplayName()), true);
-         } else {
-            p_198749_0_.sendSuccess(new TranslationTextComponent("commands.tag.add.success.multiple", p_198749_2_, p_198749_1_.size()), true);
-         }
+        if (i == 0)
+        {
+            throw ADD_FAILED.create();
+        }
+        else
+        {
+            if (entities.size() == 1)
+            {
+                source.sendFeedback(new TranslationTextComponent("commands.tag.add.success.single", tagName, entities.iterator().next().getDisplayName()), true);
+            }
+            else
+            {
+                source.sendFeedback(new TranslationTextComponent("commands.tag.add.success.multiple", tagName, entities.size()), true);
+            }
 
-         return i;
-      }
-   }
+            return i;
+        }
+    }
 
-   private static int removeTag(CommandSource p_198750_0_, Collection<? extends Entity> p_198750_1_, String p_198750_2_) throws CommandSyntaxException {
-      int i = 0;
+    private static int removeTag(CommandSource source, Collection <? extends Entity > entities, String tagName) throws CommandSyntaxException
+    {
+        int i = 0;
 
-      for(Entity entity : p_198750_1_) {
-         if (entity.removeTag(p_198750_2_)) {
-            ++i;
-         }
-      }
+        for (Entity entity : entities)
+        {
+            if (entity.removeTag(tagName))
+            {
+                ++i;
+            }
+        }
 
-      if (i == 0) {
-         throw ERROR_REMOVE_FAILED.create();
-      } else {
-         if (p_198750_1_.size() == 1) {
-            p_198750_0_.sendSuccess(new TranslationTextComponent("commands.tag.remove.success.single", p_198750_2_, p_198750_1_.iterator().next().getDisplayName()), true);
-         } else {
-            p_198750_0_.sendSuccess(new TranslationTextComponent("commands.tag.remove.success.multiple", p_198750_2_, p_198750_1_.size()), true);
-         }
+        if (i == 0)
+        {
+            throw REMOVE_FAILED.create();
+        }
+        else
+        {
+            if (entities.size() == 1)
+            {
+                source.sendFeedback(new TranslationTextComponent("commands.tag.remove.success.single", tagName, entities.iterator().next().getDisplayName()), true);
+            }
+            else
+            {
+                source.sendFeedback(new TranslationTextComponent("commands.tag.remove.success.multiple", tagName, entities.size()), true);
+            }
 
-         return i;
-      }
-   }
+            return i;
+        }
+    }
 
-   private static int listTags(CommandSource p_198744_0_, Collection<? extends Entity> p_198744_1_) {
-      Set<String> set = Sets.newHashSet();
+    private static int listTags(CommandSource source, Collection <? extends Entity > entities)
+    {
+        Set<String> set = Sets.newHashSet();
 
-      for(Entity entity : p_198744_1_) {
-         set.addAll(entity.getTags());
-      }
+        for (Entity entity : entities)
+        {
+            set.addAll(entity.getTags());
+        }
 
-      if (p_198744_1_.size() == 1) {
-         Entity entity1 = p_198744_1_.iterator().next();
-         if (set.isEmpty()) {
-            p_198744_0_.sendSuccess(new TranslationTextComponent("commands.tag.list.single.empty", entity1.getDisplayName()), false);
-         } else {
-            p_198744_0_.sendSuccess(new TranslationTextComponent("commands.tag.list.single.success", entity1.getDisplayName(), set.size(), TextComponentUtils.formatList(set)), false);
-         }
-      } else if (set.isEmpty()) {
-         p_198744_0_.sendSuccess(new TranslationTextComponent("commands.tag.list.multiple.empty", p_198744_1_.size()), false);
-      } else {
-         p_198744_0_.sendSuccess(new TranslationTextComponent("commands.tag.list.multiple.success", p_198744_1_.size(), set.size(), TextComponentUtils.formatList(set)), false);
-      }
+        if (entities.size() == 1)
+        {
+            Entity entity1 = entities.iterator().next();
 
-      return set.size();
-   }
+            if (set.isEmpty())
+            {
+                source.sendFeedback(new TranslationTextComponent("commands.tag.list.single.empty", entity1.getDisplayName()), false);
+            }
+            else
+            {
+                source.sendFeedback(new TranslationTextComponent("commands.tag.list.single.success", entity1.getDisplayName(), set.size(), TextComponentUtils.makeGreenSortedList(set)), false);
+            }
+        }
+        else if (set.isEmpty())
+        {
+            source.sendFeedback(new TranslationTextComponent("commands.tag.list.multiple.empty", entities.size()), false);
+        }
+        else
+        {
+            source.sendFeedback(new TranslationTextComponent("commands.tag.list.multiple.success", entities.size(), set.size(), TextComponentUtils.makeGreenSortedList(set)), false);
+        }
+
+        return set.size();
+    }
 }

@@ -52,335 +52,460 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class PiglinEntity extends AbstractPiglinEntity implements ICrossbowUser {
-   private static final DataParameter<Boolean> DATA_BABY_ID = EntityDataManager.defineId(PiglinEntity.class, DataSerializers.BOOLEAN);
-   private static final DataParameter<Boolean> DATA_IS_CHARGING_CROSSBOW = EntityDataManager.defineId(PiglinEntity.class, DataSerializers.BOOLEAN);
-   private static final DataParameter<Boolean> DATA_IS_DANCING = EntityDataManager.defineId(PiglinEntity.class, DataSerializers.BOOLEAN);
-   private static final UUID SPEED_MODIFIER_BABY_UUID = UUID.fromString("766bfa64-11f3-11ea-8d71-362b9e155667");
-   private static final AttributeModifier SPEED_MODIFIER_BABY = new AttributeModifier(SPEED_MODIFIER_BABY_UUID, "Baby speed boost", (double)0.2F, AttributeModifier.Operation.MULTIPLY_BASE);
-   private final Inventory inventory = new Inventory(8);
-   private boolean cannotHunt = false;
-   protected static final ImmutableList<SensorType<? extends Sensor<? super PiglinEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ITEMS, SensorType.HURT_BY, SensorType.PIGLIN_SPECIFIC_SENSOR);
-   protected static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.LOOK_TARGET, MemoryModuleType.DOORS_TO_CLOSE, MemoryModuleType.LIVING_ENTITIES, MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLINS, MemoryModuleType.NEARBY_ADULT_PIGLINS, MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.PATH, MemoryModuleType.ANGRY_AT, MemoryModuleType.UNIVERSAL_ANGER, MemoryModuleType.AVOID_TARGET, MemoryModuleType.ADMIRING_ITEM, MemoryModuleType.TIME_TRYING_TO_REACH_ADMIRE_ITEM, MemoryModuleType.ADMIRING_DISABLED, MemoryModuleType.DISABLE_WALK_TO_ADMIRE_ITEM, MemoryModuleType.CELEBRATE_LOCATION, MemoryModuleType.DANCING, MemoryModuleType.HUNTED_RECENTLY, MemoryModuleType.NEAREST_VISIBLE_BABY_HOGLIN, MemoryModuleType.NEAREST_VISIBLE_NEMESIS, MemoryModuleType.NEAREST_VISIBLE_ZOMBIFIED, MemoryModuleType.RIDE_TARGET, MemoryModuleType.VISIBLE_ADULT_PIGLIN_COUNT, MemoryModuleType.VISIBLE_ADULT_HOGLIN_COUNT, MemoryModuleType.NEAREST_VISIBLE_HUNTABLE_HOGLIN, MemoryModuleType.NEAREST_TARGETABLE_PLAYER_NOT_WEARING_GOLD, MemoryModuleType.NEAREST_PLAYER_HOLDING_WANTED_ITEM, MemoryModuleType.ATE_RECENTLY, MemoryModuleType.NEAREST_REPELLENT);
+public class PiglinEntity extends AbstractPiglinEntity implements ICrossbowUser
+{
+    private static final DataParameter<Boolean> field_234415_d_ = EntityDataManager.createKey(PiglinEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> field_234409_bv_ = EntityDataManager.createKey(PiglinEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> DANCING = EntityDataManager.createKey(PiglinEntity.class, DataSerializers.BOOLEAN);
+    private static final UUID BABY_SPEED_MODIFIER_IDENTIFIER = UUID.fromString("766bfa64-11f3-11ea-8d71-362b9e155667");
+    private static final AttributeModifier BABY_SPEED_MODIFIER = new AttributeModifier(BABY_SPEED_MODIFIER_IDENTIFIER, "Baby speed boost", (double)0.2F, AttributeModifier.Operation.MULTIPLY_BASE);
+    private final Inventory inventory = new Inventory(8);
+    private boolean field_234407_bB_ = false;
+    protected static final ImmutableList < SensorType <? extends Sensor <? super PiglinEntity >>> field_234405_b_ = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ITEMS, SensorType.HURT_BY, SensorType.PIGLIN_SPECIFIC_SENSOR);
+    protected static final ImmutableList < MemoryModuleType<? >> field_234414_c_ = ImmutableList.of(MemoryModuleType.LOOK_TARGET, MemoryModuleType.OPENED_DOORS, MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLINS, MemoryModuleType.NEAREST_ADULT_PIGLINS, MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.PATH, MemoryModuleType.ANGRY_AT, MemoryModuleType.UNIVERSAL_ANGER, MemoryModuleType.AVOID_TARGET, MemoryModuleType.ADMIRING_ITEM, MemoryModuleType.TIME_TRYING_TO_REACH_ADMIRE_ITEM, MemoryModuleType.ADMIRING_DISABLED, MemoryModuleType.DISABLE_WALK_TO_ADMIRE_ITEM, MemoryModuleType.CELEBRATE_LOCATION, MemoryModuleType.DANCING, MemoryModuleType.HUNTED_RECENTLY, MemoryModuleType.NEAREST_VISIBLE_BABY_HOGLIN, MemoryModuleType.NEAREST_VISIBLE_NEMESIS, MemoryModuleType.NEAREST_VISIBLE_ZOMBIFIED, MemoryModuleType.RIDE_TARGET, MemoryModuleType.VISIBLE_ADULT_PIGLIN_COUNT, MemoryModuleType.VISIBLE_ADULT_HOGLIN_COUNT, MemoryModuleType.NEAREST_VISIBLE_HUNTABLE_HOGLIN, MemoryModuleType.NEAREST_TARGETABLE_PLAYER_NOT_WEARING_GOLD, MemoryModuleType.NEAREST_PLAYER_HOLDING_WANTED_ITEM, MemoryModuleType.ATE_RECENTLY, MemoryModuleType.NEAREST_REPELLENT);
 
-   public PiglinEntity(EntityType<? extends AbstractPiglinEntity> p_i231570_1_, World p_i231570_2_) {
-      super(p_i231570_1_, p_i231570_2_);
-      this.xpReward = 5;
-   }
+    public PiglinEntity(EntityType <? extends AbstractPiglinEntity > p_i231570_1_, World p_i231570_2_)
+    {
+        super(p_i231570_1_, p_i231570_2_);
+        this.experienceValue = 5;
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      if (this.isBaby()) {
-         p_213281_1_.putBoolean("IsBaby", true);
-      }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
 
-      if (this.cannotHunt) {
-         p_213281_1_.putBoolean("CannotHunt", true);
-      }
+        if (this.isChild())
+        {
+            compound.putBoolean("IsBaby", true);
+        }
 
-      p_213281_1_.put("Inventory", this.inventory.createTag());
-   }
+        if (this.field_234407_bB_)
+        {
+            compound.putBoolean("CannotHunt", true);
+        }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.setBaby(p_70037_1_.getBoolean("IsBaby"));
-      this.setCannotHunt(p_70037_1_.getBoolean("CannotHunt"));
-      this.inventory.fromTag(p_70037_1_.getList("Inventory", 10));
-   }
+        compound.put("Inventory", this.inventory.write());
+    }
 
-   protected void dropCustomDeathLoot(DamageSource p_213333_1_, int p_213333_2_, boolean p_213333_3_) {
-      super.dropCustomDeathLoot(p_213333_1_, p_213333_2_, p_213333_3_);
-      this.inventory.removeAllItems().forEach(this::spawnAtLocation);
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.setChild(compound.getBoolean("IsBaby"));
+        this.setCannotHunt(compound.getBoolean("CannotHunt"));
+        this.inventory.read(compound.getList("Inventory", 10));
+    }
 
-   protected ItemStack addToInventory(ItemStack p_234436_1_) {
-      return this.inventory.addItem(p_234436_1_);
-   }
+    protected void dropSpecialItems(DamageSource source, int looting, boolean recentlyHitIn)
+    {
+        super.dropSpecialItems(source, looting, recentlyHitIn);
+        this.inventory.func_233543_f_().forEach(this::entityDropItem);
+    }
 
-   protected boolean canAddToInventory(ItemStack p_234437_1_) {
-      return this.inventory.canAddItem(p_234437_1_);
-   }
+    protected ItemStack func_234436_k_(ItemStack p_234436_1_)
+    {
+        return this.inventory.addItem(p_234436_1_);
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_BABY_ID, false);
-      this.entityData.define(DATA_IS_CHARGING_CROSSBOW, false);
-      this.entityData.define(DATA_IS_DANCING, false);
-   }
+    protected boolean func_234437_l_(ItemStack p_234437_1_)
+    {
+        return this.inventory.func_233541_b_(p_234437_1_);
+    }
 
-   public void onSyncedDataUpdated(DataParameter<?> p_184206_1_) {
-      super.onSyncedDataUpdated(p_184206_1_);
-      if (DATA_BABY_ID.equals(p_184206_1_)) {
-         this.refreshDimensions();
-      }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(field_234415_d_, false);
+        this.dataManager.register(field_234409_bv_, false);
+        this.dataManager.register(DANCING, false);
+    }
 
-   }
+    public void notifyDataManagerChange(DataParameter<?> key)
+    {
+        super.notifyDataManagerChange(key);
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MonsterEntity.createMonsterAttributes().add(Attributes.MAX_HEALTH, 16.0D).add(Attributes.MOVEMENT_SPEED, (double)0.35F).add(Attributes.ATTACK_DAMAGE, 5.0D);
-   }
+        if (field_234415_d_.equals(key))
+        {
+            this.recalculateSize();
+        }
+    }
 
-   public static boolean checkPiglinSpawnRules(EntityType<PiglinEntity> p_234418_0_, IWorld p_234418_1_, SpawnReason p_234418_2_, BlockPos p_234418_3_, Random p_234418_4_) {
-      return !p_234418_1_.getBlockState(p_234418_3_.below()).is(Blocks.NETHER_WART_BLOCK);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234420_eI_()
+    {
+        return MonsterEntity.func_234295_eP_().createMutableAttribute(Attributes.MAX_HEALTH, 16.0D).createMutableAttribute(Attributes.MOVEMENT_SPEED, (double)0.35F).createMutableAttribute(Attributes.ATTACK_DAMAGE, 5.0D);
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      if (p_213386_3_ != SpawnReason.STRUCTURE) {
-         if (p_213386_1_.getRandom().nextFloat() < 0.2F) {
-            this.setBaby(true);
-         } else if (this.isAdult()) {
-            this.setItemSlot(EquipmentSlotType.MAINHAND, this.createSpawnWeapon());
-         }
-      }
+    public static boolean func_234418_b_(EntityType<PiglinEntity> p_234418_0_, IWorld p_234418_1_, SpawnReason p_234418_2_, BlockPos p_234418_3_, Random p_234418_4_)
+    {
+        return !p_234418_1_.getBlockState(p_234418_3_.down()).isIn(Blocks.NETHER_WART_BLOCK);
+    }
 
-      PiglinTasks.initMemories(this);
-      this.populateDefaultEquipmentSlots(p_213386_2_);
-      this.populateDefaultEquipmentEnchantments(p_213386_2_);
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        if (reason != SpawnReason.STRUCTURE)
+        {
+            if (worldIn.getRandom().nextFloat() < 0.2F)
+            {
+                this.setChild(true);
+            }
+            else if (this.func_242337_eM())
+            {
+                this.setItemStackToSlot(EquipmentSlotType.MAINHAND, this.func_234432_eW_());
+            }
+        }
 
-   protected boolean shouldDespawnInPeaceful() {
-      return false;
-   }
+        PiglinTasks.func_234466_a_(this);
+        this.setEquipmentBasedOnDifficulty(difficultyIn);
+        this.setEnchantmentBasedOnDifficulty(difficultyIn);
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
 
-   public boolean removeWhenFarAway(double p_213397_1_) {
-      return !this.isPersistenceRequired();
-   }
+    protected boolean isDespawnPeaceful()
+    {
+        return false;
+    }
 
-   protected void populateDefaultEquipmentSlots(DifficultyInstance p_180481_1_) {
-      if (this.isAdult()) {
-         this.maybeWearArmor(EquipmentSlotType.HEAD, new ItemStack(Items.GOLDEN_HELMET));
-         this.maybeWearArmor(EquipmentSlotType.CHEST, new ItemStack(Items.GOLDEN_CHESTPLATE));
-         this.maybeWearArmor(EquipmentSlotType.LEGS, new ItemStack(Items.GOLDEN_LEGGINGS));
-         this.maybeWearArmor(EquipmentSlotType.FEET, new ItemStack(Items.GOLDEN_BOOTS));
-      }
+    public boolean canDespawn(double distanceToClosestPlayer)
+    {
+        return !this.isNoDespawnRequired();
+    }
 
-   }
+    /**
+     * Gives armor or weapon for entity based on given DifficultyInstance
+     */
+    protected void setEquipmentBasedOnDifficulty(DifficultyInstance difficulty)
+    {
+        if (this.func_242337_eM())
+        {
+            this.func_234419_d_(EquipmentSlotType.HEAD, new ItemStack(Items.GOLDEN_HELMET));
+            this.func_234419_d_(EquipmentSlotType.CHEST, new ItemStack(Items.GOLDEN_CHESTPLATE));
+            this.func_234419_d_(EquipmentSlotType.LEGS, new ItemStack(Items.GOLDEN_LEGGINGS));
+            this.func_234419_d_(EquipmentSlotType.FEET, new ItemStack(Items.GOLDEN_BOOTS));
+        }
+    }
 
-   private void maybeWearArmor(EquipmentSlotType p_234419_1_, ItemStack p_234419_2_) {
-      if (this.level.random.nextFloat() < 0.1F) {
-         this.setItemSlot(p_234419_1_, p_234419_2_);
-      }
+    private void func_234419_d_(EquipmentSlotType p_234419_1_, ItemStack p_234419_2_)
+    {
+        if (this.world.rand.nextFloat() < 0.1F)
+        {
+            this.setItemStackToSlot(p_234419_1_, p_234419_2_);
+        }
+    }
 
-   }
+    protected Brain.BrainCodec<PiglinEntity> getBrainCodec()
+    {
+        return Brain.createCodec(field_234414_c_, field_234405_b_);
+    }
 
-   protected Brain.BrainCodec<PiglinEntity> brainProvider() {
-      return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
-   }
+    protected Brain<?> createBrain(Dynamic<?> dynamicIn)
+    {
+        return PiglinTasks.func_234469_a_(this, this.getBrainCodec().deserialize(dynamicIn));
+    }
 
-   protected Brain<?> makeBrain(Dynamic<?> p_213364_1_) {
-      return PiglinTasks.makeBrain(this, this.brainProvider().makeBrain(p_213364_1_));
-   }
+    public Brain<PiglinEntity> getBrain()
+    {
+        return (Brain<PiglinEntity>)super.getBrain();
+    }
 
-   public Brain<PiglinEntity> getBrain() {
-      return (Brain<PiglinEntity>)super.getBrain();
-   }
+    public ActionResultType func_230254_b_(PlayerEntity p_230254_1_, Hand p_230254_2_)
+    {
+        ActionResultType actionresulttype = super.func_230254_b_(p_230254_1_, p_230254_2_);
 
-   public ActionResultType mobInteract(PlayerEntity p_230254_1_, Hand p_230254_2_) {
-      ActionResultType actionresulttype = super.mobInteract(p_230254_1_, p_230254_2_);
-      if (actionresulttype.consumesAction()) {
-         return actionresulttype;
-      } else if (!this.level.isClientSide) {
-         return PiglinTasks.mobInteract(this, p_230254_1_, p_230254_2_);
-      } else {
-         boolean flag = PiglinTasks.canAdmire(this, p_230254_1_.getItemInHand(p_230254_2_)) && this.getArmPose() != PiglinAction.ADMIRING_ITEM;
-         return flag ? ActionResultType.SUCCESS : ActionResultType.PASS;
-      }
-   }
+        if (actionresulttype.isSuccessOrConsume())
+        {
+            return actionresulttype;
+        }
+        else if (!this.world.isRemote)
+        {
+            return PiglinTasks.func_234471_a_(this, p_230254_1_, p_230254_2_);
+        }
+        else
+        {
+            boolean flag = PiglinTasks.func_234489_b_(this, p_230254_1_.getHeldItem(p_230254_2_)) && this.func_234424_eM_() != PiglinAction.ADMIRING_ITEM;
+            return flag ? ActionResultType.SUCCESS : ActionResultType.PASS;
+        }
+    }
 
-   protected float getStandingEyeHeight(Pose p_213348_1_, EntitySize p_213348_2_) {
-      return this.isBaby() ? 0.93F : 1.74F;
-   }
+    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return this.isChild() ? 0.93F : 1.74F;
+    }
 
-   public double getPassengersRidingOffset() {
-      return (double)this.getBbHeight() * 0.92D;
-   }
+    /**
+     * Returns the Y offset from the entity's position for any entity riding this one.
+     */
+    public double getMountedYOffset()
+    {
+        return (double)this.getHeight() * 0.92D;
+    }
 
-   public void setBaby(boolean p_82227_1_) {
-      this.getEntityData().set(DATA_BABY_ID, p_82227_1_);
-      if (!this.level.isClientSide) {
-         ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
-         modifiableattributeinstance.removeModifier(SPEED_MODIFIER_BABY);
-         if (p_82227_1_) {
-            modifiableattributeinstance.addTransientModifier(SPEED_MODIFIER_BABY);
-         }
-      }
+    /**
+     * Set whether this zombie is a child.
+     */
+    public void setChild(boolean childZombie)
+    {
+        this.getDataManager().set(field_234415_d_, childZombie);
 
-   }
+        if (!this.world.isRemote)
+        {
+            ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            modifiableattributeinstance.removeModifier(BABY_SPEED_MODIFIER);
 
-   public boolean isBaby() {
-      return this.getEntityData().get(DATA_BABY_ID);
-   }
+            if (childZombie)
+            {
+                modifiableattributeinstance.applyNonPersistentModifier(BABY_SPEED_MODIFIER);
+            }
+        }
+    }
 
-   private void setCannotHunt(boolean p_234443_1_) {
-      this.cannotHunt = p_234443_1_;
-   }
+    /**
+     * If Animal, checks if the age timer is negative
+     */
+    public boolean isChild()
+    {
+        return this.getDataManager().get(field_234415_d_);
+    }
 
-   protected boolean canHunt() {
-      return !this.cannotHunt;
-   }
+    private void setCannotHunt(boolean p_234443_1_)
+    {
+        this.field_234407_bB_ = p_234443_1_;
+    }
 
-   protected void customServerAiStep() {
-      this.level.getProfiler().push("piglinBrain");
-      this.getBrain().tick((ServerWorld)this.level, this);
-      this.level.getProfiler().pop();
-      PiglinTasks.updateActivity(this);
-      super.customServerAiStep();
-   }
+    protected boolean func_234422_eK_()
+    {
+        return !this.field_234407_bB_;
+    }
 
-   protected int getExperienceReward(PlayerEntity p_70693_1_) {
-      return this.xpReward;
-   }
+    protected void updateAITasks()
+    {
+        this.world.getProfiler().startSection("piglinBrain");
+        this.getBrain().tick((ServerWorld)this.world, this);
+        this.world.getProfiler().endSection();
+        PiglinTasks.func_234486_b_(this);
+        super.updateAITasks();
+    }
 
-   protected void finishConversion(ServerWorld p_234416_1_) {
-      PiglinTasks.cancelAdmiring(this);
-      this.inventory.removeAllItems().forEach(this::spawnAtLocation);
-      super.finishConversion(p_234416_1_);
-   }
+    /**
+     * Get the experience points the entity currently has.
+     */
+    protected int getExperiencePoints(PlayerEntity player)
+    {
+        return this.experienceValue;
+    }
 
-   private ItemStack createSpawnWeapon() {
-      return (double)this.random.nextFloat() < 0.5D ? new ItemStack(Items.CROSSBOW) : new ItemStack(Items.GOLDEN_SWORD);
-   }
+    protected void func_234416_a_(ServerWorld p_234416_1_)
+    {
+        PiglinTasks.func_234496_c_(this);
+        this.inventory.func_233543_f_().forEach(this::entityDropItem);
+        super.func_234416_a_(p_234416_1_);
+    }
 
-   private boolean isChargingCrossbow() {
-      return this.entityData.get(DATA_IS_CHARGING_CROSSBOW);
-   }
+    private ItemStack func_234432_eW_()
+    {
+        return (double)this.rand.nextFloat() < 0.5D ? new ItemStack(Items.CROSSBOW) : new ItemStack(Items.GOLDEN_SWORD);
+    }
 
-   public void setChargingCrossbow(boolean p_213671_1_) {
-      this.entityData.set(DATA_IS_CHARGING_CROSSBOW, p_213671_1_);
-   }
+    private boolean func_234433_eX_()
+    {
+        return this.dataManager.get(field_234409_bv_);
+    }
 
-   public void onCrossbowAttackPerformed() {
-      this.noActionTime = 0;
-   }
+    public void setCharging(boolean isCharging)
+    {
+        this.dataManager.set(field_234409_bv_, isCharging);
+    }
 
-   public PiglinAction getArmPose() {
-      if (this.isDancing()) {
-         return PiglinAction.DANCING;
-      } else if (PiglinTasks.isLovedItem(this.getOffhandItem().getItem())) {
-         return PiglinAction.ADMIRING_ITEM;
-      } else if (this.isAggressive() && this.isHoldingMeleeWeapon()) {
-         return PiglinAction.ATTACKING_WITH_MELEE_WEAPON;
-      } else if (this.isChargingCrossbow()) {
-         return PiglinAction.CROSSBOW_CHARGE;
-      } else {
-         return this.isAggressive() && this.isHolding(Items.CROSSBOW) ? PiglinAction.CROSSBOW_HOLD : PiglinAction.DEFAULT;
-      }
-   }
+    public void func_230283_U__()
+    {
+        this.idleTime = 0;
+    }
 
-   public boolean isDancing() {
-      return this.entityData.get(DATA_IS_DANCING);
-   }
+    public PiglinAction func_234424_eM_()
+    {
+        if (this.func_234425_eN_())
+        {
+            return PiglinAction.DANCING;
+        }
+        else if (PiglinTasks.func_234480_a_(this.getHeldItemOffhand().getItem()))
+        {
+            return PiglinAction.ADMIRING_ITEM;
+        }
+        else if (this.isAggressive() && this.func_242338_eO())
+        {
+            return PiglinAction.ATTACKING_WITH_MELEE_WEAPON;
+        }
+        else if (this.func_234433_eX_())
+        {
+            return PiglinAction.CROSSBOW_CHARGE;
+        }
+        else
+        {
+            return this.isAggressive() && this.canEquip(Items.CROSSBOW) ? PiglinAction.CROSSBOW_HOLD : PiglinAction.DEFAULT;
+        }
+    }
 
-   public void setDancing(boolean p_234442_1_) {
-      this.entityData.set(DATA_IS_DANCING, p_234442_1_);
-   }
+    public boolean func_234425_eN_()
+    {
+        return this.dataManager.get(DANCING);
+    }
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      boolean flag = super.hurt(p_70097_1_, p_70097_2_);
-      if (this.level.isClientSide) {
-         return false;
-      } else {
-         if (flag && p_70097_1_.getEntity() instanceof LivingEntity) {
-            PiglinTasks.wasHurtBy(this, (LivingEntity)p_70097_1_.getEntity());
-         }
+    public void func_234442_u_(boolean p_234442_1_)
+    {
+        this.dataManager.set(DANCING, p_234442_1_);
+    }
 
-         return flag;
-      }
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        boolean flag = super.attackEntityFrom(source, amount);
 
-   public void performRangedAttack(LivingEntity p_82196_1_, float p_82196_2_) {
-      this.performCrossbowAttack(this, 1.6F);
-   }
-
-   public void shootCrossbowProjectile(LivingEntity p_230284_1_, ItemStack p_230284_2_, ProjectileEntity p_230284_3_, float p_230284_4_) {
-      this.shootCrossbowProjectile(this, p_230284_1_, p_230284_3_, p_230284_4_, 1.6F);
-   }
-
-   public boolean canFireProjectileWeapon(ShootableItem p_230280_1_) {
-      return p_230280_1_ == Items.CROSSBOW;
-   }
-
-   protected void holdInMainHand(ItemStack p_234438_1_) {
-      this.setItemSlotAndDropWhenKilled(EquipmentSlotType.MAINHAND, p_234438_1_);
-   }
-
-   protected void holdInOffHand(ItemStack p_234439_1_) {
-      if (p_234439_1_.getItem() == PiglinTasks.BARTERING_ITEM) {
-         this.setItemSlot(EquipmentSlotType.OFFHAND, p_234439_1_);
-         this.setGuaranteedDrop(EquipmentSlotType.OFFHAND);
-      } else {
-         this.setItemSlotAndDropWhenKilled(EquipmentSlotType.OFFHAND, p_234439_1_);
-      }
-
-   }
-
-   public boolean wantsToPickUp(ItemStack p_230293_1_) {
-      return this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && this.canPickUpLoot() && PiglinTasks.wantsToPickup(this, p_230293_1_);
-   }
-
-   protected boolean canReplaceCurrentItem(ItemStack p_234440_1_) {
-      EquipmentSlotType equipmentslottype = MobEntity.getEquipmentSlotForItem(p_234440_1_);
-      ItemStack itemstack = this.getItemBySlot(equipmentslottype);
-      return this.canReplaceCurrentItem(p_234440_1_, itemstack);
-   }
-
-   protected boolean canReplaceCurrentItem(ItemStack p_208003_1_, ItemStack p_208003_2_) {
-      if (EnchantmentHelper.hasBindingCurse(p_208003_2_)) {
-         return false;
-      } else {
-         boolean flag = PiglinTasks.isLovedItem(p_208003_1_.getItem()) || p_208003_1_.getItem() == Items.CROSSBOW;
-         boolean flag1 = PiglinTasks.isLovedItem(p_208003_2_.getItem()) || p_208003_2_.getItem() == Items.CROSSBOW;
-         if (flag && !flag1) {
-            return true;
-         } else if (!flag && flag1) {
+        if (this.world.isRemote)
+        {
             return false;
-         } else {
-            return this.isAdult() && p_208003_1_.getItem() != Items.CROSSBOW && p_208003_2_.getItem() == Items.CROSSBOW ? false : super.canReplaceCurrentItem(p_208003_1_, p_208003_2_);
-         }
-      }
-   }
+        }
+        else
+        {
+            if (flag && source.getTrueSource() instanceof LivingEntity)
+            {
+                PiglinTasks.func_234468_a_(this, (LivingEntity)source.getTrueSource());
+            }
 
-   protected void pickUpItem(ItemEntity p_175445_1_) {
-      this.onItemPickup(p_175445_1_);
-      PiglinTasks.pickUpItem(this, p_175445_1_);
-   }
+            return flag;
+        }
+    }
 
-   public boolean startRiding(Entity p_184205_1_, boolean p_184205_2_) {
-      if (this.isBaby() && p_184205_1_.getType() == EntityType.HOGLIN) {
-         p_184205_1_ = this.getTopPassenger(p_184205_1_, 3);
-      }
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
+    public void attackEntityWithRangedAttack(LivingEntity target, float distanceFactor)
+    {
+        this.func_234281_b_(this, 1.6F);
+    }
 
-      return super.startRiding(p_184205_1_, p_184205_2_);
-   }
+    public void func_230284_a_(LivingEntity p_230284_1_, ItemStack p_230284_2_, ProjectileEntity p_230284_3_, float p_230284_4_)
+    {
+        this.func_234279_a_(this, p_230284_1_, p_230284_3_, p_230284_4_, 1.6F);
+    }
 
-   private Entity getTopPassenger(Entity p_234417_1_, int p_234417_2_) {
-      List<Entity> list = p_234417_1_.getPassengers();
-      return p_234417_2_ != 1 && !list.isEmpty() ? this.getTopPassenger(list.get(0), p_234417_2_ - 1) : p_234417_1_;
-   }
+    public boolean func_230280_a_(ShootableItem p_230280_1_)
+    {
+        return p_230280_1_ == Items.CROSSBOW;
+    }
 
-   protected SoundEvent getAmbientSound() {
-      return this.level.isClientSide ? null : PiglinTasks.getSoundForCurrentActivity(this).orElse((SoundEvent)null);
-   }
+    protected void func_234438_m_(ItemStack p_234438_1_)
+    {
+        this.func_233657_b_(EquipmentSlotType.MAINHAND, p_234438_1_);
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.PIGLIN_HURT;
-   }
+    protected void func_234439_n_(ItemStack p_234439_1_)
+    {
+        if (p_234439_1_.getItem() == PiglinTasks.field_234444_a_)
+        {
+            this.setItemStackToSlot(EquipmentSlotType.OFFHAND, p_234439_1_);
+            this.func_233663_d_(EquipmentSlotType.OFFHAND);
+        }
+        else
+        {
+            this.func_233657_b_(EquipmentSlotType.OFFHAND, p_234439_1_);
+        }
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.PIGLIN_DEATH;
-   }
+    public boolean func_230293_i_(ItemStack p_230293_1_)
+    {
+        return this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING) && this.canPickUpLoot() && PiglinTasks.func_234474_a_(this, p_230293_1_);
+    }
 
-   protected void playStepSound(BlockPos p_180429_1_, BlockState p_180429_2_) {
-      this.playSound(SoundEvents.PIGLIN_STEP, 0.15F, 1.0F);
-   }
+    protected boolean func_234440_o_(ItemStack p_234440_1_)
+    {
+        EquipmentSlotType equipmentslottype = MobEntity.getSlotForItemStack(p_234440_1_);
+        ItemStack itemstack = this.getItemStackFromSlot(equipmentslottype);
+        return this.shouldExchangeEquipment(p_234440_1_, itemstack);
+    }
 
-   protected void playSound(SoundEvent p_241417_1_) {
-      this.playSound(p_241417_1_, this.getSoundVolume(), this.getVoicePitch());
-   }
+    protected boolean shouldExchangeEquipment(ItemStack candidate, ItemStack existing)
+    {
+        if (EnchantmentHelper.hasBindingCurse(existing))
+        {
+            return false;
+        }
+        else
+        {
+            boolean flag = PiglinTasks.func_234480_a_(candidate.getItem()) || candidate.getItem() == Items.CROSSBOW;
+            boolean flag1 = PiglinTasks.func_234480_a_(existing.getItem()) || existing.getItem() == Items.CROSSBOW;
 
-   protected void playConvertedSound() {
-      this.playSound(SoundEvents.PIGLIN_CONVERTED_TO_ZOMBIFIED);
-   }
+            if (flag && !flag1)
+            {
+                return true;
+            }
+            else if (!flag && flag1)
+            {
+                return false;
+            }
+            else
+            {
+                return this.func_242337_eM() && candidate.getItem() != Items.CROSSBOW && existing.getItem() == Items.CROSSBOW ? false : super.shouldExchangeEquipment(candidate, existing);
+            }
+        }
+    }
+
+    /**
+     * Tests if this entity should pickup a weapon or an armor. Entity drops current weapon or armor if the new one is
+     * better.
+     */
+    protected void updateEquipmentIfNeeded(ItemEntity itemEntity)
+    {
+        this.triggerItemPickupTrigger(itemEntity);
+        PiglinTasks.func_234470_a_(this, itemEntity);
+    }
+
+    public boolean startRiding(Entity entityIn, boolean force)
+    {
+        if (this.isChild() && entityIn.getType() == EntityType.HOGLIN)
+        {
+            entityIn = this.func_234417_b_(entityIn, 3);
+        }
+
+        return super.startRiding(entityIn, force);
+    }
+
+    private Entity func_234417_b_(Entity p_234417_1_, int p_234417_2_)
+    {
+        List<Entity> list = p_234417_1_.getPassengers();
+        return p_234417_2_ != 1 && !list.isEmpty() ? this.func_234417_b_(list.get(0), p_234417_2_ - 1) : p_234417_1_;
+    }
+
+    protected SoundEvent getAmbientSound()
+    {
+        return this.world.isRemote ? null : PiglinTasks.func_241429_d_(this).orElse((SoundEvent)null);
+    }
+
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_PIGLIN_HURT;
+    }
+
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_PIGLIN_DEATH;
+    }
+
+    protected void playStepSound(BlockPos pos, BlockState blockIn)
+    {
+        this.playSound(SoundEvents.ENTITY_PIGLIN_STEP, 0.15F, 1.0F);
+    }
+
+    protected void func_241417_a_(SoundEvent p_241417_1_)
+    {
+        this.playSound(p_241417_1_, this.getSoundVolume(), this.getSoundPitch());
+    }
+
+    protected void func_241848_eP()
+    {
+        this.func_241417_a_(SoundEvents.ENTITY_PIGLIN_CONVERTED_TO_ZOMBIFIED);
+    }
 }

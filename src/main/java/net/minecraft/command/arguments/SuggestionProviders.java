@@ -16,59 +16,79 @@ import net.minecraft.util.Util;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class SuggestionProviders {
-   private static final Map<ResourceLocation, SuggestionProvider<ISuggestionProvider>> PROVIDERS_BY_NAME = Maps.newHashMap();
-   private static final ResourceLocation DEFAULT_NAME = new ResourceLocation("ask_server");
-   public static final SuggestionProvider<ISuggestionProvider> ASK_SERVER = register(DEFAULT_NAME, (p_197500_0_, p_197500_1_) -> {
-      return p_197500_0_.getSource().customSuggestion(p_197500_0_, p_197500_1_);
-   });
-   public static final SuggestionProvider<CommandSource> ALL_RECIPES = register(new ResourceLocation("all_recipes"), (p_197501_0_, p_197501_1_) -> {
-      return ISuggestionProvider.suggestResource(p_197501_0_.getSource().getRecipeNames(), p_197501_1_);
-   });
-   public static final SuggestionProvider<CommandSource> AVAILABLE_SOUNDS = register(new ResourceLocation("available_sounds"), (p_197495_0_, p_197495_1_) -> {
-      return ISuggestionProvider.suggestResource(p_197495_0_.getSource().getAvailableSoundEvents(), p_197495_1_);
-   });
-   public static final SuggestionProvider<CommandSource> AVAILABLE_BIOMES = register(new ResourceLocation("available_biomes"), (p_239577_0_, p_239577_1_) -> {
-      return ISuggestionProvider.suggestResource(p_239577_0_.getSource().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).keySet(), p_239577_1_);
-   });
-   public static final SuggestionProvider<CommandSource> SUMMONABLE_ENTITIES = register(new ResourceLocation("summonable_entities"), (p_201210_0_, p_201210_1_) -> {
-      return ISuggestionProvider.suggestResource(Registry.ENTITY_TYPE.stream().filter(EntityType::canSummon), p_201210_1_, EntityType::getKey, (p_201209_0_) -> {
-         return new TranslationTextComponent(Util.makeDescriptionId("entity", EntityType.getKey(p_201209_0_)));
-      });
-   });
+public class SuggestionProviders
+{
+    private static final Map<ResourceLocation, SuggestionProvider<ISuggestionProvider>> REGISTRY = Maps.newHashMap();
+    private static final ResourceLocation ASK_SERVER_ID = new ResourceLocation("ask_server");
+    public static final SuggestionProvider<ISuggestionProvider> ASK_SERVER = register(ASK_SERVER_ID, (p_197500_0_, p_197500_1_) ->
+    {
+        return p_197500_0_.getSource().getSuggestionsFromServer(p_197500_0_, p_197500_1_);
+    });
+    public static final SuggestionProvider<CommandSource> ALL_RECIPES = register(new ResourceLocation("all_recipes"), (p_197501_0_, p_197501_1_) ->
+    {
+        return ISuggestionProvider.func_212476_a(p_197501_0_.getSource().getRecipeResourceLocations(), p_197501_1_);
+    });
+    public static final SuggestionProvider<CommandSource> AVAILABLE_SOUNDS = register(new ResourceLocation("available_sounds"), (p_197495_0_, p_197495_1_) ->
+    {
+        return ISuggestionProvider.suggestIterable(p_197495_0_.getSource().getSoundResourceLocations(), p_197495_1_);
+    });
+    public static final SuggestionProvider<CommandSource> field_239574_d_ = register(new ResourceLocation("available_biomes"), (p_239577_0_, p_239577_1_) ->
+    {
+        return ISuggestionProvider.suggestIterable(p_239577_0_.getSource().func_241861_q().getRegistry(Registry.BIOME_KEY).keySet(), p_239577_1_);
+    });
+    public static final SuggestionProvider<CommandSource> SUMMONABLE_ENTITIES = register(new ResourceLocation("summonable_entities"), (p_201210_0_, p_201210_1_) ->
+    {
+        return ISuggestionProvider.func_201725_a(Registry.ENTITY_TYPE.stream().filter(EntityType::isSummonable), p_201210_1_, EntityType::getKey, (p_201209_0_) -> {
+            return new TranslationTextComponent(Util.makeTranslationKey("entity", EntityType.getKey(p_201209_0_)));
+        });
+    });
 
-   public static <S extends ISuggestionProvider> SuggestionProvider<S> register(ResourceLocation p_197494_0_, SuggestionProvider<ISuggestionProvider> p_197494_1_) {
-      if (PROVIDERS_BY_NAME.containsKey(p_197494_0_)) {
-         throw new IllegalArgumentException("A command suggestion provider is already registered with the name " + p_197494_0_);
-      } else {
-         PROVIDERS_BY_NAME.put(p_197494_0_, p_197494_1_);
-         return (SuggestionProvider<S>)new SuggestionProviders.Wrapper(p_197494_0_, p_197494_1_);
-      }
-   }
+    public static <S extends ISuggestionProvider> SuggestionProvider<S> register(ResourceLocation id, SuggestionProvider<ISuggestionProvider> provider)
+    {
+        if (REGISTRY.containsKey(id))
+        {
+            throw new IllegalArgumentException("A command suggestion provider is already registered with the name " + id);
+        }
+        else
+        {
+            REGISTRY.put(id, provider);
+            return (SuggestionProvider<S>)new SuggestionProviders.Wrapper(id, provider);
+        }
+    }
 
-   public static SuggestionProvider<ISuggestionProvider> getProvider(ResourceLocation p_197498_0_) {
-      return PROVIDERS_BY_NAME.getOrDefault(p_197498_0_, ASK_SERVER);
-   }
+    public static SuggestionProvider<ISuggestionProvider> get(ResourceLocation id)
+    {
+        return REGISTRY.getOrDefault(id, ASK_SERVER);
+    }
 
-   public static ResourceLocation getName(SuggestionProvider<ISuggestionProvider> p_197497_0_) {
-      return p_197497_0_ instanceof SuggestionProviders.Wrapper ? ((SuggestionProviders.Wrapper)p_197497_0_).name : DEFAULT_NAME;
-   }
+    /**
+     * Gets the ID for the given provider. If the provider is not a wrapped one created via {@link #register}, then it
+     * returns {@link #ASK_SERVER_ID} instead, as there is no known ID but ASK_SERVER always works.
+     */
+    public static ResourceLocation getId(SuggestionProvider<ISuggestionProvider> provider)
+    {
+        return provider instanceof SuggestionProviders.Wrapper ? ((SuggestionProviders.Wrapper)provider).id : ASK_SERVER_ID;
+    }
 
-   public static SuggestionProvider<ISuggestionProvider> safelySwap(SuggestionProvider<ISuggestionProvider> p_197496_0_) {
-      return p_197496_0_ instanceof SuggestionProviders.Wrapper ? p_197496_0_ : ASK_SERVER;
-   }
+    public static SuggestionProvider<ISuggestionProvider> ensureKnown(SuggestionProvider<ISuggestionProvider> provider)
+    {
+        return provider instanceof SuggestionProviders.Wrapper ? provider : ASK_SERVER;
+    }
 
-   public static class Wrapper implements SuggestionProvider<ISuggestionProvider> {
-      private final SuggestionProvider<ISuggestionProvider> delegate;
-      private final ResourceLocation name;
+    public static class Wrapper implements SuggestionProvider<ISuggestionProvider>
+    {
+        private final SuggestionProvider<ISuggestionProvider> provider;
+        private final ResourceLocation id;
 
-      public Wrapper(ResourceLocation p_i47984_1_, SuggestionProvider<ISuggestionProvider> p_i47984_2_) {
-         this.delegate = p_i47984_2_;
-         this.name = p_i47984_1_;
-      }
+        public Wrapper(ResourceLocation idIn, SuggestionProvider<ISuggestionProvider> providerIn)
+        {
+            this.provider = providerIn;
+            this.id = idIn;
+        }
 
-      public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> p_getSuggestions_1_, SuggestionsBuilder p_getSuggestions_2_) throws CommandSyntaxException {
-         return this.delegate.getSuggestions(p_getSuggestions_1_, p_getSuggestions_2_);
-      }
-   }
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> p_getSuggestions_1_, SuggestionsBuilder p_getSuggestions_2_) throws CommandSyntaxException
+        {
+            return this.provider.getSuggestions(p_getSuggestions_1_, p_getSuggestions_2_);
+        }
+    }
 }

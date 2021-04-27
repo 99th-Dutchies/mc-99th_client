@@ -18,253 +18,348 @@ import net.minecraft.item.Items;
 import net.minecraft.util.IWorldPosCallable;
 import net.minecraft.world.World;
 
-public class GrindstoneContainer extends Container {
-   private final IInventory resultSlots = new CraftResultInventory();
-   private final IInventory repairSlots = new Inventory(2) {
-      public void setChanged() {
-         super.setChanged();
-         GrindstoneContainer.this.slotsChanged(this);
-      }
-   };
-   private final IWorldPosCallable access;
+public class GrindstoneContainer extends Container
+{
+    /** The inventory slot that stores the output of the crafting recipe. */
+    private final IInventory outputInventory = new CraftResultInventory();
+    private final IInventory inputInventory = new Inventory(2)
+    {
+        public void markDirty()
+        {
+            super.markDirty();
+            GrindstoneContainer.this.onCraftMatrixChanged(this);
+        }
+    };
+    private final IWorldPosCallable worldPosCallable;
 
-   public GrindstoneContainer(int p_i50080_1_, PlayerInventory p_i50080_2_) {
-      this(p_i50080_1_, p_i50080_2_, IWorldPosCallable.NULL);
-   }
+    public GrindstoneContainer(int p_i50080_1_, PlayerInventory playerInventoryIn)
+    {
+        this(p_i50080_1_, playerInventoryIn, IWorldPosCallable.DUMMY);
+    }
 
-   public GrindstoneContainer(int p_i50081_1_, PlayerInventory p_i50081_2_, final IWorldPosCallable p_i50081_3_) {
-      super(ContainerType.GRINDSTONE, p_i50081_1_);
-      this.access = p_i50081_3_;
-      this.addSlot(new Slot(this.repairSlots, 0, 49, 19) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
-            return p_75214_1_.isDamageableItem() || p_75214_1_.getItem() == Items.ENCHANTED_BOOK || p_75214_1_.isEnchanted();
-         }
-      });
-      this.addSlot(new Slot(this.repairSlots, 1, 49, 40) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
-            return p_75214_1_.isDamageableItem() || p_75214_1_.getItem() == Items.ENCHANTED_BOOK || p_75214_1_.isEnchanted();
-         }
-      });
-      this.addSlot(new Slot(this.resultSlots, 2, 129, 34) {
-         public boolean mayPlace(ItemStack p_75214_1_) {
-            return false;
-         }
-
-         public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
-            p_i50081_3_.execute((p_216944_1_, p_216944_2_) -> {
-               int l = this.getExperienceAmount(p_216944_1_);
-
-               while(l > 0) {
-                  int i1 = ExperienceOrbEntity.getExperienceValue(l);
-                  l -= i1;
-                  p_216944_1_.addFreshEntity(new ExperienceOrbEntity(p_216944_1_, (double)p_216944_2_.getX(), (double)p_216944_2_.getY() + 0.5D, (double)p_216944_2_.getZ() + 0.5D, i1));
-               }
-
-               p_216944_1_.levelEvent(1042, p_216944_2_, 0);
-            });
-            GrindstoneContainer.this.repairSlots.setItem(0, ItemStack.EMPTY);
-            GrindstoneContainer.this.repairSlots.setItem(1, ItemStack.EMPTY);
-            return p_190901_2_;
-         }
-
-         private int getExperienceAmount(World p_216942_1_) {
-            int l = 0;
-            l = l + this.getExperienceFromItem(GrindstoneContainer.this.repairSlots.getItem(0));
-            l = l + this.getExperienceFromItem(GrindstoneContainer.this.repairSlots.getItem(1));
-            if (l > 0) {
-               int i1 = (int)Math.ceil((double)l / 2.0D);
-               return i1 + p_216942_1_.random.nextInt(i1);
-            } else {
-               return 0;
+    public GrindstoneContainer(int windowIdIn, PlayerInventory p_i50081_2_, final IWorldPosCallable worldPosCallableIn)
+    {
+        super(ContainerType.GRINDSTONE, windowIdIn);
+        this.worldPosCallable = worldPosCallableIn;
+        this.addSlot(new Slot(this.inputInventory, 0, 49, 19)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return stack.isDamageable() || stack.getItem() == Items.ENCHANTED_BOOK || stack.isEnchanted();
             }
-         }
-
-         private int getExperienceFromItem(ItemStack p_216943_1_) {
-            int l = 0;
-            Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(p_216943_1_);
-
-            for(Entry<Enchantment, Integer> entry : map.entrySet()) {
-               Enchantment enchantment = entry.getKey();
-               Integer integer = entry.getValue();
-               if (!enchantment.isCurse()) {
-                  l += enchantment.getMinCost(integer);
-               }
+        });
+        this.addSlot(new Slot(this.inputInventory, 1, 49, 40)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return stack.isDamageable() || stack.getItem() == Items.ENCHANTED_BOOK || stack.isEnchanted();
             }
-
-            return l;
-         }
-      });
-
-      for(int i = 0; i < 3; ++i) {
-         for(int j = 0; j < 9; ++j) {
-            this.addSlot(new Slot(p_i50081_2_, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
-         }
-      }
-
-      for(int k = 0; k < 9; ++k) {
-         this.addSlot(new Slot(p_i50081_2_, k, 8 + k * 18, 142));
-      }
-
-   }
-
-   public void slotsChanged(IInventory p_75130_1_) {
-      super.slotsChanged(p_75130_1_);
-      if (p_75130_1_ == this.repairSlots) {
-         this.createResult();
-      }
-
-   }
-
-   private void createResult() {
-      ItemStack itemstack = this.repairSlots.getItem(0);
-      ItemStack itemstack1 = this.repairSlots.getItem(1);
-      boolean flag = !itemstack.isEmpty() || !itemstack1.isEmpty();
-      boolean flag1 = !itemstack.isEmpty() && !itemstack1.isEmpty();
-      if (!flag) {
-         this.resultSlots.setItem(0, ItemStack.EMPTY);
-      } else {
-         boolean flag2 = !itemstack.isEmpty() && itemstack.getItem() != Items.ENCHANTED_BOOK && !itemstack.isEnchanted() || !itemstack1.isEmpty() && itemstack1.getItem() != Items.ENCHANTED_BOOK && !itemstack1.isEnchanted();
-         if (itemstack.getCount() > 1 || itemstack1.getCount() > 1 || !flag1 && flag2) {
-            this.resultSlots.setItem(0, ItemStack.EMPTY);
-            this.broadcastChanges();
-            return;
-         }
-
-         int j = 1;
-         int i;
-         ItemStack itemstack2;
-         if (flag1) {
-            if (itemstack.getItem() != itemstack1.getItem()) {
-               this.resultSlots.setItem(0, ItemStack.EMPTY);
-               this.broadcastChanges();
-               return;
+        });
+        this.addSlot(new Slot(this.outputInventory, 2, 129, 34)
+        {
+            public boolean isItemValid(ItemStack stack)
+            {
+                return false;
             }
+            public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+            {
+                worldPosCallableIn.consume((p_216944_1_, p_216944_2_) ->
+                {
+                    int l = this.getEnchantmentXpFromInputs(p_216944_1_);
 
-            Item item = itemstack.getItem();
-            int k = item.getMaxDamage() - itemstack.getDamageValue();
-            int l = item.getMaxDamage() - itemstack1.getDamageValue();
-            int i1 = k + l + item.getMaxDamage() * 5 / 100;
-            i = Math.max(item.getMaxDamage() - i1, 0);
-            itemstack2 = this.mergeEnchants(itemstack, itemstack1);
-            if (!itemstack2.isDamageableItem()) {
-               if (!ItemStack.matches(itemstack, itemstack1)) {
-                  this.resultSlots.setItem(0, ItemStack.EMPTY);
-                  this.broadcastChanges();
-                  return;
-               }
+                    while (l > 0)
+                    {
+                        int i1 = ExperienceOrbEntity.getXPSplit(l);
+                        l -= i1;
+                        p_216944_1_.addEntity(new ExperienceOrbEntity(p_216944_1_, (double)p_216944_2_.getX(), (double)p_216944_2_.getY() + 0.5D, (double)p_216944_2_.getZ() + 0.5D, i1));
+                    }
 
-               j = 2;
+                    p_216944_1_.playEvent(1042, p_216944_2_, 0);
+                });
+                GrindstoneContainer.this.inputInventory.setInventorySlotContents(0, ItemStack.EMPTY);
+                GrindstoneContainer.this.inputInventory.setInventorySlotContents(1, ItemStack.EMPTY);
+                return stack;
             }
-         } else {
-            boolean flag3 = !itemstack.isEmpty();
-            i = flag3 ? itemstack.getDamageValue() : itemstack1.getDamageValue();
-            itemstack2 = flag3 ? itemstack : itemstack1;
-         }
+            private int getEnchantmentXpFromInputs(World worldIn)
+            {
+                int l = 0;
+                l = l + this.getEnchantmentXp(GrindstoneContainer.this.inputInventory.getStackInSlot(0));
+                l = l + this.getEnchantmentXp(GrindstoneContainer.this.inputInventory.getStackInSlot(1));
 
-         this.resultSlots.setItem(0, this.removeNonCurses(itemstack2, i, j));
-      }
+                if (l > 0)
+                {
+                    int i1 = (int)Math.ceil((double)l / 2.0D);
+                    return i1 + worldIn.rand.nextInt(i1);
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            private int getEnchantmentXp(ItemStack stack)
+            {
+                int l = 0;
+                Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(stack);
 
-      this.broadcastChanges();
-   }
+                for (Entry<Enchantment, Integer> entry : map.entrySet())
+                {
+                    Enchantment enchantment = entry.getKey();
+                    Integer integer = entry.getValue();
 
-   private ItemStack mergeEnchants(ItemStack p_217011_1_, ItemStack p_217011_2_) {
-      ItemStack itemstack = p_217011_1_.copy();
-      Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(p_217011_2_);
+                    if (!enchantment.isCurse())
+                    {
+                        l += enchantment.getMinEnchantability(integer);
+                    }
+                }
 
-      for(Entry<Enchantment, Integer> entry : map.entrySet()) {
-         Enchantment enchantment = entry.getKey();
-         if (!enchantment.isCurse() || EnchantmentHelper.getItemEnchantmentLevel(enchantment, itemstack) == 0) {
-            itemstack.enchant(enchantment, entry.getValue());
-         }
-      }
+                return l;
+            }
+        });
 
-      return itemstack;
-   }
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 9; ++j)
+            {
+                this.addSlot(new Slot(p_i50081_2_, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+            }
+        }
 
-   private ItemStack removeNonCurses(ItemStack p_217007_1_, int p_217007_2_, int p_217007_3_) {
-      ItemStack itemstack = p_217007_1_.copy();
-      itemstack.removeTagKey("Enchantments");
-      itemstack.removeTagKey("StoredEnchantments");
-      if (p_217007_2_ > 0) {
-         itemstack.setDamageValue(p_217007_2_);
-      } else {
-         itemstack.removeTagKey("Damage");
-      }
+        for (int k = 0; k < 9; ++k)
+        {
+            this.addSlot(new Slot(p_i50081_2_, k, 8 + k * 18, 142));
+        }
+    }
 
-      itemstack.setCount(p_217007_3_);
-      Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(p_217007_1_).entrySet().stream().filter((p_217012_0_) -> {
-         return p_217012_0_.getKey().isCurse();
-      }).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-      EnchantmentHelper.setEnchantments(map, itemstack);
-      itemstack.setRepairCost(0);
-      if (itemstack.getItem() == Items.ENCHANTED_BOOK && map.size() == 0) {
-         itemstack = new ItemStack(Items.BOOK);
-         if (p_217007_1_.hasCustomHoverName()) {
-            itemstack.setHoverName(p_217007_1_.getHoverName());
-         }
-      }
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
+    public void onCraftMatrixChanged(IInventory inventoryIn)
+    {
+        super.onCraftMatrixChanged(inventoryIn);
 
-      for(int i = 0; i < map.size(); ++i) {
-         itemstack.setRepairCost(RepairContainer.calculateIncreasedRepairCost(itemstack.getBaseRepairCost()));
-      }
+        if (inventoryIn == this.inputInventory)
+        {
+            this.updateRecipeOutput();
+        }
+    }
 
-      return itemstack;
-   }
+    private void updateRecipeOutput()
+    {
+        ItemStack itemstack = this.inputInventory.getStackInSlot(0);
+        ItemStack itemstack1 = this.inputInventory.getStackInSlot(1);
+        boolean flag = !itemstack.isEmpty() || !itemstack1.isEmpty();
+        boolean flag1 = !itemstack.isEmpty() && !itemstack1.isEmpty();
 
-   public void removed(PlayerEntity p_75134_1_) {
-      super.removed(p_75134_1_);
-      this.access.execute((p_217009_2_, p_217009_3_) -> {
-         this.clearContainer(p_75134_1_, p_217009_2_, this.repairSlots);
-      });
-   }
+        if (!flag)
+        {
+            this.outputInventory.setInventorySlotContents(0, ItemStack.EMPTY);
+        }
+        else
+        {
+            boolean flag2 = !itemstack.isEmpty() && itemstack.getItem() != Items.ENCHANTED_BOOK && !itemstack.isEnchanted() || !itemstack1.isEmpty() && itemstack1.getItem() != Items.ENCHANTED_BOOK && !itemstack1.isEnchanted();
 
-   public boolean stillValid(PlayerEntity p_75145_1_) {
-      return stillValid(this.access, p_75145_1_, Blocks.GRINDSTONE);
-   }
-
-   public ItemStack quickMoveStack(PlayerEntity p_82846_1_, int p_82846_2_) {
-      ItemStack itemstack = ItemStack.EMPTY;
-      Slot slot = this.slots.get(p_82846_2_);
-      if (slot != null && slot.hasItem()) {
-         ItemStack itemstack1 = slot.getItem();
-         itemstack = itemstack1.copy();
-         ItemStack itemstack2 = this.repairSlots.getItem(0);
-         ItemStack itemstack3 = this.repairSlots.getItem(1);
-         if (p_82846_2_ == 2) {
-            if (!this.moveItemStackTo(itemstack1, 3, 39, true)) {
-               return ItemStack.EMPTY;
+            if (itemstack.getCount() > 1 || itemstack1.getCount() > 1 || !flag1 && flag2)
+            {
+                this.outputInventory.setInventorySlotContents(0, ItemStack.EMPTY);
+                this.detectAndSendChanges();
+                return;
             }
 
-            slot.onQuickCraft(itemstack1, itemstack);
-         } else if (p_82846_2_ != 0 && p_82846_2_ != 1) {
-            if (!itemstack2.isEmpty() && !itemstack3.isEmpty()) {
-               if (p_82846_2_ >= 3 && p_82846_2_ < 30) {
-                  if (!this.moveItemStackTo(itemstack1, 30, 39, false)) {
-                     return ItemStack.EMPTY;
-                  }
-               } else if (p_82846_2_ >= 30 && p_82846_2_ < 39 && !this.moveItemStackTo(itemstack1, 3, 30, false)) {
-                  return ItemStack.EMPTY;
-               }
-            } else if (!this.moveItemStackTo(itemstack1, 0, 2, false)) {
-               return ItemStack.EMPTY;
+            int j = 1;
+            int i;
+            ItemStack itemstack2;
+
+            if (flag1)
+            {
+                if (itemstack.getItem() != itemstack1.getItem())
+                {
+                    this.outputInventory.setInventorySlotContents(0, ItemStack.EMPTY);
+                    this.detectAndSendChanges();
+                    return;
+                }
+
+                Item item = itemstack.getItem();
+                int k = item.getMaxDamage() - itemstack.getDamage();
+                int l = item.getMaxDamage() - itemstack1.getDamage();
+                int i1 = k + l + item.getMaxDamage() * 5 / 100;
+                i = Math.max(item.getMaxDamage() - i1, 0);
+                itemstack2 = this.copyEnchantments(itemstack, itemstack1);
+
+                if (!itemstack2.isDamageable())
+                {
+                    if (!ItemStack.areItemStacksEqual(itemstack, itemstack1))
+                    {
+                        this.outputInventory.setInventorySlotContents(0, ItemStack.EMPTY);
+                        this.detectAndSendChanges();
+                        return;
+                    }
+
+                    j = 2;
+                }
             }
-         } else if (!this.moveItemStackTo(itemstack1, 3, 39, false)) {
-            return ItemStack.EMPTY;
-         }
+            else
+            {
+                boolean flag3 = !itemstack.isEmpty();
+                i = flag3 ? itemstack.getDamage() : itemstack1.getDamage();
+                itemstack2 = flag3 ? itemstack : itemstack1;
+            }
 
-         if (itemstack1.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-         } else {
-            slot.setChanged();
-         }
+            this.outputInventory.setInventorySlotContents(0, this.removeEnchantments(itemstack2, i, j));
+        }
 
-         if (itemstack1.getCount() == itemstack.getCount()) {
-            return ItemStack.EMPTY;
-         }
+        this.detectAndSendChanges();
+    }
 
-         slot.onTake(p_82846_1_, itemstack1);
-      }
+    private ItemStack copyEnchantments(ItemStack copyTo, ItemStack copyFrom)
+    {
+        ItemStack itemstack = copyTo.copy();
+        Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(copyFrom);
 
-      return itemstack;
-   }
+        for (Entry<Enchantment, Integer> entry : map.entrySet())
+        {
+            Enchantment enchantment = entry.getKey();
+
+            if (!enchantment.isCurse() || EnchantmentHelper.getEnchantmentLevel(enchantment, itemstack) == 0)
+            {
+                itemstack.addEnchantment(enchantment, entry.getValue());
+            }
+        }
+
+        return itemstack;
+    }
+
+    /**
+     * Removes all enchantments from the {@plainlink ItemStack}. Note that the curses are not removed.
+     */
+    private ItemStack removeEnchantments(ItemStack stack, int damage, int count)
+    {
+        ItemStack itemstack = stack.copy();
+        itemstack.removeChildTag("Enchantments");
+        itemstack.removeChildTag("StoredEnchantments");
+
+        if (damage > 0)
+        {
+            itemstack.setDamage(damage);
+        }
+        else
+        {
+            itemstack.removeChildTag("Damage");
+        }
+
+        itemstack.setCount(count);
+        Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(stack).entrySet().stream().filter((p_217012_0_) ->
+        {
+            return p_217012_0_.getKey().isCurse();
+        }).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        EnchantmentHelper.setEnchantments(map, itemstack);
+        itemstack.setRepairCost(0);
+
+        if (itemstack.getItem() == Items.ENCHANTED_BOOK && map.size() == 0)
+        {
+            itemstack = new ItemStack(Items.BOOK);
+
+            if (stack.hasDisplayName())
+            {
+                itemstack.setDisplayName(stack.getDisplayName());
+            }
+        }
+
+        for (int i = 0; i < map.size(); ++i)
+        {
+            itemstack.setRepairCost(RepairContainer.getNewRepairCost(itemstack.getRepairCost()));
+        }
+
+        return itemstack;
+    }
+
+    /**
+     * Called when the container is closed.
+     */
+    public void onContainerClosed(PlayerEntity playerIn)
+    {
+        super.onContainerClosed(playerIn);
+        this.worldPosCallable.consume((p_217009_2_, p_217009_3_) ->
+        {
+            this.clearContainer(playerIn, p_217009_2_, this.inputInventory);
+        });
+    }
+
+    /**
+     * Determines whether supplied player can use this container
+     */
+    public boolean canInteractWith(PlayerEntity playerIn)
+    {
+        return isWithinUsableDistance(this.worldPosCallable, playerIn, Blocks.GRINDSTONE);
+    }
+
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player
+     * inventory and the other inventory(s).
+     */
+    public ItemStack transferStackInSlot(PlayerEntity playerIn, int index)
+    {
+        ItemStack itemstack = ItemStack.EMPTY;
+        Slot slot = this.inventorySlots.get(index);
+
+        if (slot != null && slot.getHasStack())
+        {
+            ItemStack itemstack1 = slot.getStack();
+            itemstack = itemstack1.copy();
+            ItemStack itemstack2 = this.inputInventory.getStackInSlot(0);
+            ItemStack itemstack3 = this.inputInventory.getStackInSlot(1);
+
+            if (index == 2)
+            {
+                if (!this.mergeItemStack(itemstack1, 3, 39, true))
+                {
+                    return ItemStack.EMPTY;
+                }
+
+                slot.onSlotChange(itemstack1, itemstack);
+            }
+            else if (index != 0 && index != 1)
+            {
+                if (!itemstack2.isEmpty() && !itemstack3.isEmpty())
+                {
+                    if (index >= 3 && index < 30)
+                    {
+                        if (!this.mergeItemStack(itemstack1, 30, 39, false))
+                        {
+                            return ItemStack.EMPTY;
+                        }
+                    }
+                    else if (index >= 30 && index < 39 && !this.mergeItemStack(itemstack1, 3, 30, false))
+                    {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                else if (!this.mergeItemStack(itemstack1, 0, 2, false))
+                {
+                    return ItemStack.EMPTY;
+                }
+            }
+            else if (!this.mergeItemStack(itemstack1, 3, 39, false))
+            {
+                return ItemStack.EMPTY;
+            }
+
+            if (itemstack1.isEmpty())
+            {
+                slot.putStack(ItemStack.EMPTY);
+            }
+            else
+            {
+                slot.onSlotChanged();
+            }
+
+            if (itemstack1.getCount() == itemstack.getCount())
+            {
+                return ItemStack.EMPTY;
+            }
+
+            slot.onTake(playerIn, itemstack1);
+        }
+
+        return itemstack;
+    }
 }

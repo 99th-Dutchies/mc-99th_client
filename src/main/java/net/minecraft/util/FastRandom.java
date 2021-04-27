@@ -1,8 +1,10 @@
 package net.minecraft.util;
 
-public class FastRandom {
-   public static long next(long p_226162_0_, long p_226162_2_) {
-      p_226162_0_ = p_226162_0_ * (p_226162_0_ * 6364136223846793005L + 1442695040888963407L);
-      return p_226162_0_ + p_226162_2_;
-   }
+public class FastRandom
+{
+    public static long mix(long left, long right)
+    {
+        left = left * (left * 6364136223846793005L + 1442695040888963407L);
+        return left + right;
+    }
 }

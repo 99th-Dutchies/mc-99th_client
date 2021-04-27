@@ -17,64 +17,88 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class SeaGrassBlock extends BushBlock implements IGrowable, ILiquidContainer {
-   protected static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 12.0D, 14.0D);
+public class SeaGrassBlock extends BushBlock implements IGrowable, ILiquidContainer
+{
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 12.0D, 14.0D);
 
-   protected SeaGrassBlock(AbstractBlock.Properties p_i48780_1_) {
-      super(p_i48780_1_);
-   }
+    protected SeaGrassBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   protected boolean mayPlaceOn(BlockState p_200014_1_, IBlockReader p_200014_2_, BlockPos p_200014_3_) {
-      return p_200014_1_.isFaceSturdy(p_200014_2_, p_200014_3_, Direction.UP) && !p_200014_1_.is(Blocks.MAGMA_BLOCK);
-   }
+    protected boolean isValidGround(BlockState state, IBlockReader worldIn, BlockPos pos)
+    {
+        return state.isSolidSide(worldIn, pos, Direction.UP) && !state.isIn(Blocks.MAGMA_BLOCK);
+    }
 
-   @Nullable
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      FluidState fluidstate = p_196258_1_.getLevel().getFluidState(p_196258_1_.getClickedPos());
-      return fluidstate.is(FluidTags.WATER) && fluidstate.getAmount() == 8 ? super.getStateForPlacement(p_196258_1_) : null;
-   }
+    @Nullable
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        FluidState fluidstate = context.getWorld().getFluidState(context.getPos());
+        return fluidstate.isTagged(FluidTags.WATER) && fluidstate.getLevel() == 8 ? super.getStateForPlacement(context) : null;
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      BlockState blockstate = super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-      if (!blockstate.isAir()) {
-         p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
-      }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        BlockState blockstate = super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
 
-      return blockstate;
-   }
+        if (!blockstate.isAir())
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+        }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return true;
-   }
+        return blockstate;
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return true;
+    }
 
-   public FluidState getFluidState(BlockState p_204507_1_) {
-      return Fluids.WATER.getSource(false);
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      BlockState blockstate = Blocks.TALL_SEAGRASS.defaultBlockState();
-      BlockState blockstate1 = blockstate.setValue(TallSeaGrassBlock.HALF, DoubleBlockHalf.UPPER);
-      BlockPos blockpos = p_225535_3_.above();
-      if (p_225535_1_.getBlockState(blockpos).is(Blocks.WATER)) {
-         p_225535_1_.setBlock(p_225535_3_, blockstate, 2);
-         p_225535_1_.setBlock(blockpos, blockstate1, 2);
-      }
+    public FluidState getFluidState(BlockState state)
+    {
+        return Fluids.WATER.getStillFluidState(false);
+    }
 
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        BlockState blockstate = Blocks.TALL_SEAGRASS.getDefaultState();
+        BlockState blockstate1 = blockstate.with(TallSeaGrassBlock.HALF, DoubleBlockHalf.UPPER);
+        BlockPos blockpos = pos.up();
 
-   public boolean canPlaceLiquid(IBlockReader p_204510_1_, BlockPos p_204510_2_, BlockState p_204510_3_, Fluid p_204510_4_) {
-      return false;
-   }
+        if (worldIn.getBlockState(blockpos).isIn(Blocks.WATER))
+        {
+            worldIn.setBlockState(pos, blockstate, 2);
+            worldIn.setBlockState(blockpos, blockstate1, 2);
+        }
+    }
 
-   public boolean placeLiquid(IWorld p_204509_1_, BlockPos p_204509_2_, BlockState p_204509_3_, FluidState p_204509_4_) {
-      return false;
-   }
+    public boolean canContainFluid(IBlockReader worldIn, BlockPos pos, BlockState state, Fluid fluidIn)
+    {
+        return false;
+    }
+
+    public boolean receiveFluid(IWorld worldIn, BlockPos pos, BlockState state, FluidState fluidStateIn)
+    {
+        return false;
+    }
 }

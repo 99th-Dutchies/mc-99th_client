@@ -11,80 +11,99 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolItem;
 import net.minecraft.item.TridentItem;
 
-public enum EnchantmentType {
-   ARMOR {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof ArmorItem;
-      }
-   },
-   ARMOR_FEET {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof ArmorItem && ((ArmorItem)p_77557_1_).getSlot() == EquipmentSlotType.FEET;
-      }
-   },
-   ARMOR_LEGS {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof ArmorItem && ((ArmorItem)p_77557_1_).getSlot() == EquipmentSlotType.LEGS;
-      }
-   },
-   ARMOR_CHEST {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof ArmorItem && ((ArmorItem)p_77557_1_).getSlot() == EquipmentSlotType.CHEST;
-      }
-   },
-   ARMOR_HEAD {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof ArmorItem && ((ArmorItem)p_77557_1_).getSlot() == EquipmentSlotType.HEAD;
-      }
-   },
-   WEAPON {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof SwordItem;
-      }
-   },
-   DIGGER {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof ToolItem;
-      }
-   },
-   FISHING_ROD {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof FishingRodItem;
-      }
-   },
-   TRIDENT {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof TridentItem;
-      }
-   },
-   BREAKABLE {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_.canBeDepleted();
-      }
-   },
-   BOW {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof BowItem;
-      }
-   },
-   WEARABLE {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof IArmorVanishable || Block.byItem(p_77557_1_) instanceof IArmorVanishable;
-      }
-   },
-   CROSSBOW {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof CrossbowItem;
-      }
-   },
-   VANISHABLE {
-      public boolean canEnchant(Item p_77557_1_) {
-         return p_77557_1_ instanceof IVanishable || Block.byItem(p_77557_1_) instanceof IVanishable || BREAKABLE.canEnchant(p_77557_1_);
-      }
-   };
+public enum EnchantmentType
+{
+    ARMOR {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof ArmorItem;
+        }
+    },
+    ARMOR_FEET {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof ArmorItem && ((ArmorItem)itemIn).getEquipmentSlot() == EquipmentSlotType.FEET;
+        }
+    },
+    ARMOR_LEGS {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof ArmorItem && ((ArmorItem)itemIn).getEquipmentSlot() == EquipmentSlotType.LEGS;
+        }
+    },
+    ARMOR_CHEST {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof ArmorItem && ((ArmorItem)itemIn).getEquipmentSlot() == EquipmentSlotType.CHEST;
+        }
+    },
+    ARMOR_HEAD {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof ArmorItem && ((ArmorItem)itemIn).getEquipmentSlot() == EquipmentSlotType.HEAD;
+        }
+    },
+    WEAPON {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof SwordItem;
+        }
+    },
+    DIGGER {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof ToolItem;
+        }
+    },
+    FISHING_ROD {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof FishingRodItem;
+        }
+    },
+    TRIDENT {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof TridentItem;
+        }
+    },
+    BREAKABLE {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn.isDamageable();
+        }
+    },
+    BOW {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof BowItem;
+        }
+    },
+    WEARABLE {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof IArmorVanishable || Block.getBlockFromItem(itemIn) instanceof IArmorVanishable;
+        }
+    },
+    CROSSBOW {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof CrossbowItem;
+        }
+    },
+    VANISHABLE {
+        public boolean canEnchantItem(Item itemIn)
+        {
+            return itemIn instanceof IVanishable || Block.getBlockFromItem(itemIn) instanceof IVanishable || BREAKABLE.canEnchantItem(itemIn);
+        }
+    };
 
-   private EnchantmentType() {
-   }
+    private EnchantmentType()
+    {
+    }
 
-   public abstract boolean canEnchant(Item p_77557_1_);
+    /**
+     * Return true if the item passed can be enchanted by a enchantment of this type.
+     */
+    public abstract boolean canEnchantItem(Item itemIn);
 }

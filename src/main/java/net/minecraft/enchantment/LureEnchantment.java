@@ -2,20 +2,31 @@ package net.minecraft.enchantment;
 
 import net.minecraft.inventory.EquipmentSlotType;
 
-public class LureEnchantment extends Enchantment {
-   protected LureEnchantment(Enchantment.Rarity p_i46729_1_, EnchantmentType p_i46729_2_, EquipmentSlotType... p_i46729_3_) {
-      super(p_i46729_1_, p_i46729_2_, p_i46729_3_);
-   }
+public class LureEnchantment extends Enchantment
+{
+    protected LureEnchantment(Enchantment.Rarity rarityIn, EnchantmentType typeIn, EquipmentSlotType... slots)
+    {
+        super(rarityIn, typeIn, slots);
+    }
 
-   public int getMinCost(int p_77321_1_) {
-      return 15 + (p_77321_1_ - 1) * 9;
-   }
+    /**
+     * Returns the minimal value of enchantability needed on the enchantment level passed.
+     */
+    public int getMinEnchantability(int enchantmentLevel)
+    {
+        return 15 + (enchantmentLevel - 1) * 9;
+    }
 
-   public int getMaxCost(int p_223551_1_) {
-      return super.getMinCost(p_223551_1_) + 50;
-   }
+    public int getMaxEnchantability(int enchantmentLevel)
+    {
+        return super.getMinEnchantability(enchantmentLevel) + 50;
+    }
 
-   public int getMaxLevel() {
-      return 3;
-   }
+    /**
+     * Returns the maximum level that the enchantment can have.
+     */
+    public int getMaxLevel()
+    {
+        return 3;
+    }
 }

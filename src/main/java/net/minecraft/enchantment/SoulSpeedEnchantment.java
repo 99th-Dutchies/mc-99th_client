@@ -2,32 +2,52 @@ package net.minecraft.enchantment;
 
 import net.minecraft.inventory.EquipmentSlotType;
 
-public class SoulSpeedEnchantment extends Enchantment {
-   public SoulSpeedEnchantment(Enchantment.Rarity p_i231601_1_, EquipmentSlotType... p_i231601_2_) {
-      super(p_i231601_1_, EnchantmentType.ARMOR_FEET, p_i231601_2_);
-   }
+public class SoulSpeedEnchantment extends Enchantment
+{
+    public SoulSpeedEnchantment(Enchantment.Rarity rarity, EquipmentSlotType... slots)
+    {
+        super(rarity, EnchantmentType.ARMOR_FEET, slots);
+    }
 
-   public int getMinCost(int p_77321_1_) {
-      return p_77321_1_ * 10;
-   }
+    /**
+     * Returns the minimal value of enchantability needed on the enchantment level passed.
+     */
+    public int getMinEnchantability(int enchantmentLevel)
+    {
+        return enchantmentLevel * 10;
+    }
 
-   public int getMaxCost(int p_223551_1_) {
-      return this.getMinCost(p_223551_1_) + 15;
-   }
+    public int getMaxEnchantability(int enchantmentLevel)
+    {
+        return this.getMinEnchantability(enchantmentLevel) + 15;
+    }
 
-   public boolean isTreasureOnly() {
-      return true;
-   }
+    public boolean isTreasureEnchantment()
+    {
+        return true;
+    }
 
-   public boolean isTradeable() {
-      return false;
-   }
+    /**
+     * Checks if the enchantment can be sold by villagers in their trades.
+     */
+    public boolean canVillagerTrade()
+    {
+        return false;
+    }
 
-   public boolean isDiscoverable() {
-      return false;
-   }
+    /**
+     * Checks if the enchantment can be applied to loot table drops.
+     */
+    public boolean canGenerateInLoot()
+    {
+        return false;
+    }
 
-   public int getMaxLevel() {
-      return 3;
-   }
+    /**
+     * Returns the maximum level that the enchantment can have.
+     */
+    public int getMaxLevel()
+    {
+        return 3;
+    }
 }

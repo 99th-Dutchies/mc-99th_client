@@ -8,49 +8,60 @@ import net.minecraft.loot.ConditionArraySerializer;
 import net.minecraft.loot.LootContext;
 import net.minecraft.util.ResourceLocation;
 
-public class TameAnimalTrigger extends AbstractCriterionTrigger<TameAnimalTrigger.Instance> {
-   private static final ResourceLocation ID = new ResourceLocation("tame_animal");
+public class TameAnimalTrigger extends AbstractCriterionTrigger<TameAnimalTrigger.Instance>
+{
+    private static final ResourceLocation ID = new ResourceLocation("tame_animal");
 
-   public ResourceLocation getId() {
-      return ID;
-   }
+    public ResourceLocation getId()
+    {
+        return ID;
+    }
 
-   public TameAnimalTrigger.Instance createInstance(JsonObject p_230241_1_, EntityPredicate.AndPredicate p_230241_2_, ConditionArrayParser p_230241_3_) {
-      EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.fromJson(p_230241_1_, "entity", p_230241_3_);
-      return new TameAnimalTrigger.Instance(p_230241_2_, entitypredicate$andpredicate);
-   }
+    public TameAnimalTrigger.Instance deserializeTrigger(JsonObject json, EntityPredicate.AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+    {
+        EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.deserializeJSONObject(json, "entity", conditionsParser);
+        return new TameAnimalTrigger.Instance(entityPredicate, entitypredicate$andpredicate);
+    }
 
-   public void trigger(ServerPlayerEntity p_193178_1_, AnimalEntity p_193178_2_) {
-      LootContext lootcontext = EntityPredicate.createContext(p_193178_1_, p_193178_2_);
-      this.trigger(p_193178_1_, (p_227251_1_) -> {
-         return p_227251_1_.matches(lootcontext);
-      });
-   }
+    public void trigger(ServerPlayerEntity player, AnimalEntity entity)
+    {
+        LootContext lootcontext = EntityPredicate.getLootContext(player, entity);
+        this.triggerListeners(player, (instance) ->
+        {
+            return instance.test(lootcontext);
+        });
+    }
 
-   public static class Instance extends CriterionInstance {
-      private final EntityPredicate.AndPredicate entity;
+    public static class Instance extends CriterionInstance
+    {
+        private final EntityPredicate.AndPredicate entity;
 
-      public Instance(EntityPredicate.AndPredicate p_i231963_1_, EntityPredicate.AndPredicate p_i231963_2_) {
-         super(TameAnimalTrigger.ID, p_i231963_1_);
-         this.entity = p_i231963_2_;
-      }
+        public Instance(EntityPredicate.AndPredicate player, EntityPredicate.AndPredicate entity)
+        {
+            super(TameAnimalTrigger.ID, player);
+            this.entity = entity;
+        }
 
-      public static TameAnimalTrigger.Instance tamedAnimal() {
-         return new TameAnimalTrigger.Instance(EntityPredicate.AndPredicate.ANY, EntityPredicate.AndPredicate.ANY);
-      }
+        public static TameAnimalTrigger.Instance any()
+        {
+            return new TameAnimalTrigger.Instance(EntityPredicate.AndPredicate.ANY_AND, EntityPredicate.AndPredicate.ANY_AND);
+        }
 
-      public static TameAnimalTrigger.Instance tamedAnimal(EntityPredicate p_215124_0_) {
-         return new TameAnimalTrigger.Instance(EntityPredicate.AndPredicate.ANY, EntityPredicate.AndPredicate.wrap(p_215124_0_));
-      }
+        public static TameAnimalTrigger.Instance create(EntityPredicate entityCondition)
+        {
+            return new TameAnimalTrigger.Instance(EntityPredicate.AndPredicate.ANY_AND, EntityPredicate.AndPredicate.createAndFromEntityCondition(entityCondition));
+        }
 
-      public boolean matches(LootContext p_236323_1_) {
-         return this.entity.matches(p_236323_1_);
-      }
+        public boolean test(LootContext context)
+        {
+            return this.entity.testContext(context);
+        }
 
-      public JsonObject serializeToJson(ConditionArraySerializer p_230240_1_) {
-         JsonObject jsonobject = super.serializeToJson(p_230240_1_);
-         jsonobject.add("entity", this.entity.toJson(p_230240_1_));
-         return jsonobject;
-      }
-   }
+        public JsonObject serialize(ConditionArraySerializer conditions)
+        {
+            JsonObject jsonobject = super.serialize(conditions);
+            jsonobject.add("entity", this.entity.serializeConditions(conditions));
+            return jsonobject;
+        }
+    }
 }

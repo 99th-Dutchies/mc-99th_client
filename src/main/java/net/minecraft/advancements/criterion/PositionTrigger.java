@@ -9,57 +9,70 @@ import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.server.ServerWorld;
 
-public class PositionTrigger extends AbstractCriterionTrigger<PositionTrigger.Instance> {
-   private final ResourceLocation id;
+public class PositionTrigger extends AbstractCriterionTrigger<PositionTrigger.Instance>
+{
+    private final ResourceLocation id;
 
-   public PositionTrigger(ResourceLocation p_i47432_1_) {
-      this.id = p_i47432_1_;
-   }
+    public PositionTrigger(ResourceLocation id)
+    {
+        this.id = id;
+    }
 
-   public ResourceLocation getId() {
-      return this.id;
-   }
+    public ResourceLocation getId()
+    {
+        return this.id;
+    }
 
-   public PositionTrigger.Instance createInstance(JsonObject p_230241_1_, EntityPredicate.AndPredicate p_230241_2_, ConditionArrayParser p_230241_3_) {
-      JsonObject jsonobject = JSONUtils.getAsJsonObject(p_230241_1_, "location", p_230241_1_);
-      LocationPredicate locationpredicate = LocationPredicate.fromJson(jsonobject);
-      return new PositionTrigger.Instance(this.id, p_230241_2_, locationpredicate);
-   }
+    public PositionTrigger.Instance deserializeTrigger(JsonObject json, EntityPredicate.AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+    {
+        JsonObject jsonobject = JSONUtils.getJsonObject(json, "location", json);
+        LocationPredicate locationpredicate = LocationPredicate.deserialize(jsonobject);
+        return new PositionTrigger.Instance(this.id, entityPredicate, locationpredicate);
+    }
 
-   public void trigger(ServerPlayerEntity p_192215_1_) {
-      this.trigger(p_192215_1_, (p_226923_1_) -> {
-         return p_226923_1_.matches(p_192215_1_.getLevel(), p_192215_1_.getX(), p_192215_1_.getY(), p_192215_1_.getZ());
-      });
-   }
+    public void trigger(ServerPlayerEntity player)
+    {
+        this.triggerListeners(player, (instance) ->
+        {
+            return instance.test(player.getServerWorld(), player.getPosX(), player.getPosY(), player.getPosZ());
+        });
+    }
 
-   public static class Instance extends CriterionInstance {
-      private final LocationPredicate location;
+    public static class Instance extends CriterionInstance
+    {
+        private final LocationPredicate location;
 
-      public Instance(ResourceLocation p_i231661_1_, EntityPredicate.AndPredicate p_i231661_2_, LocationPredicate p_i231661_3_) {
-         super(p_i231661_1_, p_i231661_2_);
-         this.location = p_i231661_3_;
-      }
+        public Instance(ResourceLocation id, EntityPredicate.AndPredicate player, LocationPredicate location)
+        {
+            super(id, player);
+            this.location = location;
+        }
 
-      public static PositionTrigger.Instance located(LocationPredicate p_203932_0_) {
-         return new PositionTrigger.Instance(CriteriaTriggers.LOCATION.id, EntityPredicate.AndPredicate.ANY, p_203932_0_);
-      }
+        public static PositionTrigger.Instance forLocation(LocationPredicate location)
+        {
+            return new PositionTrigger.Instance(CriteriaTriggers.LOCATION.id, EntityPredicate.AndPredicate.ANY_AND, location);
+        }
 
-      public static PositionTrigger.Instance sleptInBed() {
-         return new PositionTrigger.Instance(CriteriaTriggers.SLEPT_IN_BED.id, EntityPredicate.AndPredicate.ANY, LocationPredicate.ANY);
-      }
+        public static PositionTrigger.Instance sleptInBed()
+        {
+            return new PositionTrigger.Instance(CriteriaTriggers.SLEPT_IN_BED.id, EntityPredicate.AndPredicate.ANY_AND, LocationPredicate.ANY);
+        }
 
-      public static PositionTrigger.Instance raidWon() {
-         return new PositionTrigger.Instance(CriteriaTriggers.RAID_WIN.id, EntityPredicate.AndPredicate.ANY, LocationPredicate.ANY);
-      }
+        public static PositionTrigger.Instance villageHero()
+        {
+            return new PositionTrigger.Instance(CriteriaTriggers.HERO_OF_THE_VILLAGE.id, EntityPredicate.AndPredicate.ANY_AND, LocationPredicate.ANY);
+        }
 
-      public boolean matches(ServerWorld p_193204_1_, double p_193204_2_, double p_193204_4_, double p_193204_6_) {
-         return this.location.matches(p_193204_1_, p_193204_2_, p_193204_4_, p_193204_6_);
-      }
+        public boolean test(ServerWorld world, double x, double y, double z)
+        {
+            return this.location.test(world, x, y, z);
+        }
 
-      public JsonObject serializeToJson(ConditionArraySerializer p_230240_1_) {
-         JsonObject jsonobject = super.serializeToJson(p_230240_1_);
-         jsonobject.add("location", this.location.serializeToJson());
-         return jsonobject;
-      }
-   }
+        public JsonObject serialize(ConditionArraySerializer conditions)
+        {
+            JsonObject jsonobject = super.serialize(conditions);
+            jsonobject.add("location", this.location.serialize());
+            return jsonobject;
+        }
+    }
 }

@@ -14,45 +14,68 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class WritableBookItem extends Item {
-   public WritableBookItem(Item.Properties p_i48455_1_) {
-      super(p_i48455_1_);
-   }
+public class WritableBookItem extends Item
+{
+    public WritableBookItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      World world = p_195939_1_.getLevel();
-      BlockPos blockpos = p_195939_1_.getClickedPos();
-      BlockState blockstate = world.getBlockState(blockpos);
-      if (blockstate.is(Blocks.LECTERN)) {
-         return LecternBlock.tryPlaceBook(world, blockpos, blockstate, p_195939_1_.getItemInHand()) ? ActionResultType.sidedSuccess(world.isClientSide) : ActionResultType.PASS;
-      } else {
-         return ActionResultType.PASS;
-      }
-   }
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        World world = context.getWorld();
+        BlockPos blockpos = context.getPos();
+        BlockState blockstate = world.getBlockState(blockpos);
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      p_77659_2_.openItemGui(itemstack, p_77659_3_);
-      p_77659_2_.awardStat(Stats.ITEM_USED.get(this));
-      return ActionResult.sidedSuccess(itemstack, p_77659_1_.isClientSide());
-   }
+        if (blockstate.isIn(Blocks.LECTERN))
+        {
+            return LecternBlock.tryPlaceBook(world, blockpos, blockstate, context.getItem()) ? ActionResultType.func_233537_a_(world.isRemote) : ActionResultType.PASS;
+        }
+        else
+        {
+            return ActionResultType.PASS;
+        }
+    }
 
-   public static boolean makeSureTagIsValid(@Nullable CompoundNBT p_150930_0_) {
-      if (p_150930_0_ == null) {
-         return false;
-      } else if (!p_150930_0_.contains("pages", 9)) {
-         return false;
-      } else {
-         ListNBT listnbt = p_150930_0_.getList("pages", 8);
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        playerIn.openBook(itemstack, handIn);
+        playerIn.addStat(Stats.ITEM_USED.get(this));
+        return ActionResult.func_233538_a_(itemstack, worldIn.isRemote());
+    }
 
-         for(int i = 0; i < listnbt.size(); ++i) {
-            String s = listnbt.getString(i);
-            if (s.length() > 32767) {
-               return false;
+    /**
+     * this method returns true if the book's NBT Tag List "pages" is valid
+     */
+    public static boolean isNBTValid(@Nullable CompoundNBT nbt)
+    {
+        if (nbt == null)
+        {
+            return false;
+        }
+        else if (!nbt.contains("pages", 9))
+        {
+            return false;
+        }
+        else
+        {
+            ListNBT listnbt = nbt.getList("pages", 8);
+
+            for (int i = 0; i < listnbt.size(); ++i)
+            {
+                String s = listnbt.getString(i);
+
+                if (s.length() > 32767)
+                {
+                    return false;
+                }
             }
-         }
 
-         return true;
-      }
-   }
+            return true;
+        }
+    }
 }

@@ -5,36 +5,55 @@ import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
 
-public class EntitySenses {
-   private final MobEntity mob;
-   private final List<Entity> seen = Lists.newArrayList();
-   private final List<Entity> unseen = Lists.newArrayList();
+public class EntitySenses
+{
+    private final MobEntity entity;
+    private final List<Entity> seenEntities = Lists.newArrayList();
+    private final List<Entity> unseenEntities = Lists.newArrayList();
 
-   public EntitySenses(MobEntity p_i1672_1_) {
-      this.mob = p_i1672_1_;
-   }
+    public EntitySenses(MobEntity entityIn)
+    {
+        this.entity = entityIn;
+    }
 
-   public void tick() {
-      this.seen.clear();
-      this.unseen.clear();
-   }
+    /**
+     * Clears canSeeCachePositive and canSeeCacheNegative.
+     */
+    public void tick()
+    {
+        this.seenEntities.clear();
+        this.unseenEntities.clear();
+    }
 
-   public boolean canSee(Entity p_75522_1_) {
-      if (this.seen.contains(p_75522_1_)) {
-         return true;
-      } else if (this.unseen.contains(p_75522_1_)) {
-         return false;
-      } else {
-         this.mob.level.getProfiler().push("canSee");
-         boolean flag = this.mob.canSee(p_75522_1_);
-         this.mob.level.getProfiler().pop();
-         if (flag) {
-            this.seen.add(p_75522_1_);
-         } else {
-            this.unseen.add(p_75522_1_);
-         }
+    /**
+     * Checks, whether 'our' entity can see the entity given as argument (true) or not (false), caching the result.
+     */
+    public boolean canSee(Entity entityIn)
+    {
+        if (this.seenEntities.contains(entityIn))
+        {
+            return true;
+        }
+        else if (this.unseenEntities.contains(entityIn))
+        {
+            return false;
+        }
+        else
+        {
+            this.entity.world.getProfiler().startSection("canSee");
+            boolean flag = this.entity.canEntityBeSeen(entityIn);
+            this.entity.world.getProfiler().endSection();
 
-         return flag;
-      }
-   }
+            if (flag)
+            {
+                this.seenEntities.add(entityIn);
+            }
+            else
+            {
+                this.unseenEntities.add(entityIn);
+            }
+
+            return flag;
+        }
+    }
 }

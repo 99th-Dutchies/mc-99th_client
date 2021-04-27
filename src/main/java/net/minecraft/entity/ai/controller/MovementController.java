@@ -13,154 +13,202 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.VoxelShape;
 
-public class MovementController {
-   protected final MobEntity mob;
-   protected double wantedX;
-   protected double wantedY;
-   protected double wantedZ;
-   protected double speedModifier;
-   protected float strafeForwards;
-   protected float strafeRight;
-   protected MovementController.Action operation = MovementController.Action.WAIT;
+public class MovementController
+{
+    protected final MobEntity mob;
+    protected double posX;
+    protected double posY;
+    protected double posZ;
+    protected double speed;
+    protected float moveForward;
+    protected float moveStrafe;
+    protected MovementController.Action action = MovementController.Action.WAIT;
 
-   public MovementController(MobEntity p_i1614_1_) {
-      this.mob = p_i1614_1_;
-   }
+    public MovementController(MobEntity mob)
+    {
+        this.mob = mob;
+    }
 
-   public boolean hasWanted() {
-      return this.operation == MovementController.Action.MOVE_TO;
-   }
+    public boolean isUpdating()
+    {
+        return this.action == MovementController.Action.MOVE_TO;
+    }
 
-   public double getSpeedModifier() {
-      return this.speedModifier;
-   }
+    public double getSpeed()
+    {
+        return this.speed;
+    }
 
-   public void setWantedPosition(double p_75642_1_, double p_75642_3_, double p_75642_5_, double p_75642_7_) {
-      this.wantedX = p_75642_1_;
-      this.wantedY = p_75642_3_;
-      this.wantedZ = p_75642_5_;
-      this.speedModifier = p_75642_7_;
-      if (this.operation != MovementController.Action.JUMPING) {
-         this.operation = MovementController.Action.MOVE_TO;
-      }
+    /**
+     * Sets the speed and location to move to
+     */
+    public void setMoveTo(double x, double y, double z, double speedIn)
+    {
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+        this.speed = speedIn;
 
-   }
+        if (this.action != MovementController.Action.JUMPING)
+        {
+            this.action = MovementController.Action.MOVE_TO;
+        }
+    }
 
-   public void strafe(float p_188488_1_, float p_188488_2_) {
-      this.operation = MovementController.Action.STRAFE;
-      this.strafeForwards = p_188488_1_;
-      this.strafeRight = p_188488_2_;
-      this.speedModifier = 0.25D;
-   }
+    public void strafe(float forward, float strafe)
+    {
+        this.action = MovementController.Action.STRAFE;
+        this.moveForward = forward;
+        this.moveStrafe = strafe;
+        this.speed = 0.25D;
+    }
 
-   public void tick() {
-      if (this.operation == MovementController.Action.STRAFE) {
-         float f = (float)this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED);
-         float f1 = (float)this.speedModifier * f;
-         float f2 = this.strafeForwards;
-         float f3 = this.strafeRight;
-         float f4 = MathHelper.sqrt(f2 * f2 + f3 * f3);
-         if (f4 < 1.0F) {
-            f4 = 1.0F;
-         }
+    public void tick()
+    {
+        if (this.action == MovementController.Action.STRAFE)
+        {
+            float f = (float)this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED);
+            float f1 = (float)this.speed * f;
+            float f2 = this.moveForward;
+            float f3 = this.moveStrafe;
+            float f4 = MathHelper.sqrt(f2 * f2 + f3 * f3);
 
-         f4 = f1 / f4;
-         f2 = f2 * f4;
-         f3 = f3 * f4;
-         float f5 = MathHelper.sin(this.mob.yRot * ((float)Math.PI / 180F));
-         float f6 = MathHelper.cos(this.mob.yRot * ((float)Math.PI / 180F));
-         float f7 = f2 * f6 - f3 * f5;
-         float f8 = f3 * f6 + f2 * f5;
-         if (!this.isWalkable(f7, f8)) {
-            this.strafeForwards = 1.0F;
-            this.strafeRight = 0.0F;
-         }
+            if (f4 < 1.0F)
+            {
+                f4 = 1.0F;
+            }
 
-         this.mob.setSpeed(f1);
-         this.mob.setZza(this.strafeForwards);
-         this.mob.setXxa(this.strafeRight);
-         this.operation = MovementController.Action.WAIT;
-      } else if (this.operation == MovementController.Action.MOVE_TO) {
-         this.operation = MovementController.Action.WAIT;
-         double d0 = this.wantedX - this.mob.getX();
-         double d1 = this.wantedZ - this.mob.getZ();
-         double d2 = this.wantedY - this.mob.getY();
-         double d3 = d0 * d0 + d2 * d2 + d1 * d1;
-         if (d3 < (double)2.5000003E-7F) {
-            this.mob.setZza(0.0F);
-            return;
-         }
+            f4 = f1 / f4;
+            f2 = f2 * f4;
+            f3 = f3 * f4;
+            float f5 = MathHelper.sin(this.mob.rotationYaw * ((float)Math.PI / 180F));
+            float f6 = MathHelper.cos(this.mob.rotationYaw * ((float)Math.PI / 180F));
+            float f7 = f2 * f6 - f3 * f5;
+            float f8 = f3 * f6 + f2 * f5;
 
-         float f9 = (float)(MathHelper.atan2(d1, d0) * (double)(180F / (float)Math.PI)) - 90.0F;
-         this.mob.yRot = this.rotlerp(this.mob.yRot, f9, 90.0F);
-         this.mob.setSpeed((float)(this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
-         BlockPos blockpos = this.mob.blockPosition();
-         BlockState blockstate = this.mob.level.getBlockState(blockpos);
-         Block block = blockstate.getBlock();
-         VoxelShape voxelshape = blockstate.getCollisionShape(this.mob.level, blockpos);
-         if (d2 > (double)this.mob.maxUpStep && d0 * d0 + d1 * d1 < (double)Math.max(1.0F, this.mob.getBbWidth()) || !voxelshape.isEmpty() && this.mob.getY() < voxelshape.max(Direction.Axis.Y) + (double)blockpos.getY() && !block.is(BlockTags.DOORS) && !block.is(BlockTags.FENCES)) {
-            this.mob.getJumpControl().jump();
-            this.operation = MovementController.Action.JUMPING;
-         }
-      } else if (this.operation == MovementController.Action.JUMPING) {
-         this.mob.setSpeed((float)(this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
-         if (this.mob.isOnGround()) {
-            this.operation = MovementController.Action.WAIT;
-         }
-      } else {
-         this.mob.setZza(0.0F);
-      }
+            if (!this.func_234024_b_(f7, f8))
+            {
+                this.moveForward = 1.0F;
+                this.moveStrafe = 0.0F;
+            }
 
-   }
+            this.mob.setAIMoveSpeed(f1);
+            this.mob.setMoveForward(this.moveForward);
+            this.mob.setMoveStrafing(this.moveStrafe);
+            this.action = MovementController.Action.WAIT;
+        }
+        else if (this.action == MovementController.Action.MOVE_TO)
+        {
+            this.action = MovementController.Action.WAIT;
+            double d0 = this.posX - this.mob.getPosX();
+            double d1 = this.posZ - this.mob.getPosZ();
+            double d2 = this.posY - this.mob.getPosY();
+            double d3 = d0 * d0 + d2 * d2 + d1 * d1;
 
-   private boolean isWalkable(float p_234024_1_, float p_234024_2_) {
-      PathNavigator pathnavigator = this.mob.getNavigation();
-      if (pathnavigator != null) {
-         NodeProcessor nodeprocessor = pathnavigator.getNodeEvaluator();
-         if (nodeprocessor != null && nodeprocessor.getBlockPathType(this.mob.level, MathHelper.floor(this.mob.getX() + (double)p_234024_1_), MathHelper.floor(this.mob.getY()), MathHelper.floor(this.mob.getZ() + (double)p_234024_2_)) != PathNodeType.WALKABLE) {
-            return false;
-         }
-      }
+            if (d3 < (double)2.5000003E-7F)
+            {
+                this.mob.setMoveForward(0.0F);
+                return;
+            }
 
-      return true;
-   }
+            float f9 = (float)(MathHelper.atan2(d1, d0) * (double)(180F / (float)Math.PI)) - 90.0F;
+            this.mob.rotationYaw = this.limitAngle(this.mob.rotationYaw, f9, 90.0F);
+            this.mob.setAIMoveSpeed((float)(this.speed * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
+            BlockPos blockpos = this.mob.getPosition();
+            BlockState blockstate = this.mob.world.getBlockState(blockpos);
+            Block block = blockstate.getBlock();
+            VoxelShape voxelshape = blockstate.getCollisionShape(this.mob.world, blockpos);
 
-   protected float rotlerp(float p_75639_1_, float p_75639_2_, float p_75639_3_) {
-      float f = MathHelper.wrapDegrees(p_75639_2_ - p_75639_1_);
-      if (f > p_75639_3_) {
-         f = p_75639_3_;
-      }
+            if (d2 > (double)this.mob.stepHeight && d0 * d0 + d1 * d1 < (double)Math.max(1.0F, this.mob.getWidth()) || !voxelshape.isEmpty() && this.mob.getPosY() < voxelshape.getEnd(Direction.Axis.Y) + (double)blockpos.getY() && !block.isIn(BlockTags.DOORS) && !block.isIn(BlockTags.FENCES))
+            {
+                this.mob.getJumpController().setJumping();
+                this.action = MovementController.Action.JUMPING;
+            }
+        }
+        else if (this.action == MovementController.Action.JUMPING)
+        {
+            this.mob.setAIMoveSpeed((float)(this.speed * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
 
-      if (f < -p_75639_3_) {
-         f = -p_75639_3_;
-      }
+            if (this.mob.isOnGround())
+            {
+                this.action = MovementController.Action.WAIT;
+            }
+        }
+        else
+        {
+            this.mob.setMoveForward(0.0F);
+        }
+    }
 
-      float f1 = p_75639_1_ + f;
-      if (f1 < 0.0F) {
-         f1 += 360.0F;
-      } else if (f1 > 360.0F) {
-         f1 -= 360.0F;
-      }
+    private boolean func_234024_b_(float p_234024_1_, float p_234024_2_)
+    {
+        PathNavigator pathnavigator = this.mob.getNavigator();
 
-      return f1;
-   }
+        if (pathnavigator != null)
+        {
+            NodeProcessor nodeprocessor = pathnavigator.getNodeProcessor();
 
-   public double getWantedX() {
-      return this.wantedX;
-   }
+            if (nodeprocessor != null && nodeprocessor.getPathNodeType(this.mob.world, MathHelper.floor(this.mob.getPosX() + (double)p_234024_1_), MathHelper.floor(this.mob.getPosY()), MathHelper.floor(this.mob.getPosZ() + (double)p_234024_2_)) != PathNodeType.WALKABLE)
+            {
+                return false;
+            }
+        }
 
-   public double getWantedY() {
-      return this.wantedY;
-   }
+        return true;
+    }
 
-   public double getWantedZ() {
-      return this.wantedZ;
-   }
+    /**
+     * Attempt to rotate the first angle to become the second angle, but only allow overall direction change to at max
+     * be third parameter
+     */
+    protected float limitAngle(float sourceAngle, float targetAngle, float maximumChange)
+    {
+        float f = MathHelper.wrapDegrees(targetAngle - sourceAngle);
 
-   public static enum Action {
-      WAIT,
-      MOVE_TO,
-      STRAFE,
-      JUMPING;
-   }
+        if (f > maximumChange)
+        {
+            f = maximumChange;
+        }
+
+        if (f < -maximumChange)
+        {
+            f = -maximumChange;
+        }
+
+        float f1 = sourceAngle + f;
+
+        if (f1 < 0.0F)
+        {
+            f1 += 360.0F;
+        }
+        else if (f1 > 360.0F)
+        {
+            f1 -= 360.0F;
+        }
+
+        return f1;
+    }
+
+    public double getX()
+    {
+        return this.posX;
+    }
+
+    public double getY()
+    {
+        return this.posY;
+    }
+
+    public double getZ()
+    {
+        return this.posZ;
+    }
+
+    public static enum Action
+    {
+        WAIT,
+        MOVE_TO,
+        STRAFE,
+        JUMPING;
+    }
 }

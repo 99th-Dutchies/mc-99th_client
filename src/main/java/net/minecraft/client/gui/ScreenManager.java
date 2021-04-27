@@ -29,89 +29,104 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class ScreenManager {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final Map<ContainerType<?>, ScreenManager.IScreenFactory<?, ?>> SCREENS = Maps.newHashMap();
+public class ScreenManager
+{
+    private static final Logger LOG = LogManager.getLogger();
+    private static final Map < ContainerType<?>, ScreenManager.IScreenFactory <? , ? >> FACTORIES = Maps.newHashMap();
 
-   public static <T extends Container> void create(@Nullable ContainerType<T> p_216909_0_, Minecraft p_216909_1_, int p_216909_2_, ITextComponent p_216909_3_) {
-      if (p_216909_0_ == null) {
-         LOGGER.warn("Trying to open invalid screen with name: {}", (Object)p_216909_3_.getString());
-      } else {
-         ScreenManager.IScreenFactory<T, ?> iscreenfactory = getConstructor(p_216909_0_);
-         if (iscreenfactory == null) {
-            LOGGER.warn("Failed to create screen for menu type: {}", (Object)Registry.MENU.getKey(p_216909_0_));
-         } else {
-            iscreenfactory.fromPacket(p_216909_3_, p_216909_0_, p_216909_1_, p_216909_2_);
-         }
-      }
-   }
+    public static <T extends Container> void openScreen(@Nullable ContainerType<T> type, Minecraft mc, int windowId, ITextComponent title)
+    {
+        if (type == null)
+        {
+            LOG.warn("Trying to open invalid screen with name: {}", (Object)title.getString());
+        }
+        else
+        {
+            ScreenManager.IScreenFactory < T, ? > iscreenfactory = getFactory(type);
 
-   @Nullable
-   private static <T extends Container> ScreenManager.IScreenFactory<T, ?> getConstructor(ContainerType<T> p_216912_0_) {
-      return (ScreenManager.IScreenFactory<T, ?>)SCREENS.get(p_216912_0_);
-   }
+            if (iscreenfactory == null)
+            {
+                LOG.warn("Failed to create screen for menu type: {}", (Object)Registry.MENU.getKey(type));
+            }
+            else
+            {
+                iscreenfactory.createScreen(title, type, mc, windowId);
+            }
+        }
+    }
 
-   private static <M extends Container, U extends Screen & IHasContainer<M>> void register(ContainerType<? extends M> p_216911_0_, ScreenManager.IScreenFactory<M, U> p_216911_1_) {
-      ScreenManager.IScreenFactory<?, ?> iscreenfactory = SCREENS.put(p_216911_0_, p_216911_1_);
-      if (iscreenfactory != null) {
-         throw new IllegalStateException("Duplicate registration for " + Registry.MENU.getKey(p_216911_0_));
-      }
-   }
+    @Nullable
+    private static <T extends Container> ScreenManager.IScreenFactory < T, ? > getFactory(ContainerType<T> type)
+    {
+        return (ScreenManager.IScreenFactory < T, ? >)FACTORIES.get(type);
+    }
 
-   public static boolean selfTest() {
-      boolean flag = false;
+    private static <M extends Container, U extends Screen & IHasContainer<M>> void registerFactory(ContainerType <? extends M > type, ScreenManager.IScreenFactory<M, U> factory)
+    {
+        ScreenManager.IScreenFactory <? , ? > iscreenfactory = FACTORIES.put(type, factory);
 
-      for(ContainerType<?> containertype : Registry.MENU) {
-         if (!SCREENS.containsKey(containertype)) {
-            LOGGER.debug("Menu {} has no matching screen", (Object)Registry.MENU.getKey(containertype));
-            flag = true;
-         }
-      }
+        if (iscreenfactory != null)
+        {
+            throw new IllegalStateException("Duplicate registration for " + Registry.MENU.getKey(type));
+        }
+    }
 
-      return flag;
-   }
+    public static boolean isMissingScreen()
+    {
+        boolean flag = false;
 
-   static {
-      register(ContainerType.GENERIC_9x1, ChestScreen::new);
-      register(ContainerType.GENERIC_9x2, ChestScreen::new);
-      register(ContainerType.GENERIC_9x3, ChestScreen::new);
-      register(ContainerType.GENERIC_9x4, ChestScreen::new);
-      register(ContainerType.GENERIC_9x5, ChestScreen::new);
-      register(ContainerType.GENERIC_9x6, ChestScreen::new);
-      register(ContainerType.GENERIC_3x3, DispenserScreen::new);
-      register(ContainerType.ANVIL, AnvilScreen::new);
-      register(ContainerType.BEACON, BeaconScreen::new);
-      register(ContainerType.BLAST_FURNACE, BlastFurnaceScreen::new);
-      register(ContainerType.BREWING_STAND, BrewingStandScreen::new);
-      register(ContainerType.CRAFTING, CraftingScreen::new);
-      register(ContainerType.ENCHANTMENT, EnchantmentScreen::new);
-      register(ContainerType.FURNACE, FurnaceScreen::new);
-      register(ContainerType.GRINDSTONE, GrindstoneScreen::new);
-      register(ContainerType.HOPPER, HopperScreen::new);
-      register(ContainerType.LECTERN, LecternScreen::new);
-      register(ContainerType.LOOM, LoomScreen::new);
-      register(ContainerType.MERCHANT, MerchantScreen::new);
-      register(ContainerType.SHULKER_BOX, ShulkerBoxScreen::new);
-      register(ContainerType.SMITHING, SmithingTableScreen::new);
-      register(ContainerType.SMOKER, SmokerScreen::new);
-      register(ContainerType.CARTOGRAPHY_TABLE, CartographyTableScreen::new);
-      register(ContainerType.STONECUTTER, StonecutterScreen::new);
-   }
+        for (ContainerType<?> containertype : Registry.MENU)
+        {
+            if (!FACTORIES.containsKey(containertype))
+            {
+                LOG.debug("Menu {} has no matching screen", (Object)Registry.MENU.getKey(containertype));
+                flag = true;
+            }
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   interface IScreenFactory<T extends Container, U extends Screen & IHasContainer<T>> {
-      default void fromPacket(ITextComponent p_216908_1_, ContainerType<T> p_216908_2_, Minecraft p_216908_3_, int p_216908_4_) {
-         U u = this.create(p_216908_2_.create(p_216908_4_, p_216908_3_.player.inventory), p_216908_3_.player.inventory, p_216908_1_);
-         p_216908_3_.player.containerMenu = u.getMenu();
-         p_216908_3_.setScreen(u);
-      }
+        return flag;
+    }
 
-      U create(T p_create_1_, PlayerInventory p_create_2_, ITextComponent p_create_3_);
-   }
+    static
+    {
+        registerFactory(ContainerType.GENERIC_9X1, ChestScreen::new);
+        registerFactory(ContainerType.GENERIC_9X2, ChestScreen::new);
+        registerFactory(ContainerType.GENERIC_9X3, ChestScreen::new);
+        registerFactory(ContainerType.GENERIC_9X4, ChestScreen::new);
+        registerFactory(ContainerType.GENERIC_9X5, ChestScreen::new);
+        registerFactory(ContainerType.GENERIC_9X6, ChestScreen::new);
+        registerFactory(ContainerType.GENERIC_3X3, DispenserScreen::new);
+        registerFactory(ContainerType.ANVIL, AnvilScreen::new);
+        registerFactory(ContainerType.BEACON, BeaconScreen::new);
+        registerFactory(ContainerType.BLAST_FURNACE, BlastFurnaceScreen::new);
+        registerFactory(ContainerType.BREWING_STAND, BrewingStandScreen::new);
+        registerFactory(ContainerType.CRAFTING, CraftingScreen::new);
+        registerFactory(ContainerType.ENCHANTMENT, EnchantmentScreen::new);
+        registerFactory(ContainerType.FURNACE, FurnaceScreen::new);
+        registerFactory(ContainerType.GRINDSTONE, GrindstoneScreen::new);
+        registerFactory(ContainerType.HOPPER, HopperScreen::new);
+        registerFactory(ContainerType.LECTERN, LecternScreen::new);
+        registerFactory(ContainerType.LOOM, LoomScreen::new);
+        registerFactory(ContainerType.MERCHANT, MerchantScreen::new);
+        registerFactory(ContainerType.SHULKER_BOX, ShulkerBoxScreen::new);
+        registerFactory(ContainerType.SMITHING, SmithingTableScreen::new);
+        registerFactory(ContainerType.SMOKER, SmokerScreen::new);
+        registerFactory(ContainerType.CARTOGRAPHY_TABLE, CartographyTableScreen::new);
+        registerFactory(ContainerType.STONECUTTER, StonecutterScreen::new);
+    }
+
+    interface IScreenFactory<T extends Container, U extends Screen & IHasContainer<T>>
+    {
+    default void createScreen(ITextComponent title, ContainerType<T> type, Minecraft mc, int windowId)
+        {
+            U u = this.create(type.create(windowId, mc.player.inventory), mc.player.inventory, title);
+            mc.player.openContainer = u.getContainer();
+            mc.displayGuiScreen(u);
+        }
+
+        U create(T p_create_1_, PlayerInventory p_create_2_, ITextComponent p_create_3_);
+    }
 }

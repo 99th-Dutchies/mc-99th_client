@@ -24,102 +24,151 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 
-public abstract class MonsterEntity extends CreatureEntity implements IMob {
-   protected MonsterEntity(EntityType<? extends MonsterEntity> p_i48553_1_, World p_i48553_2_) {
-      super(p_i48553_1_, p_i48553_2_);
-      this.xpReward = 5;
-   }
+public abstract class MonsterEntity extends CreatureEntity implements IMob
+{
+    protected MonsterEntity(EntityType <? extends MonsterEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+        this.experienceValue = 5;
+    }
 
-   public SoundCategory getSoundSource() {
-      return SoundCategory.HOSTILE;
-   }
+    public SoundCategory getSoundCategory()
+    {
+        return SoundCategory.HOSTILE;
+    }
 
-   public void aiStep() {
-      this.updateSwingTime();
-      this.updateNoActionTime();
-      super.aiStep();
-   }
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void livingTick()
+    {
+        this.updateArmSwingProgress();
+        this.idle();
+        super.livingTick();
+    }
 
-   protected void updateNoActionTime() {
-      float f = this.getBrightness();
-      if (f > 0.5F) {
-         this.noActionTime += 2;
-      }
+    protected void idle()
+    {
+        float f = this.getBrightness();
 
-   }
+        if (f > 0.5F)
+        {
+            this.idleTime += 2;
+        }
+    }
 
-   protected boolean shouldDespawnInPeaceful() {
-      return true;
-   }
+    protected boolean isDespawnPeaceful()
+    {
+        return true;
+    }
 
-   protected SoundEvent getSwimSound() {
-      return SoundEvents.HOSTILE_SWIM;
-   }
+    protected SoundEvent getSwimSound()
+    {
+        return SoundEvents.ENTITY_HOSTILE_SWIM;
+    }
 
-   protected SoundEvent getSwimSplashSound() {
-      return SoundEvents.HOSTILE_SPLASH;
-   }
+    protected SoundEvent getSplashSound()
+    {
+        return SoundEvents.ENTITY_HOSTILE_SPLASH;
+    }
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      return this.isInvulnerableTo(p_70097_1_) ? false : super.hurt(p_70097_1_, p_70097_2_);
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        return this.isInvulnerableTo(source) ? false : super.attackEntityFrom(source, amount);
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.HOSTILE_HURT;
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_HOSTILE_HURT;
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.HOSTILE_DEATH;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_HOSTILE_DEATH;
+    }
 
-   protected SoundEvent getFallDamageSound(int p_184588_1_) {
-      return p_184588_1_ > 4 ? SoundEvents.HOSTILE_BIG_FALL : SoundEvents.HOSTILE_SMALL_FALL;
-   }
+    protected SoundEvent getFallSound(int heightIn)
+    {
+        return heightIn > 4 ? SoundEvents.ENTITY_HOSTILE_BIG_FALL : SoundEvents.ENTITY_HOSTILE_SMALL_FALL;
+    }
 
-   public float getWalkTargetValue(BlockPos p_205022_1_, IWorldReader p_205022_2_) {
-      return 0.5F - p_205022_2_.getBrightness(p_205022_1_);
-   }
+    public float getBlockPathWeight(BlockPos pos, IWorldReader worldIn)
+    {
+        return 0.5F - worldIn.getBrightness(pos);
+    }
 
-   public static boolean isDarkEnoughToSpawn(IServerWorld p_223323_0_, BlockPos p_223323_1_, Random p_223323_2_) {
-      if (p_223323_0_.getBrightness(LightType.SKY, p_223323_1_) > p_223323_2_.nextInt(32)) {
-         return false;
-      } else {
-         int i = p_223323_0_.getLevel().isThundering() ? p_223323_0_.getMaxLocalRawBrightness(p_223323_1_, 10) : p_223323_0_.getMaxLocalRawBrightness(p_223323_1_);
-         return i <= p_223323_2_.nextInt(8);
-      }
-   }
+    /**
+     * Static predicate for determining if the current light level and environmental conditions allow for a monster to
+     * spawn.
+     */
+    public static boolean isValidLightLevel(IServerWorld worldIn, BlockPos pos, Random randomIn)
+    {
+        if (worldIn.getLightFor(LightType.SKY, pos) > randomIn.nextInt(32))
+        {
+            return false;
+        }
+        else
+        {
+            int i = worldIn.getWorld().isThundering() ? worldIn.getNeighborAwareLightSubtracted(pos, 10) : worldIn.getLight(pos);
+            return i <= randomIn.nextInt(8);
+        }
+    }
 
-   public static boolean checkMonsterSpawnRules(EntityType<? extends MonsterEntity> p_223325_0_, IServerWorld p_223325_1_, SpawnReason p_223325_2_, BlockPos p_223325_3_, Random p_223325_4_) {
-      return p_223325_1_.getDifficulty() != Difficulty.PEACEFUL && isDarkEnoughToSpawn(p_223325_1_, p_223325_3_, p_223325_4_) && checkMobSpawnRules(p_223325_0_, p_223325_1_, p_223325_2_, p_223325_3_, p_223325_4_);
-   }
+    /**
+     * Static predicate for determining whether or not a monster can spawn at the provided location, incorporating a
+     * check of the current light level at the location.
+     */
+    public static boolean canMonsterSpawnInLight(EntityType <? extends MonsterEntity > type, IServerWorld worldIn, SpawnReason reason, BlockPos pos, Random randomIn)
+    {
+        return worldIn.getDifficulty() != Difficulty.PEACEFUL && isValidLightLevel(worldIn, pos, randomIn) && canSpawnOn(type, worldIn, reason, pos, randomIn);
+    }
 
-   public static boolean checkAnyLightMonsterSpawnRules(EntityType<? extends MonsterEntity> p_223324_0_, IWorld p_223324_1_, SpawnReason p_223324_2_, BlockPos p_223324_3_, Random p_223324_4_) {
-      return p_223324_1_.getDifficulty() != Difficulty.PEACEFUL && checkMobSpawnRules(p_223324_0_, p_223324_1_, p_223324_2_, p_223324_3_, p_223324_4_);
-   }
+    /**
+     * Static predicate for determining whether or not a monster can spawn at the provided location.
+     */
+    public static boolean canMonsterSpawn(EntityType <? extends MonsterEntity > type, IWorld worldIn, SpawnReason reason, BlockPos pos, Random randomIn)
+    {
+        return worldIn.getDifficulty() != Difficulty.PEACEFUL && canSpawnOn(type, worldIn, reason, pos, randomIn);
+    }
 
-   public static AttributeModifierMap.MutableAttribute createMonsterAttributes() {
-      return MobEntity.createMobAttributes().add(Attributes.ATTACK_DAMAGE);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234295_eP_()
+    {
+        return MobEntity.func_233666_p_().createMutableAttribute(Attributes.ATTACK_DAMAGE);
+    }
 
-   protected boolean shouldDropExperience() {
-      return true;
-   }
+    /**
+     * Entity won't drop items or experience points if this returns false
+     */
+    protected boolean canDropLoot()
+    {
+        return true;
+    }
 
-   protected boolean shouldDropLoot() {
-      return true;
-   }
+    protected boolean func_230282_cS_()
+    {
+        return true;
+    }
 
-   public boolean isPreventingPlayerRest(PlayerEntity p_230292_1_) {
-      return true;
-   }
+    public boolean func_230292_f_(PlayerEntity p_230292_1_)
+    {
+        return true;
+    }
 
-   public ItemStack getProjectile(ItemStack p_213356_1_) {
-      if (p_213356_1_.getItem() instanceof ShootableItem) {
-         Predicate<ItemStack> predicate = ((ShootableItem)p_213356_1_.getItem()).getSupportedHeldProjectiles();
-         ItemStack itemstack = ShootableItem.getHeldProjectile(this, predicate);
-         return itemstack.isEmpty() ? new ItemStack(Items.ARROW) : itemstack;
-      } else {
-         return ItemStack.EMPTY;
-      }
-   }
+    public ItemStack findAmmo(ItemStack shootable)
+    {
+        if (shootable.getItem() instanceof ShootableItem)
+        {
+            Predicate<ItemStack> predicate = ((ShootableItem)shootable.getItem()).getAmmoPredicate();
+            ItemStack itemstack = ShootableItem.getHeldAmmo(this, predicate);
+            return itemstack.isEmpty() ? new ItemStack(Items.ARROW) : itemstack;
+        }
+        else
+        {
+            return ItemStack.EMPTY;
+        }
+    }
 }

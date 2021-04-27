@@ -10,29 +10,33 @@ import net.minecraft.entity.passive.PandaEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class PandaHeldItemLayer extends LayerRenderer<PandaEntity, PandaModel<PandaEntity>> {
-   public PandaHeldItemLayer(IEntityRenderer<PandaEntity, PandaModel<PandaEntity>> p_i50930_1_) {
-      super(p_i50930_1_);
-   }
+public class PandaHeldItemLayer extends LayerRenderer<PandaEntity, PandaModel<PandaEntity>>
+{
+    public PandaHeldItemLayer(IEntityRenderer<PandaEntity, PandaModel<PandaEntity>> p_i50930_1_)
+    {
+        super(p_i50930_1_);
+    }
 
-   public void render(MatrixStack p_225628_1_, IRenderTypeBuffer p_225628_2_, int p_225628_3_, PandaEntity p_225628_4_, float p_225628_5_, float p_225628_6_, float p_225628_7_, float p_225628_8_, float p_225628_9_, float p_225628_10_) {
-      ItemStack itemstack = p_225628_4_.getItemBySlot(EquipmentSlotType.MAINHAND);
-      if (p_225628_4_.isSitting() && !p_225628_4_.isScared()) {
-         float f = -0.6F;
-         float f1 = 1.4F;
-         if (p_225628_4_.isEating()) {
-            f -= 0.2F * MathHelper.sin(p_225628_8_ * 0.6F) + 0.2F;
-            f1 -= 0.09F * MathHelper.sin(p_225628_8_ * 0.6F);
-         }
+    public void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, PandaEntity entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        ItemStack itemstack = entitylivingbaseIn.getItemStackFromSlot(EquipmentSlotType.MAINHAND);
 
-         p_225628_1_.pushPose();
-         p_225628_1_.translate((double)0.1F, (double)f1, (double)f);
-         Minecraft.getInstance().getItemInHandRenderer().renderItem(p_225628_4_, itemstack, ItemCameraTransforms.TransformType.GROUND, false, p_225628_1_, p_225628_2_, p_225628_3_);
-         p_225628_1_.popPose();
-      }
-   }
+        if (entitylivingbaseIn.func_213556_dX() && !entitylivingbaseIn.func_213566_eo())
+        {
+            float f = -0.6F;
+            float f1 = 1.4F;
+
+            if (entitylivingbaseIn.func_213578_dZ())
+            {
+                f -= 0.2F * MathHelper.sin(ageInTicks * 0.6F) + 0.2F;
+                f1 -= 0.09F * MathHelper.sin(ageInTicks * 0.6F);
+            }
+
+            matrixStackIn.push();
+            matrixStackIn.translate((double)0.1F, (double)f1, (double)f);
+            Minecraft.getInstance().getFirstPersonRenderer().renderItemSide(entitylivingbaseIn, itemstack, ItemCameraTransforms.TransformType.GROUND, false, matrixStackIn, bufferIn, packedLightIn);
+            matrixStackIn.pop();
+        }
+    }
 }

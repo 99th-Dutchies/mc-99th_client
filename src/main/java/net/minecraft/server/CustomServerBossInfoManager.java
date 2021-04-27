@@ -9,61 +9,72 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 
-public class CustomServerBossInfoManager {
-   private final Map<ResourceLocation, CustomServerBossInfo> events = Maps.newHashMap();
+public class CustomServerBossInfoManager
+{
+    private final Map<ResourceLocation, CustomServerBossInfo> bars = Maps.newHashMap();
 
-   @Nullable
-   public CustomServerBossInfo get(ResourceLocation p_201384_1_) {
-      return this.events.get(p_201384_1_);
-   }
+    @Nullable
+    public CustomServerBossInfo get(ResourceLocation id)
+    {
+        return this.bars.get(id);
+    }
 
-   public CustomServerBossInfo create(ResourceLocation p_201379_1_, ITextComponent p_201379_2_) {
-      CustomServerBossInfo customserverbossinfo = new CustomServerBossInfo(p_201379_1_, p_201379_2_);
-      this.events.put(p_201379_1_, customserverbossinfo);
-      return customserverbossinfo;
-   }
+    public CustomServerBossInfo add(ResourceLocation id, ITextComponent p_201379_2_)
+    {
+        CustomServerBossInfo customserverbossinfo = new CustomServerBossInfo(id, p_201379_2_);
+        this.bars.put(id, customserverbossinfo);
+        return customserverbossinfo;
+    }
 
-   public void remove(CustomServerBossInfo p_201385_1_) {
-      this.events.remove(p_201385_1_.getTextId());
-   }
+    public void remove(CustomServerBossInfo bossbar)
+    {
+        this.bars.remove(bossbar.getId());
+    }
 
-   public Collection<ResourceLocation> getIds() {
-      return this.events.keySet();
-   }
+    public Collection<ResourceLocation> getIDs()
+    {
+        return this.bars.keySet();
+    }
 
-   public Collection<CustomServerBossInfo> getEvents() {
-      return this.events.values();
-   }
+    public Collection<CustomServerBossInfo> getBossbars()
+    {
+        return this.bars.values();
+    }
 
-   public CompoundNBT save() {
-      CompoundNBT compoundnbt = new CompoundNBT();
+    public CompoundNBT write()
+    {
+        CompoundNBT compoundnbt = new CompoundNBT();
 
-      for(CustomServerBossInfo customserverbossinfo : this.events.values()) {
-         compoundnbt.put(customserverbossinfo.getTextId().toString(), customserverbossinfo.save());
-      }
+        for (CustomServerBossInfo customserverbossinfo : this.bars.values())
+        {
+            compoundnbt.put(customserverbossinfo.getId().toString(), customserverbossinfo.write());
+        }
 
-      return compoundnbt;
-   }
+        return compoundnbt;
+    }
 
-   public void load(CompoundNBT p_201381_1_) {
-      for(String s : p_201381_1_.getAllKeys()) {
-         ResourceLocation resourcelocation = new ResourceLocation(s);
-         this.events.put(resourcelocation, CustomServerBossInfo.load(p_201381_1_.getCompound(s), resourcelocation));
-      }
+    public void read(CompoundNBT p_201381_1_)
+    {
+        for (String s : p_201381_1_.keySet())
+        {
+            ResourceLocation resourcelocation = new ResourceLocation(s);
+            this.bars.put(resourcelocation, CustomServerBossInfo.read(p_201381_1_.getCompound(s), resourcelocation));
+        }
+    }
 
-   }
+    public void onPlayerLogin(ServerPlayerEntity player)
+    {
+        for (CustomServerBossInfo customserverbossinfo : this.bars.values())
+        {
+            customserverbossinfo.onPlayerLogin(player);
+        }
+    }
 
-   public void onPlayerConnect(ServerPlayerEntity p_201383_1_) {
-      for(CustomServerBossInfo customserverbossinfo : this.events.values()) {
-         customserverbossinfo.onPlayerConnect(p_201383_1_);
-      }
-
-   }
-
-   public void onPlayerDisconnect(ServerPlayerEntity p_201382_1_) {
-      for(CustomServerBossInfo customserverbossinfo : this.events.values()) {
-         customserverbossinfo.onPlayerDisconnect(p_201382_1_);
-      }
-
-   }
+    public void onPlayerLogout(ServerPlayerEntity player)
+    {
+        for (CustomServerBossInfo customserverbossinfo : this.bars.values())
+        {
+            customserverbossinfo.onPlayerLogout(player);
+        }
+    }
 }

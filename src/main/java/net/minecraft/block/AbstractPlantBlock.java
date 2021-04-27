@@ -12,55 +12,67 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.server.ServerWorld;
 
-public abstract class AbstractPlantBlock extends Block {
-   protected final Direction growthDirection;
-   protected final boolean scheduleFluidTicks;
-   protected final VoxelShape shape;
+public abstract class AbstractPlantBlock extends Block
+{
+    protected final Direction growthDirection;
+    protected final boolean breaksInWater;
+    protected final VoxelShape shape;
 
-   protected AbstractPlantBlock(AbstractBlock.Properties p_i241178_1_, Direction p_i241178_2_, VoxelShape p_i241178_3_, boolean p_i241178_4_) {
-      super(p_i241178_1_);
-      this.growthDirection = p_i241178_2_;
-      this.shape = p_i241178_3_;
-      this.scheduleFluidTicks = p_i241178_4_;
-   }
+    protected AbstractPlantBlock(AbstractBlock.Properties properties, Direction growthDirection, VoxelShape shape, boolean breaksInWater)
+    {
+        super(properties);
+        this.growthDirection = growthDirection;
+        this.shape = shape;
+        this.breaksInWater = breaksInWater;
+    }
 
-   @Nullable
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      BlockState blockstate = p_196258_1_.getLevel().getBlockState(p_196258_1_.getClickedPos().relative(this.growthDirection));
-      return !blockstate.is(this.getHeadBlock()) && !blockstate.is(this.getBodyBlock()) ? this.getStateForPlacement(p_196258_1_.getLevel()) : this.getBodyBlock().defaultBlockState();
-   }
+    @Nullable
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        BlockState blockstate = context.getWorld().getBlockState(context.getPos().offset(this.growthDirection));
+        return !blockstate.isIn(this.getTopPlantBlock()) && !blockstate.isIn(this.getBodyPlantBlock()) ? this.grow(context.getWorld()) : this.getBodyPlantBlock().getDefaultState();
+    }
 
-   public BlockState getStateForPlacement(IWorld p_235504_1_) {
-      return this.defaultBlockState();
-   }
+    public BlockState grow(IWorld world)
+    {
+        return this.getDefaultState();
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockPos blockpos = p_196260_3_.relative(this.growthDirection.getOpposite());
-      BlockState blockstate = p_196260_2_.getBlockState(blockpos);
-      Block block = blockstate.getBlock();
-      if (!this.canAttachToBlock(block)) {
-         return false;
-      } else {
-         return block == this.getHeadBlock() || block == this.getBodyBlock() || blockstate.isFaceSturdy(p_196260_2_, blockpos, this.growthDirection);
-      }
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockPos blockpos = pos.offset(this.growthDirection.getOpposite());
+        BlockState blockstate = worldIn.getBlockState(blockpos);
+        Block block = blockstate.getBlock();
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!p_225534_1_.canSurvive(p_225534_2_, p_225534_3_)) {
-         p_225534_2_.destroyBlock(p_225534_3_, true);
-      }
+        if (!this.canGrowOn(block))
+        {
+            return false;
+        }
+        else
+        {
+            return block == this.getTopPlantBlock() || block == this.getBodyPlantBlock() || blockstate.isSolidSide(worldIn, blockpos, this.growthDirection);
+        }
+    }
 
-   }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!state.isValidPosition(worldIn, pos))
+        {
+            worldIn.destroyBlock(pos, true);
+        }
+    }
 
-   protected boolean canAttachToBlock(Block p_230333_1_) {
-      return true;
-   }
+    protected boolean canGrowOn(Block block)
+    {
+        return true;
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return this.shape;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return this.shape;
+    }
 
-   protected abstract AbstractTopPlantBlock getHeadBlock();
+    protected abstract AbstractTopPlantBlock getTopPlantBlock();
 
-   protected abstract Block getBodyBlock();
+    protected abstract Block getBodyPlantBlock();
 }

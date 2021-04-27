@@ -4,33 +4,46 @@ import java.io.IOException;
 import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SUpdateViewDistancePacket implements IPacket<IClientPlayNetHandler> {
-   private int radius;
+public class SUpdateViewDistancePacket implements IPacket<IClientPlayNetHandler>
+{
+    private int viewDistance;
 
-   public SUpdateViewDistancePacket() {
-   }
+    public SUpdateViewDistancePacket()
+    {
+    }
 
-   public SUpdateViewDistancePacket(int p_i50765_1_) {
-      this.radius = p_i50765_1_;
-   }
+    public SUpdateViewDistancePacket(int viewDistanceIn)
+    {
+        this.viewDistance = viewDistanceIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.radius = p_148837_1_.readVarInt();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.viewDistance = buf.readVarInt();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.radius);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.viewDistance);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetChunkCacheRadius(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleUpdateViewDistancePacket(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getRadius() {
-      return this.radius;
-   }
+    public int getViewDistance()
+    {
+        return this.viewDistance;
+    }
 }

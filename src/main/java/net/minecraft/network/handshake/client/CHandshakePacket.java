@@ -6,49 +6,63 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.ProtocolType;
 import net.minecraft.network.handshake.IHandshakeNetHandler;
 import net.minecraft.util.SharedConstants;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CHandshakePacket implements IPacket<IHandshakeNetHandler> {
-   private int protocolVersion;
-   private String hostName;
-   private int port;
-   private ProtocolType intention;
+public class CHandshakePacket implements IPacket<IHandshakeNetHandler>
+{
+    private int protocolVersion;
+    private String ip;
+    private int port;
+    private ProtocolType requestedState;
 
-   public CHandshakePacket() {
-   }
+    public CHandshakePacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CHandshakePacket(String p_i47613_1_, int p_i47613_2_, ProtocolType p_i47613_3_) {
-      this.protocolVersion = SharedConstants.getCurrentVersion().getProtocolVersion();
-      this.hostName = p_i47613_1_;
-      this.port = p_i47613_2_;
-      this.intention = p_i47613_3_;
-   }
+    public CHandshakePacket(String p_i47613_1_, int p_i47613_2_, ProtocolType p_i47613_3_)
+    {
+        this.protocolVersion = SharedConstants.getVersion().getProtocolVersion();
+        this.ip = p_i47613_1_;
+        this.port = p_i47613_2_;
+        this.requestedState = p_i47613_3_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.protocolVersion = p_148837_1_.readVarInt();
-      this.hostName = p_148837_1_.readUtf(255);
-      this.port = p_148837_1_.readUnsignedShort();
-      this.intention = ProtocolType.getById(p_148837_1_.readVarInt());
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.protocolVersion = buf.readVarInt();
+        this.ip = buf.readString(255);
+        this.port = buf.readUnsignedShort();
+        this.requestedState = ProtocolType.getById(buf.readVarInt());
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.protocolVersion);
-      p_148840_1_.writeUtf(this.hostName);
-      p_148840_1_.writeShort(this.port);
-      p_148840_1_.writeVarInt(this.intention.getId());
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.protocolVersion);
+        buf.writeString(this.ip);
+        buf.writeShort(this.port);
+        buf.writeVarInt(this.requestedState.getId());
+    }
 
-   public void handle(IHandshakeNetHandler p_148833_1_) {
-      p_148833_1_.handleIntention(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IHandshakeNetHandler handler)
+    {
+        handler.processHandshake(this);
+    }
 
-   public ProtocolType getIntention() {
-      return this.intention;
-   }
+    public ProtocolType getRequestedState()
+    {
+        return this.requestedState;
+    }
 
-   public int getProtocolVersion() {
-      return this.protocolVersion;
-   }
+    public int getProtocolVersion()
+    {
+        return this.protocolVersion;
+    }
 }

@@ -6,64 +6,79 @@ import java.io.IOException;
 import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SChangeGameStatePacket implements IPacket<IClientPlayNetHandler> {
-   public static final SChangeGameStatePacket.State NO_RESPAWN_BLOCK_AVAILABLE = new SChangeGameStatePacket.State(0);
-   public static final SChangeGameStatePacket.State START_RAINING = new SChangeGameStatePacket.State(1);
-   public static final SChangeGameStatePacket.State STOP_RAINING = new SChangeGameStatePacket.State(2);
-   public static final SChangeGameStatePacket.State CHANGE_GAME_MODE = new SChangeGameStatePacket.State(3);
-   public static final SChangeGameStatePacket.State WIN_GAME = new SChangeGameStatePacket.State(4);
-   public static final SChangeGameStatePacket.State DEMO_EVENT = new SChangeGameStatePacket.State(5);
-   public static final SChangeGameStatePacket.State ARROW_HIT_PLAYER = new SChangeGameStatePacket.State(6);
-   public static final SChangeGameStatePacket.State RAIN_LEVEL_CHANGE = new SChangeGameStatePacket.State(7);
-   public static final SChangeGameStatePacket.State THUNDER_LEVEL_CHANGE = new SChangeGameStatePacket.State(8);
-   public static final SChangeGameStatePacket.State PUFFER_FISH_STING = new SChangeGameStatePacket.State(9);
-   public static final SChangeGameStatePacket.State GUARDIAN_ELDER_EFFECT = new SChangeGameStatePacket.State(10);
-   public static final SChangeGameStatePacket.State IMMEDIATE_RESPAWN = new SChangeGameStatePacket.State(11);
-   private SChangeGameStatePacket.State event;
-   private float param;
+public class SChangeGameStatePacket implements IPacket<IClientPlayNetHandler>
+{
+    public static final SChangeGameStatePacket.State field_241764_a_ = new SChangeGameStatePacket.State(0);
+    public static final SChangeGameStatePacket.State field_241765_b_ = new SChangeGameStatePacket.State(1);
+    public static final SChangeGameStatePacket.State field_241766_c_ = new SChangeGameStatePacket.State(2);
+    public static final SChangeGameStatePacket.State field_241767_d_ = new SChangeGameStatePacket.State(3);
+    public static final SChangeGameStatePacket.State field_241768_e_ = new SChangeGameStatePacket.State(4);
+    public static final SChangeGameStatePacket.State field_241769_f_ = new SChangeGameStatePacket.State(5);
+    public static final SChangeGameStatePacket.State field_241770_g_ = new SChangeGameStatePacket.State(6);
+    public static final SChangeGameStatePacket.State field_241771_h_ = new SChangeGameStatePacket.State(7);
+    public static final SChangeGameStatePacket.State field_241772_i_ = new SChangeGameStatePacket.State(8);
+    public static final SChangeGameStatePacket.State field_241773_j_ = new SChangeGameStatePacket.State(9);
+    public static final SChangeGameStatePacket.State field_241774_k_ = new SChangeGameStatePacket.State(10);
+    public static final SChangeGameStatePacket.State field_241775_l_ = new SChangeGameStatePacket.State(11);
+    private SChangeGameStatePacket.State state;
+    private float value;
 
-   public SChangeGameStatePacket() {
-   }
+    public SChangeGameStatePacket()
+    {
+    }
 
-   public SChangeGameStatePacket(SChangeGameStatePacket.State p_i241263_1_, float p_i241263_2_) {
-      this.event = p_i241263_1_;
-      this.param = p_i241263_2_;
-   }
+    public SChangeGameStatePacket(SChangeGameStatePacket.State p_i241263_1_, float p_i241263_2_)
+    {
+        this.state = p_i241263_1_;
+        this.value = p_i241263_2_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.event = SChangeGameStatePacket.State.TYPES.get(p_148837_1_.readUnsignedByte());
-      this.param = p_148837_1_.readFloat();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.state = SChangeGameStatePacket.State.field_241777_a_.get(buf.readUnsignedByte());
+        this.value = buf.readFloat();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.event.id);
-      p_148840_1_.writeFloat(this.param);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.state.field_241778_b_);
+        buf.writeFloat(this.value);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleGameEvent(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleChangeGameState(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public SChangeGameStatePacket.State getEvent() {
-      return this.event;
-   }
+    public SChangeGameStatePacket.State func_241776_b_()
+    {
+        return this.state;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getParam() {
-      return this.param;
-   }
+    public float getValue()
+    {
+        return this.value;
+    }
 
-   public static class State {
-      private static final Int2ObjectMap<SChangeGameStatePacket.State> TYPES = new Int2ObjectOpenHashMap<>();
-      private final int id;
+    public static class State
+    {
+        private static final Int2ObjectMap<SChangeGameStatePacket.State> field_241777_a_ = new Int2ObjectOpenHashMap<>();
+        private final int field_241778_b_;
 
-      public State(int p_i241264_1_) {
-         this.id = p_i241264_1_;
-         TYPES.put(p_i241264_1_, this);
-      }
-   }
+        public State(int p_i241264_1_)
+        {
+            this.field_241778_b_ = p_i241264_1_;
+            field_241777_a_.put(p_i241264_1_, this);
+        }
+    }
 }

@@ -1,16 +1,19 @@
 package net.minecraft.resources;
 
-public enum ResourcePackType {
-   CLIENT_RESOURCES("assets"),
-   SERVER_DATA("data");
+public enum ResourcePackType
+{
+    CLIENT_RESOURCES("assets"),
+    SERVER_DATA("data");
 
-   private final String directory;
+    private final String directoryName;
 
-   private ResourcePackType(String p_i47913_3_) {
-      this.directory = p_i47913_3_;
-   }
+    private ResourcePackType(String directoryNameIn)
+    {
+        this.directoryName = directoryNameIn;
+    }
 
-   public String getDirectory() {
-      return this.directory;
-   }
+    public String getDirectoryName()
+    {
+        return this.directoryName;
+    }
 }

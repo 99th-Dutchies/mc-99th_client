@@ -1,44 +1,59 @@
 package net.minecraft.profiler;
 
 import java.util.function.Supplier;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class EmptyProfiler implements IResultableProfiler {
-   public static final EmptyProfiler INSTANCE = new EmptyProfiler();
+public class EmptyProfiler implements IResultableProfiler
+{
+    public static final EmptyProfiler INSTANCE = new EmptyProfiler();
 
-   private EmptyProfiler() {
-   }
+    private EmptyProfiler()
+    {
+    }
 
-   public void startTick() {
-   }
+    public void startTick()
+    {
+    }
 
-   public void endTick() {
-   }
+    public void endTick()
+    {
+    }
 
-   public void push(String p_76320_1_) {
-   }
+    /**
+     * Start section
+     */
+    public void startSection(String name)
+    {
+    }
 
-   public void push(Supplier<String> p_194340_1_) {
-   }
+    public void startSection(Supplier<String> nameSupplier)
+    {
+    }
 
-   public void pop() {
-   }
+    /**
+     * End section
+     */
+    public void endSection()
+    {
+    }
 
-   public void popPush(String p_219895_1_) {
-   }
+    public void endStartSection(String name)
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void popPush(Supplier<String> p_194339_1_) {
-   }
+    public void endStartSection(Supplier<String> nameSupplier)
+    {
+    }
 
-   public void incrementCounter(String p_230035_1_) {
-   }
+    public void func_230035_c_(String p_230035_1_)
+    {
+    }
 
-   public void incrementCounter(Supplier<String> p_230036_1_) {
-   }
+    public void func_230036_c_(Supplier<String> p_230036_1_)
+    {
+    }
 
-   public IProfileResult getResults() {
-      return EmptyProfileResult.EMPTY;
-   }
+    public IProfileResult getResults()
+    {
+        return EmptyProfileResult.INSTANCE;
+    }
 }

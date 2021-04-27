@@ -3,74 +3,85 @@ package net.minecraft.client.particle;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class LavaParticle extends SpriteTexturedParticle {
-   private LavaParticle(ClientWorld p_i232403_1_, double p_i232403_2_, double p_i232403_4_, double p_i232403_6_) {
-      super(p_i232403_1_, p_i232403_2_, p_i232403_4_, p_i232403_6_, 0.0D, 0.0D, 0.0D);
-      this.xd *= (double)0.8F;
-      this.yd *= (double)0.8F;
-      this.zd *= (double)0.8F;
-      this.yd = (double)(this.random.nextFloat() * 0.4F + 0.05F);
-      this.quadSize *= this.random.nextFloat() * 2.0F + 0.2F;
-      this.lifetime = (int)(16.0D / (Math.random() * 0.8D + 0.2D));
-   }
+public class LavaParticle extends SpriteTexturedParticle
+{
+    private LavaParticle(ClientWorld world, double x, double y, double z)
+    {
+        super(world, x, y, z, 0.0D, 0.0D, 0.0D);
+        this.motionX *= (double)0.8F;
+        this.motionY *= (double)0.8F;
+        this.motionZ *= (double)0.8F;
+        this.motionY = (double)(this.rand.nextFloat() * 0.4F + 0.05F);
+        this.particleScale *= this.rand.nextFloat() * 2.0F + 0.2F;
+        this.maxAge = (int)(16.0D / (Math.random() * 0.8D + 0.2D));
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-   public int getLightColor(float p_189214_1_) {
-      int i = super.getLightColor(p_189214_1_);
-      int j = 240;
-      int k = i >> 16 & 255;
-      return 240 | k << 16;
-   }
+    public int getBrightnessForRender(float partialTick)
+    {
+        int i = super.getBrightnessForRender(partialTick);
+        int j = 240;
+        int k = i >> 16 & 255;
+        return 240 | k << 16;
+    }
 
-   public float getQuadSize(float p_217561_1_) {
-      float f = ((float)this.age + p_217561_1_) / (float)this.lifetime;
-      return this.quadSize * (1.0F - f * f);
-   }
+    public float getScale(float scaleFactor)
+    {
+        float f = ((float)this.age + scaleFactor) / (float)this.maxAge;
+        return this.particleScale * (1.0F - f * f);
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      float f = (float)this.age / (float)this.lifetime;
-      if (this.random.nextFloat() > f) {
-         this.level.addParticle(ParticleTypes.SMOKE, this.x, this.y, this.z, this.xd, this.yd, this.zd);
-      }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+        float f = (float)this.age / (float)this.maxAge;
 
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.yd -= 0.03D;
-         this.move(this.xd, this.yd, this.zd);
-         this.xd *= (double)0.999F;
-         this.yd *= (double)0.999F;
-         this.zd *= (double)0.999F;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+        if (this.rand.nextFloat() > f)
+        {
+            this.world.addParticle(ParticleTypes.SMOKE, this.posX, this.posY, this.posZ, this.motionX, this.motionY, this.motionZ);
+        }
 
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.motionY -= 0.03D;
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionX *= (double)0.999F;
+            this.motionY *= (double)0.999F;
+            this.motionZ *= (double)0.999F;
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 
-      public Factory(IAnimatedSprite p_i50495_1_) {
-         this.sprite = p_i50495_1_;
-      }
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         LavaParticle lavaparticle = new LavaParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_);
-         lavaparticle.pickSprite(this.sprite);
-         return lavaparticle;
-      }
-   }
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            LavaParticle lavaparticle = new LavaParticle(worldIn, x, y, z);
+            lavaparticle.selectSpriteRandomly(this.spriteSet);
+            return lavaparticle;
+        }
+    }
 }

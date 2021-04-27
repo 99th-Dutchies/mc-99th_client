@@ -9,54 +9,67 @@ import net.minecraft.loot.ConditionArraySerializer;
 import net.minecraft.loot.LootContext;
 import net.minecraft.util.ResourceLocation;
 
-public class CuredZombieVillagerTrigger extends AbstractCriterionTrigger<CuredZombieVillagerTrigger.Instance> {
-   private static final ResourceLocation ID = new ResourceLocation("cured_zombie_villager");
+public class CuredZombieVillagerTrigger extends AbstractCriterionTrigger<CuredZombieVillagerTrigger.Instance>
+{
+    private static final ResourceLocation ID = new ResourceLocation("cured_zombie_villager");
 
-   public ResourceLocation getId() {
-      return ID;
-   }
+    public ResourceLocation getId()
+    {
+        return ID;
+    }
 
-   public CuredZombieVillagerTrigger.Instance createInstance(JsonObject p_230241_1_, EntityPredicate.AndPredicate p_230241_2_, ConditionArrayParser p_230241_3_) {
-      EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.fromJson(p_230241_1_, "zombie", p_230241_3_);
-      EntityPredicate.AndPredicate entitypredicate$andpredicate1 = EntityPredicate.AndPredicate.fromJson(p_230241_1_, "villager", p_230241_3_);
-      return new CuredZombieVillagerTrigger.Instance(p_230241_2_, entitypredicate$andpredicate, entitypredicate$andpredicate1);
-   }
+    public CuredZombieVillagerTrigger.Instance deserializeTrigger(JsonObject json, EntityPredicate.AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+    {
+        EntityPredicate.AndPredicate entitypredicate$andpredicate = EntityPredicate.AndPredicate.deserializeJSONObject(json, "zombie", conditionsParser);
+        EntityPredicate.AndPredicate entitypredicate$andpredicate1 = EntityPredicate.AndPredicate.deserializeJSONObject(json, "villager", conditionsParser);
+        return new CuredZombieVillagerTrigger.Instance(entityPredicate, entitypredicate$andpredicate, entitypredicate$andpredicate1);
+    }
 
-   public void trigger(ServerPlayerEntity p_192183_1_, ZombieEntity p_192183_2_, VillagerEntity p_192183_3_) {
-      LootContext lootcontext = EntityPredicate.createContext(p_192183_1_, p_192183_2_);
-      LootContext lootcontext1 = EntityPredicate.createContext(p_192183_1_, p_192183_3_);
-      this.trigger(p_192183_1_, (p_233969_2_) -> {
-         return p_233969_2_.matches(lootcontext, lootcontext1);
-      });
-   }
+    public void trigger(ServerPlayerEntity player, ZombieEntity zombie, VillagerEntity villager)
+    {
+        LootContext lootcontext = EntityPredicate.getLootContext(player, zombie);
+        LootContext lootcontext1 = EntityPredicate.getLootContext(player, villager);
+        this.triggerListeners(player, (instance) ->
+        {
+            return instance.test(lootcontext, lootcontext1);
+        });
+    }
 
-   public static class Instance extends CriterionInstance {
-      private final EntityPredicate.AndPredicate zombie;
-      private final EntityPredicate.AndPredicate villager;
+    public static class Instance extends CriterionInstance
+    {
+        private final EntityPredicate.AndPredicate zombie;
+        private final EntityPredicate.AndPredicate villager;
 
-      public Instance(EntityPredicate.AndPredicate p_i231535_1_, EntityPredicate.AndPredicate p_i231535_2_, EntityPredicate.AndPredicate p_i231535_3_) {
-         super(CuredZombieVillagerTrigger.ID, p_i231535_1_);
-         this.zombie = p_i231535_2_;
-         this.villager = p_i231535_3_;
-      }
+        public Instance(EntityPredicate.AndPredicate player, EntityPredicate.AndPredicate zombie, EntityPredicate.AndPredicate villager)
+        {
+            super(CuredZombieVillagerTrigger.ID, player);
+            this.zombie = zombie;
+            this.villager = villager;
+        }
 
-      public static CuredZombieVillagerTrigger.Instance curedZombieVillager() {
-         return new CuredZombieVillagerTrigger.Instance(EntityPredicate.AndPredicate.ANY, EntityPredicate.AndPredicate.ANY, EntityPredicate.AndPredicate.ANY);
-      }
+        public static CuredZombieVillagerTrigger.Instance any()
+        {
+            return new CuredZombieVillagerTrigger.Instance(EntityPredicate.AndPredicate.ANY_AND, EntityPredicate.AndPredicate.ANY_AND, EntityPredicate.AndPredicate.ANY_AND);
+        }
 
-      public boolean matches(LootContext p_233970_1_, LootContext p_233970_2_) {
-         if (!this.zombie.matches(p_233970_1_)) {
-            return false;
-         } else {
-            return this.villager.matches(p_233970_2_);
-         }
-      }
+        public boolean test(LootContext zombie, LootContext villager)
+        {
+            if (!this.zombie.testContext(zombie))
+            {
+                return false;
+            }
+            else
+            {
+                return this.villager.testContext(villager);
+            }
+        }
 
-      public JsonObject serializeToJson(ConditionArraySerializer p_230240_1_) {
-         JsonObject jsonobject = super.serializeToJson(p_230240_1_);
-         jsonobject.add("zombie", this.zombie.toJson(p_230240_1_));
-         jsonobject.add("villager", this.villager.toJson(p_230240_1_));
-         return jsonobject;
-      }
-   }
+        public JsonObject serialize(ConditionArraySerializer conditions)
+        {
+            JsonObject jsonobject = super.serialize(conditions);
+            jsonobject.add("zombie", this.zombie.serializeConditions(conditions));
+            jsonobject.add("villager", this.villager.serializeConditions(conditions));
+            return jsonobject;
+        }
+    }
 }

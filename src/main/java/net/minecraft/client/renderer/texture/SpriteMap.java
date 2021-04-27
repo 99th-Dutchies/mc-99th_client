@@ -6,27 +6,29 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SpriteMap implements AutoCloseable {
-   private final Map<ResourceLocation, AtlasTexture> atlases;
+public class SpriteMap implements AutoCloseable
+{
+    private final Map<ResourceLocation, AtlasTexture> atlasTextures;
 
-   public SpriteMap(Collection<AtlasTexture> p_i226042_1_) {
-      this.atlases = p_i226042_1_.stream().collect(Collectors.toMap(AtlasTexture::location, Function.identity()));
-   }
+    public SpriteMap(Collection<AtlasTexture> atlasTexturesIn)
+    {
+        this.atlasTextures = atlasTexturesIn.stream().collect(Collectors.toMap(AtlasTexture::getTextureLocation, Function.identity()));
+    }
 
-   public AtlasTexture getAtlas(ResourceLocation p_229152_1_) {
-      return this.atlases.get(p_229152_1_);
-   }
+    public AtlasTexture getAtlasTexture(ResourceLocation locationIn)
+    {
+        return this.atlasTextures.get(locationIn);
+    }
 
-   public TextureAtlasSprite getSprite(RenderMaterial p_229151_1_) {
-      return this.atlases.get(p_229151_1_.atlasLocation()).getSprite(p_229151_1_.texture());
-   }
+    public TextureAtlasSprite getSprite(RenderMaterial materialIn)
+    {
+        return this.atlasTextures.get(materialIn.getAtlasLocation()).getSprite(materialIn.getTextureLocation());
+    }
 
-   public void close() {
-      this.atlases.values().forEach(AtlasTexture::clearTextureData);
-      this.atlases.clear();
-   }
+    public void close()
+    {
+        this.atlasTextures.values().forEach(AtlasTexture::clear);
+        this.atlasTextures.clear();
+    }
 }

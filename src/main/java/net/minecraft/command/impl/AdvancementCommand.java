@@ -17,213 +17,311 @@ import net.minecraft.command.arguments.ResourceLocationArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class AdvancementCommand {
-   private static final SuggestionProvider<CommandSource> SUGGEST_ADVANCEMENTS = (p_198206_0_, p_198206_1_) -> {
-      Collection<Advancement> collection = p_198206_0_.getSource().getServer().getAdvancements().getAllAdvancements();
-      return ISuggestionProvider.suggestResource(collection.stream().map(Advancement::getId), p_198206_1_);
-   };
+public class AdvancementCommand
+{
+    private static final SuggestionProvider<CommandSource> SUGGEST_ADVANCEMENTS = (p_198206_0_, p_198206_1_) ->
+    {
+        Collection<Advancement> collection = p_198206_0_.getSource().getServer().getAdvancementManager().getAllAdvancements();
+        return ISuggestionProvider.func_212476_a(collection.stream().map(Advancement::getId), p_198206_1_);
+    };
 
-   public static void register(CommandDispatcher<CommandSource> p_198199_0_) {
-      p_198199_0_.register(Commands.literal("advancement").requires((p_198205_0_) -> {
-         return p_198205_0_.hasPermission(2);
-      }).then(Commands.literal("grant").then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("only").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198202_0_) -> {
-         return perform(p_198202_0_.getSource(), EntityArgument.getPlayers(p_198202_0_, "targets"), AdvancementCommand.Action.GRANT, getAdvancements(ResourceLocationArgument.getAdvancement(p_198202_0_, "advancement"), AdvancementCommand.Mode.ONLY));
-      }).then(Commands.argument("criterion", StringArgumentType.greedyString()).suggests((p_198209_0_, p_198209_1_) -> {
-         return ISuggestionProvider.suggest(ResourceLocationArgument.getAdvancement(p_198209_0_, "advancement").getCriteria().keySet(), p_198209_1_);
-      }).executes((p_198212_0_) -> {
-         return performCriterion(p_198212_0_.getSource(), EntityArgument.getPlayers(p_198212_0_, "targets"), AdvancementCommand.Action.GRANT, ResourceLocationArgument.getAdvancement(p_198212_0_, "advancement"), StringArgumentType.getString(p_198212_0_, "criterion"));
-      })))).then(Commands.literal("from").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198215_0_) -> {
-         return perform(p_198215_0_.getSource(), EntityArgument.getPlayers(p_198215_0_, "targets"), AdvancementCommand.Action.GRANT, getAdvancements(ResourceLocationArgument.getAdvancement(p_198215_0_, "advancement"), AdvancementCommand.Mode.FROM));
-      }))).then(Commands.literal("until").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198204_0_) -> {
-         return perform(p_198204_0_.getSource(), EntityArgument.getPlayers(p_198204_0_, "targets"), AdvancementCommand.Action.GRANT, getAdvancements(ResourceLocationArgument.getAdvancement(p_198204_0_, "advancement"), AdvancementCommand.Mode.UNTIL));
-      }))).then(Commands.literal("through").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198211_0_) -> {
-         return perform(p_198211_0_.getSource(), EntityArgument.getPlayers(p_198211_0_, "targets"), AdvancementCommand.Action.GRANT, getAdvancements(ResourceLocationArgument.getAdvancement(p_198211_0_, "advancement"), AdvancementCommand.Mode.THROUGH));
-      }))).then(Commands.literal("everything").executes((p_198217_0_) -> {
-         return perform(p_198217_0_.getSource(), EntityArgument.getPlayers(p_198217_0_, "targets"), AdvancementCommand.Action.GRANT, p_198217_0_.getSource().getServer().getAdvancements().getAllAdvancements());
-      })))).then(Commands.literal("revoke").then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("only").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198198_0_) -> {
-         return perform(p_198198_0_.getSource(), EntityArgument.getPlayers(p_198198_0_, "targets"), AdvancementCommand.Action.REVOKE, getAdvancements(ResourceLocationArgument.getAdvancement(p_198198_0_, "advancement"), AdvancementCommand.Mode.ONLY));
-      }).then(Commands.argument("criterion", StringArgumentType.greedyString()).suggests((p_198210_0_, p_198210_1_) -> {
-         return ISuggestionProvider.suggest(ResourceLocationArgument.getAdvancement(p_198210_0_, "advancement").getCriteria().keySet(), p_198210_1_);
-      }).executes((p_198200_0_) -> {
-         return performCriterion(p_198200_0_.getSource(), EntityArgument.getPlayers(p_198200_0_, "targets"), AdvancementCommand.Action.REVOKE, ResourceLocationArgument.getAdvancement(p_198200_0_, "advancement"), StringArgumentType.getString(p_198200_0_, "criterion"));
-      })))).then(Commands.literal("from").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198208_0_) -> {
-         return perform(p_198208_0_.getSource(), EntityArgument.getPlayers(p_198208_0_, "targets"), AdvancementCommand.Action.REVOKE, getAdvancements(ResourceLocationArgument.getAdvancement(p_198208_0_, "advancement"), AdvancementCommand.Mode.FROM));
-      }))).then(Commands.literal("until").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198201_0_) -> {
-         return perform(p_198201_0_.getSource(), EntityArgument.getPlayers(p_198201_0_, "targets"), AdvancementCommand.Action.REVOKE, getAdvancements(ResourceLocationArgument.getAdvancement(p_198201_0_, "advancement"), AdvancementCommand.Mode.UNTIL));
-      }))).then(Commands.literal("through").then(Commands.argument("advancement", ResourceLocationArgument.id()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198197_0_) -> {
-         return perform(p_198197_0_.getSource(), EntityArgument.getPlayers(p_198197_0_, "targets"), AdvancementCommand.Action.REVOKE, getAdvancements(ResourceLocationArgument.getAdvancement(p_198197_0_, "advancement"), AdvancementCommand.Mode.THROUGH));
-      }))).then(Commands.literal("everything").executes((p_198213_0_) -> {
-         return perform(p_198213_0_.getSource(), EntityArgument.getPlayers(p_198213_0_, "targets"), AdvancementCommand.Action.REVOKE, p_198213_0_.getSource().getServer().getAdvancements().getAllAdvancements());
-      })))));
-   }
+    public static void register(CommandDispatcher<CommandSource> dispatcher)
+    {
+        dispatcher.register(Commands.literal("advancement").requires((p_198205_0_) ->
+        {
+            return p_198205_0_.hasPermissionLevel(2);
+        }).then(Commands.literal("grant").then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("only").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198202_0_) ->
+        {
+            return forEachAdvancement(p_198202_0_.getSource(), EntityArgument.getPlayers(p_198202_0_, "targets"), AdvancementCommand.Action.GRANT, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198202_0_, "advancement"), AdvancementCommand.Mode.ONLY));
+        }).then(Commands.argument("criterion", StringArgumentType.greedyString()).suggests((p_198209_0_, p_198209_1_) ->
+        {
+            return ISuggestionProvider.suggest(ResourceLocationArgument.getAdvancement(p_198209_0_, "advancement").getCriteria().keySet(), p_198209_1_);
+        }).executes((p_198212_0_) ->
+        {
+            return updateCriterion(p_198212_0_.getSource(), EntityArgument.getPlayers(p_198212_0_, "targets"), AdvancementCommand.Action.GRANT, ResourceLocationArgument.getAdvancement(p_198212_0_, "advancement"), StringArgumentType.getString(p_198212_0_, "criterion"));
+        })))).then(Commands.literal("from").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198215_0_) ->
+        {
+            return forEachAdvancement(p_198215_0_.getSource(), EntityArgument.getPlayers(p_198215_0_, "targets"), AdvancementCommand.Action.GRANT, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198215_0_, "advancement"), AdvancementCommand.Mode.FROM));
+        }))).then(Commands.literal("until").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198204_0_) ->
+        {
+            return forEachAdvancement(p_198204_0_.getSource(), EntityArgument.getPlayers(p_198204_0_, "targets"), AdvancementCommand.Action.GRANT, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198204_0_, "advancement"), AdvancementCommand.Mode.UNTIL));
+        }))).then(Commands.literal("through").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198211_0_) ->
+        {
+            return forEachAdvancement(p_198211_0_.getSource(), EntityArgument.getPlayers(p_198211_0_, "targets"), AdvancementCommand.Action.GRANT, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198211_0_, "advancement"), AdvancementCommand.Mode.THROUGH));
+        }))).then(Commands.literal("everything").executes((p_198217_0_) ->
+        {
+            return forEachAdvancement(p_198217_0_.getSource(), EntityArgument.getPlayers(p_198217_0_, "targets"), AdvancementCommand.Action.GRANT, p_198217_0_.getSource().getServer().getAdvancementManager().getAllAdvancements());
+        })))).then(Commands.literal("revoke").then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("only").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198198_0_) ->
+        {
+            return forEachAdvancement(p_198198_0_.getSource(), EntityArgument.getPlayers(p_198198_0_, "targets"), AdvancementCommand.Action.REVOKE, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198198_0_, "advancement"), AdvancementCommand.Mode.ONLY));
+        }).then(Commands.argument("criterion", StringArgumentType.greedyString()).suggests((p_198210_0_, p_198210_1_) ->
+        {
+            return ISuggestionProvider.suggest(ResourceLocationArgument.getAdvancement(p_198210_0_, "advancement").getCriteria().keySet(), p_198210_1_);
+        }).executes((p_198200_0_) ->
+        {
+            return updateCriterion(p_198200_0_.getSource(), EntityArgument.getPlayers(p_198200_0_, "targets"), AdvancementCommand.Action.REVOKE, ResourceLocationArgument.getAdvancement(p_198200_0_, "advancement"), StringArgumentType.getString(p_198200_0_, "criterion"));
+        })))).then(Commands.literal("from").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198208_0_) ->
+        {
+            return forEachAdvancement(p_198208_0_.getSource(), EntityArgument.getPlayers(p_198208_0_, "targets"), AdvancementCommand.Action.REVOKE, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198208_0_, "advancement"), AdvancementCommand.Mode.FROM));
+        }))).then(Commands.literal("until").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198201_0_) ->
+        {
+            return forEachAdvancement(p_198201_0_.getSource(), EntityArgument.getPlayers(p_198201_0_, "targets"), AdvancementCommand.Action.REVOKE, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198201_0_, "advancement"), AdvancementCommand.Mode.UNTIL));
+        }))).then(Commands.literal("through").then(Commands.argument("advancement", ResourceLocationArgument.resourceLocation()).suggests(SUGGEST_ADVANCEMENTS).executes((p_198197_0_) ->
+        {
+            return forEachAdvancement(p_198197_0_.getSource(), EntityArgument.getPlayers(p_198197_0_, "targets"), AdvancementCommand.Action.REVOKE, getMatchingAdvancements(ResourceLocationArgument.getAdvancement(p_198197_0_, "advancement"), AdvancementCommand.Mode.THROUGH));
+        }))).then(Commands.literal("everything").executes((p_198213_0_) ->
+        {
+            return forEachAdvancement(p_198213_0_.getSource(), EntityArgument.getPlayers(p_198213_0_, "targets"), AdvancementCommand.Action.REVOKE, p_198213_0_.getSource().getServer().getAdvancementManager().getAllAdvancements());
+        })))));
+    }
 
-   private static int perform(CommandSource p_198214_0_, Collection<ServerPlayerEntity> p_198214_1_, AdvancementCommand.Action p_198214_2_, Collection<Advancement> p_198214_3_) {
-      int i = 0;
+    /**
+     * Performs the given action on each advancement in the list, for each player.
+     *  
+     * @return The number of affected advancements across all players.
+     */
+    private static int forEachAdvancement(CommandSource source, Collection<ServerPlayerEntity> targets, AdvancementCommand.Action action, Collection<Advancement> advancements)
+    {
+        int i = 0;
 
-      for(ServerPlayerEntity serverplayerentity : p_198214_1_) {
-         i += p_198214_2_.perform(serverplayerentity, p_198214_3_);
-      }
+        for (ServerPlayerEntity serverplayerentity : targets)
+        {
+            i += action.applyToAdvancements(serverplayerentity, advancements);
+        }
 
-      if (i == 0) {
-         if (p_198214_3_.size() == 1) {
-            if (p_198214_1_.size() == 1) {
-               throw new CommandException(new TranslationTextComponent(p_198214_2_.getKey() + ".one.to.one.failure", p_198214_3_.iterator().next().getChatComponent(), p_198214_1_.iterator().next().getDisplayName()));
-            } else {
-               throw new CommandException(new TranslationTextComponent(p_198214_2_.getKey() + ".one.to.many.failure", p_198214_3_.iterator().next().getChatComponent(), p_198214_1_.size()));
+        if (i == 0)
+        {
+            if (advancements.size() == 1)
+            {
+                if (targets.size() == 1)
+                {
+                    throw new CommandException(new TranslationTextComponent(action.getPrefix() + ".one.to.one.failure", advancements.iterator().next().getDisplayText(), targets.iterator().next().getDisplayName()));
+                }
+                else
+                {
+                    throw new CommandException(new TranslationTextComponent(action.getPrefix() + ".one.to.many.failure", advancements.iterator().next().getDisplayText(), targets.size()));
+                }
             }
-         } else if (p_198214_1_.size() == 1) {
-            throw new CommandException(new TranslationTextComponent(p_198214_2_.getKey() + ".many.to.one.failure", p_198214_3_.size(), p_198214_1_.iterator().next().getDisplayName()));
-         } else {
-            throw new CommandException(new TranslationTextComponent(p_198214_2_.getKey() + ".many.to.many.failure", p_198214_3_.size(), p_198214_1_.size()));
-         }
-      } else {
-         if (p_198214_3_.size() == 1) {
-            if (p_198214_1_.size() == 1) {
-               p_198214_0_.sendSuccess(new TranslationTextComponent(p_198214_2_.getKey() + ".one.to.one.success", p_198214_3_.iterator().next().getChatComponent(), p_198214_1_.iterator().next().getDisplayName()), true);
-            } else {
-               p_198214_0_.sendSuccess(new TranslationTextComponent(p_198214_2_.getKey() + ".one.to.many.success", p_198214_3_.iterator().next().getChatComponent(), p_198214_1_.size()), true);
+            else if (targets.size() == 1)
+            {
+                throw new CommandException(new TranslationTextComponent(action.getPrefix() + ".many.to.one.failure", advancements.size(), targets.iterator().next().getDisplayName()));
             }
-         } else if (p_198214_1_.size() == 1) {
-            p_198214_0_.sendSuccess(new TranslationTextComponent(p_198214_2_.getKey() + ".many.to.one.success", p_198214_3_.size(), p_198214_1_.iterator().next().getDisplayName()), true);
-         } else {
-            p_198214_0_.sendSuccess(new TranslationTextComponent(p_198214_2_.getKey() + ".many.to.many.success", p_198214_3_.size(), p_198214_1_.size()), true);
-         }
-
-         return i;
-      }
-   }
-
-   private static int performCriterion(CommandSource p_198203_0_, Collection<ServerPlayerEntity> p_198203_1_, AdvancementCommand.Action p_198203_2_, Advancement p_198203_3_, String p_198203_4_) {
-      int i = 0;
-      if (!p_198203_3_.getCriteria().containsKey(p_198203_4_)) {
-         throw new CommandException(new TranslationTextComponent("commands.advancement.criterionNotFound", p_198203_3_.getChatComponent(), p_198203_4_));
-      } else {
-         for(ServerPlayerEntity serverplayerentity : p_198203_1_) {
-            if (p_198203_2_.performCriterion(serverplayerentity, p_198203_3_, p_198203_4_)) {
-               ++i;
+            else
+            {
+                throw new CommandException(new TranslationTextComponent(action.getPrefix() + ".many.to.many.failure", advancements.size(), targets.size()));
             }
-         }
-
-         if (i == 0) {
-            if (p_198203_1_.size() == 1) {
-               throw new CommandException(new TranslationTextComponent(p_198203_2_.getKey() + ".criterion.to.one.failure", p_198203_4_, p_198203_3_.getChatComponent(), p_198203_1_.iterator().next().getDisplayName()));
-            } else {
-               throw new CommandException(new TranslationTextComponent(p_198203_2_.getKey() + ".criterion.to.many.failure", p_198203_4_, p_198203_3_.getChatComponent(), p_198203_1_.size()));
+        }
+        else
+        {
+            if (advancements.size() == 1)
+            {
+                if (targets.size() == 1)
+                {
+                    source.sendFeedback(new TranslationTextComponent(action.getPrefix() + ".one.to.one.success", advancements.iterator().next().getDisplayText(), targets.iterator().next().getDisplayName()), true);
+                }
+                else
+                {
+                    source.sendFeedback(new TranslationTextComponent(action.getPrefix() + ".one.to.many.success", advancements.iterator().next().getDisplayText(), targets.size()), true);
+                }
             }
-         } else {
-            if (p_198203_1_.size() == 1) {
-               p_198203_0_.sendSuccess(new TranslationTextComponent(p_198203_2_.getKey() + ".criterion.to.one.success", p_198203_4_, p_198203_3_.getChatComponent(), p_198203_1_.iterator().next().getDisplayName()), true);
-            } else {
-               p_198203_0_.sendSuccess(new TranslationTextComponent(p_198203_2_.getKey() + ".criterion.to.many.success", p_198203_4_, p_198203_3_.getChatComponent(), p_198203_1_.size()), true);
+            else if (targets.size() == 1)
+            {
+                source.sendFeedback(new TranslationTextComponent(action.getPrefix() + ".many.to.one.success", advancements.size(), targets.iterator().next().getDisplayName()), true);
+            }
+            else
+            {
+                source.sendFeedback(new TranslationTextComponent(action.getPrefix() + ".many.to.many.success", advancements.size(), targets.size()), true);
             }
 
             return i;
-         }
-      }
-   }
+        }
+    }
 
-   private static List<Advancement> getAdvancements(Advancement p_198216_0_, AdvancementCommand.Mode p_198216_1_) {
-      List<Advancement> list = Lists.newArrayList();
-      if (p_198216_1_.parents) {
-         for(Advancement advancement = p_198216_0_.getParent(); advancement != null; advancement = advancement.getParent()) {
+    /**
+     * Updates a single criterion based on the given action.
+     *  
+     * @return The number of affected criteria across all players.
+     */
+    private static int updateCriterion(CommandSource source, Collection<ServerPlayerEntity> targets, AdvancementCommand.Action action, Advancement advancementIn, String criterionName)
+    {
+        int i = 0;
+
+        if (!advancementIn.getCriteria().containsKey(criterionName))
+        {
+            throw new CommandException(new TranslationTextComponent("commands.advancement.criterionNotFound", advancementIn.getDisplayText(), criterionName));
+        }
+        else
+        {
+            for (ServerPlayerEntity serverplayerentity : targets)
+            {
+                if (action.applyToCriterion(serverplayerentity, advancementIn, criterionName))
+                {
+                    ++i;
+                }
+            }
+
+            if (i == 0)
+            {
+                if (targets.size() == 1)
+                {
+                    throw new CommandException(new TranslationTextComponent(action.getPrefix() + ".criterion.to.one.failure", criterionName, advancementIn.getDisplayText(), targets.iterator().next().getDisplayName()));
+                }
+                else
+                {
+                    throw new CommandException(new TranslationTextComponent(action.getPrefix() + ".criterion.to.many.failure", criterionName, advancementIn.getDisplayText(), targets.size()));
+                }
+            }
+            else
+            {
+                if (targets.size() == 1)
+                {
+                    source.sendFeedback(new TranslationTextComponent(action.getPrefix() + ".criterion.to.one.success", criterionName, advancementIn.getDisplayText(), targets.iterator().next().getDisplayName()), true);
+                }
+                else
+                {
+                    source.sendFeedback(new TranslationTextComponent(action.getPrefix() + ".criterion.to.many.success", criterionName, advancementIn.getDisplayText(), targets.size()), true);
+                }
+
+                return i;
+            }
+        }
+    }
+
+    private static List<Advancement> getMatchingAdvancements(Advancement advancementIn, AdvancementCommand.Mode mode)
+    {
+        List<Advancement> list = Lists.newArrayList();
+
+        if (mode.includesParents)
+        {
+            for (Advancement advancement = advancementIn.getParent(); advancement != null; advancement = advancement.getParent())
+            {
+                list.add(advancement);
+            }
+        }
+
+        list.add(advancementIn);
+
+        if (mode.includesChildren)
+        {
+            addAllChildren(advancementIn, list);
+        }
+
+        return list;
+    }
+
+    /**
+     * Recursively adds all children of the given advancement to the given list. Does not add the advancement itself to
+     * the list.
+     */
+    private static void addAllChildren(Advancement advancementIn, List<Advancement> list)
+    {
+        for (Advancement advancement : advancementIn.getChildren())
+        {
             list.add(advancement);
-         }
-      }
+            addAllChildren(advancement, list);
+        }
+    }
 
-      list.add(p_198216_0_);
-      if (p_198216_1_.children) {
-         addChildren(p_198216_0_, list);
-      }
+    static enum Action
+    {
+        GRANT("grant")
+        {
+            protected boolean applyToAdvancement(ServerPlayerEntity player, Advancement advancementIn)
+            {
+                AdvancementProgress advancementprogress = player.getAdvancements().getProgress(advancementIn);
 
-      return list;
-   }
+                if (advancementprogress.isDone())
+                {
+                    return false;
+                }
+                else
+                {
+                    for (String s : advancementprogress.getRemaningCriteria())
+                    {
+                        player.getAdvancements().grantCriterion(advancementIn, s);
+                    }
 
-   private static void addChildren(Advancement p_198207_0_, List<Advancement> p_198207_1_) {
-      for(Advancement advancement : p_198207_0_.getChildren()) {
-         p_198207_1_.add(advancement);
-         addChildren(advancement, p_198207_1_);
-      }
-
-   }
-
-   static enum Action {
-      GRANT("grant") {
-         protected boolean perform(ServerPlayerEntity p_198179_1_, Advancement p_198179_2_) {
-            AdvancementProgress advancementprogress = p_198179_1_.getAdvancements().getOrStartProgress(p_198179_2_);
-            if (advancementprogress.isDone()) {
-               return false;
-            } else {
-               for(String s : advancementprogress.getRemainingCriteria()) {
-                  p_198179_1_.getAdvancements().award(p_198179_2_, s);
-               }
-
-               return true;
+                    return true;
+                }
             }
-         }
-
-         protected boolean performCriterion(ServerPlayerEntity p_198182_1_, Advancement p_198182_2_, String p_198182_3_) {
-            return p_198182_1_.getAdvancements().award(p_198182_2_, p_198182_3_);
-         }
-      },
-      REVOKE("revoke") {
-         protected boolean perform(ServerPlayerEntity p_198179_1_, Advancement p_198179_2_) {
-            AdvancementProgress advancementprogress = p_198179_1_.getAdvancements().getOrStartProgress(p_198179_2_);
-            if (!advancementprogress.hasProgress()) {
-               return false;
-            } else {
-               for(String s : advancementprogress.getCompletedCriteria()) {
-                  p_198179_1_.getAdvancements().revoke(p_198179_2_, s);
-               }
-
-               return true;
+            protected boolean applyToCriterion(ServerPlayerEntity player, Advancement advancementIn, String criterionName)
+            {
+                return player.getAdvancements().grantCriterion(advancementIn, criterionName);
             }
-         }
+        },
+        REVOKE("revoke")
+        {
+            protected boolean applyToAdvancement(ServerPlayerEntity player, Advancement advancementIn)
+            {
+                AdvancementProgress advancementprogress = player.getAdvancements().getProgress(advancementIn);
 
-         protected boolean performCriterion(ServerPlayerEntity p_198182_1_, Advancement p_198182_2_, String p_198182_3_) {
-            return p_198182_1_.getAdvancements().revoke(p_198182_2_, p_198182_3_);
-         }
-      };
+                if (!advancementprogress.hasProgress())
+                {
+                    return false;
+                }
+                else
+                {
+                    for (String s : advancementprogress.getCompletedCriteria())
+                    {
+                        player.getAdvancements().revokeCriterion(advancementIn, s);
+                    }
 
-      private final String key;
-
-      private Action(String p_i48092_3_) {
-         this.key = "commands.advancement." + p_i48092_3_;
-      }
-
-      public int perform(ServerPlayerEntity p_198180_1_, Iterable<Advancement> p_198180_2_) {
-         int i = 0;
-
-         for(Advancement advancement : p_198180_2_) {
-            if (this.perform(p_198180_1_, advancement)) {
-               ++i;
+                    return true;
+                }
             }
-         }
+            protected boolean applyToCriterion(ServerPlayerEntity player, Advancement advancementIn, String criterionName)
+            {
+                return player.getAdvancements().revokeCriterion(advancementIn, criterionName);
+            }
+        };
 
-         return i;
-      }
+        private final String prefix;
 
-      protected abstract boolean perform(ServerPlayerEntity p_198179_1_, Advancement p_198179_2_);
+        private Action(String name)
+        {
+            this.prefix = "commands.advancement." + name;
+        }
 
-      protected abstract boolean performCriterion(ServerPlayerEntity p_198182_1_, Advancement p_198182_2_, String p_198182_3_);
+        public int applyToAdvancements(ServerPlayerEntity player, Iterable<Advancement> advancements)
+        {
+            int i = 0;
 
-      protected String getKey() {
-         return this.key;
-      }
-   }
+            for (Advancement advancement : advancements)
+            {
+                if (this.applyToAdvancement(player, advancement))
+                {
+                    ++i;
+                }
+            }
 
-   static enum Mode {
-      ONLY(false, false),
-      THROUGH(true, true),
-      FROM(false, true),
-      UNTIL(true, false),
-      EVERYTHING(true, true);
+            return i;
+        }
 
-      private final boolean parents;
-      private final boolean children;
+        protected abstract boolean applyToAdvancement(ServerPlayerEntity player, Advancement advancementIn);
 
-      private Mode(boolean p_i48091_3_, boolean p_i48091_4_) {
-         this.parents = p_i48091_3_;
-         this.children = p_i48091_4_;
-      }
-   }
+        protected abstract boolean applyToCriterion(ServerPlayerEntity player, Advancement advancementIn, String criterionName);
+
+        protected String getPrefix()
+        {
+            return this.prefix;
+        }
+    }
+
+    static enum Mode
+    {
+        ONLY(false, false),
+        THROUGH(true, true),
+        FROM(false, true),
+        UNTIL(true, false),
+        EVERYTHING(true, true);
+
+        private final boolean includesParents;
+        private final boolean includesChildren;
+
+        private Mode(boolean includesParentsIn, boolean includesChildrenIn)
+        {
+            this.includesParents = includesParentsIn;
+            this.includesChildren = includesChildrenIn;
+        }
+    }
 }

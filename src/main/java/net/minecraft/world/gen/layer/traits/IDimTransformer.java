@@ -1,7 +1,8 @@
 package net.minecraft.world.gen.layer.traits;
 
-public interface IDimTransformer {
-   int getParentX(int p_215721_1_);
+public interface IDimTransformer
+{
+    int getOffsetX(int x);
 
-   int getParentY(int p_215722_1_);
+    int getOffsetZ(int z);
 }

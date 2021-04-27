@@ -11,71 +11,95 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.server.ServerWorld;
 
-public class ChorusPlantBlock extends SixWayBlock {
-   protected ChorusPlantBlock(AbstractBlock.Properties p_i48428_1_) {
-      super(0.3125F, p_i48428_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(NORTH, Boolean.valueOf(false)).setValue(EAST, Boolean.valueOf(false)).setValue(SOUTH, Boolean.valueOf(false)).setValue(WEST, Boolean.valueOf(false)).setValue(UP, Boolean.valueOf(false)).setValue(DOWN, Boolean.valueOf(false)));
-   }
+public class ChorusPlantBlock extends SixWayBlock
+{
+    protected ChorusPlantBlock(AbstractBlock.Properties builder)
+    {
+        super(0.3125F, builder);
+        this.setDefaultState(this.stateContainer.getBaseState().with(NORTH, Boolean.valueOf(false)).with(EAST, Boolean.valueOf(false)).with(SOUTH, Boolean.valueOf(false)).with(WEST, Boolean.valueOf(false)).with(UP, Boolean.valueOf(false)).with(DOWN, Boolean.valueOf(false)));
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      return this.getStateForPlacement(p_196258_1_.getLevel(), p_196258_1_.getClickedPos());
-   }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        return this.makeConnections(context.getWorld(), context.getPos());
+    }
 
-   public BlockState getStateForPlacement(IBlockReader p_196497_1_, BlockPos p_196497_2_) {
-      Block block = p_196497_1_.getBlockState(p_196497_2_.below()).getBlock();
-      Block block1 = p_196497_1_.getBlockState(p_196497_2_.above()).getBlock();
-      Block block2 = p_196497_1_.getBlockState(p_196497_2_.north()).getBlock();
-      Block block3 = p_196497_1_.getBlockState(p_196497_2_.east()).getBlock();
-      Block block4 = p_196497_1_.getBlockState(p_196497_2_.south()).getBlock();
-      Block block5 = p_196497_1_.getBlockState(p_196497_2_.west()).getBlock();
-      return this.defaultBlockState().setValue(DOWN, Boolean.valueOf(block == this || block == Blocks.CHORUS_FLOWER || block == Blocks.END_STONE)).setValue(UP, Boolean.valueOf(block1 == this || block1 == Blocks.CHORUS_FLOWER)).setValue(NORTH, Boolean.valueOf(block2 == this || block2 == Blocks.CHORUS_FLOWER)).setValue(EAST, Boolean.valueOf(block3 == this || block3 == Blocks.CHORUS_FLOWER)).setValue(SOUTH, Boolean.valueOf(block4 == this || block4 == Blocks.CHORUS_FLOWER)).setValue(WEST, Boolean.valueOf(block5 == this || block5 == Blocks.CHORUS_FLOWER));
-   }
+    public BlockState makeConnections(IBlockReader blockReader, BlockPos pos)
+    {
+        Block block = blockReader.getBlockState(pos.down()).getBlock();
+        Block block1 = blockReader.getBlockState(pos.up()).getBlock();
+        Block block2 = blockReader.getBlockState(pos.north()).getBlock();
+        Block block3 = blockReader.getBlockState(pos.east()).getBlock();
+        Block block4 = blockReader.getBlockState(pos.south()).getBlock();
+        Block block5 = blockReader.getBlockState(pos.west()).getBlock();
+        return this.getDefaultState().with(DOWN, Boolean.valueOf(block == this || block == Blocks.CHORUS_FLOWER || block == Blocks.END_STONE)).with(UP, Boolean.valueOf(block1 == this || block1 == Blocks.CHORUS_FLOWER)).with(NORTH, Boolean.valueOf(block2 == this || block2 == Blocks.CHORUS_FLOWER)).with(EAST, Boolean.valueOf(block3 == this || block3 == Blocks.CHORUS_FLOWER)).with(SOUTH, Boolean.valueOf(block4 == this || block4 == Blocks.CHORUS_FLOWER)).with(WEST, Boolean.valueOf(block5 == this || block5 == Blocks.CHORUS_FLOWER));
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (!p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 1);
-         return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-      } else {
-         boolean flag = p_196271_3_.getBlock() == this || p_196271_3_.is(Blocks.CHORUS_FLOWER) || p_196271_2_ == Direction.DOWN && p_196271_3_.is(Blocks.END_STONE);
-         return p_196271_1_.setValue(PROPERTY_BY_DIRECTION.get(p_196271_2_), Boolean.valueOf(flag));
-      }
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (!stateIn.isValidPosition(worldIn, currentPos))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+            return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+        }
+        else
+        {
+            boolean flag = facingState.getBlock() == this || facingState.isIn(Blocks.CHORUS_FLOWER) || facing == Direction.DOWN && facingState.isIn(Blocks.END_STONE);
+            return stateIn.with(FACING_TO_PROPERTY_MAP.get(facing), Boolean.valueOf(flag));
+        }
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!p_225534_1_.canSurvive(p_225534_2_, p_225534_3_)) {
-         p_225534_2_.destroyBlock(p_225534_3_, true);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!state.isValidPosition(worldIn, pos))
+        {
+            worldIn.destroyBlock(pos, true);
+        }
+    }
 
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockState blockstate = worldIn.getBlockState(pos.down());
+        boolean flag = !worldIn.getBlockState(pos.up()).isAir() && !blockstate.isAir();
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockState blockstate = p_196260_2_.getBlockState(p_196260_3_.below());
-      boolean flag = !p_196260_2_.getBlockState(p_196260_3_.above()).isAir() && !blockstate.isAir();
+        for (Direction direction : Direction.Plane.HORIZONTAL)
+        {
+            BlockPos blockpos = pos.offset(direction);
+            Block block = worldIn.getBlockState(blockpos).getBlock();
 
-      for(Direction direction : Direction.Plane.HORIZONTAL) {
-         BlockPos blockpos = p_196260_3_.relative(direction);
-         Block block = p_196260_2_.getBlockState(blockpos).getBlock();
-         if (block == this) {
-            if (flag) {
-               return false;
+            if (block == this)
+            {
+                if (flag)
+                {
+                    return false;
+                }
+
+                Block block1 = worldIn.getBlockState(blockpos.down()).getBlock();
+
+                if (block1 == this || block1 == Blocks.END_STONE)
+                {
+                    return true;
+                }
             }
+        }
 
-            Block block1 = p_196260_2_.getBlockState(blockpos.below()).getBlock();
-            if (block1 == this || block1 == Blocks.END_STONE) {
-               return true;
-            }
-         }
-      }
+        Block block2 = blockstate.getBlock();
+        return block2 == this || block2 == Blocks.END_STONE;
+    }
 
-      Block block2 = blockstate.getBlock();
-      return block2 == this || block2 == Blocks.END_STONE;
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
-   }
-
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

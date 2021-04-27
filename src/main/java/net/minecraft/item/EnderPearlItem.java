@@ -9,27 +9,34 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.world.World;
 
-public class EnderPearlItem extends Item {
-   public EnderPearlItem(Item.Properties p_i48501_1_) {
-      super(p_i48501_1_);
-   }
+public class EnderPearlItem extends Item
+{
+    public EnderPearlItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      p_77659_1_.playSound((PlayerEntity)null, p_77659_2_.getX(), p_77659_2_.getY(), p_77659_2_.getZ(), SoundEvents.ENDER_PEARL_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (random.nextFloat() * 0.4F + 0.8F));
-      p_77659_2_.getCooldowns().addCooldown(this, 20);
-      if (!p_77659_1_.isClientSide) {
-         EnderPearlEntity enderpearlentity = new EnderPearlEntity(p_77659_1_, p_77659_2_);
-         enderpearlentity.setItem(itemstack);
-         enderpearlentity.shootFromRotation(p_77659_2_, p_77659_2_.xRot, p_77659_2_.yRot, 0.0F, 1.5F, 1.0F);
-         p_77659_1_.addFreshEntity(enderpearlentity);
-      }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        worldIn.playSound((PlayerEntity)null, playerIn.getPosX(), playerIn.getPosY(), playerIn.getPosZ(), SoundEvents.ENTITY_ENDER_PEARL_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (random.nextFloat() * 0.4F + 0.8F));
+        playerIn.getCooldownTracker().setCooldown(this, 20);
 
-      p_77659_2_.awardStat(Stats.ITEM_USED.get(this));
-      if (!p_77659_2_.abilities.instabuild) {
-         itemstack.shrink(1);
-      }
+        if (!worldIn.isRemote)
+        {
+            EnderPearlEntity enderpearlentity = new EnderPearlEntity(worldIn, playerIn);
+            enderpearlentity.setItem(itemstack);
+            enderpearlentity.func_234612_a_(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.5F, 1.0F);
+            worldIn.addEntity(enderpearlentity);
+        }
 
-      return ActionResult.sidedSuccess(itemstack, p_77659_1_.isClientSide());
-   }
+        playerIn.addStat(Stats.ITEM_USED.get(this));
+
+        if (!playerIn.abilities.isCreativeMode)
+        {
+            itemstack.shrink(1);
+        }
+
+        return ActionResult.func_233538_a_(itemstack, worldIn.isRemote());
+    }
 }

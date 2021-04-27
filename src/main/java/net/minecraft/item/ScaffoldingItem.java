@@ -15,60 +15,83 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
-public class ScaffoldingItem extends BlockItem {
-   public ScaffoldingItem(Block p_i50039_1_, Item.Properties p_i50039_2_) {
-      super(p_i50039_1_, p_i50039_2_);
-   }
+public class ScaffoldingItem extends BlockItem
+{
+    public ScaffoldingItem(Block block, Item.Properties builder)
+    {
+        super(block, builder);
+    }
 
-   @Nullable
-   public BlockItemUseContext updatePlacementContext(BlockItemUseContext p_219984_1_) {
-      BlockPos blockpos = p_219984_1_.getClickedPos();
-      World world = p_219984_1_.getLevel();
-      BlockState blockstate = world.getBlockState(blockpos);
-      Block block = this.getBlock();
-      if (!blockstate.is(block)) {
-         return ScaffoldingBlock.getDistance(world, blockpos) == 7 ? null : p_219984_1_;
-      } else {
-         Direction direction;
-         if (p_219984_1_.isSecondaryUseActive()) {
-            direction = p_219984_1_.isInside() ? p_219984_1_.getClickedFace().getOpposite() : p_219984_1_.getClickedFace();
-         } else {
-            direction = p_219984_1_.getClickedFace() == Direction.UP ? p_219984_1_.getHorizontalDirection() : Direction.UP;
-         }
+    @Nullable
+    public BlockItemUseContext getBlockItemUseContext(BlockItemUseContext context)
+    {
+        BlockPos blockpos = context.getPos();
+        World world = context.getWorld();
+        BlockState blockstate = world.getBlockState(blockpos);
+        Block block = this.getBlock();
 
-         int i = 0;
-         BlockPos.Mutable blockpos$mutable = blockpos.mutable().move(direction);
+        if (!blockstate.isIn(block))
+        {
+            return ScaffoldingBlock.getDistance(world, blockpos) == 7 ? null : context;
+        }
+        else
+        {
+            Direction direction;
 
-         while(i < 7) {
-            if (!world.isClientSide && !World.isInWorldBounds(blockpos$mutable)) {
-               PlayerEntity playerentity = p_219984_1_.getPlayer();
-               int j = world.getMaxBuildHeight();
-               if (playerentity instanceof ServerPlayerEntity && blockpos$mutable.getY() >= j) {
-                  SChatPacket schatpacket = new SChatPacket((new TranslationTextComponent("build.tooHigh", j)).withStyle(TextFormatting.RED), ChatType.GAME_INFO, Util.NIL_UUID);
-                  ((ServerPlayerEntity)playerentity).connection.send(schatpacket);
-               }
-               break;
+            if (context.hasSecondaryUseForPlayer())
+            {
+                direction = context.isInside() ? context.getFace().getOpposite() : context.getFace();
+            }
+            else
+            {
+                direction = context.getFace() == Direction.UP ? context.getPlacementHorizontalFacing() : Direction.UP;
             }
 
-            blockstate = world.getBlockState(blockpos$mutable);
-            if (!blockstate.is(this.getBlock())) {
-               if (blockstate.canBeReplaced(p_219984_1_)) {
-                  return BlockItemUseContext.at(p_219984_1_, blockpos$mutable, direction);
-               }
-               break;
+            int i = 0;
+            BlockPos.Mutable blockpos$mutable = blockpos.toMutable().move(direction);
+
+            while (i < 7)
+            {
+                if (!world.isRemote && !World.isValid(blockpos$mutable))
+                {
+                    PlayerEntity playerentity = context.getPlayer();
+                    int j = world.getHeight();
+
+                    if (playerentity instanceof ServerPlayerEntity && blockpos$mutable.getY() >= j)
+                    {
+                        SChatPacket schatpacket = new SChatPacket((new TranslationTextComponent("build.tooHigh", j)).mergeStyle(TextFormatting.RED), ChatType.GAME_INFO, Util.DUMMY_UUID);
+                        ((ServerPlayerEntity)playerentity).connection.sendPacket(schatpacket);
+                    }
+
+                    break;
+                }
+
+                blockstate = world.getBlockState(blockpos$mutable);
+
+                if (!blockstate.isIn(this.getBlock()))
+                {
+                    if (blockstate.isReplaceable(context))
+                    {
+                        return BlockItemUseContext.func_221536_a(context, blockpos$mutable, direction);
+                    }
+
+                    break;
+                }
+
+                blockpos$mutable.move(direction);
+
+                if (direction.getAxis().isHorizontal())
+                {
+                    ++i;
+                }
             }
 
-            blockpos$mutable.move(direction);
-            if (direction.getAxis().isHorizontal()) {
-               ++i;
-            }
-         }
+            return null;
+        }
+    }
 
-         return null;
-      }
-   }
-
-   protected boolean mustSurvive() {
-      return false;
-   }
+    protected boolean checkPosition()
+    {
+        return false;
+    }
 }

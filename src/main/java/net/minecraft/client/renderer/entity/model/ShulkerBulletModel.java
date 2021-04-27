@@ -3,29 +3,33 @@ package net.minecraft.client.renderer.entity.model;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.Entity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class ShulkerBulletModel<T extends Entity> extends SegmentedModel<T> {
-   private final ModelRenderer main;
+public class ShulkerBulletModel<T extends Entity> extends SegmentedModel<T>
+{
+    private final ModelRenderer renderer;
 
-   public ShulkerBulletModel() {
-      this.texWidth = 64;
-      this.texHeight = 32;
-      this.main = new ModelRenderer(this);
-      this.main.texOffs(0, 0).addBox(-4.0F, -4.0F, -1.0F, 8.0F, 8.0F, 2.0F, 0.0F);
-      this.main.texOffs(0, 10).addBox(-1.0F, -4.0F, -4.0F, 2.0F, 8.0F, 8.0F, 0.0F);
-      this.main.texOffs(20, 0).addBox(-4.0F, -1.0F, -4.0F, 8.0F, 2.0F, 8.0F, 0.0F);
-      this.main.setPos(0.0F, 0.0F, 0.0F);
-   }
+    public ShulkerBulletModel()
+    {
+        this.textureWidth = 64;
+        this.textureHeight = 32;
+        this.renderer = new ModelRenderer(this);
+        this.renderer.setTextureOffset(0, 0).addBox(-4.0F, -4.0F, -1.0F, 8.0F, 8.0F, 2.0F, 0.0F);
+        this.renderer.setTextureOffset(0, 10).addBox(-1.0F, -4.0F, -4.0F, 2.0F, 8.0F, 8.0F, 0.0F);
+        this.renderer.setTextureOffset(20, 0).addBox(-4.0F, -1.0F, -4.0F, 8.0F, 2.0F, 8.0F, 0.0F);
+        this.renderer.setRotationPoint(0.0F, 0.0F, 0.0F);
+    }
 
-   public Iterable<ModelRenderer> parts() {
-      return ImmutableList.of(this.main);
-   }
+    public Iterable<ModelRenderer> getParts()
+    {
+        return ImmutableList.of(this.renderer);
+    }
 
-   public void setupAnim(T p_225597_1_, float p_225597_2_, float p_225597_3_, float p_225597_4_, float p_225597_5_, float p_225597_6_) {
-      this.main.yRot = p_225597_5_ * ((float)Math.PI / 180F);
-      this.main.xRot = p_225597_6_ * ((float)Math.PI / 180F);
-   }
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setRotationAngles(T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        this.renderer.rotateAngleY = netHeadYaw * ((float)Math.PI / 180F);
+        this.renderer.rotateAngleX = headPitch * ((float)Math.PI / 180F);
+    }
 }

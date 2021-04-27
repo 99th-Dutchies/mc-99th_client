@@ -10,80 +10,99 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.util.math.ChunkPos;
 
-public final class RegionFileCache implements AutoCloseable {
-   private final Long2ObjectLinkedOpenHashMap<RegionFile> regionCache = new Long2ObjectLinkedOpenHashMap<>();
-   private final File folder;
-   private final boolean sync;
+public final class RegionFileCache implements AutoCloseable
+{
+    private final Long2ObjectLinkedOpenHashMap<RegionFile> cache = new Long2ObjectLinkedOpenHashMap<>();
+    private final File folder;
+    private final boolean field_235986_c_;
 
-   RegionFileCache(File p_i231895_1_, boolean p_i231895_2_) {
-      this.folder = p_i231895_1_;
-      this.sync = p_i231895_2_;
-   }
+    RegionFileCache(File p_i231895_1_, boolean p_i231895_2_)
+    {
+        this.folder = p_i231895_1_;
+        this.field_235986_c_ = p_i231895_2_;
+    }
 
-   private RegionFile getRegionFile(ChunkPos p_219098_1_) throws IOException {
-      long i = ChunkPos.asLong(p_219098_1_.getRegionX(), p_219098_1_.getRegionZ());
-      RegionFile regionfile = this.regionCache.getAndMoveToFirst(i);
-      if (regionfile != null) {
-         return regionfile;
-      } else {
-         if (this.regionCache.size() >= 256) {
-            this.regionCache.removeLast().close();
-         }
+    private RegionFile loadFile(ChunkPos pos) throws IOException
+    {
+        long i = ChunkPos.asLong(pos.getRegionCoordX(), pos.getRegionCoordZ());
+        RegionFile regionfile = this.cache.getAndMoveToFirst(i);
 
-         if (!this.folder.exists()) {
-            this.folder.mkdirs();
-         }
+        if (regionfile != null)
+        {
+            return regionfile;
+        }
+        else
+        {
+            if (this.cache.size() >= 256)
+            {
+                this.cache.removeLast().close();
+            }
 
-         File file1 = new File(this.folder, "r." + p_219098_1_.getRegionX() + "." + p_219098_1_.getRegionZ() + ".mca");
-         RegionFile regionfile1 = new RegionFile(file1, this.folder, this.sync);
-         this.regionCache.putAndMoveToFirst(i, regionfile1);
-         return regionfile1;
-      }
-   }
+            if (!this.folder.exists())
+            {
+                this.folder.mkdirs();
+            }
 
-   @Nullable
-   public CompoundNBT read(ChunkPos p_219099_1_) throws IOException {
-      RegionFile regionfile = this.getRegionFile(p_219099_1_);
+            File file1 = new File(this.folder, "r." + pos.getRegionCoordX() + "." + pos.getRegionCoordZ() + ".mca");
+            RegionFile regionfile1 = new RegionFile(file1, this.folder, this.field_235986_c_);
+            this.cache.putAndMoveToFirst(i, regionfile1);
+            return regionfile1;
+        }
+    }
 
-      Object object;
-      try (DataInputStream datainputstream = regionfile.getChunkDataInputStream(p_219099_1_)) {
-         if (datainputstream != null) {
-            return CompressedStreamTools.read(datainputstream);
-         }
+    @Nullable
+    public CompoundNBT readChunk(ChunkPos pos) throws IOException
+    {
+        RegionFile regionfile = this.loadFile(pos);
+        Object object;
 
-         object = null;
-      }
+        try (DataInputStream datainputstream = regionfile.func_222666_a(pos))
+        {
+            if (datainputstream != null)
+            {
+                return CompressedStreamTools.read(datainputstream);
+            }
 
-      return (CompoundNBT)object;
-   }
+            object = null;
+        }
 
-   protected void write(ChunkPos p_219100_1_, CompoundNBT p_219100_2_) throws IOException {
-      RegionFile regionfile = this.getRegionFile(p_219100_1_);
+        return (CompoundNBT)object;
+    }
 
-      try (DataOutputStream dataoutputstream = regionfile.getChunkDataOutputStream(p_219100_1_)) {
-         CompressedStreamTools.write(p_219100_2_, dataoutputstream);
-      }
+    protected void writeChunk(ChunkPos pos, CompoundNBT compound) throws IOException
+    {
+        RegionFile regionfile = this.loadFile(pos);
 
-   }
+        try (DataOutputStream dataoutputstream = regionfile.func_222661_c(pos))
+        {
+            CompressedStreamTools.write(compound, dataoutputstream);
+        }
+    }
 
-   public void close() throws IOException {
-      SuppressedExceptions<IOException> suppressedexceptions = new SuppressedExceptions<>();
+    public void close() throws IOException
+    {
+        SuppressedExceptions<IOException> suppressedexceptions = new SuppressedExceptions<>();
 
-      for(RegionFile regionfile : this.regionCache.values()) {
-         try {
-            regionfile.close();
-         } catch (IOException ioexception) {
-            suppressedexceptions.add(ioexception);
-         }
-      }
+        for (RegionFile regionfile : this.cache.values())
+        {
+            try
+            {
+                regionfile.close();
+            }
+            catch (IOException ioexception)
+            {
+                suppressedexceptions.func_233003_a_(ioexception);
+            }
+        }
 
-      suppressedexceptions.throwIfPresent();
-   }
+        suppressedexceptions.func_233002_a_();
+    }
 
-   public void flush() throws IOException {
-      for(RegionFile regionfile : this.regionCache.values()) {
-         regionfile.flush();
-      }
-
-   }
+    public void func_235987_a_() throws IOException
+    {
+        for (RegionFile regionfile : this.cache.values())
+        {
+            regionfile.func_235985_a_();
+        }
+    }
 }

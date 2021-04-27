@@ -21,279 +21,346 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SocialInteractionsScreen extends Screen {
-   protected static final ResourceLocation SOCIAL_INTERACTIONS_LOCATION = new ResourceLocation("textures/gui/social_interactions.png");
-   private static final ITextComponent TAB_ALL = new TranslationTextComponent("gui.socialInteractions.tab_all");
-   private static final ITextComponent TAB_HIDDEN = new TranslationTextComponent("gui.socialInteractions.tab_hidden");
-   private static final ITextComponent TAB_BLOCKED = new TranslationTextComponent("gui.socialInteractions.tab_blocked");
-   private static final ITextComponent TAB_ALL_SELECTED = TAB_ALL.plainCopy().withStyle(TextFormatting.UNDERLINE);
-   private static final ITextComponent TAB_HIDDEN_SELECTED = TAB_HIDDEN.plainCopy().withStyle(TextFormatting.UNDERLINE);
-   private static final ITextComponent TAB_BLOCKED_SELECTED = TAB_BLOCKED.plainCopy().withStyle(TextFormatting.UNDERLINE);
-   private static final ITextComponent SEARCH_HINT = (new TranslationTextComponent("gui.socialInteractions.search_hint")).withStyle(TextFormatting.ITALIC).withStyle(TextFormatting.GRAY);
-   private static final ITextComponent EMPTY_SEARCH = (new TranslationTextComponent("gui.socialInteractions.search_empty")).withStyle(TextFormatting.GRAY);
-   private static final ITextComponent EMPTY_HIDDEN = (new TranslationTextComponent("gui.socialInteractions.empty_hidden")).withStyle(TextFormatting.GRAY);
-   private static final ITextComponent EMPTY_BLOCKED = (new TranslationTextComponent("gui.socialInteractions.empty_blocked")).withStyle(TextFormatting.GRAY);
-   private static final ITextComponent BLOCKING_HINT = new TranslationTextComponent("gui.socialInteractions.blocking_hint");
-   private FilterList socialInteractionsPlayerList;
-   private TextFieldWidget searchBox;
-   private String lastSearch = "";
-   private SocialInteractionsScreen.Mode page = SocialInteractionsScreen.Mode.ALL;
-   private Button allButton;
-   private Button hiddenButton;
-   private Button blockedButton;
-   private Button blockingHintButton;
-   @Nullable
-   private ITextComponent serverLabel;
-   private int playerCount;
-   private boolean initialized;
-   @Nullable
-   private Runnable postRenderRunnable;
+public class SocialInteractionsScreen extends Screen
+{
+    protected static final ResourceLocation field_244666_a = new ResourceLocation("textures/gui/social_interactions.png");
+    private static final ITextComponent field_244667_b = new TranslationTextComponent("gui.socialInteractions.tab_all");
+    private static final ITextComponent field_244668_c = new TranslationTextComponent("gui.socialInteractions.tab_hidden");
+    private static final ITextComponent field_244762_p = new TranslationTextComponent("gui.socialInteractions.tab_blocked");
+    private static final ITextComponent field_244669_p = field_244667_b.copyRaw().mergeStyle(TextFormatting.UNDERLINE);
+    private static final ITextComponent field_244670_q = field_244668_c.copyRaw().mergeStyle(TextFormatting.UNDERLINE);
+    private static final ITextComponent field_244763_s = field_244762_p.copyRaw().mergeStyle(TextFormatting.UNDERLINE);
+    private static final ITextComponent field_244671_r = (new TranslationTextComponent("gui.socialInteractions.search_hint")).mergeStyle(TextFormatting.ITALIC).mergeStyle(TextFormatting.GRAY);
+    private static final ITextComponent field_244764_u = (new TranslationTextComponent("gui.socialInteractions.search_empty")).mergeStyle(TextFormatting.GRAY);
+    private static final ITextComponent field_244672_s = (new TranslationTextComponent("gui.socialInteractions.empty_hidden")).mergeStyle(TextFormatting.GRAY);
+    private static final ITextComponent field_244765_w = (new TranslationTextComponent("gui.socialInteractions.empty_blocked")).mergeStyle(TextFormatting.GRAY);
+    private static final ITextComponent field_244766_x = new TranslationTextComponent("gui.socialInteractions.blocking_hint");
+    private FilterList field_244673_t;
+    private TextFieldWidget field_244674_u;
+    private String field_244675_v = "";
+    private SocialInteractionsScreen.Mode field_244676_w = SocialInteractionsScreen.Mode.ALL;
+    private Button field_244677_x;
+    private Button field_244678_y;
+    private Button field_244760_E;
+    private Button field_244761_F;
+    @Nullable
+    private ITextComponent field_244679_z;
+    private int field_244662_A;
+    private boolean field_244664_C;
+    @Nullable
+    private Runnable field_244665_D;
 
-   public SocialInteractionsScreen() {
-      super(new TranslationTextComponent("gui.socialInteractions.title"));
-      this.updateServerLabel(Minecraft.getInstance());
-   }
+    public SocialInteractionsScreen()
+    {
+        super(new TranslationTextComponent("gui.socialInteractions.title"));
+        this.func_244680_a(Minecraft.getInstance());
+    }
 
-   private int windowHeight() {
-      return Math.max(52, this.height - 128 - 16);
-   }
+    private int func_244689_k()
+    {
+        return Math.max(52, this.height - 128 - 16);
+    }
 
-   private int backgroundUnits() {
-      return this.windowHeight() / 16;
-   }
+    private int func_244690_l()
+    {
+        return this.func_244689_k() / 16;
+    }
 
-   private int listEnd() {
-      return 80 + this.backgroundUnits() * 16 - 8;
-   }
+    private int func_244691_m()
+    {
+        return 80 + this.func_244690_l() * 16 - 8;
+    }
 
-   private int marginX() {
-      return (this.width - 238) / 2;
-   }
+    private int func_244692_n()
+    {
+        return (this.width - 238) / 2;
+    }
 
-   public String getNarrationMessage() {
-      return super.getNarrationMessage() + ". " + this.serverLabel.getString();
-   }
+    public String getNarrationMessage()
+    {
+        return super.getNarrationMessage() + ". " + this.field_244679_z.getString();
+    }
 
-   public void tick() {
-      super.tick();
-      this.searchBox.tick();
-   }
+    public void tick()
+    {
+        super.tick();
+        this.field_244674_u.tick();
+    }
 
-   protected void init() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      if (this.initialized) {
-         this.socialInteractionsPlayerList.updateSize(this.width, this.height, 88, this.listEnd());
-      } else {
-         this.socialInteractionsPlayerList = new FilterList(this, this.minecraft, this.width, this.height, 88, this.listEnd(), 36);
-      }
+    protected void init()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
 
-      int i = this.socialInteractionsPlayerList.getRowWidth() / 3;
-      int j = this.socialInteractionsPlayerList.getRowLeft();
-      int k = this.socialInteractionsPlayerList.getRowRight();
-      int l = this.font.width(BLOCKING_HINT) + 40;
-      int i1 = 64 + 16 * this.backgroundUnits();
-      int j1 = (this.width - l) / 2;
-      this.allButton = this.addButton(new Button(j, 45, i, 20, TAB_ALL, (p_244686_1_) -> {
-         this.showPage(SocialInteractionsScreen.Mode.ALL);
-      }));
-      this.hiddenButton = this.addButton(new Button((j + k - i) / 2 + 1, 45, i, 20, TAB_HIDDEN, (p_244681_1_) -> {
-         this.showPage(SocialInteractionsScreen.Mode.HIDDEN);
-      }));
-      this.blockedButton = this.addButton(new Button(k - i + 1, 45, i, 20, TAB_BLOCKED, (p_244769_1_) -> {
-         this.showPage(SocialInteractionsScreen.Mode.BLOCKED);
-      }));
-      this.blockingHintButton = this.addButton(new Button(j1, i1, l, 20, BLOCKING_HINT, (p_244767_1_) -> {
-         this.minecraft.setScreen(new ConfirmOpenLinkScreen((p_244771_1_) -> {
-            if (p_244771_1_) {
-               Util.getPlatform().openUri("https://aka.ms/javablocking");
+        if (this.field_244664_C)
+        {
+            this.field_244673_t.updateSize(this.width, this.height, 88, this.func_244691_m());
+        }
+        else
+        {
+            this.field_244673_t = new FilterList(this, this.minecraft, this.width, this.height, 88, this.func_244691_m(), 36);
+        }
+
+        int i = this.field_244673_t.getRowWidth() / 3;
+        int j = this.field_244673_t.getRowLeft();
+        int k = this.field_244673_t.func_244736_r();
+        int l = this.font.getStringPropertyWidth(field_244766_x) + 40;
+        int i1 = 64 + 16 * this.func_244690_l();
+        int j1 = (this.width - l) / 2;
+        this.field_244677_x = this.addButton(new Button(j, 45, i, 20, field_244667_b, (p_244686_1_) ->
+        {
+            this.func_244682_a(SocialInteractionsScreen.Mode.ALL);
+        }));
+        this.field_244678_y = this.addButton(new Button((j + k - i) / 2 + 1, 45, i, 20, field_244668_c, (p_244681_1_) ->
+        {
+            this.func_244682_a(SocialInteractionsScreen.Mode.HIDDEN);
+        }));
+        this.field_244760_E = this.addButton(new Button(k - i + 1, 45, i, 20, field_244762_p, (p_244769_1_) ->
+        {
+            this.func_244682_a(SocialInteractionsScreen.Mode.BLOCKED);
+        }));
+        this.field_244761_F = this.addButton(new Button(j1, i1, l, 20, field_244766_x, (p_244767_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new ConfirmOpenLinkScreen((p_244771_1_) -> {
+                if (p_244771_1_)
+                {
+                    Util.getOSType().openURI("https://aka.ms/javablocking");
+                }
+
+                this.minecraft.displayGuiScreen(this);
+            }, "https://aka.ms/javablocking", true));
+        }));
+        String s = this.field_244674_u != null ? this.field_244674_u.getText() : "";
+        this.field_244674_u = new TextFieldWidget(this.font, this.func_244692_n() + 28, 78, 196, 16, field_244671_r)
+        {
+            protected IFormattableTextComponent getNarrationMessage()
+            {
+                return !SocialInteractionsScreen.this.field_244674_u.getText().isEmpty() && SocialInteractionsScreen.this.field_244673_t.func_244660_f() ? super.getNarrationMessage().appendString(", ").append(SocialInteractionsScreen.field_244764_u) : super.getNarrationMessage();
+            }
+        };
+        this.field_244674_u.setMaxStringLength(16);
+        this.field_244674_u.setEnableBackgroundDrawing(false);
+        this.field_244674_u.setVisible(true);
+        this.field_244674_u.setTextColor(16777215);
+        this.field_244674_u.setText(s);
+        this.field_244674_u.setResponder(this::func_244687_b);
+        this.children.add(this.field_244674_u);
+        this.children.add(this.field_244673_t);
+        this.field_244664_C = true;
+        this.func_244682_a(this.field_244676_w);
+    }
+
+    private void func_244682_a(SocialInteractionsScreen.Mode p_244682_1_)
+    {
+        this.field_244676_w = p_244682_1_;
+        this.field_244677_x.setMessage(field_244667_b);
+        this.field_244678_y.setMessage(field_244668_c);
+        this.field_244760_E.setMessage(field_244762_p);
+        Collection<UUID> collection;
+
+        switch (p_244682_1_)
+        {
+            case ALL:
+                this.field_244677_x.setMessage(field_244669_p);
+                collection = this.minecraft.player.connection.func_244695_f();
+                break;
+
+            case HIDDEN:
+                this.field_244678_y.setMessage(field_244670_q);
+                collection = this.minecraft.func_244599_aA().func_244644_a();
+                break;
+
+            case BLOCKED:
+                this.field_244760_E.setMessage(field_244763_s);
+                FilterManager filtermanager = this.minecraft.func_244599_aA();
+                collection = this.minecraft.player.connection.func_244695_f().stream().filter(filtermanager::func_244757_e).collect(Collectors.toSet());
+                break;
+
+            default:
+                collection = ImmutableList.of();
+        }
+
+        this.field_244676_w = p_244682_1_;
+        this.field_244673_t.func_244759_a(collection, this.field_244673_t.getScrollAmount());
+
+        if (!this.field_244674_u.getText().isEmpty() && this.field_244673_t.func_244660_f() && !this.field_244674_u.isFocused())
+        {
+            NarratorChatListener.INSTANCE.say(field_244764_u.getString());
+        }
+        else if (collection.isEmpty())
+        {
+            if (p_244682_1_ == SocialInteractionsScreen.Mode.HIDDEN)
+            {
+                NarratorChatListener.INSTANCE.say(field_244672_s.getString());
+            }
+            else if (p_244682_1_ == SocialInteractionsScreen.Mode.BLOCKED)
+            {
+                NarratorChatListener.INSTANCE.say(field_244765_w.getString());
+            }
+        }
+    }
+
+    public void onClose()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+    }
+
+    public void renderBackground(MatrixStack matrixStack)
+    {
+        int i = this.func_244692_n() + 3;
+        super.renderBackground(matrixStack);
+        this.minecraft.getTextureManager().bindTexture(field_244666_a);
+        this.blit(matrixStack, i, 64, 1, 1, 236, 8);
+        int j = this.func_244690_l();
+
+        for (int k = 0; k < j; ++k)
+        {
+            this.blit(matrixStack, i, 72 + 16 * k, 1, 10, 236, 16);
+        }
+
+        this.blit(matrixStack, i, 72 + 16 * j, 1, 27, 236, 8);
+        this.blit(matrixStack, i + 10, 76, 243, 1, 12, 12);
+    }
+
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.func_244680_a(this.minecraft);
+        this.renderBackground(matrixStack);
+
+        if (this.field_244679_z != null)
+        {
+            drawString(matrixStack, this.minecraft.fontRenderer, this.field_244679_z, this.func_244692_n() + 8, 35, -1);
+        }
+
+        if (!this.field_244673_t.func_244660_f())
+        {
+            this.field_244673_t.render(matrixStack, mouseX, mouseY, partialTicks);
+        }
+        else if (!this.field_244674_u.getText().isEmpty())
+        {
+            drawCenteredString(matrixStack, this.minecraft.fontRenderer, field_244764_u, this.width / 2, (78 + this.func_244691_m()) / 2, -1);
+        }
+        else
+        {
+            switch (this.field_244676_w)
+            {
+                case HIDDEN:
+                    drawCenteredString(matrixStack, this.minecraft.fontRenderer, field_244672_s, this.width / 2, (78 + this.func_244691_m()) / 2, -1);
+                    break;
+
+                case BLOCKED:
+                    drawCenteredString(matrixStack, this.minecraft.fontRenderer, field_244765_w, this.width / 2, (78 + this.func_244691_m()) / 2, -1);
+            }
+        }
+
+        if (!this.field_244674_u.isFocused() && this.field_244674_u.getText().isEmpty())
+        {
+            drawString(matrixStack, this.minecraft.fontRenderer, field_244671_r, this.field_244674_u.x, this.field_244674_u.y, -1);
+        }
+        else
+        {
+            this.field_244674_u.render(matrixStack, mouseX, mouseY, partialTicks);
+        }
+
+        this.field_244761_F.visible = this.field_244676_w == SocialInteractionsScreen.Mode.BLOCKED;
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+
+        if (this.field_244665_D != null)
+        {
+            this.field_244665_D.run();
+        }
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button)
+    {
+        if (this.field_244674_u.isFocused())
+        {
+            this.field_244674_u.mouseClicked(mouseX, mouseY, button);
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button) || this.field_244673_t.mouseClicked(mouseX, mouseY, button);
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (!this.field_244674_u.isFocused() && this.minecraft.gameSettings.field_244602_au.matchesKey(keyCode, scanCode))
+        {
+            this.minecraft.displayGuiScreen((Screen)null);
+            return true;
+        }
+        else
+        {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+    }
+
+    public boolean isPauseScreen()
+    {
+        return false;
+    }
+
+    private void func_244687_b(String p_244687_1_)
+    {
+        p_244687_1_ = p_244687_1_.toLowerCase(Locale.ROOT);
+
+        if (!p_244687_1_.equals(this.field_244675_v))
+        {
+            this.field_244673_t.func_244658_a(p_244687_1_);
+            this.field_244675_v = p_244687_1_;
+            this.func_244682_a(this.field_244676_w);
+        }
+    }
+
+    private void func_244680_a(Minecraft p_244680_1_)
+    {
+        int i = p_244680_1_.getConnection().getPlayerInfoMap().size();
+
+        if (this.field_244662_A != i)
+        {
+            String s = "";
+            ServerData serverdata = p_244680_1_.getCurrentServerData();
+
+            if (p_244680_1_.isIntegratedServerRunning())
+            {
+                s = p_244680_1_.getIntegratedServer().getMOTD();
+            }
+            else if (serverdata != null)
+            {
+                s = serverdata.serverName;
             }
 
-            this.minecraft.setScreen(this);
-         }, "https://aka.ms/javablocking", true));
-      }));
-      String s = this.searchBox != null ? this.searchBox.getValue() : "";
-      this.searchBox = new TextFieldWidget(this.font, this.marginX() + 28, 78, 196, 16, SEARCH_HINT) {
-         protected IFormattableTextComponent createNarrationMessage() {
-            return !SocialInteractionsScreen.this.searchBox.getValue().isEmpty() && SocialInteractionsScreen.this.socialInteractionsPlayerList.isEmpty() ? super.createNarrationMessage().append(", ").append(SocialInteractionsScreen.EMPTY_SEARCH) : super.createNarrationMessage();
-         }
-      };
-      this.searchBox.setMaxLength(16);
-      this.searchBox.setBordered(false);
-      this.searchBox.setVisible(true);
-      this.searchBox.setTextColor(16777215);
-      this.searchBox.setValue(s);
-      this.searchBox.setResponder(this::checkSearchStringUpdate);
-      this.children.add(this.searchBox);
-      this.children.add(this.socialInteractionsPlayerList);
-      this.initialized = true;
-      this.showPage(this.page);
-   }
+            if (i > 1)
+            {
+                this.field_244679_z = new TranslationTextComponent("gui.socialInteractions.server_label.multiple", s, i);
+            }
+            else
+            {
+                this.field_244679_z = new TranslationTextComponent("gui.socialInteractions.server_label.single", s, i);
+            }
 
-   private void showPage(SocialInteractionsScreen.Mode p_244682_1_) {
-      this.page = p_244682_1_;
-      this.allButton.setMessage(TAB_ALL);
-      this.hiddenButton.setMessage(TAB_HIDDEN);
-      this.blockedButton.setMessage(TAB_BLOCKED);
-      Collection<UUID> collection;
-      switch(p_244682_1_) {
-      case ALL:
-         this.allButton.setMessage(TAB_ALL_SELECTED);
-         collection = this.minecraft.player.connection.getOnlinePlayerIds();
-         break;
-      case HIDDEN:
-         this.hiddenButton.setMessage(TAB_HIDDEN_SELECTED);
-         collection = this.minecraft.getPlayerSocialManager().getHiddenPlayers();
-         break;
-      case BLOCKED:
-         this.blockedButton.setMessage(TAB_BLOCKED_SELECTED);
-         FilterManager filtermanager = this.minecraft.getPlayerSocialManager();
-         collection = this.minecraft.player.connection.getOnlinePlayerIds().stream().filter(filtermanager::isBlocked).collect(Collectors.toSet());
-         break;
-      default:
-         collection = ImmutableList.of();
-      }
+            this.field_244662_A = i;
+        }
+    }
 
-      this.page = p_244682_1_;
-      this.socialInteractionsPlayerList.updatePlayerList(collection, this.socialInteractionsPlayerList.getScrollAmount());
-      if (!this.searchBox.getValue().isEmpty() && this.socialInteractionsPlayerList.isEmpty() && !this.searchBox.isFocused()) {
-         NarratorChatListener.INSTANCE.sayNow(EMPTY_SEARCH.getString());
-      } else if (collection.isEmpty()) {
-         if (p_244682_1_ == SocialInteractionsScreen.Mode.HIDDEN) {
-            NarratorChatListener.INSTANCE.sayNow(EMPTY_HIDDEN.getString());
-         } else if (p_244682_1_ == SocialInteractionsScreen.Mode.BLOCKED) {
-            NarratorChatListener.INSTANCE.sayNow(EMPTY_BLOCKED.getString());
-         }
-      }
+    public void func_244683_a(NetworkPlayerInfo p_244683_1_)
+    {
+        this.field_244673_t.func_244657_a(p_244683_1_, this.field_244676_w);
+    }
 
-   }
+    public void func_244685_a(UUID p_244685_1_)
+    {
+        this.field_244673_t.func_244659_a(p_244685_1_);
+    }
 
-   public void removed() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-   }
+    public void func_244684_a(@Nullable Runnable p_244684_1_)
+    {
+        this.field_244665_D = p_244684_1_;
+    }
 
-   public void renderBackground(MatrixStack p_230446_1_) {
-      int i = this.marginX() + 3;
-      super.renderBackground(p_230446_1_);
-      this.minecraft.getTextureManager().bind(SOCIAL_INTERACTIONS_LOCATION);
-      this.blit(p_230446_1_, i, 64, 1, 1, 236, 8);
-      int j = this.backgroundUnits();
-
-      for(int k = 0; k < j; ++k) {
-         this.blit(p_230446_1_, i, 72 + 16 * k, 1, 10, 236, 16);
-      }
-
-      this.blit(p_230446_1_, i, 72 + 16 * j, 1, 27, 236, 8);
-      this.blit(p_230446_1_, i + 10, 76, 243, 1, 12, 12);
-   }
-
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.updateServerLabel(this.minecraft);
-      this.renderBackground(p_230430_1_);
-      if (this.serverLabel != null) {
-         drawString(p_230430_1_, this.minecraft.font, this.serverLabel, this.marginX() + 8, 35, -1);
-      }
-
-      if (!this.socialInteractionsPlayerList.isEmpty()) {
-         this.socialInteractionsPlayerList.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      } else if (!this.searchBox.getValue().isEmpty()) {
-         drawCenteredString(p_230430_1_, this.minecraft.font, EMPTY_SEARCH, this.width / 2, (78 + this.listEnd()) / 2, -1);
-      } else {
-         switch(this.page) {
-         case HIDDEN:
-            drawCenteredString(p_230430_1_, this.minecraft.font, EMPTY_HIDDEN, this.width / 2, (78 + this.listEnd()) / 2, -1);
-            break;
-         case BLOCKED:
-            drawCenteredString(p_230430_1_, this.minecraft.font, EMPTY_BLOCKED, this.width / 2, (78 + this.listEnd()) / 2, -1);
-         }
-      }
-
-      if (!this.searchBox.isFocused() && this.searchBox.getValue().isEmpty()) {
-         drawString(p_230430_1_, this.minecraft.font, SEARCH_HINT, this.searchBox.x, this.searchBox.y, -1);
-      } else {
-         this.searchBox.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      }
-
-      this.blockingHintButton.visible = this.page == SocialInteractionsScreen.Mode.BLOCKED;
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      if (this.postRenderRunnable != null) {
-         this.postRenderRunnable.run();
-      }
-
-   }
-
-   public boolean mouseClicked(double p_231044_1_, double p_231044_3_, int p_231044_5_) {
-      if (this.searchBox.isFocused()) {
-         this.searchBox.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
-      }
-
-      return super.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_) || this.socialInteractionsPlayerList.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
-   }
-
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (!this.searchBox.isFocused() && this.minecraft.options.keySocialInteractions.matches(p_231046_1_, p_231046_2_)) {
-         this.minecraft.setScreen((Screen)null);
-         return true;
-      } else {
-         return super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-      }
-   }
-
-   public boolean isPauseScreen() {
-      return false;
-   }
-
-   private void checkSearchStringUpdate(String p_244687_1_) {
-      p_244687_1_ = p_244687_1_.toLowerCase(Locale.ROOT);
-      if (!p_244687_1_.equals(this.lastSearch)) {
-         this.socialInteractionsPlayerList.setFilter(p_244687_1_);
-         this.lastSearch = p_244687_1_;
-         this.showPage(this.page);
-      }
-
-   }
-
-   private void updateServerLabel(Minecraft p_244680_1_) {
-      int i = p_244680_1_.getConnection().getOnlinePlayers().size();
-      if (this.playerCount != i) {
-         String s = "";
-         ServerData serverdata = p_244680_1_.getCurrentServer();
-         if (p_244680_1_.isLocalServer()) {
-            s = p_244680_1_.getSingleplayerServer().getMotd();
-         } else if (serverdata != null) {
-            s = serverdata.name;
-         }
-
-         if (i > 1) {
-            this.serverLabel = new TranslationTextComponent("gui.socialInteractions.server_label.multiple", s, i);
-         } else {
-            this.serverLabel = new TranslationTextComponent("gui.socialInteractions.server_label.single", s, i);
-         }
-
-         this.playerCount = i;
-      }
-
-   }
-
-   public void onAddPlayer(NetworkPlayerInfo p_244683_1_) {
-      this.socialInteractionsPlayerList.addPlayer(p_244683_1_, this.page);
-   }
-
-   public void onRemovePlayer(UUID p_244685_1_) {
-      this.socialInteractionsPlayerList.removePlayer(p_244685_1_);
-   }
-
-   public void setPostRenderRunnable(@Nullable Runnable p_244684_1_) {
-      this.postRenderRunnable = p_244684_1_;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public static enum Mode {
-      ALL,
-      HIDDEN,
-      BLOCKED;
-   }
+    public static enum Mode
+    {
+        ALL,
+        HIDDEN,
+        BLOCKED;
+    }
 }

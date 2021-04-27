@@ -1,19 +1,23 @@
 package net.minecraft.entity.ai.brain.schedule;
 
-public class DutyTime {
-   private final int timeStamp;
-   private final float value;
+public class DutyTime
+{
+    private final int duration;
+    private final float active;
 
-   public DutyTime(int p_i50139_1_, float p_i50139_2_) {
-      this.timeStamp = p_i50139_1_;
-      this.value = p_i50139_2_;
-   }
+    public DutyTime(int durationIn, float active)
+    {
+        this.duration = durationIn;
+        this.active = active;
+    }
 
-   public int getTimeStamp() {
-      return this.timeStamp;
-   }
+    public int getDuration()
+    {
+        return this.duration;
+    }
 
-   public float getValue() {
-      return this.value;
-   }
+    public float getActive()
+    {
+        return this.active;
+    }
 }

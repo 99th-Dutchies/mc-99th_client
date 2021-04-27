@@ -4,10 +4,17 @@ import javax.annotation.Nullable;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 
-public interface ISidedInventory extends IInventory {
-   int[] getSlotsForFace(Direction p_180463_1_);
+public interface ISidedInventory extends IInventory
+{
+    int[] getSlotsForFace(Direction side);
 
-   boolean canPlaceItemThroughFace(int p_180462_1_, ItemStack p_180462_2_, @Nullable Direction p_180462_3_);
+    /**
+     * Returns true if automation can insert the given item in the given slot from the given side.
+     */
+    boolean canInsertItem(int index, ItemStack itemStackIn, @Nullable Direction direction);
 
-   boolean canTakeItemThroughFace(int p_180461_1_, ItemStack p_180461_2_, Direction p_180461_3_);
+    /**
+     * Returns true if automation can extract the given item in the given slot from the given side.
+     */
+    boolean canExtractItem(int index, ItemStack stack, Direction direction);
 }

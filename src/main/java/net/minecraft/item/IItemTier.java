@@ -2,16 +2,17 @@ package net.minecraft.item;
 
 import net.minecraft.item.crafting.Ingredient;
 
-public interface IItemTier {
-   int getUses();
+public interface IItemTier
+{
+    int getMaxUses();
 
-   float getSpeed();
+    float getEfficiency();
 
-   float getAttackDamageBonus();
+    float getAttackDamage();
 
-   int getLevel();
+    int getHarvestLevel();
 
-   int getEnchantmentValue();
+    int getEnchantability();
 
-   Ingredient getRepairIngredient();
+    Ingredient getRepairMaterial();
 }

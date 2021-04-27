@@ -30,152 +30,212 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.spawner.AbstractSpawner;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SpawnEggItem extends Item {
-   private static final Map<EntityType<?>, SpawnEggItem> BY_ID = Maps.newIdentityHashMap();
-   private final int color1;
-   private final int color2;
-   private final EntityType<?> defaultType;
+public class SpawnEggItem extends Item
+{
+    private static final Map < EntityType<?>, SpawnEggItem > EGGS = Maps.newIdentityHashMap();
+    private final int primaryColor;
+    private final int secondaryColor;
+    private final EntityType<?> typeIn;
 
-   public SpawnEggItem(EntityType<?> p_i48465_1_, int p_i48465_2_, int p_i48465_3_, Item.Properties p_i48465_4_) {
-      super(p_i48465_4_);
-      this.defaultType = p_i48465_1_;
-      this.color1 = p_i48465_2_;
-      this.color2 = p_i48465_3_;
-      BY_ID.put(p_i48465_1_, this);
-   }
+    public SpawnEggItem(EntityType<?> typeIn, int primaryColorIn, int secondaryColorIn, Item.Properties builder)
+    {
+        super(builder);
+        this.typeIn = typeIn;
+        this.primaryColor = primaryColorIn;
+        this.secondaryColor = secondaryColorIn;
+        EGGS.put(typeIn, this);
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      World world = p_195939_1_.getLevel();
-      if (!(world instanceof ServerWorld)) {
-         return ActionResultType.SUCCESS;
-      } else {
-         ItemStack itemstack = p_195939_1_.getItemInHand();
-         BlockPos blockpos = p_195939_1_.getClickedPos();
-         Direction direction = p_195939_1_.getClickedFace();
-         BlockState blockstate = world.getBlockState(blockpos);
-         if (blockstate.is(Blocks.SPAWNER)) {
-            TileEntity tileentity = world.getBlockEntity(blockpos);
-            if (tileentity instanceof MobSpawnerTileEntity) {
-               AbstractSpawner abstractspawner = ((MobSpawnerTileEntity)tileentity).getSpawner();
-               EntityType<?> entitytype1 = this.getType(itemstack.getTag());
-               abstractspawner.setEntityId(entitytype1);
-               tileentity.setChanged();
-               world.sendBlockUpdated(blockpos, blockstate, blockstate, 3);
-               itemstack.shrink(1);
-               return ActionResultType.CONSUME;
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        World world = context.getWorld();
+
+        if (!(world instanceof ServerWorld))
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            ItemStack itemstack = context.getItem();
+            BlockPos blockpos = context.getPos();
+            Direction direction = context.getFace();
+            BlockState blockstate = world.getBlockState(blockpos);
+
+            if (blockstate.isIn(Blocks.SPAWNER))
+            {
+                TileEntity tileentity = world.getTileEntity(blockpos);
+
+                if (tileentity instanceof MobSpawnerTileEntity)
+                {
+                    AbstractSpawner abstractspawner = ((MobSpawnerTileEntity)tileentity).getSpawnerBaseLogic();
+                    EntityType<?> entitytype1 = this.getType(itemstack.getTag());
+                    abstractspawner.setEntityType(entitytype1);
+                    tileentity.markDirty();
+                    world.notifyBlockUpdate(blockpos, blockstate, blockstate, 3);
+                    itemstack.shrink(1);
+                    return ActionResultType.CONSUME;
+                }
             }
-         }
 
-         BlockPos blockpos1;
-         if (blockstate.getCollisionShape(world, blockpos).isEmpty()) {
-            blockpos1 = blockpos;
-         } else {
-            blockpos1 = blockpos.relative(direction);
-         }
+            BlockPos blockpos1;
 
-         EntityType<?> entitytype = this.getType(itemstack.getTag());
-         if (entitytype.spawn((ServerWorld)world, itemstack, p_195939_1_.getPlayer(), blockpos1, SpawnReason.SPAWN_EGG, true, !Objects.equals(blockpos, blockpos1) && direction == Direction.UP) != null) {
-            itemstack.shrink(1);
-         }
+            if (blockstate.getCollisionShape(world, blockpos).isEmpty())
+            {
+                blockpos1 = blockpos;
+            }
+            else
+            {
+                blockpos1 = blockpos.offset(direction);
+            }
 
-         return ActionResultType.CONSUME;
-      }
-   }
-
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      RayTraceResult raytraceresult = getPlayerPOVHitResult(p_77659_1_, p_77659_2_, RayTraceContext.FluidMode.SOURCE_ONLY);
-      if (raytraceresult.getType() != RayTraceResult.Type.BLOCK) {
-         return ActionResult.pass(itemstack);
-      } else if (!(p_77659_1_ instanceof ServerWorld)) {
-         return ActionResult.success(itemstack);
-      } else {
-         BlockRayTraceResult blockraytraceresult = (BlockRayTraceResult)raytraceresult;
-         BlockPos blockpos = blockraytraceresult.getBlockPos();
-         if (!(p_77659_1_.getBlockState(blockpos).getBlock() instanceof FlowingFluidBlock)) {
-            return ActionResult.pass(itemstack);
-         } else if (p_77659_1_.mayInteract(p_77659_2_, blockpos) && p_77659_2_.mayUseItemAt(blockpos, blockraytraceresult.getDirection(), itemstack)) {
             EntityType<?> entitytype = this.getType(itemstack.getTag());
-            if (entitytype.spawn((ServerWorld)p_77659_1_, itemstack, p_77659_2_, blockpos, SpawnReason.SPAWN_EGG, false, false) == null) {
-               return ActionResult.pass(itemstack);
-            } else {
-               if (!p_77659_2_.abilities.instabuild) {
-                  itemstack.shrink(1);
-               }
 
-               p_77659_2_.awardStat(Stats.ITEM_USED.get(this));
-               return ActionResult.consume(itemstack);
+            if (entitytype.spawn((ServerWorld)world, itemstack, context.getPlayer(), blockpos1, SpawnReason.SPAWN_EGG, true, !Objects.equals(blockpos, blockpos1) && direction == Direction.UP) != null)
+            {
+                itemstack.shrink(1);
             }
-         } else {
-            return ActionResult.fail(itemstack);
-         }
-      }
-   }
 
-   public boolean spawnsEntity(@Nullable CompoundNBT p_208077_1_, EntityType<?> p_208077_2_) {
-      return Objects.equals(this.getType(p_208077_1_), p_208077_2_);
-   }
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getColor(int p_195983_1_) {
-      return p_195983_1_ == 0 ? this.color1 : this.color2;
-   }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        RayTraceResult raytraceresult = rayTrace(worldIn, playerIn, RayTraceContext.FluidMode.SOURCE_ONLY);
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public static SpawnEggItem byId(@Nullable EntityType<?> p_200889_0_) {
-      return BY_ID.get(p_200889_0_);
-   }
+        if (raytraceresult.getType() != RayTraceResult.Type.BLOCK)
+        {
+            return ActionResult.resultPass(itemstack);
+        }
+        else if (!(worldIn instanceof ServerWorld))
+        {
+            return ActionResult.resultSuccess(itemstack);
+        }
+        else
+        {
+            BlockRayTraceResult blockraytraceresult = (BlockRayTraceResult)raytraceresult;
+            BlockPos blockpos = blockraytraceresult.getPos();
 
-   public static Iterable<SpawnEggItem> eggs() {
-      return Iterables.unmodifiableIterable(BY_ID.values());
-   }
+            if (!(worldIn.getBlockState(blockpos).getBlock() instanceof FlowingFluidBlock))
+            {
+                return ActionResult.resultPass(itemstack);
+            }
+            else if (worldIn.isBlockModifiable(playerIn, blockpos) && playerIn.canPlayerEdit(blockpos, blockraytraceresult.getFace(), itemstack))
+            {
+                EntityType<?> entitytype = this.getType(itemstack.getTag());
 
-   public EntityType<?> getType(@Nullable CompoundNBT p_208076_1_) {
-      if (p_208076_1_ != null && p_208076_1_.contains("EntityTag", 10)) {
-         CompoundNBT compoundnbt = p_208076_1_.getCompound("EntityTag");
-         if (compoundnbt.contains("id", 8)) {
-            return EntityType.byString(compoundnbt.getString("id")).orElse(this.defaultType);
-         }
-      }
+                if (entitytype.spawn((ServerWorld)worldIn, itemstack, playerIn, blockpos, SpawnReason.SPAWN_EGG, false, false) == null)
+                {
+                    return ActionResult.resultPass(itemstack);
+                }
+                else
+                {
+                    if (!playerIn.abilities.isCreativeMode)
+                    {
+                        itemstack.shrink(1);
+                    }
 
-      return this.defaultType;
-   }
+                    playerIn.addStat(Stats.ITEM_USED.get(this));
+                    return ActionResult.resultConsume(itemstack);
+                }
+            }
+            else
+            {
+                return ActionResult.resultFail(itemstack);
+            }
+        }
+    }
 
-   public Optional<MobEntity> spawnOffspringFromSpawnEgg(PlayerEntity p_234809_1_, MobEntity p_234809_2_, EntityType<? extends MobEntity> p_234809_3_, ServerWorld p_234809_4_, Vector3d p_234809_5_, ItemStack p_234809_6_) {
-      if (!this.spawnsEntity(p_234809_6_.getTag(), p_234809_3_)) {
-         return Optional.empty();
-      } else {
-         MobEntity mobentity;
-         if (p_234809_2_ instanceof AgeableEntity) {
-            mobentity = ((AgeableEntity)p_234809_2_).getBreedOffspring(p_234809_4_, (AgeableEntity)p_234809_2_);
-         } else {
-            mobentity = p_234809_3_.create(p_234809_4_);
-         }
+    public boolean hasType(@Nullable CompoundNBT nbt, EntityType<?> type)
+    {
+        return Objects.equals(this.getType(nbt), type);
+    }
 
-         if (mobentity == null) {
+    public int getColor(int tintIndex)
+    {
+        return tintIndex == 0 ? this.primaryColor : this.secondaryColor;
+    }
+
+    @Nullable
+    public static SpawnEggItem getEgg(@Nullable EntityType<?> type)
+    {
+        return EGGS.get(type);
+    }
+
+    public static Iterable<SpawnEggItem> getEggs()
+    {
+        return Iterables.unmodifiableIterable(EGGS.values());
+    }
+
+    public EntityType<?> getType(@Nullable CompoundNBT nbt)
+    {
+        if (nbt != null && nbt.contains("EntityTag", 10))
+        {
+            CompoundNBT compoundnbt = nbt.getCompound("EntityTag");
+
+            if (compoundnbt.contains("id", 8))
+            {
+                return EntityType.byKey(compoundnbt.getString("id")).orElse(this.typeIn);
+            }
+        }
+
+        return this.typeIn;
+    }
+
+    public Optional<MobEntity> getChildToSpawn(PlayerEntity player, MobEntity mob, EntityType <? extends MobEntity > entityType, ServerWorld world, Vector3d pos, ItemStack stack)
+    {
+        if (!this.hasType(stack.getTag(), entityType))
+        {
             return Optional.empty();
-         } else {
-            mobentity.setBaby(true);
-            if (!mobentity.isBaby()) {
-               return Optional.empty();
-            } else {
-               mobentity.moveTo(p_234809_5_.x(), p_234809_5_.y(), p_234809_5_.z(), 0.0F, 0.0F);
-               p_234809_4_.addFreshEntityWithPassengers(mobentity);
-               if (p_234809_6_.hasCustomHoverName()) {
-                  mobentity.setCustomName(p_234809_6_.getHoverName());
-               }
+        }
+        else
+        {
+            MobEntity mobentity;
 
-               if (!p_234809_1_.abilities.instabuild) {
-                  p_234809_6_.shrink(1);
-               }
-
-               return Optional.of(mobentity);
+            if (mob instanceof AgeableEntity)
+            {
+                mobentity = ((AgeableEntity)mob).func_241840_a(world, (AgeableEntity)mob);
             }
-         }
-      }
-   }
+            else
+            {
+                mobentity = entityType.create(world);
+            }
+
+            if (mobentity == null)
+            {
+                return Optional.empty();
+            }
+            else
+            {
+                mobentity.setChild(true);
+
+                if (!mobentity.isChild())
+                {
+                    return Optional.empty();
+                }
+                else
+                {
+                    mobentity.setLocationAndAngles(pos.getX(), pos.getY(), pos.getZ(), 0.0F, 0.0F);
+                    world.func_242417_l(mobentity);
+
+                    if (stack.hasDisplayName())
+                    {
+                        mobentity.setCustomName(stack.getDisplayName());
+                    }
+
+                    if (!player.abilities.isCreativeMode)
+                    {
+                        stack.shrink(1);
+                    }
+
+                    return Optional.of(mobentity);
+                }
+            }
+        }
+    }
 }

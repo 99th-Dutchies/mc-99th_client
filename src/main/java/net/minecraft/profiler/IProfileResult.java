@@ -2,32 +2,33 @@ package net.minecraft.profiler;
 
 import java.io.File;
 import java.util.List;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IProfileResult {
-   @OnlyIn(Dist.CLIENT)
-   List<DataPoint> getTimes(String p_219917_1_);
+public interface IProfileResult
+{
+    List<DataPoint> getDataPoints(String sectionPath);
 
-   boolean saveResults(File p_219919_1_);
+    boolean writeToFile(File p_219919_1_);
 
-   long getStartTimeNano();
+    long timeStop();
 
-   int getStartTimeTicks();
+    int ticksStop();
 
-   long getEndTimeNano();
+    long timeStart();
 
-   int getEndTimeTicks();
+    int ticksStart();
 
-   default long getNanoDuration() {
-      return this.getEndTimeNano() - this.getStartTimeNano();
-   }
+default long nanoTime()
+    {
+        return this.timeStart() - this.timeStop();
+    }
 
-   default int getTickDuration() {
-      return this.getEndTimeTicks() - this.getStartTimeTicks();
-   }
+default int ticksSpend()
+    {
+        return this.ticksStart() - this.ticksStop();
+    }
 
-   static String demanglePath(String p_225434_0_) {
-      return p_225434_0_.replace('\u001e', '.');
-   }
+    static String decodePath(String p_225434_0_)
+    {
+        return p_225434_0_.replace('\u001e', '.');
+    }
 }

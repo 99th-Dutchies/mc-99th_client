@@ -5,26 +5,31 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.server.ServerWorld;
 
-public class SwimTask extends Task<MobEntity> {
-   private final float chance;
+public class SwimTask extends Task<MobEntity>
+{
+    private final float field_220590_b;
 
-   public SwimTask(float p_i231540_1_) {
-      super(ImmutableMap.of());
-      this.chance = p_i231540_1_;
-   }
+    public SwimTask(float p_i231540_1_)
+    {
+        super(ImmutableMap.of());
+        this.field_220590_b = p_i231540_1_;
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, MobEntity p_212832_2_) {
-      return p_212832_2_.isInWater() && p_212832_2_.getFluidHeight(FluidTags.WATER) > p_212832_2_.getFluidJumpThreshold() || p_212832_2_.isInLava();
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, MobEntity owner)
+    {
+        return owner.isInWater() && owner.func_233571_b_(FluidTags.WATER) > owner.func_233579_cu_() || owner.isInLava();
+    }
 
-   protected boolean canStillUse(ServerWorld p_212834_1_, MobEntity p_212834_2_, long p_212834_3_) {
-      return this.checkExtraStartConditions(p_212834_1_, p_212834_2_);
-   }
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, MobEntity entityIn, long gameTimeIn)
+    {
+        return this.shouldExecute(worldIn, entityIn);
+    }
 
-   protected void tick(ServerWorld p_212833_1_, MobEntity p_212833_2_, long p_212833_3_) {
-      if (p_212833_2_.getRandom().nextFloat() < this.chance) {
-         p_212833_2_.getJumpControl().jump();
-      }
-
-   }
+    protected void updateTask(ServerWorld worldIn, MobEntity owner, long gameTime)
+    {
+        if (owner.getRNG().nextFloat() < this.field_220590_b)
+        {
+            owner.getJumpController().setJumping();
+        }
+    }
 }

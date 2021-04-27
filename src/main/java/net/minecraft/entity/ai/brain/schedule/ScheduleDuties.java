@@ -5,47 +5,58 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import java.util.List;
 
-public class ScheduleDuties {
-   private final List<DutyTime> keyframes = Lists.newArrayList();
-   private int previousIndex;
+public class ScheduleDuties
+{
+    private final List<DutyTime> dutyTimes = Lists.newArrayList();
+    private int index;
 
-   public ScheduleDuties addKeyframe(int p_221394_1_, float p_221394_2_) {
-      this.keyframes.add(new DutyTime(p_221394_1_, p_221394_2_));
-      this.sortAndDeduplicateKeyframes();
-      return this;
-   }
+    public ScheduleDuties addDutyTime(int duration, float active)
+    {
+        this.dutyTimes.add(new DutyTime(duration, active));
+        this.sortDutyTimes();
+        return this;
+    }
 
-   private void sortAndDeduplicateKeyframes() {
-      Int2ObjectSortedMap<DutyTime> int2objectsortedmap = new Int2ObjectAVLTreeMap<>();
-      this.keyframes.forEach((p_221393_1_) -> {
-         DutyTime dutytime = int2objectsortedmap.put(p_221393_1_.getTimeStamp(), p_221393_1_);
-      });
-      this.keyframes.clear();
-      this.keyframes.addAll(int2objectsortedmap.values());
-      this.previousIndex = 0;
-   }
+    private void sortDutyTimes()
+    {
+        Int2ObjectSortedMap<DutyTime> int2objectsortedmap = new Int2ObjectAVLTreeMap<>();
+        this.dutyTimes.forEach((dutyTime) ->
+        {
+            DutyTime dutytime = int2objectsortedmap.put(dutyTime.getDuration(), dutyTime);
+        });
+        this.dutyTimes.clear();
+        this.dutyTimes.addAll(int2objectsortedmap.values());
+        this.index = 0;
+    }
 
-   public float getValueAt(int p_221392_1_) {
-      if (this.keyframes.size() <= 0) {
-         return 0.0F;
-      } else {
-         DutyTime dutytime = this.keyframes.get(this.previousIndex);
-         DutyTime dutytime1 = this.keyframes.get(this.keyframes.size() - 1);
-         boolean flag = p_221392_1_ < dutytime.getTimeStamp();
-         int i = flag ? 0 : this.previousIndex;
-         float f = flag ? dutytime1.getValue() : dutytime.getValue();
+    public float updateActiveDutyTime(int dayTime)
+    {
+        if (this.dutyTimes.size() <= 0)
+        {
+            return 0.0F;
+        }
+        else
+        {
+            DutyTime dutytime = this.dutyTimes.get(this.index);
+            DutyTime dutytime1 = this.dutyTimes.get(this.dutyTimes.size() - 1);
+            boolean flag = dayTime < dutytime.getDuration();
+            int i = flag ? 0 : this.index;
+            float f = flag ? dutytime1.getActive() : dutytime.getActive();
 
-         for(int j = i; j < this.keyframes.size(); ++j) {
-            DutyTime dutytime2 = this.keyframes.get(j);
-            if (dutytime2.getTimeStamp() > p_221392_1_) {
-               break;
+            for (int j = i; j < this.dutyTimes.size(); ++j)
+            {
+                DutyTime dutytime2 = this.dutyTimes.get(j);
+
+                if (dutytime2.getDuration() > dayTime)
+                {
+                    break;
+                }
+
+                this.index = j;
+                f = dutytime2.getActive();
             }
 
-            this.previousIndex = j;
-            f = dutytime2.getValue();
-         }
-
-         return f;
-      }
-   }
+            return f;
+        }
+    }
 }

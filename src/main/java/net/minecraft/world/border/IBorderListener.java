@@ -1,53 +1,63 @@
 package net.minecraft.world.border;
 
-public interface IBorderListener {
-   void onBorderSizeSet(WorldBorder p_177694_1_, double p_177694_2_);
+public interface IBorderListener
+{
+    void onSizeChanged(WorldBorder border, double newSize);
 
-   void onBorderSizeLerping(WorldBorder p_177692_1_, double p_177692_2_, double p_177692_4_, long p_177692_6_);
+    void onTransitionStarted(WorldBorder border, double oldSize, double newSize, long time);
 
-   void onBorderCenterSet(WorldBorder p_177693_1_, double p_177693_2_, double p_177693_4_);
+    void onCenterChanged(WorldBorder border, double x, double z);
 
-   void onBorderSetWarningTime(WorldBorder p_177691_1_, int p_177691_2_);
+    void onWarningTimeChanged(WorldBorder border, int newTime);
 
-   void onBorderSetWarningBlocks(WorldBorder p_177690_1_, int p_177690_2_);
+    void onWarningDistanceChanged(WorldBorder border, int newDistance);
 
-   void onBorderSetDamagePerBlock(WorldBorder p_177696_1_, double p_177696_2_);
+    void onDamageAmountChanged(WorldBorder border, double newAmount);
 
-   void onBorderSetDamageSafeZOne(WorldBorder p_177695_1_, double p_177695_2_);
+    void onDamageBufferChanged(WorldBorder border, double newSize);
 
-   public static class Impl implements IBorderListener {
-      private final WorldBorder worldBorder;
+    public static class Impl implements IBorderListener
+    {
+        private final WorldBorder worldBorder;
 
-      public Impl(WorldBorder p_i50549_1_) {
-         this.worldBorder = p_i50549_1_;
-      }
+        public Impl(WorldBorder border)
+        {
+            this.worldBorder = border;
+        }
 
-      public void onBorderSizeSet(WorldBorder p_177694_1_, double p_177694_2_) {
-         this.worldBorder.setSize(p_177694_2_);
-      }
+        public void onSizeChanged(WorldBorder border, double newSize)
+        {
+            this.worldBorder.setTransition(newSize);
+        }
 
-      public void onBorderSizeLerping(WorldBorder p_177692_1_, double p_177692_2_, double p_177692_4_, long p_177692_6_) {
-         this.worldBorder.lerpSizeBetween(p_177692_2_, p_177692_4_, p_177692_6_);
-      }
+        public void onTransitionStarted(WorldBorder border, double oldSize, double newSize, long time)
+        {
+            this.worldBorder.setTransition(oldSize, newSize, time);
+        }
 
-      public void onBorderCenterSet(WorldBorder p_177693_1_, double p_177693_2_, double p_177693_4_) {
-         this.worldBorder.setCenter(p_177693_2_, p_177693_4_);
-      }
+        public void onCenterChanged(WorldBorder border, double x, double z)
+        {
+            this.worldBorder.setCenter(x, z);
+        }
 
-      public void onBorderSetWarningTime(WorldBorder p_177691_1_, int p_177691_2_) {
-         this.worldBorder.setWarningTime(p_177691_2_);
-      }
+        public void onWarningTimeChanged(WorldBorder border, int newTime)
+        {
+            this.worldBorder.setWarningTime(newTime);
+        }
 
-      public void onBorderSetWarningBlocks(WorldBorder p_177690_1_, int p_177690_2_) {
-         this.worldBorder.setWarningBlocks(p_177690_2_);
-      }
+        public void onWarningDistanceChanged(WorldBorder border, int newDistance)
+        {
+            this.worldBorder.setWarningDistance(newDistance);
+        }
 
-      public void onBorderSetDamagePerBlock(WorldBorder p_177696_1_, double p_177696_2_) {
-         this.worldBorder.setDamagePerBlock(p_177696_2_);
-      }
+        public void onDamageAmountChanged(WorldBorder border, double newAmount)
+        {
+            this.worldBorder.setDamagePerBlock(newAmount);
+        }
 
-      public void onBorderSetDamageSafeZOne(WorldBorder p_177695_1_, double p_177695_2_) {
-         this.worldBorder.setDamageSafeZone(p_177695_2_);
-      }
-   }
+        public void onDamageBufferChanged(WorldBorder border, double newSize)
+        {
+            this.worldBorder.setDamageBuffer(newSize);
+        }
+    }
 }

@@ -9,35 +9,42 @@ import net.minecraft.util.math.EntityPosWrapper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.server.ServerWorld;
 
-public class AttackStrafingTask<E extends MobEntity> extends Task<E> {
-   private final int tooCloseDistance;
-   private final float strafeSpeed;
+public class AttackStrafingTask<E extends MobEntity> extends Task<E>
+{
+    private final int distance;
+    private final float speed;
 
-   public AttackStrafingTask(int p_i231509_1_, float p_i231509_2_) {
-      super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT, MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED, MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.VALUE_PRESENT));
-      this.tooCloseDistance = p_i231509_1_;
-      this.strafeSpeed = p_i231509_2_;
-   }
+    public AttackStrafingTask(int distance, float speed)
+    {
+        super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT, MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED, MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.VISIBLE_MOBS, MemoryModuleStatus.VALUE_PRESENT));
+        this.distance = distance;
+        this.speed = speed;
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, E p_212832_2_) {
-      return this.isTargetVisible(p_212832_2_) && this.isTargetTooClose(p_212832_2_);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, E owner)
+    {
+        return this.hasSeen(owner) && this.isTargetWithinDistance(owner);
+    }
 
-   protected void start(ServerWorld p_212831_1_, E p_212831_2_, long p_212831_3_) {
-      p_212831_2_.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityPosWrapper(this.getTarget(p_212831_2_), true));
-      p_212831_2_.getMoveControl().strafe(-this.strafeSpeed, 0.0F);
-      p_212831_2_.yRot = MathHelper.rotateIfNecessary(p_212831_2_.yRot, p_212831_2_.yHeadRot, 0.0F);
-   }
+    protected void startExecuting(ServerWorld worldIn, E entityIn, long gameTimeIn)
+    {
+        entityIn.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityPosWrapper(this.getAttackTarget(entityIn), true));
+        entityIn.getMoveHelper().strafe(-this.speed, 0.0F);
+        entityIn.rotationYaw = MathHelper.func_219800_b(entityIn.rotationYaw, entityIn.rotationYawHead, 0.0F);
+    }
 
-   private boolean isTargetVisible(E p_233855_1_) {
-      return p_233855_1_.getBrain().getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).get().contains(this.getTarget(p_233855_1_));
-   }
+    private boolean hasSeen(E mob)
+    {
+        return mob.getBrain().getMemory(MemoryModuleType.VISIBLE_MOBS).get().contains(this.getAttackTarget(mob));
+    }
 
-   private boolean isTargetTooClose(E p_233856_1_) {
-      return this.getTarget(p_233856_1_).closerThan(p_233856_1_, (double)this.tooCloseDistance);
-   }
+    private boolean isTargetWithinDistance(E mob)
+    {
+        return this.getAttackTarget(mob).isEntityInRange(mob, (double)this.distance);
+    }
 
-   private LivingEntity getTarget(E p_233857_1_) {
-      return p_233857_1_.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).get();
-   }
+    private LivingEntity getAttackTarget(E mob)
+    {
+        return mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).get();
+    }
 }

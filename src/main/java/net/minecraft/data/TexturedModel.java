@@ -8,83 +8,98 @@ import java.util.function.Supplier;
 import net.minecraft.block.Block;
 import net.minecraft.util.ResourceLocation;
 
-public class TexturedModel {
-   public static final TexturedModel.ISupplier CUBE = createDefault(ModelTextures::cube, StockModelShapes.CUBE_ALL);
-   public static final TexturedModel.ISupplier CUBE_MIRRORED = createDefault(ModelTextures::cube, StockModelShapes.CUBE_MIRRORED_ALL);
-   public static final TexturedModel.ISupplier COLUMN = createDefault(ModelTextures::column, StockModelShapes.CUBE_COLUMN);
-   public static final TexturedModel.ISupplier COLUMN_HORIZONTAL = createDefault(ModelTextures::column, StockModelShapes.CUBE_COLUMN_HORIZONTAL);
-   public static final TexturedModel.ISupplier CUBE_TOP_BOTTOM = createDefault(ModelTextures::cubeBottomTop, StockModelShapes.CUBE_BOTTOM_TOP);
-   public static final TexturedModel.ISupplier CUBE_TOP = createDefault(ModelTextures::cubeTop, StockModelShapes.CUBE_TOP);
-   public static final TexturedModel.ISupplier ORIENTABLE_ONLY_TOP = createDefault(ModelTextures::orientableCubeOnlyTop, StockModelShapes.CUBE_ORIENTABLE);
-   public static final TexturedModel.ISupplier ORIENTABLE = createDefault(ModelTextures::orientableCube, StockModelShapes.CUBE_ORIENTABLE_TOP_BOTTOM);
-   public static final TexturedModel.ISupplier CARPET = createDefault(ModelTextures::wool, StockModelShapes.CARPET);
-   public static final TexturedModel.ISupplier GLAZED_TERRACOTTA = createDefault(ModelTextures::pattern, StockModelShapes.GLAZED_TERRACOTTA);
-   public static final TexturedModel.ISupplier CORAL_FAN = createDefault(ModelTextures::fan, StockModelShapes.CORAL_FAN);
-   public static final TexturedModel.ISupplier PARTICLE_ONLY = createDefault(ModelTextures::particle, StockModelShapes.PARTICLE_ONLY);
-   public static final TexturedModel.ISupplier ANVIL = createDefault(ModelTextures::top, StockModelShapes.ANVIL);
-   public static final TexturedModel.ISupplier LEAVES = createDefault(ModelTextures::cube, StockModelShapes.LEAVES);
-   public static final TexturedModel.ISupplier LANTERN = createDefault(ModelTextures::lantern, StockModelShapes.LANTERN);
-   public static final TexturedModel.ISupplier HANGING_LANTERN = createDefault(ModelTextures::lantern, StockModelShapes.HANGING_LANTERN);
-   public static final TexturedModel.ISupplier SEAGRASS = createDefault(ModelTextures::defaultTexture, StockModelShapes.SEAGRASS);
-   public static final TexturedModel.ISupplier COLUMN_ALT = createDefault(ModelTextures::logColumn, StockModelShapes.CUBE_COLUMN);
-   public static final TexturedModel.ISupplier COLUMN_HORIZONTAL_ALT = createDefault(ModelTextures::logColumn, StockModelShapes.CUBE_COLUMN_HORIZONTAL);
-   public static final TexturedModel.ISupplier TOP_BOTTOM_WITH_WALL = createDefault(ModelTextures::cubeBottomTopWithWall, StockModelShapes.CUBE_BOTTOM_TOP);
-   public static final TexturedModel.ISupplier COLUMN_WITH_WALL = createDefault(ModelTextures::columnWithWall, StockModelShapes.CUBE_COLUMN);
-   private final ModelTextures mapping;
-   private final ModelsUtil template;
+public class TexturedModel
+{
+    public static final TexturedModel.ISupplier field_240434_a_ = func_240461_a_(ModelTextures::func_240345_a_, StockModelShapes.CUBE_ALL);
+    public static final TexturedModel.ISupplier field_240435_b_ = func_240461_a_(ModelTextures::func_240345_a_, StockModelShapes.CUBE_MIRRORED_ALL);
+    public static final TexturedModel.ISupplier field_240436_c_ = func_240461_a_(ModelTextures::func_240375_j_, StockModelShapes.CUBE_COLUMN);
+    public static final TexturedModel.ISupplier field_240437_d_ = func_240461_a_(ModelTextures::func_240375_j_, StockModelShapes.CUBE_COLUMN_HORIZONTAL);
+    public static final TexturedModel.ISupplier field_240438_e_ = func_240461_a_(ModelTextures::func_240379_m_, StockModelShapes.CUBE_BOTTOM_TOP);
+    public static final TexturedModel.ISupplier field_240439_f_ = func_240461_a_(ModelTextures::func_240377_k_, StockModelShapes.CUBE_TOP);
+    public static final TexturedModel.ISupplier field_240440_g_ = func_240461_a_(ModelTextures::func_240390_x_, StockModelShapes.ORIENTABLE);
+    public static final TexturedModel.ISupplier field_240441_h_ = func_240461_a_(ModelTextures::func_240389_w_, StockModelShapes.ORIENTABLE_WITH_BOTTOM);
+    public static final TexturedModel.ISupplier field_240442_i_ = func_240461_a_(ModelTextures::func_240368_f_, StockModelShapes.CARPET);
+    public static final TexturedModel.ISupplier field_240443_j_ = func_240461_a_(ModelTextures::func_240371_h_, StockModelShapes.TEMPLATE_GLAZED_TERRACOTTA);
+    public static final TexturedModel.ISupplier field_240444_k_ = func_240461_a_(ModelTextures::func_240373_i_, StockModelShapes.CORAL_FAN);
+    public static final TexturedModel.ISupplier field_240445_l_ = func_240461_a_(ModelTextures::func_240383_q_, StockModelShapes.PARTICLE);
+    public static final TexturedModel.ISupplier field_240446_m_ = func_240461_a_(ModelTextures::func_240392_z_, StockModelShapes.TEMPLATE_ANVIL);
+    public static final TexturedModel.ISupplier field_240447_n_ = func_240461_a_(ModelTextures::func_240345_a_, StockModelShapes.LEAVES);
+    public static final TexturedModel.ISupplier field_240448_o_ = func_240461_a_(ModelTextures::func_240386_t_, StockModelShapes.TEMPLATE_LANTERN);
+    public static final TexturedModel.ISupplier field_240449_p_ = func_240461_a_(ModelTextures::func_240386_t_, StockModelShapes.TEMPLATE_HANGING_LANTERN);
+    public static final TexturedModel.ISupplier field_240450_q_ = func_240461_a_(ModelTextures::func_240353_b_, StockModelShapes.TEMPLATE_SEAGRASS);
+    public static final TexturedModel.ISupplier field_240451_r_ = func_240461_a_(ModelTextures::func_240378_l_, StockModelShapes.CUBE_COLUMN);
+    public static final TexturedModel.ISupplier field_240452_s_ = func_240461_a_(ModelTextures::func_240378_l_, StockModelShapes.CUBE_COLUMN_HORIZONTAL);
+    public static final TexturedModel.ISupplier field_240453_t_ = func_240461_a_(ModelTextures::func_240380_n_, StockModelShapes.CUBE_BOTTOM_TOP);
+    public static final TexturedModel.ISupplier field_240454_u_ = func_240461_a_(ModelTextures::func_240381_o_, StockModelShapes.CUBE_COLUMN);
+    private final ModelTextures field_240455_v_;
+    private final ModelsUtil field_240456_w_;
 
-   private TexturedModel(ModelTextures p_i232548_1_, ModelsUtil p_i232548_2_) {
-      this.mapping = p_i232548_1_;
-      this.template = p_i232548_2_;
-   }
+    private TexturedModel(ModelTextures p_i232548_1_, ModelsUtil p_i232548_2_)
+    {
+        this.field_240455_v_ = p_i232548_1_;
+        this.field_240456_w_ = p_i232548_2_;
+    }
 
-   public ModelsUtil getTemplate() {
-      return this.template;
-   }
+    public ModelsUtil func_240457_a_()
+    {
+        return this.field_240456_w_;
+    }
 
-   public ModelTextures getMapping() {
-      return this.mapping;
-   }
+    public ModelTextures func_240464_b_()
+    {
+        return this.field_240455_v_;
+    }
 
-   public TexturedModel updateTextures(Consumer<ModelTextures> p_240460_1_) {
-      p_240460_1_.accept(this.mapping);
-      return this;
-   }
+    public TexturedModel func_240460_a_(Consumer<ModelTextures> p_240460_1_)
+    {
+        p_240460_1_.accept(this.field_240455_v_);
+        return this;
+    }
 
-   public ResourceLocation create(Block p_240459_1_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240459_2_) {
-      return this.template.create(p_240459_1_, this.mapping, p_240459_2_);
-   }
+    public ResourceLocation func_240459_a_(Block p_240459_1_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240459_2_)
+    {
+        return this.field_240456_w_.func_240228_a_(p_240459_1_, this.field_240455_v_, p_240459_2_);
+    }
 
-   public ResourceLocation createWithSuffix(Block p_240458_1_, String p_240458_2_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240458_3_) {
-      return this.template.createWithSuffix(p_240458_1_, p_240458_2_, this.mapping, p_240458_3_);
-   }
+    public ResourceLocation func_240458_a_(Block p_240458_1_, String p_240458_2_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240458_3_)
+    {
+        return this.field_240456_w_.func_240229_a_(p_240458_1_, p_240458_2_, this.field_240455_v_, p_240458_3_);
+    }
 
-   private static TexturedModel.ISupplier createDefault(Function<Block, ModelTextures> p_240461_0_, ModelsUtil p_240461_1_) {
-      return (p_240462_2_) -> {
-         return new TexturedModel(p_240461_0_.apply(p_240462_2_), p_240461_1_);
-      };
-   }
+    private static TexturedModel.ISupplier func_240461_a_(Function<Block, ModelTextures> p_240461_0_, ModelsUtil p_240461_1_)
+    {
+        return (p_240462_2_) ->
+        {
+            return new TexturedModel(p_240461_0_.apply(p_240462_2_), p_240461_1_);
+        };
+    }
 
-   public static TexturedModel createAllSame(ResourceLocation p_240463_0_) {
-      return new TexturedModel(ModelTextures.cube(p_240463_0_), StockModelShapes.CUBE_ALL);
-   }
+    public static TexturedModel func_240463_a_(ResourceLocation p_240463_0_)
+    {
+        return new TexturedModel(ModelTextures.func_240356_b_(p_240463_0_), StockModelShapes.CUBE_ALL);
+    }
 
-   @FunctionalInterface
-   public interface ISupplier {
-      TexturedModel get(Block p_get_1_);
+    @FunctionalInterface
+    public interface ISupplier
+    {
+        TexturedModel get(Block p_get_1_);
 
-      default ResourceLocation create(Block p_240466_1_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240466_2_) {
-         return this.get(p_240466_1_).create(p_240466_1_, p_240466_2_);
-      }
+    default ResourceLocation func_240466_a_(Block p_240466_1_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240466_2_)
+        {
+            return this.get(p_240466_1_).func_240459_a_(p_240466_1_, p_240466_2_);
+        }
 
-      default ResourceLocation createWithSuffix(Block p_240465_1_, String p_240465_2_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240465_3_) {
-         return this.get(p_240465_1_).createWithSuffix(p_240465_1_, p_240465_2_, p_240465_3_);
-      }
+    default ResourceLocation func_240465_a_(Block p_240465_1_, String p_240465_2_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_240465_3_)
+        {
+            return this.get(p_240465_1_).func_240458_a_(p_240465_1_, p_240465_2_, p_240465_3_);
+        }
 
-      default TexturedModel.ISupplier updateTexture(Consumer<ModelTextures> p_240467_1_) {
-         return (p_240468_2_) -> {
-            return this.get(p_240468_2_).updateTextures(p_240467_1_);
-         };
-      }
-   }
+    default TexturedModel.ISupplier func_240467_a_(Consumer<ModelTextures> p_240467_1_)
+        {
+            return (p_240468_2_) ->
+            {
+                return this.get(p_240468_2_).func_240460_a_(p_240467_1_);
+            };
+        }
+    }
 }

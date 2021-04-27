@@ -2,67 +2,76 @@ package net.minecraft.client.particle;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class RisingParticle extends SpriteTexturedParticle {
-   private final IAnimatedSprite sprites;
-   private final double fallSpeed;
+public class RisingParticle extends SpriteTexturedParticle
+{
+    private final IAnimatedSprite spriteWithAge;
+    private final double yAccel;
 
-   protected RisingParticle(ClientWorld p_i232345_1_, double p_i232345_2_, double p_i232345_4_, double p_i232345_6_, float p_i232345_8_, float p_i232345_9_, float p_i232345_10_, double p_i232345_11_, double p_i232345_13_, double p_i232345_15_, float p_i232345_17_, IAnimatedSprite p_i232345_18_, float p_i232345_19_, int p_i232345_20_, double p_i232345_21_, boolean p_i232345_23_) {
-      super(p_i232345_1_, p_i232345_2_, p_i232345_4_, p_i232345_6_, 0.0D, 0.0D, 0.0D);
-      this.fallSpeed = p_i232345_21_;
-      this.sprites = p_i232345_18_;
-      this.xd *= (double)p_i232345_8_;
-      this.yd *= (double)p_i232345_9_;
-      this.zd *= (double)p_i232345_10_;
-      this.xd += p_i232345_11_;
-      this.yd += p_i232345_13_;
-      this.zd += p_i232345_15_;
-      float f = p_i232345_1_.random.nextFloat() * p_i232345_19_;
-      this.rCol = f;
-      this.gCol = f;
-      this.bCol = f;
-      this.quadSize *= 0.75F * p_i232345_17_;
-      this.lifetime = (int)((double)p_i232345_20_ / ((double)p_i232345_1_.random.nextFloat() * 0.8D + 0.2D));
-      this.lifetime = (int)((float)this.lifetime * p_i232345_17_);
-      this.lifetime = Math.max(this.lifetime, 1);
-      this.setSpriteFromAge(p_i232345_18_);
-      this.hasPhysics = p_i232345_23_;
-   }
+    protected RisingParticle(ClientWorld world, double x, double y, double z, float defaultMotionMultX, float defaultMotionMultY, float defaultMotionMultZ, double motionX, double motionY, double motionZ, float scale, IAnimatedSprite spriteWithAge, float colorMult, int maxAge, double yAccel, boolean canCollide)
+    {
+        super(world, x, y, z, 0.0D, 0.0D, 0.0D);
+        this.yAccel = yAccel;
+        this.spriteWithAge = spriteWithAge;
+        this.motionX *= (double)defaultMotionMultX;
+        this.motionY *= (double)defaultMotionMultY;
+        this.motionZ *= (double)defaultMotionMultZ;
+        this.motionX += motionX;
+        this.motionY += motionY;
+        this.motionZ += motionZ;
+        float f = world.rand.nextFloat() * colorMult;
+        this.particleRed = f;
+        this.particleGreen = f;
+        this.particleBlue = f;
+        this.particleScale *= 0.75F * scale;
+        this.maxAge = (int)((double)maxAge / ((double)world.rand.nextFloat() * 0.8D + 0.2D));
+        this.maxAge = (int)((float)this.maxAge * scale);
+        this.maxAge = Math.max(this.maxAge, 1);
+        this.selectSpriteWithAge(spriteWithAge);
+        this.canCollide = canCollide;
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-   public float getQuadSize(float p_217561_1_) {
-      return this.quadSize * MathHelper.clamp(((float)this.age + p_217561_1_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
-   }
+    public float getScale(float scaleFactor)
+    {
+        return this.particleScale * MathHelper.clamp(((float)this.age + scaleFactor) / (float)this.maxAge * 32.0F, 0.0F, 1.0F);
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.setSpriteFromAge(this.sprites);
-         this.yd += this.fallSpeed;
-         this.move(this.xd, this.yd, this.zd);
-         if (this.y == this.yo) {
-            this.xd *= 1.1D;
-            this.zd *= 1.1D;
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-         this.xd *= (double)0.96F;
-         this.yd *= (double)0.96F;
-         this.zd *= (double)0.96F;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.selectSpriteWithAge(this.spriteWithAge);
+            this.motionY += this.yAccel;
+            this.move(this.motionX, this.motionY, this.motionZ);
 
-      }
-   }
+            if (this.posY == this.prevPosY)
+            {
+                this.motionX *= 1.1D;
+                this.motionZ *= 1.1D;
+            }
+
+            this.motionX *= (double)0.96F;
+            this.motionY *= (double)0.96F;
+            this.motionZ *= (double)0.96F;
+
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 }

@@ -22,94 +22,132 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-public class MagmaCubeEntity extends SlimeEntity {
-   public MagmaCubeEntity(EntityType<? extends MagmaCubeEntity> p_i50202_1_, World p_i50202_2_) {
-      super(p_i50202_1_, p_i50202_2_);
-   }
+public class MagmaCubeEntity extends SlimeEntity
+{
+    public MagmaCubeEntity(EntityType <? extends MagmaCubeEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MonsterEntity.createMonsterAttributes().add(Attributes.MOVEMENT_SPEED, (double)0.2F);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234294_m_()
+    {
+        return MonsterEntity.func_234295_eP_().createMutableAttribute(Attributes.MOVEMENT_SPEED, (double)0.2F);
+    }
 
-   public static boolean checkMagmaCubeSpawnRules(EntityType<MagmaCubeEntity> p_223367_0_, IWorld p_223367_1_, SpawnReason p_223367_2_, BlockPos p_223367_3_, Random p_223367_4_) {
-      return p_223367_1_.getDifficulty() != Difficulty.PEACEFUL;
-   }
+    public static boolean func_223367_b(EntityType<MagmaCubeEntity> p_223367_0_, IWorld p_223367_1_, SpawnReason p_223367_2_, BlockPos p_223367_3_, Random p_223367_4_)
+    {
+        return p_223367_1_.getDifficulty() != Difficulty.PEACEFUL;
+    }
 
-   public boolean checkSpawnObstruction(IWorldReader p_205019_1_) {
-      return p_205019_1_.isUnobstructed(this) && !p_205019_1_.containsAnyLiquid(this.getBoundingBox());
-   }
+    public boolean isNotColliding(IWorldReader worldIn)
+    {
+        return worldIn.checkNoEntityCollision(this) && !worldIn.containsAnyLiquid(this.getBoundingBox());
+    }
 
-   protected void setSize(int p_70799_1_, boolean p_70799_2_) {
-      super.setSize(p_70799_1_, p_70799_2_);
-      this.getAttribute(Attributes.ARMOR).setBaseValue((double)(p_70799_1_ * 3));
-   }
+    protected void setSlimeSize(int size, boolean resetHealth)
+    {
+        super.setSlimeSize(size, resetHealth);
+        this.getAttribute(Attributes.ARMOR).setBaseValue((double)(size * 3));
+    }
 
-   public float getBrightness() {
-      return 1.0F;
-   }
+    /**
+     * Gets how bright this entity is.
+     */
+    public float getBrightness()
+    {
+        return 1.0F;
+    }
 
-   protected IParticleData getParticleType() {
-      return ParticleTypes.FLAME;
-   }
+    protected IParticleData getSquishParticle()
+    {
+        return ParticleTypes.FLAME;
+    }
 
-   protected ResourceLocation getDefaultLootTable() {
-      return this.isTiny() ? LootTables.EMPTY : this.getType().getDefaultLootTable();
-   }
+    protected ResourceLocation getLootTable()
+    {
+        return this.isSmallSlime() ? LootTables.EMPTY : this.getType().getLootTable();
+    }
 
-   public boolean isOnFire() {
-      return false;
-   }
+    /**
+     * Returns true if the entity is on fire. Used by render to add the fire effect on rendering.
+     */
+    public boolean isBurning()
+    {
+        return false;
+    }
 
-   protected int getJumpDelay() {
-      return super.getJumpDelay() * 4;
-   }
+    /**
+     * Gets the amount of time the slime needs to wait between jumps.
+     */
+    protected int getJumpDelay()
+    {
+        return super.getJumpDelay() * 4;
+    }
 
-   protected void decreaseSquish() {
-      this.targetSquish *= 0.9F;
-   }
+    protected void alterSquishAmount()
+    {
+        this.squishAmount *= 0.9F;
+    }
 
-   protected void jumpFromGround() {
-      Vector3d vector3d = this.getDeltaMovement();
-      this.setDeltaMovement(vector3d.x, (double)(this.getJumpPower() + (float)this.getSize() * 0.1F), vector3d.z);
-      this.hasImpulse = true;
-   }
+    /**
+     * Causes this entity to do an upwards motion (jumping).
+     */
+    protected void jump()
+    {
+        Vector3d vector3d = this.getMotion();
+        this.setMotion(vector3d.x, (double)(this.getJumpUpwardsMotion() + (float)this.getSlimeSize() * 0.1F), vector3d.z);
+        this.isAirBorne = true;
+    }
 
-   protected void jumpInLiquid(ITag<Fluid> p_180466_1_) {
-      if (p_180466_1_ == FluidTags.LAVA) {
-         Vector3d vector3d = this.getDeltaMovement();
-         this.setDeltaMovement(vector3d.x, (double)(0.22F + (float)this.getSize() * 0.05F), vector3d.z);
-         this.hasImpulse = true;
-      } else {
-         super.jumpInLiquid(p_180466_1_);
-      }
+    protected void handleFluidJump(ITag<Fluid> fluidTag)
+    {
+        if (fluidTag == FluidTags.LAVA)
+        {
+            Vector3d vector3d = this.getMotion();
+            this.setMotion(vector3d.x, (double)(0.22F + (float)this.getSlimeSize() * 0.05F), vector3d.z);
+            this.isAirBorne = true;
+        }
+        else
+        {
+            super.handleFluidJump(fluidTag);
+        }
+    }
 
-   }
+    public boolean onLivingFall(float distance, float damageMultiplier)
+    {
+        return false;
+    }
 
-   public boolean causeFallDamage(float p_225503_1_, float p_225503_2_) {
-      return false;
-   }
+    /**
+     * Indicates weather the slime is able to damage the player (based upon the slime's size)
+     */
+    protected boolean canDamagePlayer()
+    {
+        return this.isServerWorld();
+    }
 
-   protected boolean isDealsDamage() {
-      return this.isEffectiveAi();
-   }
+    protected float func_225512_er_()
+    {
+        return super.func_225512_er_() + 2.0F;
+    }
 
-   protected float getAttackDamage() {
-      return super.getAttackDamage() + 2.0F;
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_MAGMA_CUBE_HURT_SMALL : SoundEvents.ENTITY_MAGMA_CUBE_HURT;
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return this.isTiny() ? SoundEvents.MAGMA_CUBE_HURT_SMALL : SoundEvents.MAGMA_CUBE_HURT;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_MAGMA_CUBE_DEATH_SMALL : SoundEvents.ENTITY_MAGMA_CUBE_DEATH;
+    }
 
-   protected SoundEvent getDeathSound() {
-      return this.isTiny() ? SoundEvents.MAGMA_CUBE_DEATH_SMALL : SoundEvents.MAGMA_CUBE_DEATH;
-   }
+    protected SoundEvent getSquishSound()
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_MAGMA_CUBE_SQUISH_SMALL : SoundEvents.ENTITY_MAGMA_CUBE_SQUISH;
+    }
 
-   protected SoundEvent getSquishSound() {
-      return this.isTiny() ? SoundEvents.MAGMA_CUBE_SQUISH_SMALL : SoundEvents.MAGMA_CUBE_SQUISH;
-   }
-
-   protected SoundEvent getJumpSound() {
-      return SoundEvents.MAGMA_CUBE_JUMP;
-   }
+    protected SoundEvent getJumpSound()
+    {
+        return SoundEvents.ENTITY_MAGMA_CUBE_JUMP;
+    }
 }

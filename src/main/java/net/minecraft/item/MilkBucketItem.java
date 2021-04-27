@@ -10,38 +10,57 @@ import net.minecraft.util.DrinkHelper;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
-public class MilkBucketItem extends Item {
-   public MilkBucketItem(Item.Properties p_i48481_1_) {
-      super(p_i48481_1_);
-   }
+public class MilkBucketItem extends Item
+{
+    public MilkBucketItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ItemStack finishUsingItem(ItemStack p_77654_1_, World p_77654_2_, LivingEntity p_77654_3_) {
-      if (p_77654_3_ instanceof ServerPlayerEntity) {
-         ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)p_77654_3_;
-         CriteriaTriggers.CONSUME_ITEM.trigger(serverplayerentity, p_77654_1_);
-         serverplayerentity.awardStat(Stats.ITEM_USED.get(this));
-      }
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
+     * the Item before the action is complete.
+     */
+    public ItemStack onItemUseFinish(ItemStack stack, World worldIn, LivingEntity entityLiving)
+    {
+        if (entityLiving instanceof ServerPlayerEntity)
+        {
+            ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entityLiving;
+            CriteriaTriggers.CONSUME_ITEM.trigger(serverplayerentity, stack);
+            serverplayerentity.addStat(Stats.ITEM_USED.get(this));
+        }
 
-      if (p_77654_3_ instanceof PlayerEntity && !((PlayerEntity)p_77654_3_).abilities.instabuild) {
-         p_77654_1_.shrink(1);
-      }
+        if (entityLiving instanceof PlayerEntity && !((PlayerEntity)entityLiving).abilities.isCreativeMode)
+        {
+            stack.shrink(1);
+        }
 
-      if (!p_77654_2_.isClientSide) {
-         p_77654_3_.removeAllEffects();
-      }
+        if (!worldIn.isRemote)
+        {
+            entityLiving.clearActivePotions();
+        }
 
-      return p_77654_1_.isEmpty() ? new ItemStack(Items.BUCKET) : p_77654_1_;
-   }
+        return stack.isEmpty() ? new ItemStack(Items.BUCKET) : stack;
+    }
 
-   public int getUseDuration(ItemStack p_77626_1_) {
-      return 32;
-   }
+    /**
+     * How long it takes to use or consume an item
+     */
+    public int getUseDuration(ItemStack stack)
+    {
+        return 32;
+    }
 
-   public UseAction getUseAnimation(ItemStack p_77661_1_) {
-      return UseAction.DRINK;
-   }
+    /**
+     * returns the action that specifies what animation to play when the items is being used
+     */
+    public UseAction getUseAction(ItemStack stack)
+    {
+        return UseAction.DRINK;
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      return DrinkHelper.useDrink(p_77659_1_, p_77659_2_, p_77659_3_);
-   }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        return DrinkHelper.startDrinking(worldIn, playerIn, handIn);
+    }
 }

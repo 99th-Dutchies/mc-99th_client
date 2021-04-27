@@ -1,19 +1,19 @@
 package net.minecraft.util;
 
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IProgressUpdate {
-   void progressStartNoAbort(ITextComponent p_200210_1_);
+public interface IProgressUpdate
+{
+    void displaySavingString(ITextComponent component);
 
-   @OnlyIn(Dist.CLIENT)
-   void progressStart(ITextComponent p_200211_1_);
+    void resetProgressAndMessage(ITextComponent component);
 
-   void progressStage(ITextComponent p_200209_1_);
+    void displayLoadingString(ITextComponent component);
 
-   void progressStagePercentage(int p_73718_1_);
+    /**
+     * Updates the progress bar on the loading screen to the specified amount.
+     */
+    void setLoadingProgress(int progress);
 
-   @OnlyIn(Dist.CLIENT)
-   void stop();
+    void setDoneWorking();
 }

@@ -18,152 +18,221 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class TNTMinecartEntity extends AbstractMinecartEntity {
-   private int fuse = -1;
+public class TNTMinecartEntity extends AbstractMinecartEntity
+{
+    private int minecartTNTFuse = -1;
 
-   public TNTMinecartEntity(EntityType<? extends TNTMinecartEntity> p_i50112_1_, World p_i50112_2_) {
-      super(p_i50112_1_, p_i50112_2_);
-   }
+    public TNTMinecartEntity(EntityType <? extends TNTMinecartEntity > type, World world)
+    {
+        super(type, world);
+    }
 
-   public TNTMinecartEntity(World p_i1728_1_, double p_i1728_2_, double p_i1728_4_, double p_i1728_6_) {
-      super(EntityType.TNT_MINECART, p_i1728_1_, p_i1728_2_, p_i1728_4_, p_i1728_6_);
-   }
+    public TNTMinecartEntity(World worldIn, double x, double y, double z)
+    {
+        super(EntityType.TNT_MINECART, worldIn, x, y, z);
+    }
 
-   public AbstractMinecartEntity.Type getMinecartType() {
-      return AbstractMinecartEntity.Type.TNT;
-   }
+    public AbstractMinecartEntity.Type getMinecartType()
+    {
+        return AbstractMinecartEntity.Type.TNT;
+    }
 
-   public BlockState getDefaultDisplayBlockState() {
-      return Blocks.TNT.defaultBlockState();
-   }
+    public BlockState getDefaultDisplayTile()
+    {
+        return Blocks.TNT.getDefaultState();
+    }
 
-   public void tick() {
-      super.tick();
-      if (this.fuse > 0) {
-         --this.fuse;
-         this.level.addParticle(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.5D, this.getZ(), 0.0D, 0.0D, 0.0D);
-      } else if (this.fuse == 0) {
-         this.explode(getHorizontalDistanceSqr(this.getDeltaMovement()));
-      }
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void tick()
+    {
+        super.tick();
 
-      if (this.horizontalCollision) {
-         double d0 = getHorizontalDistanceSqr(this.getDeltaMovement());
-         if (d0 >= (double)0.01F) {
-            this.explode(d0);
-         }
-      }
+        if (this.minecartTNTFuse > 0)
+        {
+            --this.minecartTNTFuse;
+            this.world.addParticle(ParticleTypes.SMOKE, this.getPosX(), this.getPosY() + 0.5D, this.getPosZ(), 0.0D, 0.0D, 0.0D);
+        }
+        else if (this.minecartTNTFuse == 0)
+        {
+            this.explodeCart(horizontalMag(this.getMotion()));
+        }
 
-   }
+        if (this.collidedHorizontally)
+        {
+            double d0 = horizontalMag(this.getMotion());
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      Entity entity = p_70097_1_.getDirectEntity();
-      if (entity instanceof AbstractArrowEntity) {
-         AbstractArrowEntity abstractarrowentity = (AbstractArrowEntity)entity;
-         if (abstractarrowentity.isOnFire()) {
-            this.explode(abstractarrowentity.getDeltaMovement().lengthSqr());
-         }
-      }
+            if (d0 >= (double)0.01F)
+            {
+                this.explodeCart(d0);
+            }
+        }
+    }
 
-      return super.hurt(p_70097_1_, p_70097_2_);
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        Entity entity = source.getImmediateSource();
 
-   public void destroy(DamageSource p_94095_1_) {
-      double d0 = getHorizontalDistanceSqr(this.getDeltaMovement());
-      if (!p_94095_1_.isFire() && !p_94095_1_.isExplosion() && !(d0 >= (double)0.01F)) {
-         super.destroy(p_94095_1_);
-         if (!p_94095_1_.isExplosion() && this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-            this.spawnAtLocation(Blocks.TNT);
-         }
+        if (entity instanceof AbstractArrowEntity)
+        {
+            AbstractArrowEntity abstractarrowentity = (AbstractArrowEntity)entity;
 
-      } else {
-         if (this.fuse < 0) {
-            this.primeFuse();
-            this.fuse = this.random.nextInt(20) + this.random.nextInt(20);
-         }
+            if (abstractarrowentity.isBurning())
+            {
+                this.explodeCart(abstractarrowentity.getMotion().lengthSquared());
+            }
+        }
 
-      }
-   }
+        return super.attackEntityFrom(source, amount);
+    }
 
-   protected void explode(double p_94103_1_) {
-      if (!this.level.isClientSide) {
-         double d0 = Math.sqrt(p_94103_1_);
-         if (d0 > 5.0D) {
-            d0 = 5.0D;
-         }
+    public void killMinecart(DamageSource source)
+    {
+        double d0 = horizontalMag(this.getMotion());
 
-         this.level.explode(this, this.getX(), this.getY(), this.getZ(), (float)(4.0D + this.random.nextDouble() * 1.5D * d0), Explosion.Mode.BREAK);
-         this.remove();
-      }
+        if (!source.isFireDamage() && !source.isExplosion() && !(d0 >= (double)0.01F))
+        {
+            super.killMinecart(source);
 
-   }
+            if (!source.isExplosion() && this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS))
+            {
+                this.entityDropItem(Blocks.TNT);
+            }
+        }
+        else
+        {
+            if (this.minecartTNTFuse < 0)
+            {
+                this.ignite();
+                this.minecartTNTFuse = this.rand.nextInt(20) + this.rand.nextInt(20);
+            }
+        }
+    }
 
-   public boolean causeFallDamage(float p_225503_1_, float p_225503_2_) {
-      if (p_225503_1_ >= 3.0F) {
-         float f = p_225503_1_ / 10.0F;
-         this.explode((double)(f * f));
-      }
+    /**
+     * Makes the minecart explode.
+     */
+    protected void explodeCart(double radiusModifier)
+    {
+        if (!this.world.isRemote)
+        {
+            double d0 = Math.sqrt(radiusModifier);
 
-      return super.causeFallDamage(p_225503_1_, p_225503_2_);
-   }
+            if (d0 > 5.0D)
+            {
+                d0 = 5.0D;
+            }
 
-   public void activateMinecart(int p_96095_1_, int p_96095_2_, int p_96095_3_, boolean p_96095_4_) {
-      if (p_96095_4_ && this.fuse < 0) {
-         this.primeFuse();
-      }
+            this.world.createExplosion(this, this.getPosX(), this.getPosY(), this.getPosZ(), (float)(4.0D + this.rand.nextDouble() * 1.5D * d0), Explosion.Mode.BREAK);
+            this.remove();
+        }
+    }
 
-   }
+    public boolean onLivingFall(float distance, float damageMultiplier)
+    {
+        if (distance >= 3.0F)
+        {
+            float f = distance / 10.0F;
+            this.explodeCart((double)(f * f));
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public void handleEntityEvent(byte p_70103_1_) {
-      if (p_70103_1_ == 10) {
-         this.primeFuse();
-      } else {
-         super.handleEntityEvent(p_70103_1_);
-      }
+        return super.onLivingFall(distance, damageMultiplier);
+    }
 
-   }
+    /**
+     * Called every tick the minecart is on an activator rail.
+     */
+    public void onActivatorRailPass(int x, int y, int z, boolean receivingPower)
+    {
+        if (receivingPower && this.minecartTNTFuse < 0)
+        {
+            this.ignite();
+        }
+    }
 
-   public void primeFuse() {
-      this.fuse = 80;
-      if (!this.level.isClientSide) {
-         this.level.broadcastEntityEvent(this, (byte)10);
-         if (!this.isSilent()) {
-            this.level.playSound((PlayerEntity)null, this.getX(), this.getY(), this.getZ(), SoundEvents.TNT_PRIMED, SoundCategory.BLOCKS, 1.0F, 1.0F);
-         }
-      }
+    /**
+     * Handler for {@link World#setEntityState}
+     */
+    public void handleStatusUpdate(byte id)
+    {
+        if (id == 10)
+        {
+            this.ignite();
+        }
+        else
+        {
+            super.handleStatusUpdate(id);
+        }
+    }
 
-   }
+    /**
+     * Ignites this TNT cart.
+     */
+    public void ignite()
+    {
+        this.minecartTNTFuse = 80;
 
-   @OnlyIn(Dist.CLIENT)
-   public int getFuse() {
-      return this.fuse;
-   }
+        if (!this.world.isRemote)
+        {
+            this.world.setEntityState(this, (byte)10);
 
-   public boolean isPrimed() {
-      return this.fuse > -1;
-   }
+            if (!this.isSilent())
+            {
+                this.world.playSound((PlayerEntity)null, this.getPosX(), this.getPosY(), this.getPosZ(), SoundEvents.ENTITY_TNT_PRIMED, SoundCategory.BLOCKS, 1.0F, 1.0F);
+            }
+        }
+    }
 
-   public float getBlockExplosionResistance(Explosion p_180428_1_, IBlockReader p_180428_2_, BlockPos p_180428_3_, BlockState p_180428_4_, FluidState p_180428_5_, float p_180428_6_) {
-      return !this.isPrimed() || !p_180428_4_.is(BlockTags.RAILS) && !p_180428_2_.getBlockState(p_180428_3_.above()).is(BlockTags.RAILS) ? super.getBlockExplosionResistance(p_180428_1_, p_180428_2_, p_180428_3_, p_180428_4_, p_180428_5_, p_180428_6_) : 0.0F;
-   }
+    /**
+     * Gets the remaining fuse time in ticks.
+     */
+    public int getFuseTicks()
+    {
+        return this.minecartTNTFuse;
+    }
 
-   public boolean shouldBlockExplode(Explosion p_174816_1_, IBlockReader p_174816_2_, BlockPos p_174816_3_, BlockState p_174816_4_, float p_174816_5_) {
-      return !this.isPrimed() || !p_174816_4_.is(BlockTags.RAILS) && !p_174816_2_.getBlockState(p_174816_3_.above()).is(BlockTags.RAILS) ? super.shouldBlockExplode(p_174816_1_, p_174816_2_, p_174816_3_, p_174816_4_, p_174816_5_) : false;
-   }
+    /**
+     * Returns true if the TNT minecart is ignited.
+     */
+    public boolean isIgnited()
+    {
+        return this.minecartTNTFuse > -1;
+    }
 
-   protected void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      if (p_70037_1_.contains("TNTFuse", 99)) {
-         this.fuse = p_70037_1_.getInt("TNTFuse");
-      }
+    /**
+     * Explosion resistance of a block relative to this entity
+     */
+    public float getExplosionResistance(Explosion explosionIn, IBlockReader worldIn, BlockPos pos, BlockState blockStateIn, FluidState fluidState, float explosionPower)
+    {
+        return !this.isIgnited() || !blockStateIn.isIn(BlockTags.RAILS) && !worldIn.getBlockState(pos.up()).isIn(BlockTags.RAILS) ? super.getExplosionResistance(explosionIn, worldIn, pos, blockStateIn, fluidState, explosionPower) : 0.0F;
+    }
 
-   }
+    public boolean canExplosionDestroyBlock(Explosion explosionIn, IBlockReader worldIn, BlockPos pos, BlockState blockStateIn, float explosionPower)
+    {
+        return !this.isIgnited() || !blockStateIn.isIn(BlockTags.RAILS) && !worldIn.getBlockState(pos.up()).isIn(BlockTags.RAILS) ? super.canExplosionDestroyBlock(explosionIn, worldIn, pos, blockStateIn, explosionPower) : false;
+    }
 
-   protected void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putInt("TNTFuse", this.fuse);
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    protected void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+
+        if (compound.contains("TNTFuse", 99))
+        {
+            this.minecartTNTFuse = compound.getInt("TNTFuse");
+        }
+    }
+
+    protected void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putInt("TNTFuse", this.minecartTNTFuse);
+    }
 }

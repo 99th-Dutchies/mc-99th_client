@@ -11,170 +11,220 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import org.apache.commons.lang3.ArrayUtils;
 
-public class LongArrayNBT extends CollectionNBT<LongNBT> {
-   public static final INBTType<LongArrayNBT> TYPE = new INBTType<LongArrayNBT>() {
-      public LongArrayNBT load(DataInput p_225649_1_, int p_225649_2_, NBTSizeTracker p_225649_3_) throws IOException {
-         p_225649_3_.accountBits(192L);
-         int i = p_225649_1_.readInt();
-         p_225649_3_.accountBits(64L * (long)i);
-         long[] along = new long[i];
+public class LongArrayNBT extends CollectionNBT<LongNBT>
+{
+    public static final INBTType<LongArrayNBT> TYPE = new INBTType<LongArrayNBT>()
+    {
+        public LongArrayNBT readNBT(DataInput input, int depth, NBTSizeTracker accounter) throws IOException
+        {
+            accounter.read(192L);
+            int i = input.readInt();
+            accounter.read(64L * (long)i);
+            long[] along = new long[i];
 
-         for(int j = 0; j < i; ++j) {
-            along[j] = p_225649_1_.readLong();
-         }
+            for (int j = 0; j < i; ++j)
+            {
+                along[j] = input.readLong();
+            }
 
-         return new LongArrayNBT(along);
-      }
+            return new LongArrayNBT(along);
+        }
+        public String getName()
+        {
+            return "LONG[]";
+        }
+        public String getTagName()
+        {
+            return "TAG_Long_Array";
+        }
+    };
+    private long[] data;
 
-      public String getName() {
-         return "LONG[]";
-      }
+    public LongArrayNBT(long[] data)
+    {
+        this.data = data;
+    }
 
-      public String getPrettyName() {
-         return "TAG_Long_Array";
-      }
-   };
-   private long[] data;
+    public LongArrayNBT(LongSet data)
+    {
+        this.data = data.toLongArray();
+    }
 
-   public LongArrayNBT(long[] p_i47524_1_) {
-      this.data = p_i47524_1_;
-   }
+    public LongArrayNBT(List<Long> longs)
+    {
+        this(toArray(longs));
+    }
 
-   public LongArrayNBT(LongSet p_i48736_1_) {
-      this.data = p_i48736_1_.toLongArray();
-   }
+    private static long[] toArray(List<Long> longs)
+    {
+        long[] along = new long[longs.size()];
 
-   public LongArrayNBT(List<Long> p_i47525_1_) {
-      this(toArray(p_i47525_1_));
-   }
+        for (int i = 0; i < longs.size(); ++i)
+        {
+            Long olong = longs.get(i);
+            along[i] = olong == null ? 0L : olong;
+        }
 
-   private static long[] toArray(List<Long> p_193586_0_) {
-      long[] along = new long[p_193586_0_.size()];
+        return along;
+    }
 
-      for(int i = 0; i < p_193586_0_.size(); ++i) {
-         Long olong = p_193586_0_.get(i);
-         along[i] = olong == null ? 0L : olong;
-      }
+    /**
+     * Write the actual data contents of the tag, implemented in NBT extension classes
+     */
+    public void write(DataOutput output) throws IOException
+    {
+        output.writeInt(this.data.length);
 
-      return along;
-   }
+        for (long i : this.data)
+        {
+            output.writeLong(i);
+        }
+    }
 
-   public void write(DataOutput p_74734_1_) throws IOException {
-      p_74734_1_.writeInt(this.data.length);
+    /**
+     * Gets the type byte for the tag.
+     */
+    public byte getId()
+    {
+        return 12;
+    }
 
-      for(long i : this.data) {
-         p_74734_1_.writeLong(i);
-      }
+    public INBTType<LongArrayNBT> getType()
+    {
+        return TYPE;
+    }
 
-   }
+    public String toString()
+    {
+        StringBuilder stringbuilder = new StringBuilder("[L;");
 
-   public byte getId() {
-      return 12;
-   }
+        for (int i = 0; i < this.data.length; ++i)
+        {
+            if (i != 0)
+            {
+                stringbuilder.append(',');
+            }
 
-   public INBTType<LongArrayNBT> getType() {
-      return TYPE;
-   }
+            stringbuilder.append(this.data[i]).append('L');
+        }
 
-   public String toString() {
-      StringBuilder stringbuilder = new StringBuilder("[L;");
+        return stringbuilder.append(']').toString();
+    }
 
-      for(int i = 0; i < this.data.length; ++i) {
-         if (i != 0) {
-            stringbuilder.append(',');
-         }
+    /**
+     * Creates a clone of the tag.
+     */
+    public LongArrayNBT copy()
+    {
+        long[] along = new long[this.data.length];
+        System.arraycopy(this.data, 0, along, 0, this.data.length);
+        return new LongArrayNBT(along);
+    }
 
-         stringbuilder.append(this.data[i]).append('L');
-      }
+    public boolean equals(Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else
+        {
+            return p_equals_1_ instanceof LongArrayNBT && Arrays.equals(this.data, ((LongArrayNBT)p_equals_1_).data);
+        }
+    }
 
-      return stringbuilder.append(']').toString();
-   }
+    public int hashCode()
+    {
+        return Arrays.hashCode(this.data);
+    }
 
-   public LongArrayNBT copy() {
-      long[] along = new long[this.data.length];
-      System.arraycopy(this.data, 0, along, 0, this.data.length);
-      return new LongArrayNBT(along);
-   }
+    public ITextComponent toFormattedComponent(String indentation, int indentDepth)
+    {
+        ITextComponent itextcomponent = (new StringTextComponent("L")).mergeStyle(SYNTAX_HIGHLIGHTING_NUMBER_TYPE);
+        IFormattableTextComponent iformattabletextcomponent = (new StringTextComponent("[")).append(itextcomponent).appendString(";");
 
-   public boolean equals(Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else {
-         return p_equals_1_ instanceof LongArrayNBT && Arrays.equals(this.data, ((LongArrayNBT)p_equals_1_).data);
-      }
-   }
+        for (int i = 0; i < this.data.length; ++i)
+        {
+            IFormattableTextComponent iformattabletextcomponent1 = (new StringTextComponent(String.valueOf(this.data[i]))).mergeStyle(SYNTAX_HIGHLIGHTING_NUMBER);
+            iformattabletextcomponent.appendString(" ").append(iformattabletextcomponent1).append(itextcomponent);
 
-   public int hashCode() {
-      return Arrays.hashCode(this.data);
-   }
+            if (i != this.data.length - 1)
+            {
+                iformattabletextcomponent.appendString(",");
+            }
+        }
 
-   public ITextComponent getPrettyDisplay(String p_199850_1_, int p_199850_2_) {
-      ITextComponent itextcomponent = (new StringTextComponent("L")).withStyle(SYNTAX_HIGHLIGHTING_NUMBER_TYPE);
-      IFormattableTextComponent iformattabletextcomponent = (new StringTextComponent("[")).append(itextcomponent).append(";");
+        iformattabletextcomponent.appendString("]");
+        return iformattabletextcomponent;
+    }
 
-      for(int i = 0; i < this.data.length; ++i) {
-         IFormattableTextComponent iformattabletextcomponent1 = (new StringTextComponent(String.valueOf(this.data[i]))).withStyle(SYNTAX_HIGHLIGHTING_NUMBER);
-         iformattabletextcomponent.append(" ").append(iformattabletextcomponent1).append(itextcomponent);
-         if (i != this.data.length - 1) {
-            iformattabletextcomponent.append(",");
-         }
-      }
+    public long[] getAsLongArray()
+    {
+        return this.data;
+    }
 
-      iformattabletextcomponent.append("]");
-      return iformattabletextcomponent;
-   }
+    public int size()
+    {
+        return this.data.length;
+    }
 
-   public long[] getAsLongArray() {
-      return this.data;
-   }
+    public LongNBT get(int p_get_1_)
+    {
+        return LongNBT.valueOf(this.data[p_get_1_]);
+    }
 
-   public int size() {
-      return this.data.length;
-   }
+    public LongNBT set(int p_set_1_, LongNBT p_set_2_)
+    {
+        long i = this.data[p_set_1_];
+        this.data[p_set_1_] = p_set_2_.getLong();
+        return LongNBT.valueOf(i);
+    }
 
-   public LongNBT get(int p_get_1_) {
-      return LongNBT.valueOf(this.data[p_get_1_]);
-   }
+    public void add(int p_add_1_, LongNBT p_add_2_)
+    {
+        this.data = ArrayUtils.add(this.data, p_add_1_, p_add_2_.getLong());
+    }
 
-   public LongNBT set(int p_set_1_, LongNBT p_set_2_) {
-      long i = this.data[p_set_1_];
-      this.data[p_set_1_] = p_set_2_.getAsLong();
-      return LongNBT.valueOf(i);
-   }
+    public boolean setNBTByIndex(int index, INBT nbt)
+    {
+        if (nbt instanceof NumberNBT)
+        {
+            this.data[index] = ((NumberNBT)nbt).getLong();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public void add(int p_add_1_, LongNBT p_add_2_) {
-      this.data = ArrayUtils.add(this.data, p_add_1_, p_add_2_.getAsLong());
-   }
+    public boolean addNBTByIndex(int index, INBT nbt)
+    {
+        if (nbt instanceof NumberNBT)
+        {
+            this.data = ArrayUtils.add(this.data, index, ((NumberNBT)nbt).getLong());
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public boolean setTag(int p_218659_1_, INBT p_218659_2_) {
-      if (p_218659_2_ instanceof NumberNBT) {
-         this.data[p_218659_1_] = ((NumberNBT)p_218659_2_).getAsLong();
-         return true;
-      } else {
-         return false;
-      }
-   }
+    public LongNBT remove(int p_remove_1_)
+    {
+        long i = this.data[p_remove_1_];
+        this.data = ArrayUtils.remove(this.data, p_remove_1_);
+        return LongNBT.valueOf(i);
+    }
 
-   public boolean addTag(int p_218660_1_, INBT p_218660_2_) {
-      if (p_218660_2_ instanceof NumberNBT) {
-         this.data = ArrayUtils.add(this.data, p_218660_1_, ((NumberNBT)p_218660_2_).getAsLong());
-         return true;
-      } else {
-         return false;
-      }
-   }
+    public byte getTagType()
+    {
+        return 4;
+    }
 
-   public LongNBT remove(int p_remove_1_) {
-      long i = this.data[p_remove_1_];
-      this.data = ArrayUtils.remove(this.data, p_remove_1_);
-      return LongNBT.valueOf(i);
-   }
-
-   public byte getElementType() {
-      return 4;
-   }
-
-   public void clear() {
-      this.data = new long[0];
-   }
+    public void clear()
+    {
+        this.data = new long[0];
+    }
 }

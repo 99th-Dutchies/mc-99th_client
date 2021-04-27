@@ -24,133 +24,178 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class FlowingFluidBlock extends Block implements IBucketPickupHandler {
-   public static final IntegerProperty LEVEL = BlockStateProperties.LEVEL;
-   protected final FlowingFluid fluid;
-   private final List<FluidState> stateCache;
-   public static final VoxelShape STABLE_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+public class FlowingFluidBlock extends Block implements IBucketPickupHandler
+{
+    public static final IntegerProperty LEVEL = BlockStateProperties.LEVEL_0_15;
+    protected final FlowingFluid fluid;
+    private final List<FluidState> fluidStatesCache;
+    public static final VoxelShape LAVA_COLLISION_SHAPE = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
 
-   protected FlowingFluidBlock(FlowingFluid p_i49014_1_, AbstractBlock.Properties p_i49014_2_) {
-      super(p_i49014_2_);
-      this.fluid = p_i49014_1_;
-      this.stateCache = Lists.newArrayList();
-      this.stateCache.add(p_i49014_1_.getSource(false));
+    protected FlowingFluidBlock(FlowingFluid fluidIn, AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.fluid = fluidIn;
+        this.fluidStatesCache = Lists.newArrayList();
+        this.fluidStatesCache.add(fluidIn.getStillFluidState(false));
 
-      for(int i = 1; i < 8; ++i) {
-         this.stateCache.add(p_i49014_1_.getFlowing(8 - i, false));
-      }
+        for (int i = 1; i < 8; ++i)
+        {
+            this.fluidStatesCache.add(fluidIn.getFlowingFluidState(8 - i, false));
+        }
 
-      this.stateCache.add(p_i49014_1_.getFlowing(8, true));
-      this.registerDefaultState(this.stateDefinition.any().setValue(LEVEL, Integer.valueOf(0)));
-   }
+        this.fluidStatesCache.add(fluidIn.getFlowingFluidState(8, true));
+        this.setDefaultState(this.stateContainer.getBaseState().with(LEVEL, Integer.valueOf(0)));
+    }
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      return p_220071_4_.isAbove(STABLE_SHAPE, p_220071_3_, true) && p_220071_1_.getValue(LEVEL) == 0 && p_220071_4_.canStandOnFluid(p_220071_2_.getFluidState(p_220071_3_.above()), this.fluid) ? STABLE_SHAPE : VoxelShapes.empty();
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return context.func_216378_a(LAVA_COLLISION_SHAPE, pos, true) && state.get(LEVEL) == 0 && context.func_230426_a_(worldIn.getFluidState(pos.up()), this.fluid) ? LAVA_COLLISION_SHAPE : VoxelShapes.empty();
+    }
 
-   public boolean isRandomlyTicking(BlockState p_149653_1_) {
-      return p_149653_1_.getFluidState().isRandomlyTicking();
-   }
+    /**
+     * Returns whether or not this block is of a type that needs random ticking. Called for ref-counting purposes by
+     * ExtendedBlockStorage in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
+    public boolean ticksRandomly(BlockState state)
+    {
+        return state.getFluidState().ticksRandomly();
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      p_225542_1_.getFluidState().randomTick(p_225542_2_, p_225542_3_, p_225542_4_);
-   }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        state.getFluidState().randomTick(worldIn, pos, random);
+    }
 
-   public boolean propagatesSkylightDown(BlockState p_200123_1_, IBlockReader p_200123_2_, BlockPos p_200123_3_) {
-      return false;
-   }
+    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos)
+    {
+        return false;
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return !this.fluid.is(FluidTags.LAVA);
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return !this.fluid.isIn(FluidTags.LAVA);
+    }
 
-   public FluidState getFluidState(BlockState p_204507_1_) {
-      int i = p_204507_1_.getValue(LEVEL);
-      return this.stateCache.get(Math.min(i, 8));
-   }
+    public FluidState getFluidState(BlockState state)
+    {
+        int i = state.get(LEVEL);
+        return this.fluidStatesCache.get(Math.min(i, 8));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean skipRendering(BlockState p_200122_1_, BlockState p_200122_2_, Direction p_200122_3_) {
-      return p_200122_2_.getFluidState().getType().isSame(this.fluid);
-   }
+    public boolean isSideInvisible(BlockState state, BlockState adjacentBlockState, Direction side)
+    {
+        return adjacentBlockState.getFluidState().getFluid().isEquivalentTo(this.fluid);
+    }
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.INVISIBLE;
-   }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.INVISIBLE;
+    }
 
-   public List<ItemStack> getDrops(BlockState p_220076_1_, LootContext.Builder p_220076_2_) {
-      return Collections.emptyList();
-   }
+    public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder)
+    {
+        return Collections.emptyList();
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return VoxelShapes.empty();
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return VoxelShapes.empty();
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      if (this.shouldSpreadLiquid(p_220082_2_, p_220082_3_, p_220082_1_)) {
-         p_220082_2_.getLiquidTicks().scheduleTick(p_220082_3_, p_220082_1_.getFluidState().getType(), this.fluid.getTickDelay(p_220082_2_));
-      }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        if (this.reactWithNeighbors(worldIn, pos, state))
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(pos, state.getFluidState().getFluid(), this.fluid.getTickRate(worldIn));
+        }
+    }
 
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (stateIn.getFluidState().isSource() || facingState.getFluidState().isSource())
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(currentPos, stateIn.getFluidState().getFluid(), this.fluid.getTickRate(worldIn));
+        }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_1_.getFluidState().isSource() || p_196271_3_.getFluidState().isSource()) {
-         p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, p_196271_1_.getFluidState().getType(), this.fluid.getTickDelay(p_196271_4_));
-      }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        if (this.reactWithNeighbors(worldIn, pos, state))
+        {
+            worldIn.getPendingFluidTicks().scheduleTick(pos, state.getFluidState().getFluid(), this.fluid.getTickRate(worldIn));
+        }
+    }
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      if (this.shouldSpreadLiquid(p_220069_2_, p_220069_3_, p_220069_1_)) {
-         p_220069_2_.getLiquidTicks().scheduleTick(p_220069_3_, p_220069_1_.getFluidState().getType(), this.fluid.getTickDelay(p_220069_2_));
-      }
+    private boolean reactWithNeighbors(World worldIn, BlockPos pos, BlockState state)
+    {
+        if (this.fluid.isIn(FluidTags.LAVA))
+        {
+            boolean flag = worldIn.getBlockState(pos.down()).isIn(Blocks.SOUL_SOIL);
 
-   }
+            for (Direction direction : Direction.values())
+            {
+                if (direction != Direction.DOWN)
+                {
+                    BlockPos blockpos = pos.offset(direction);
 
-   private boolean shouldSpreadLiquid(World p_204515_1_, BlockPos p_204515_2_, BlockState p_204515_3_) {
-      if (this.fluid.is(FluidTags.LAVA)) {
-         boolean flag = p_204515_1_.getBlockState(p_204515_2_.below()).is(Blocks.SOUL_SOIL);
+                    if (worldIn.getFluidState(blockpos).isTagged(FluidTags.WATER))
+                    {
+                        Block block = worldIn.getFluidState(pos).isSource() ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
+                        worldIn.setBlockState(pos, block.getDefaultState());
+                        this.triggerMixEffects(worldIn, pos);
+                        return false;
+                    }
 
-         for(Direction direction : Direction.values()) {
-            if (direction != Direction.DOWN) {
-               BlockPos blockpos = p_204515_2_.relative(direction);
-               if (p_204515_1_.getFluidState(blockpos).is(FluidTags.WATER)) {
-                  Block block = p_204515_1_.getFluidState(p_204515_2_).isSource() ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
-                  p_204515_1_.setBlockAndUpdate(p_204515_2_, block.defaultBlockState());
-                  this.fizz(p_204515_1_, p_204515_2_);
-                  return false;
-               }
-
-               if (flag && p_204515_1_.getBlockState(blockpos).is(Blocks.BLUE_ICE)) {
-                  p_204515_1_.setBlockAndUpdate(p_204515_2_, Blocks.BASALT.defaultBlockState());
-                  this.fizz(p_204515_1_, p_204515_2_);
-                  return false;
-               }
+                    if (flag && worldIn.getBlockState(blockpos).isIn(Blocks.BLUE_ICE))
+                    {
+                        worldIn.setBlockState(pos, Blocks.BASALT.getDefaultState());
+                        this.triggerMixEffects(worldIn, pos);
+                        return false;
+                    }
+                }
             }
-         }
-      }
+        }
 
-      return true;
-   }
+        return true;
+    }
 
-   private void fizz(IWorld p_180688_1_, BlockPos p_180688_2_) {
-      p_180688_1_.levelEvent(1501, p_180688_2_, 0);
-   }
+    private void triggerMixEffects(IWorld worldIn, BlockPos pos)
+    {
+        worldIn.playEvent(1501, pos, 0);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(LEVEL);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(LEVEL);
+    }
 
-   public Fluid takeLiquid(IWorld p_204508_1_, BlockPos p_204508_2_, BlockState p_204508_3_) {
-      if (p_204508_3_.getValue(LEVEL) == 0) {
-         p_204508_1_.setBlock(p_204508_2_, Blocks.AIR.defaultBlockState(), 11);
-         return this.fluid;
-      } else {
-         return Fluids.EMPTY;
-      }
-   }
+    public Fluid pickupFluid(IWorld worldIn, BlockPos pos, BlockState state)
+    {
+        if (state.get(LEVEL) == 0)
+        {
+            worldIn.setBlockState(pos, Blocks.AIR.getDefaultState(), 11);
+            return this.fluid;
+        }
+        else
+        {
+            return Fluids.EMPTY;
+        }
+    }
 }

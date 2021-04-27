@@ -45,313 +45,417 @@ import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.lighting.WorldLightManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.IWorldInfo;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class WorldGenRegion implements ISeedReader {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final List<IChunk> cache;
-   private final int x;
-   private final int z;
-   private final int size;
-   private final ServerWorld level;
-   private final long seed;
-   private final IWorldInfo levelData;
-   private final Random random;
-   private final DimensionType dimensionType;
-   private final ITickList<Block> blockTicks = new WorldGenTickList<>((p_205335_1_) -> {
-      return this.getChunk(p_205335_1_).getBlockTicks();
-   });
-   private final ITickList<Fluid> liquidTicks = new WorldGenTickList<>((p_205334_1_) -> {
-      return this.getChunk(p_205334_1_).getLiquidTicks();
-   });
-   private final BiomeManager biomeManager;
-   private final ChunkPos firstPos;
-   private final ChunkPos lastPos;
-   private final StructureManager structureFeatureManager;
+public class WorldGenRegion implements ISeedReader
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final List<IChunk> chunkPrimers;
+    private final int mainChunkX;
+    private final int mainChunkZ;
+    private final int field_217380_e;
+    private final ServerWorld world;
+    private final long seed;
+    private final IWorldInfo worldInfo;
+    private final Random random;
+    private final DimensionType field_241159_j_;
+    private final ITickList<Block> pendingBlockTickList = new WorldGenTickList<>((p_205335_1_) ->
+    {
+        return this.getChunk(p_205335_1_).getBlocksToBeTicked();
+    });
+    private final ITickList<Fluid> pendingFluidTickList = new WorldGenTickList<>((p_205334_1_) ->
+    {
+        return this.getChunk(p_205334_1_).getFluidsToBeTicked();
+    });
+    private final BiomeManager biomeManager;
+    private final ChunkPos field_241160_n_;
+    private final ChunkPos field_241161_o_;
+    private final StructureManager field_244530_p;
 
-   public WorldGenRegion(ServerWorld p_i50698_1_, List<IChunk> p_i50698_2_) {
-      int i = MathHelper.floor(Math.sqrt((double)p_i50698_2_.size()));
-      if (i * i != p_i50698_2_.size()) {
-         throw (IllegalStateException)Util.pauseInIde(new IllegalStateException("Cache size is not a square."));
-      } else {
-         ChunkPos chunkpos = p_i50698_2_.get(p_i50698_2_.size() / 2).getPos();
-         this.cache = p_i50698_2_;
-         this.x = chunkpos.x;
-         this.z = chunkpos.z;
-         this.size = i;
-         this.level = p_i50698_1_;
-         this.seed = p_i50698_1_.getSeed();
-         this.levelData = p_i50698_1_.getLevelData();
-         this.random = p_i50698_1_.getRandom();
-         this.dimensionType = p_i50698_1_.dimensionType();
-         this.biomeManager = new BiomeManager(this, BiomeManager.obfuscateSeed(this.seed), p_i50698_1_.dimensionType().getBiomeZoomer());
-         this.firstPos = p_i50698_2_.get(0).getPos();
-         this.lastPos = p_i50698_2_.get(p_i50698_2_.size() - 1).getPos();
-         this.structureFeatureManager = p_i50698_1_.structureFeatureManager().forWorldGenRegion(this);
-      }
-   }
+    public WorldGenRegion(ServerWorld p_i50698_1_, List<IChunk> p_i50698_2_)
+    {
+        int i = MathHelper.floor(Math.sqrt((double)p_i50698_2_.size()));
 
-   public int getCenterX() {
-      return this.x;
-   }
+        if (i * i != p_i50698_2_.size())
+        {
+            throw(IllegalStateException)Util.pauseDevMode(new IllegalStateException("Cache size is not a square."));
+        }
+        else
+        {
+            ChunkPos chunkpos = p_i50698_2_.get(p_i50698_2_.size() / 2).getPos();
+            this.chunkPrimers = p_i50698_2_;
+            this.mainChunkX = chunkpos.x;
+            this.mainChunkZ = chunkpos.z;
+            this.field_217380_e = i;
+            this.world = p_i50698_1_;
+            this.seed = p_i50698_1_.getSeed();
+            this.worldInfo = p_i50698_1_.getWorldInfo();
+            this.random = p_i50698_1_.getRandom();
+            this.field_241159_j_ = p_i50698_1_.getDimensionType();
+            this.biomeManager = new BiomeManager(this, BiomeManager.getHashedSeed(this.seed), p_i50698_1_.getDimensionType().getMagnifier());
+            this.field_241160_n_ = p_i50698_2_.get(0).getPos();
+            this.field_241161_o_ = p_i50698_2_.get(p_i50698_2_.size() - 1).getPos();
+            this.field_244530_p = p_i50698_1_.func_241112_a_().func_241464_a_(this);
+        }
+    }
 
-   public int getCenterZ() {
-      return this.z;
-   }
+    public int getMainChunkX()
+    {
+        return this.mainChunkX;
+    }
 
-   public IChunk getChunk(int p_212866_1_, int p_212866_2_) {
-      return this.getChunk(p_212866_1_, p_212866_2_, ChunkStatus.EMPTY);
-   }
+    public int getMainChunkZ()
+    {
+        return this.mainChunkZ;
+    }
 
-   @Nullable
-   public IChunk getChunk(int p_217353_1_, int p_217353_2_, ChunkStatus p_217353_3_, boolean p_217353_4_) {
-      IChunk ichunk;
-      if (this.hasChunk(p_217353_1_, p_217353_2_)) {
-         int i = p_217353_1_ - this.firstPos.x;
-         int j = p_217353_2_ - this.firstPos.z;
-         ichunk = this.cache.get(i + j * this.size);
-         if (ichunk.getStatus().isOrAfter(p_217353_3_)) {
-            return ichunk;
-         }
-      } else {
-         ichunk = null;
-      }
+    public IChunk getChunk(int chunkX, int chunkZ)
+    {
+        return this.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY);
+    }
 
-      if (!p_217353_4_) {
-         return null;
-      } else {
-         LOGGER.error("Requested chunk : {} {}", p_217353_1_, p_217353_2_);
-         LOGGER.error("Region bounds : {} {} | {} {}", this.firstPos.x, this.firstPos.z, this.lastPos.x, this.lastPos.z);
-         if (ichunk != null) {
-            throw (RuntimeException)Util.pauseInIde(new RuntimeException(String.format("Chunk is not of correct status. Expecting %s, got %s | %s %s", p_217353_3_, ichunk.getStatus(), p_217353_1_, p_217353_2_)));
-         } else {
-            throw (RuntimeException)Util.pauseInIde(new RuntimeException(String.format("We are asking a region for a chunk out of bound | %s %s", p_217353_1_, p_217353_2_)));
-         }
-      }
-   }
+    @Nullable
+    public IChunk getChunk(int x, int z, ChunkStatus requiredStatus, boolean nonnull)
+    {
+        IChunk ichunk;
 
-   public boolean hasChunk(int p_217354_1_, int p_217354_2_) {
-      return p_217354_1_ >= this.firstPos.x && p_217354_1_ <= this.lastPos.x && p_217354_2_ >= this.firstPos.z && p_217354_2_ <= this.lastPos.z;
-   }
+        if (this.chunkExists(x, z))
+        {
+            int i = x - this.field_241160_n_.x;
+            int j = z - this.field_241160_n_.z;
+            ichunk = this.chunkPrimers.get(i + j * this.field_217380_e);
 
-   public BlockState getBlockState(BlockPos p_180495_1_) {
-      return this.getChunk(p_180495_1_.getX() >> 4, p_180495_1_.getZ() >> 4).getBlockState(p_180495_1_);
-   }
+            if (ichunk.getStatus().isAtLeast(requiredStatus))
+            {
+                return ichunk;
+            }
+        }
+        else
+        {
+            ichunk = null;
+        }
 
-   public FluidState getFluidState(BlockPos p_204610_1_) {
-      return this.getChunk(p_204610_1_).getFluidState(p_204610_1_);
-   }
+        if (!nonnull)
+        {
+            return null;
+        }
+        else
+        {
+            LOGGER.error("Requested chunk : {} {}", x, z);
+            LOGGER.error("Region bounds : {} {} | {} {}", this.field_241160_n_.x, this.field_241160_n_.z, this.field_241161_o_.x, this.field_241161_o_.z);
 
-   @Nullable
-   public PlayerEntity getNearestPlayer(double p_190525_1_, double p_190525_3_, double p_190525_5_, double p_190525_7_, Predicate<Entity> p_190525_9_) {
-      return null;
-   }
+            if (ichunk != null)
+            {
+                throw(RuntimeException)Util.pauseDevMode(new RuntimeException(String.format("Chunk is not of correct status. Expecting %s, got %s | %s %s", requiredStatus, ichunk.getStatus(), x, z)));
+            }
+            else
+            {
+                throw(RuntimeException)Util.pauseDevMode(new RuntimeException(String.format("We are asking a region for a chunk out of bound | %s %s", x, z)));
+            }
+        }
+    }
 
-   public int getSkyDarken() {
-      return 0;
-   }
+    public boolean chunkExists(int chunkX, int chunkZ)
+    {
+        return chunkX >= this.field_241160_n_.x && chunkX <= this.field_241161_o_.x && chunkZ >= this.field_241160_n_.z && chunkZ <= this.field_241161_o_.z;
+    }
 
-   public BiomeManager getBiomeManager() {
-      return this.biomeManager;
-   }
+    public BlockState getBlockState(BlockPos pos)
+    {
+        return this.getChunk(pos.getX() >> 4, pos.getZ() >> 4).getBlockState(pos);
+    }
 
-   public Biome getUncachedNoiseBiome(int p_225604_1_, int p_225604_2_, int p_225604_3_) {
-      return this.level.getUncachedNoiseBiome(p_225604_1_, p_225604_2_, p_225604_3_);
-   }
+    public FluidState getFluidState(BlockPos pos)
+    {
+        return this.getChunk(pos).getFluidState(pos);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getShade(Direction p_230487_1_, boolean p_230487_2_) {
-      return 1.0F;
-   }
+    @Nullable
+    public PlayerEntity getClosestPlayer(double x, double y, double z, double distance, Predicate<Entity> predicate)
+    {
+        return null;
+    }
 
-   public WorldLightManager getLightEngine() {
-      return this.level.getLightEngine();
-   }
+    public int getSkylightSubtracted()
+    {
+        return 0;
+    }
 
-   public boolean destroyBlock(BlockPos p_241212_1_, boolean p_241212_2_, @Nullable Entity p_241212_3_, int p_241212_4_) {
-      BlockState blockstate = this.getBlockState(p_241212_1_);
-      if (blockstate.isAir()) {
-         return false;
-      } else {
-         if (p_241212_2_) {
-            TileEntity tileentity = blockstate.getBlock().isEntityBlock() ? this.getBlockEntity(p_241212_1_) : null;
-            Block.dropResources(blockstate, this.level, p_241212_1_, tileentity, p_241212_3_, ItemStack.EMPTY);
-         }
+    public BiomeManager getBiomeManager()
+    {
+        return this.biomeManager;
+    }
 
-         return this.setBlock(p_241212_1_, Blocks.AIR.defaultBlockState(), 3, p_241212_4_);
-      }
-   }
+    public Biome getNoiseBiomeRaw(int x, int y, int z)
+    {
+        return this.world.getNoiseBiomeRaw(x, y, z);
+    }
 
-   @Nullable
-   public TileEntity getBlockEntity(BlockPos p_175625_1_) {
-      IChunk ichunk = this.getChunk(p_175625_1_);
-      TileEntity tileentity = ichunk.getBlockEntity(p_175625_1_);
-      if (tileentity != null) {
-         return tileentity;
-      } else {
-         CompoundNBT compoundnbt = ichunk.getBlockEntityNbt(p_175625_1_);
-         BlockState blockstate = ichunk.getBlockState(p_175625_1_);
-         if (compoundnbt != null) {
-            if ("DUMMY".equals(compoundnbt.getString("id"))) {
-               Block block = blockstate.getBlock();
-               if (!(block instanceof ITileEntityProvider)) {
-                  return null;
-               }
+    public float func_230487_a_(Direction p_230487_1_, boolean p_230487_2_)
+    {
+        return 1.0F;
+    }
 
-               tileentity = ((ITileEntityProvider)block).newBlockEntity(this.level);
-            } else {
-               tileentity = TileEntity.loadStatic(blockstate, compoundnbt);
+    public WorldLightManager getLightManager()
+    {
+        return this.world.getLightManager();
+    }
+
+    public boolean destroyBlock(BlockPos pos, boolean dropBlock, @Nullable Entity entity, int recursionLeft)
+    {
+        BlockState blockstate = this.getBlockState(pos);
+
+        if (blockstate.isAir())
+        {
+            return false;
+        }
+        else
+        {
+            if (dropBlock)
+            {
+                TileEntity tileentity = blockstate.getBlock().isTileEntityProvider() ? this.getTileEntity(pos) : null;
+                Block.spawnDrops(blockstate, this.world, pos, tileentity, entity, ItemStack.EMPTY);
             }
 
-            if (tileentity != null) {
-               ichunk.setBlockEntity(p_175625_1_, tileentity);
-               return tileentity;
+            return this.setBlockState(pos, Blocks.AIR.getDefaultState(), 3, recursionLeft);
+        }
+    }
+
+    @Nullable
+    public TileEntity getTileEntity(BlockPos pos)
+    {
+        IChunk ichunk = this.getChunk(pos);
+        TileEntity tileentity = ichunk.getTileEntity(pos);
+
+        if (tileentity != null)
+        {
+            return tileentity;
+        }
+        else
+        {
+            CompoundNBT compoundnbt = ichunk.getDeferredTileEntity(pos);
+            BlockState blockstate = ichunk.getBlockState(pos);
+
+            if (compoundnbt != null)
+            {
+                if ("DUMMY".equals(compoundnbt.getString("id")))
+                {
+                    Block block = blockstate.getBlock();
+
+                    if (!(block instanceof ITileEntityProvider))
+                    {
+                        return null;
+                    }
+
+                    tileentity = ((ITileEntityProvider)block).createNewTileEntity(this.world);
+                }
+                else
+                {
+                    tileentity = TileEntity.readTileEntity(blockstate, compoundnbt);
+                }
+
+                if (tileentity != null)
+                {
+                    ichunk.addTileEntity(pos, tileentity);
+                    return tileentity;
+                }
             }
-         }
 
-         if (blockstate.getBlock() instanceof ITileEntityProvider) {
-            LOGGER.warn("Tried to access a block entity before it was created. {}", (Object)p_175625_1_);
-         }
+            if (blockstate.getBlock() instanceof ITileEntityProvider)
+            {
+                LOGGER.warn("Tried to access a block entity before it was created. {}", (Object)pos);
+            }
 
-         return null;
-      }
-   }
+            return null;
+        }
+    }
 
-   public boolean setBlock(BlockPos p_241211_1_, BlockState p_241211_2_, int p_241211_3_, int p_241211_4_) {
-      IChunk ichunk = this.getChunk(p_241211_1_);
-      BlockState blockstate = ichunk.setBlockState(p_241211_1_, p_241211_2_, false);
-      if (blockstate != null) {
-         this.level.onBlockStateChange(p_241211_1_, blockstate, p_241211_2_);
-      }
+    public boolean setBlockState(BlockPos pos, BlockState state, int flags, int recursionLeft)
+    {
+        IChunk ichunk = this.getChunk(pos);
+        BlockState blockstate = ichunk.setBlockState(pos, state, false);
 
-      Block block = p_241211_2_.getBlock();
-      if (block.isEntityBlock()) {
-         if (ichunk.getStatus().getChunkType() == ChunkStatus.Type.LEVELCHUNK) {
-            ichunk.setBlockEntity(p_241211_1_, ((ITileEntityProvider)block).newBlockEntity(this));
-         } else {
-            CompoundNBT compoundnbt = new CompoundNBT();
-            compoundnbt.putInt("x", p_241211_1_.getX());
-            compoundnbt.putInt("y", p_241211_1_.getY());
-            compoundnbt.putInt("z", p_241211_1_.getZ());
-            compoundnbt.putString("id", "DUMMY");
-            ichunk.setBlockEntityNbt(compoundnbt);
-         }
-      } else if (blockstate != null && blockstate.getBlock().isEntityBlock()) {
-         ichunk.removeBlockEntity(p_241211_1_);
-      }
+        if (blockstate != null)
+        {
+            this.world.onBlockStateChange(pos, blockstate, state);
+        }
 
-      if (p_241211_2_.hasPostProcess(this, p_241211_1_)) {
-         this.markPosForPostprocessing(p_241211_1_);
-      }
+        Block block = state.getBlock();
 
-      return true;
-   }
+        if (block.isTileEntityProvider())
+        {
+            if (ichunk.getStatus().getType() == ChunkStatus.Type.LEVELCHUNK)
+            {
+                ichunk.addTileEntity(pos, ((ITileEntityProvider)block).createNewTileEntity(this));
+            }
+            else
+            {
+                CompoundNBT compoundnbt = new CompoundNBT();
+                compoundnbt.putInt("x", pos.getX());
+                compoundnbt.putInt("y", pos.getY());
+                compoundnbt.putInt("z", pos.getZ());
+                compoundnbt.putString("id", "DUMMY");
+                ichunk.addTileEntity(compoundnbt);
+            }
+        }
+        else if (blockstate != null && blockstate.getBlock().isTileEntityProvider())
+        {
+            ichunk.removeTileEntity(pos);
+        }
 
-   private void markPosForPostprocessing(BlockPos p_201683_1_) {
-      this.getChunk(p_201683_1_).markPosForPostprocessing(p_201683_1_);
-   }
+        if (state.blockNeedsPostProcessing(this, pos))
+        {
+            this.markBlockForPostprocessing(pos);
+        }
 
-   public boolean addFreshEntity(Entity p_217376_1_) {
-      int i = MathHelper.floor(p_217376_1_.getX() / 16.0D);
-      int j = MathHelper.floor(p_217376_1_.getZ() / 16.0D);
-      this.getChunk(i, j).addEntity(p_217376_1_);
-      return true;
-   }
+        return true;
+    }
 
-   public boolean removeBlock(BlockPos p_217377_1_, boolean p_217377_2_) {
-      return this.setBlock(p_217377_1_, Blocks.AIR.defaultBlockState(), 3);
-   }
+    private void markBlockForPostprocessing(BlockPos pos)
+    {
+        this.getChunk(pos).markBlockForPostprocessing(pos);
+    }
 
-   public WorldBorder getWorldBorder() {
-      return this.level.getWorldBorder();
-   }
+    public boolean addEntity(Entity entityIn)
+    {
+        int i = MathHelper.floor(entityIn.getPosX() / 16.0D);
+        int j = MathHelper.floor(entityIn.getPosZ() / 16.0D);
+        this.getChunk(i, j).addEntity(entityIn);
+        return true;
+    }
 
-   public boolean isClientSide() {
-      return false;
-   }
+    public boolean removeBlock(BlockPos pos, boolean isMoving)
+    {
+        return this.setBlockState(pos, Blocks.AIR.getDefaultState(), 3);
+    }
 
-   @Deprecated
-   public ServerWorld getLevel() {
-      return this.level;
-   }
+    public WorldBorder getWorldBorder()
+    {
+        return this.world.getWorldBorder();
+    }
 
-   public DynamicRegistries registryAccess() {
-      return this.level.registryAccess();
-   }
+    public boolean isRemote()
+    {
+        return false;
+    }
 
-   public IWorldInfo getLevelData() {
-      return this.levelData;
-   }
+    @Deprecated
+    public ServerWorld getWorld()
+    {
+        return this.world;
+    }
 
-   public DifficultyInstance getCurrentDifficultyAt(BlockPos p_175649_1_) {
-      if (!this.hasChunk(p_175649_1_.getX() >> 4, p_175649_1_.getZ() >> 4)) {
-         throw new RuntimeException("We are asking a region for a chunk out of bound");
-      } else {
-         return new DifficultyInstance(this.level.getDifficulty(), this.level.getDayTime(), 0L, this.level.getMoonBrightness());
-      }
-   }
+    public DynamicRegistries func_241828_r()
+    {
+        return this.world.func_241828_r();
+    }
 
-   public AbstractChunkProvider getChunkSource() {
-      return this.level.getChunkSource();
-   }
+    /**
+     * Returns the world's WorldInfo object
+     */
+    public IWorldInfo getWorldInfo()
+    {
+        return this.worldInfo;
+    }
 
-   public long getSeed() {
-      return this.seed;
-   }
+    public DifficultyInstance getDifficultyForLocation(BlockPos pos)
+    {
+        if (!this.chunkExists(pos.getX() >> 4, pos.getZ() >> 4))
+        {
+            throw new RuntimeException("We are asking a region for a chunk out of bound");
+        }
+        else
+        {
+            return new DifficultyInstance(this.world.getDifficulty(), this.world.getDayTime(), 0L, this.world.getMoonFactor());
+        }
+    }
 
-   public ITickList<Block> getBlockTicks() {
-      return this.blockTicks;
-   }
+    /**
+     * Gets the world's chunk provider
+     */
+    public AbstractChunkProvider getChunkProvider()
+    {
+        return this.world.getChunkProvider();
+    }
 
-   public ITickList<Fluid> getLiquidTicks() {
-      return this.liquidTicks;
-   }
+    /**
+     * gets the random world seed
+     */
+    public long getSeed()
+    {
+        return this.seed;
+    }
 
-   public int getSeaLevel() {
-      return this.level.getSeaLevel();
-   }
+    public ITickList<Block> getPendingBlockTicks()
+    {
+        return this.pendingBlockTickList;
+    }
 
-   public Random getRandom() {
-      return this.random;
-   }
+    public ITickList<Fluid> getPendingFluidTicks()
+    {
+        return this.pendingFluidTickList;
+    }
 
-   public int getHeight(Heightmap.Type p_201676_1_, int p_201676_2_, int p_201676_3_) {
-      return this.getChunk(p_201676_2_ >> 4, p_201676_3_ >> 4).getHeight(p_201676_1_, p_201676_2_ & 15, p_201676_3_ & 15) + 1;
-   }
+    public int getSeaLevel()
+    {
+        return this.world.getSeaLevel();
+    }
 
-   public void playSound(@Nullable PlayerEntity p_184133_1_, BlockPos p_184133_2_, SoundEvent p_184133_3_, SoundCategory p_184133_4_, float p_184133_5_, float p_184133_6_) {
-   }
+    public Random getRandom()
+    {
+        return this.random;
+    }
 
-   public void addParticle(IParticleData p_195594_1_, double p_195594_2_, double p_195594_4_, double p_195594_6_, double p_195594_8_, double p_195594_10_, double p_195594_12_) {
-   }
+    public int getHeight(Heightmap.Type heightmapType, int x, int z)
+    {
+        return this.getChunk(x >> 4, z >> 4).getTopBlockY(heightmapType, x & 15, z & 15) + 1;
+    }
 
-   public void levelEvent(@Nullable PlayerEntity p_217378_1_, int p_217378_2_, BlockPos p_217378_3_, int p_217378_4_) {
-   }
+    /**
+     * Plays a sound. On the server, the sound is broadcast to all nearby <em>except</em> the given player. On the
+     * client, the sound only plays if the given player is the client player. Thus, this method is intended to be called
+     * from code running on both sides. The client plays it locally and the server plays it for everyone else.
+     */
+    public void playSound(@Nullable PlayerEntity player, BlockPos pos, SoundEvent soundIn, SoundCategory category, float volume, float pitch)
+    {
+    }
 
-   public DimensionType dimensionType() {
-      return this.dimensionType;
-   }
+    public void addParticle(IParticleData particleData, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+    {
+    }
 
-   public boolean isStateAtPosition(BlockPos p_217375_1_, Predicate<BlockState> p_217375_2_) {
-      return p_217375_2_.test(this.getBlockState(p_217375_1_));
-   }
+    public void playEvent(@Nullable PlayerEntity player, int type, BlockPos pos, int data)
+    {
+    }
 
-   public <T extends Entity> List<T> getEntitiesOfClass(Class<? extends T> p_175647_1_, AxisAlignedBB p_175647_2_, @Nullable Predicate<? super T> p_175647_3_) {
-      return Collections.emptyList();
-   }
+    public DimensionType getDimensionType()
+    {
+        return this.field_241159_j_;
+    }
 
-   public List<Entity> getEntities(@Nullable Entity p_175674_1_, AxisAlignedBB p_175674_2_, @Nullable Predicate<? super Entity> p_175674_3_) {
-      return Collections.emptyList();
-   }
+    public boolean hasBlockState(BlockPos pos, Predicate<BlockState> state)
+    {
+        return state.test(this.getBlockState(pos));
+    }
 
-   public List<PlayerEntity> players() {
-      return Collections.emptyList();
-   }
+    public <T extends Entity> List<T> getEntitiesWithinAABB(Class <? extends T > clazz, AxisAlignedBB aabb, @Nullable Predicate <? super T > filter)
+    {
+        return Collections.emptyList();
+    }
 
-   public Stream<? extends StructureStart<?>> startsForFeature(SectionPos p_241827_1_, Structure<?> p_241827_2_) {
-      return this.structureFeatureManager.startsForFeature(p_241827_1_, p_241827_2_);
-   }
+    public List<Entity> getEntitiesInAABBexcluding(@Nullable Entity entityIn, AxisAlignedBB boundingBox, @Nullable Predicate <? super Entity > predicate)
+    {
+        return Collections.emptyList();
+    }
+
+    public List<PlayerEntity> getPlayers()
+    {
+        return Collections.emptyList();
+    }
+
+    public Stream <? extends StructureStart<? >> func_241827_a(SectionPos p_241827_1_, Structure<?> p_241827_2_)
+    {
+        return this.field_244530_p.func_235011_a_(p_241827_1_, p_241827_2_);
+    }
 }

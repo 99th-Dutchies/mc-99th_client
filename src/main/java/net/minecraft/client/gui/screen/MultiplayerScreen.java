@@ -12,244 +12,306 @@ import net.minecraft.client.network.ServerPinger;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class MultiplayerScreen extends Screen {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final ServerPinger pinger = new ServerPinger();
-   private final Screen lastScreen;
-   protected ServerSelectionList serverSelectionList;
-   private ServerList servers;
-   private Button editButton;
-   private Button selectButton;
-   private Button deleteButton;
-   private List<ITextComponent> toolTip;
-   private ServerData editingServer;
-   private LanServerDetector.LanServerList lanServerList;
-   private LanServerDetector.LanServerFindThread lanServerDetector;
-   private boolean initedOnce;
+public class MultiplayerScreen extends Screen
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final ServerPinger oldServerPinger = new ServerPinger();
+    private final Screen parentScreen;
+    protected ServerSelectionList serverListSelector;
+    private ServerList savedServerList;
+    private Button btnEditServer;
+    private Button btnSelectServer;
+    private Button btnDeleteServer;
+    private List<ITextComponent> hoveringText;
+    private ServerData selectedServer;
+    private LanServerDetector.LanServerList lanServerList;
+    private LanServerDetector.LanServerFindThread lanServerDetector;
+    private boolean initialized;
 
-   public MultiplayerScreen(Screen p_i1040_1_) {
-      super(new TranslationTextComponent("multiplayer.title"));
-      this.lastScreen = p_i1040_1_;
-   }
+    public MultiplayerScreen(Screen parentScreen)
+    {
+        super(new TranslationTextComponent("multiplayer.title"));
+        this.parentScreen = parentScreen;
+    }
 
-   protected void init() {
-      super.init();
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      if (this.initedOnce) {
-         this.serverSelectionList.updateSize(this.width, this.height, 32, this.height - 64);
-      } else {
-         this.initedOnce = true;
-         this.servers = new ServerList(this.minecraft);
-         this.servers.load();
-         this.lanServerList = new LanServerDetector.LanServerList();
+    protected void init()
+    {
+        super.init();
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
 
-         try {
-            this.lanServerDetector = new LanServerDetector.LanServerFindThread(this.lanServerList);
-            this.lanServerDetector.start();
-         } catch (Exception exception) {
-            LOGGER.warn("Unable to start LAN server detection: {}", (Object)exception.getMessage());
-         }
+        if (this.initialized)
+        {
+            this.serverListSelector.updateSize(this.width, this.height, 32, this.height - 64);
+        }
+        else
+        {
+            this.initialized = true;
+            this.savedServerList = new ServerList(this.minecraft);
+            this.savedServerList.loadServerList();
+            this.lanServerList = new LanServerDetector.LanServerList();
 
-         this.serverSelectionList = new ServerSelectionList(this, this.minecraft, this.width, this.height, 32, this.height - 64, 36);
-         this.serverSelectionList.updateOnlineServers(this.servers);
-      }
-
-      this.children.add(this.serverSelectionList);
-      this.selectButton = this.addButton(new Button(this.width / 2 - 154, this.height - 52, 100, 20, new TranslationTextComponent("selectServer.select"), (p_214293_1_) -> {
-         this.joinSelectedServer();
-      }));
-      this.addButton(new Button(this.width / 2 - 50, this.height - 52, 100, 20, new TranslationTextComponent("selectServer.direct"), (p_214286_1_) -> {
-         this.editingServer = new ServerData(I18n.get("selectServer.defaultName"), "", false);
-         this.minecraft.setScreen(new ServerListScreen(this, this::directJoinCallback, this.editingServer));
-      }));
-      this.addButton(new Button(this.width / 2 + 4 + 50, this.height - 52, 100, 20, new TranslationTextComponent("selectServer.add"), (p_214288_1_) -> {
-         this.editingServer = new ServerData(I18n.get("selectServer.defaultName"), "", false);
-         this.minecraft.setScreen(new AddServerScreen(this, this::addServerCallback, this.editingServer));
-      }));
-      this.editButton = this.addButton(new Button(this.width / 2 - 154, this.height - 28, 70, 20, new TranslationTextComponent("selectServer.edit"), (p_214283_1_) -> {
-         ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-         if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry) {
-            ServerData serverdata = ((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData();
-            this.editingServer = new ServerData(serverdata.name, serverdata.ip, false);
-            this.editingServer.copyFrom(serverdata);
-            this.minecraft.setScreen(new AddServerScreen(this, this::editServerCallback, this.editingServer));
-         }
-
-      }));
-      this.deleteButton = this.addButton(new Button(this.width / 2 - 74, this.height - 28, 70, 20, new TranslationTextComponent("selectServer.delete"), (p_214294_1_) -> {
-         ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-         if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry) {
-            String s = ((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData().name;
-            if (s != null) {
-               ITextComponent itextcomponent = new TranslationTextComponent("selectServer.deleteQuestion");
-               ITextComponent itextcomponent1 = new TranslationTextComponent("selectServer.deleteWarning", s);
-               ITextComponent itextcomponent2 = new TranslationTextComponent("selectServer.deleteButton");
-               ITextComponent itextcomponent3 = DialogTexts.GUI_CANCEL;
-               this.minecraft.setScreen(new ConfirmScreen(this::deleteCallback, itextcomponent, itextcomponent1, itextcomponent2, itextcomponent3));
+            try
+            {
+                this.lanServerDetector = new LanServerDetector.LanServerFindThread(this.lanServerList);
+                this.lanServerDetector.start();
             }
-         }
+            catch (Exception exception)
+            {
+                LOGGER.warn("Unable to start LAN server detection: {}", (Object)exception.getMessage());
+            }
 
-      }));
-      this.addButton(new Button(this.width / 2 + 4, this.height - 28, 70, 20, new TranslationTextComponent("selectServer.refresh"), (p_214291_1_) -> {
-         this.refreshServerList();
-      }));
-      this.addButton(new Button(this.width / 2 + 4 + 76, this.height - 28, 75, 20, DialogTexts.GUI_CANCEL, (p_214289_1_) -> {
-         this.minecraft.setScreen(this.lastScreen);
-      }));
-      this.onSelectedChange();
-   }
+            this.serverListSelector = new ServerSelectionList(this, this.minecraft, this.width, this.height, 32, this.height - 64, 36);
+            this.serverListSelector.updateOnlineServers(this.savedServerList);
+        }
 
-   public void tick() {
-      super.tick();
-      if (this.lanServerList.isDirty()) {
-         List<LanServerInfo> list = this.lanServerList.getServers();
-         this.lanServerList.markClean();
-         this.serverSelectionList.updateNetworkServers(list);
-      }
+        this.children.add(this.serverListSelector);
+        this.btnSelectServer = this.addButton(new Button(this.width / 2 - 154, this.height - 52, 100, 20, new TranslationTextComponent("selectServer.select"), (p_214293_1_) ->
+        {
+            this.connectToSelected();
+        }));
+        this.addButton(new Button(this.width / 2 - 50, this.height - 52, 100, 20, new TranslationTextComponent("selectServer.direct"), (p_214286_1_) ->
+        {
+            this.selectedServer = new ServerData(I18n.format("selectServer.defaultName"), "", false);
+            this.minecraft.displayGuiScreen(new ServerListScreen(this, this::func_214290_d, this.selectedServer));
+        }));
+        this.addButton(new Button(this.width / 2 + 4 + 50, this.height - 52, 100, 20, new TranslationTextComponent("selectServer.add"), (p_214288_1_) ->
+        {
+            this.selectedServer = new ServerData(I18n.format("selectServer.defaultName"), "", false);
+            this.minecraft.displayGuiScreen(new AddServerScreen(this, this::func_214284_c, this.selectedServer));
+        }));
+        this.btnEditServer = this.addButton(new Button(this.width / 2 - 154, this.height - 28, 70, 20, new TranslationTextComponent("selectServer.edit"), (p_214283_1_) ->
+        {
+            ServerSelectionList.Entry serverselectionlist$entry = this.serverListSelector.getSelected();
 
-      this.pinger.tick();
-   }
+            if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry)
+            {
+                ServerData serverdata = ((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData();
+                this.selectedServer = new ServerData(serverdata.serverName, serverdata.serverIP, false);
+                this.selectedServer.copyFrom(serverdata);
+                this.minecraft.displayGuiScreen(new AddServerScreen(this, this::func_214292_b, this.selectedServer));
+            }
+        }));
+        this.btnDeleteServer = this.addButton(new Button(this.width / 2 - 74, this.height - 28, 70, 20, new TranslationTextComponent("selectServer.delete"), (p_214294_1_) ->
+        {
+            ServerSelectionList.Entry serverselectionlist$entry = this.serverListSelector.getSelected();
 
-   public void removed() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-      if (this.lanServerDetector != null) {
-         this.lanServerDetector.interrupt();
-         this.lanServerDetector = null;
-      }
+            if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry)
+            {
+                String s = ((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData().serverName;
 
-      this.pinger.removeAll();
-   }
+                if (s != null)
+                {
+                    ITextComponent itextcomponent = new TranslationTextComponent("selectServer.deleteQuestion");
+                    ITextComponent itextcomponent1 = new TranslationTextComponent("selectServer.deleteWarning", s);
+                    ITextComponent itextcomponent2 = new TranslationTextComponent("selectServer.deleteButton");
+                    ITextComponent itextcomponent3 = DialogTexts.GUI_CANCEL;
+                    this.minecraft.displayGuiScreen(new ConfirmScreen(this::func_214285_a, itextcomponent, itextcomponent1, itextcomponent2, itextcomponent3));
+                }
+            }
+        }));
+        this.addButton(new Button(this.width / 2 + 4, this.height - 28, 70, 20, new TranslationTextComponent("selectServer.refresh"), (p_214291_1_) ->
+        {
+            this.refreshServerList();
+        }));
+        this.addButton(new Button(this.width / 2 + 4 + 76, this.height - 28, 75, 20, DialogTexts.GUI_CANCEL, (p_214289_1_) ->
+        {
+            this.minecraft.displayGuiScreen(this.parentScreen);
+        }));
+        this.func_214295_b();
+    }
 
-   private void refreshServerList() {
-      this.minecraft.setScreen(new MultiplayerScreen(this.lastScreen));
-   }
+    public void tick()
+    {
+        super.tick();
 
-   private void deleteCallback(boolean p_214285_1_) {
-      ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-      if (p_214285_1_ && serverselectionlist$entry instanceof ServerSelectionList.NormalEntry) {
-         this.servers.remove(((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData());
-         this.servers.save();
-         this.serverSelectionList.setSelected((ServerSelectionList.Entry)null);
-         this.serverSelectionList.updateOnlineServers(this.servers);
-      }
+        if (this.lanServerList.getWasUpdated())
+        {
+            List<LanServerInfo> list = this.lanServerList.getLanServers();
+            this.lanServerList.setWasNotUpdated();
+            this.serverListSelector.updateNetworkServers(list);
+        }
 
-      this.minecraft.setScreen(this);
-   }
+        this.oldServerPinger.pingPendingNetworks();
+    }
 
-   private void editServerCallback(boolean p_214292_1_) {
-      ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-      if (p_214292_1_ && serverselectionlist$entry instanceof ServerSelectionList.NormalEntry) {
-         ServerData serverdata = ((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData();
-         serverdata.name = this.editingServer.name;
-         serverdata.ip = this.editingServer.ip;
-         serverdata.copyFrom(this.editingServer);
-         this.servers.save();
-         this.serverSelectionList.updateOnlineServers(this.servers);
-      }
+    public void onClose()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
 
-      this.minecraft.setScreen(this);
-   }
+        if (this.lanServerDetector != null)
+        {
+            this.lanServerDetector.interrupt();
+            this.lanServerDetector = null;
+        }
 
-   private void addServerCallback(boolean p_214284_1_) {
-      if (p_214284_1_) {
-         this.servers.add(this.editingServer);
-         this.servers.save();
-         this.serverSelectionList.setSelected((ServerSelectionList.Entry)null);
-         this.serverSelectionList.updateOnlineServers(this.servers);
-      }
+        this.oldServerPinger.clearPendingNetworks();
+    }
 
-      this.minecraft.setScreen(this);
-   }
+    private void refreshServerList()
+    {
+        this.minecraft.displayGuiScreen(new MultiplayerScreen(this.parentScreen));
+    }
 
-   private void directJoinCallback(boolean p_214290_1_) {
-      if (p_214290_1_) {
-         this.join(this.editingServer);
-      } else {
-         this.minecraft.setScreen(this);
-      }
+    private void func_214285_a(boolean p_214285_1_)
+    {
+        ServerSelectionList.Entry serverselectionlist$entry = this.serverListSelector.getSelected();
 
-   }
+        if (p_214285_1_ && serverselectionlist$entry instanceof ServerSelectionList.NormalEntry)
+        {
+            this.savedServerList.func_217506_a(((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData());
+            this.savedServerList.saveServerList();
+            this.serverListSelector.setSelected((ServerSelectionList.Entry)null);
+            this.serverListSelector.updateOnlineServers(this.savedServerList);
+        }
 
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_)) {
-         return true;
-      } else if (p_231046_1_ == 294) {
-         this.refreshServerList();
-         return true;
-      } else if (this.serverSelectionList.getSelected() != null) {
-         if (p_231046_1_ != 257 && p_231046_1_ != 335) {
-            return this.serverSelectionList.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-         } else {
-            this.joinSelectedServer();
+        this.minecraft.displayGuiScreen(this);
+    }
+
+    private void func_214292_b(boolean p_214292_1_)
+    {
+        ServerSelectionList.Entry serverselectionlist$entry = this.serverListSelector.getSelected();
+
+        if (p_214292_1_ && serverselectionlist$entry instanceof ServerSelectionList.NormalEntry)
+        {
+            ServerData serverdata = ((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData();
+            serverdata.serverName = this.selectedServer.serverName;
+            serverdata.serverIP = this.selectedServer.serverIP;
+            serverdata.copyFrom(this.selectedServer);
+            this.savedServerList.saveServerList();
+            this.serverListSelector.updateOnlineServers(this.savedServerList);
+        }
+
+        this.minecraft.displayGuiScreen(this);
+    }
+
+    private void func_214284_c(boolean p_214284_1_)
+    {
+        if (p_214284_1_)
+        {
+            this.savedServerList.addServerData(this.selectedServer);
+            this.savedServerList.saveServerList();
+            this.serverListSelector.setSelected((ServerSelectionList.Entry)null);
+            this.serverListSelector.updateOnlineServers(this.savedServerList);
+        }
+
+        this.minecraft.displayGuiScreen(this);
+    }
+
+    private void func_214290_d(boolean p_214290_1_)
+    {
+        if (p_214290_1_)
+        {
+            this.connectToServer(this.selectedServer);
+        }
+        else
+        {
+            this.minecraft.displayGuiScreen(this);
+        }
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (super.keyPressed(keyCode, scanCode, modifiers))
+        {
             return true;
-         }
-      } else {
-         return false;
-      }
-   }
+        }
+        else if (keyCode == 294)
+        {
+            this.refreshServerList();
+            return true;
+        }
+        else if (this.serverListSelector.getSelected() != null)
+        {
+            if (keyCode != 257 && keyCode != 335)
+            {
+                return this.serverListSelector.keyPressed(keyCode, scanCode, modifiers);
+            }
+            else
+            {
+                this.connectToSelected();
+                return true;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.toolTip = null;
-      this.renderBackground(p_230430_1_);
-      this.serverSelectionList.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 20, 16777215);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      if (this.toolTip != null) {
-         this.renderComponentTooltip(p_230430_1_, this.toolTip, p_230430_2_, p_230430_3_);
-      }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.hoveringText = null;
+        this.renderBackground(matrixStack);
+        this.serverListSelector.render(matrixStack, mouseX, mouseY, partialTicks);
+        drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 20, 16777215);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
 
-   }
+        if (this.hoveringText != null)
+        {
+            this.func_243308_b(matrixStack, this.hoveringText, mouseX, mouseY);
+        }
+    }
 
-   public void joinSelectedServer() {
-      ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-      if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry) {
-         this.join(((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData());
-      } else if (serverselectionlist$entry instanceof ServerSelectionList.LanDetectedEntry) {
-         LanServerInfo lanserverinfo = ((ServerSelectionList.LanDetectedEntry)serverselectionlist$entry).getServerData();
-         this.join(new ServerData(lanserverinfo.getMotd(), lanserverinfo.getAddress(), true));
-      }
+    public void connectToSelected()
+    {
+        ServerSelectionList.Entry serverselectionlist$entry = this.serverListSelector.getSelected();
 
-   }
+        if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry)
+        {
+            this.connectToServer(((ServerSelectionList.NormalEntry)serverselectionlist$entry).getServerData());
+        }
+        else if (serverselectionlist$entry instanceof ServerSelectionList.LanDetectedEntry)
+        {
+            LanServerInfo lanserverinfo = ((ServerSelectionList.LanDetectedEntry)serverselectionlist$entry).getServerData();
+            this.connectToServer(new ServerData(lanserverinfo.getServerMotd(), lanserverinfo.getServerIpPort(), true));
+        }
+    }
 
-   private void join(ServerData p_146791_1_) {
-      this.minecraft.setScreen(new ConnectingScreen(this, this.minecraft, p_146791_1_));
-   }
+    private void connectToServer(ServerData server)
+    {
+        this.minecraft.displayGuiScreen(new ConnectingScreen(this, this.minecraft, server));
+    }
 
-   public void setSelected(ServerSelectionList.Entry p_214287_1_) {
-      this.serverSelectionList.setSelected(p_214287_1_);
-      this.onSelectedChange();
-   }
+    public void func_214287_a(ServerSelectionList.Entry p_214287_1_)
+    {
+        this.serverListSelector.setSelected(p_214287_1_);
+        this.func_214295_b();
+    }
 
-   protected void onSelectedChange() {
-      this.selectButton.active = false;
-      this.editButton.active = false;
-      this.deleteButton.active = false;
-      ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-      if (serverselectionlist$entry != null && !(serverselectionlist$entry instanceof ServerSelectionList.LanScanEntry)) {
-         this.selectButton.active = true;
-         if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry) {
-            this.editButton.active = true;
-            this.deleteButton.active = true;
-         }
-      }
+    protected void func_214295_b()
+    {
+        this.btnSelectServer.active = false;
+        this.btnEditServer.active = false;
+        this.btnDeleteServer.active = false;
+        ServerSelectionList.Entry serverselectionlist$entry = this.serverListSelector.getSelected();
 
-   }
+        if (serverselectionlist$entry != null && !(serverselectionlist$entry instanceof ServerSelectionList.LanScanEntry))
+        {
+            this.btnSelectServer.active = true;
 
-   public ServerPinger getPinger() {
-      return this.pinger;
-   }
+            if (serverselectionlist$entry instanceof ServerSelectionList.NormalEntry)
+            {
+                this.btnEditServer.active = true;
+                this.btnDeleteServer.active = true;
+            }
+        }
+    }
 
-   public void setToolTip(List<ITextComponent> p_238854_1_) {
-      this.toolTip = p_238854_1_;
-   }
+    public ServerPinger getOldServerPinger()
+    {
+        return this.oldServerPinger;
+    }
 
-   public ServerList getServers() {
-      return this.servers;
-   }
+    public void func_238854_b_(List<ITextComponent> p_238854_1_)
+    {
+        this.hoveringText = p_238854_1_;
+    }
+
+    public ServerList getServerList()
+    {
+        return this.savedServerList;
+    }
 }

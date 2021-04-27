@@ -14,131 +14,157 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SubtitleOverlayGui extends AbstractGui implements ISoundEventListener {
-   private final Minecraft minecraft;
-   private final List<SubtitleOverlayGui.Subtitle> subtitles = Lists.newArrayList();
-   private boolean isListening;
+public class SubtitleOverlayGui extends AbstractGui implements ISoundEventListener
+{
+    private final Minecraft client;
+    private final List<SubtitleOverlayGui.Subtitle> subtitles = Lists.newArrayList();
+    private boolean enabled;
 
-   public SubtitleOverlayGui(Minecraft p_i46603_1_) {
-      this.minecraft = p_i46603_1_;
-   }
+    public SubtitleOverlayGui(Minecraft clientIn)
+    {
+        this.client = clientIn;
+    }
 
-   public void render(MatrixStack p_195620_1_) {
-      if (!this.isListening && this.minecraft.options.showSubtitles) {
-         this.minecraft.getSoundManager().addListener(this);
-         this.isListening = true;
-      } else if (this.isListening && !this.minecraft.options.showSubtitles) {
-         this.minecraft.getSoundManager().removeListener(this);
-         this.isListening = false;
-      }
+    public void render(MatrixStack p_195620_1_)
+    {
+        if (!this.enabled && this.client.gameSettings.showSubtitles)
+        {
+            this.client.getSoundHandler().addListener(this);
+            this.enabled = true;
+        }
+        else if (this.enabled && !this.client.gameSettings.showSubtitles)
+        {
+            this.client.getSoundHandler().removeListener(this);
+            this.enabled = false;
+        }
 
-      if (this.isListening && !this.subtitles.isEmpty()) {
-         RenderSystem.pushMatrix();
-         RenderSystem.enableBlend();
-         RenderSystem.defaultBlendFunc();
-         Vector3d vector3d = new Vector3d(this.minecraft.player.getX(), this.minecraft.player.getEyeY(), this.minecraft.player.getZ());
-         Vector3d vector3d1 = (new Vector3d(0.0D, 0.0D, -1.0D)).xRot(-this.minecraft.player.xRot * ((float)Math.PI / 180F)).yRot(-this.minecraft.player.yRot * ((float)Math.PI / 180F));
-         Vector3d vector3d2 = (new Vector3d(0.0D, 1.0D, 0.0D)).xRot(-this.minecraft.player.xRot * ((float)Math.PI / 180F)).yRot(-this.minecraft.player.yRot * ((float)Math.PI / 180F));
-         Vector3d vector3d3 = vector3d1.cross(vector3d2);
-         int i = 0;
-         int j = 0;
-         Iterator<SubtitleOverlayGui.Subtitle> iterator = this.subtitles.iterator();
-
-         while(iterator.hasNext()) {
-            SubtitleOverlayGui.Subtitle subtitleoverlaygui$subtitle = iterator.next();
-            if (subtitleoverlaygui$subtitle.getTime() + 3000L <= Util.getMillis()) {
-               iterator.remove();
-            } else {
-               j = Math.max(j, this.minecraft.font.width(subtitleoverlaygui$subtitle.getText()));
-            }
-         }
-
-         j = j + this.minecraft.font.width("<") + this.minecraft.font.width(" ") + this.minecraft.font.width(">") + this.minecraft.font.width(" ");
-
-         for(SubtitleOverlayGui.Subtitle subtitleoverlaygui$subtitle1 : this.subtitles) {
-            int k = 255;
-            ITextComponent itextcomponent = subtitleoverlaygui$subtitle1.getText();
-            Vector3d vector3d4 = subtitleoverlaygui$subtitle1.getLocation().subtract(vector3d).normalize();
-            double d0 = -vector3d3.dot(vector3d4);
-            double d1 = -vector3d1.dot(vector3d4);
-            boolean flag = d1 > 0.5D;
-            int l = j / 2;
-            int i1 = 9;
-            int j1 = i1 / 2;
-            float f = 1.0F;
-            int k1 = this.minecraft.font.width(itextcomponent);
-            int l1 = MathHelper.floor(MathHelper.clampedLerp(255.0D, 75.0D, (double)((float)(Util.getMillis() - subtitleoverlaygui$subtitle1.getTime()) / 3000.0F)));
-            int i2 = l1 << 16 | l1 << 8 | l1;
+        if (this.enabled && !this.subtitles.isEmpty())
+        {
             RenderSystem.pushMatrix();
-            RenderSystem.translatef((float)this.minecraft.getWindow().getGuiScaledWidth() - (float)l * 1.0F - 2.0F, (float)(this.minecraft.getWindow().getGuiScaledHeight() - 30) - (float)(i * (i1 + 1)) * 1.0F, 0.0F);
-            RenderSystem.scalef(1.0F, 1.0F, 1.0F);
-            fill(p_195620_1_, -l - 1, -j1 - 1, l + 1, j1 + 1, this.minecraft.options.getBackgroundColor(0.8F));
             RenderSystem.enableBlend();
-            if (!flag) {
-               if (d0 > 0.0D) {
-                  this.minecraft.font.draw(p_195620_1_, ">", (float)(l - this.minecraft.font.width(">")), (float)(-j1), i2 + -16777216);
-               } else if (d0 < 0.0D) {
-                  this.minecraft.font.draw(p_195620_1_, "<", (float)(-l), (float)(-j1), i2 + -16777216);
-               }
+            RenderSystem.defaultBlendFunc();
+            Vector3d vector3d = new Vector3d(this.client.player.getPosX(), this.client.player.getPosYEye(), this.client.player.getPosZ());
+            Vector3d vector3d1 = (new Vector3d(0.0D, 0.0D, -1.0D)).rotatePitch(-this.client.player.rotationPitch * ((float)Math.PI / 180F)).rotateYaw(-this.client.player.rotationYaw * ((float)Math.PI / 180F));
+            Vector3d vector3d2 = (new Vector3d(0.0D, 1.0D, 0.0D)).rotatePitch(-this.client.player.rotationPitch * ((float)Math.PI / 180F)).rotateYaw(-this.client.player.rotationYaw * ((float)Math.PI / 180F));
+            Vector3d vector3d3 = vector3d1.crossProduct(vector3d2);
+            int i = 0;
+            int j = 0;
+            Iterator<SubtitleOverlayGui.Subtitle> iterator = this.subtitles.iterator();
+
+            while (iterator.hasNext())
+            {
+                SubtitleOverlayGui.Subtitle subtitleoverlaygui$subtitle = iterator.next();
+
+                if (subtitleoverlaygui$subtitle.getStartTime() + 3000L <= Util.milliTime())
+                {
+                    iterator.remove();
+                }
+                else
+                {
+                    j = Math.max(j, this.client.fontRenderer.getStringPropertyWidth(subtitleoverlaygui$subtitle.func_238526_a_()));
+                }
             }
 
-            this.minecraft.font.draw(p_195620_1_, itextcomponent, (float)(-k1 / 2), (float)(-j1), i2 + -16777216);
+            j = j + this.client.fontRenderer.getStringWidth("<") + this.client.fontRenderer.getStringWidth(" ") + this.client.fontRenderer.getStringWidth(">") + this.client.fontRenderer.getStringWidth(" ");
+
+            for (SubtitleOverlayGui.Subtitle subtitleoverlaygui$subtitle1 : this.subtitles)
+            {
+                int k = 255;
+                ITextComponent itextcomponent = subtitleoverlaygui$subtitle1.func_238526_a_();
+                Vector3d vector3d4 = subtitleoverlaygui$subtitle1.getLocation().subtract(vector3d).normalize();
+                double d0 = -vector3d3.dotProduct(vector3d4);
+                double d1 = -vector3d1.dotProduct(vector3d4);
+                boolean flag = d1 > 0.5D;
+                int l = j / 2;
+                int i1 = 9;
+                int j1 = i1 / 2;
+                float f = 1.0F;
+                int k1 = this.client.fontRenderer.getStringPropertyWidth(itextcomponent);
+                int l1 = MathHelper.floor(MathHelper.clampedLerp(255.0D, 75.0D, (double)((float)(Util.milliTime() - subtitleoverlaygui$subtitle1.getStartTime()) / 3000.0F)));
+                int i2 = l1 << 16 | l1 << 8 | l1;
+                RenderSystem.pushMatrix();
+                RenderSystem.translatef((float)this.client.getMainWindow().getScaledWidth() - (float)l * 1.0F - 2.0F, (float)(this.client.getMainWindow().getScaledHeight() - 30) - (float)(i * (i1 + 1)) * 1.0F, 0.0F);
+                RenderSystem.scalef(1.0F, 1.0F, 1.0F);
+                fill(p_195620_1_, -l - 1, -j1 - 1, l + 1, j1 + 1, this.client.gameSettings.getTextBackgroundColor(0.8F));
+                RenderSystem.enableBlend();
+
+                if (!flag)
+                {
+                    if (d0 > 0.0D)
+                    {
+                        this.client.fontRenderer.drawString(p_195620_1_, ">", (float)(l - this.client.fontRenderer.getStringWidth(">")), (float)(-j1), i2 + -16777216);
+                    }
+                    else if (d0 < 0.0D)
+                    {
+                        this.client.fontRenderer.drawString(p_195620_1_, "<", (float)(-l), (float)(-j1), i2 + -16777216);
+                    }
+                }
+
+                this.client.fontRenderer.func_243248_b(p_195620_1_, itextcomponent, (float)(-k1 / 2), (float)(-j1), i2 + -16777216);
+                RenderSystem.popMatrix();
+                ++i;
+            }
+
+            RenderSystem.disableBlend();
             RenderSystem.popMatrix();
-            ++i;
-         }
+        }
+    }
 
-         RenderSystem.disableBlend();
-         RenderSystem.popMatrix();
-      }
-   }
+    public void onPlaySound(ISound soundIn, SoundEventAccessor accessor)
+    {
+        if (accessor.getSubtitle() != null)
+        {
+            ITextComponent itextcomponent = accessor.getSubtitle();
 
-   public void onPlaySound(ISound p_184067_1_, SoundEventAccessor p_184067_2_) {
-      if (p_184067_2_.getSubtitle() != null) {
-         ITextComponent itextcomponent = p_184067_2_.getSubtitle();
-         if (!this.subtitles.isEmpty()) {
-            for(SubtitleOverlayGui.Subtitle subtitleoverlaygui$subtitle : this.subtitles) {
-               if (subtitleoverlaygui$subtitle.getText().equals(itextcomponent)) {
-                  subtitleoverlaygui$subtitle.refresh(new Vector3d(p_184067_1_.getX(), p_184067_1_.getY(), p_184067_1_.getZ()));
-                  return;
-               }
+            if (!this.subtitles.isEmpty())
+            {
+                for (SubtitleOverlayGui.Subtitle subtitleoverlaygui$subtitle : this.subtitles)
+                {
+                    if (subtitleoverlaygui$subtitle.func_238526_a_().equals(itextcomponent))
+                    {
+                        subtitleoverlaygui$subtitle.refresh(new Vector3d(soundIn.getX(), soundIn.getY(), soundIn.getZ()));
+                        return;
+                    }
+                }
             }
-         }
 
-         this.subtitles.add(new SubtitleOverlayGui.Subtitle(itextcomponent, new Vector3d(p_184067_1_.getX(), p_184067_1_.getY(), p_184067_1_.getZ())));
-      }
-   }
+            this.subtitles.add(new SubtitleOverlayGui.Subtitle(itextcomponent, new Vector3d(soundIn.getX(), soundIn.getY(), soundIn.getZ())));
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public class Subtitle {
-      private final ITextComponent text;
-      private long time;
-      private Vector3d location;
+    public class Subtitle
+    {
+        private final ITextComponent subtitle;
+        private long startTime;
+        private Vector3d location;
 
-      public Subtitle(ITextComponent p_i232263_2_, Vector3d p_i232263_3_) {
-         this.text = p_i232263_2_;
-         this.location = p_i232263_3_;
-         this.time = Util.getMillis();
-      }
+        public Subtitle(ITextComponent p_i232263_2_, Vector3d p_i232263_3_)
+        {
+            this.subtitle = p_i232263_2_;
+            this.location = p_i232263_3_;
+            this.startTime = Util.milliTime();
+        }
 
-      public ITextComponent getText() {
-         return this.text;
-      }
+        public ITextComponent func_238526_a_()
+        {
+            return this.subtitle;
+        }
 
-      public long getTime() {
-         return this.time;
-      }
+        public long getStartTime()
+        {
+            return this.startTime;
+        }
 
-      public Vector3d getLocation() {
-         return this.location;
-      }
+        public Vector3d getLocation()
+        {
+            return this.location;
+        }
 
-      public void refresh(Vector3d p_186823_1_) {
-         this.location = p_186823_1_;
-         this.time = Util.getMillis();
-      }
-   }
+        public void refresh(Vector3d locationIn)
+        {
+            this.location = locationIn;
+            this.startTime = Util.milliTime();
+        }
+    }
 }

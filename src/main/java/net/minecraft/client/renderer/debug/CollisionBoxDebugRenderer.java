@@ -12,34 +12,37 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class CollisionBoxDebugRenderer implements DebugRenderer.IDebugRenderer {
-   private final Minecraft minecraft;
-   private double lastUpdateTime = Double.MIN_VALUE;
-   private List<VoxelShape> shapes = Collections.emptyList();
+public class CollisionBoxDebugRenderer implements DebugRenderer.IDebugRenderer
+{
+    private final Minecraft minecraft;
+    private double lastUpdate = Double.MIN_VALUE;
+    private List<VoxelShape> collisionData = Collections.emptyList();
 
-   public CollisionBoxDebugRenderer(Minecraft p_i47215_1_) {
-      this.minecraft = p_i47215_1_;
-   }
+    public CollisionBoxDebugRenderer(Minecraft minecraftIn)
+    {
+        this.minecraft = minecraftIn;
+    }
 
-   public void render(MatrixStack p_225619_1_, IRenderTypeBuffer p_225619_2_, double p_225619_3_, double p_225619_5_, double p_225619_7_) {
-      double d0 = (double)Util.getNanos();
-      if (d0 - this.lastUpdateTime > 1.0E8D) {
-         this.lastUpdateTime = d0;
-         Entity entity = this.minecraft.gameRenderer.getMainCamera().getEntity();
-         this.shapes = entity.level.getCollisions(entity, entity.getBoundingBox().inflate(6.0D), (p_239370_0_) -> {
-            return true;
-         }).collect(Collectors.toList());
-      }
+    public void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, double camX, double camY, double camZ)
+    {
+        double d0 = (double)Util.nanoTime();
 
-      IVertexBuilder ivertexbuilder = p_225619_2_.getBuffer(RenderType.lines());
+        if (d0 - this.lastUpdate > 1.0E8D)
+        {
+            this.lastUpdate = d0;
+            Entity entity = this.minecraft.gameRenderer.getActiveRenderInfo().getRenderViewEntity();
+            this.collisionData = entity.world.func_234867_d_(entity, entity.getBoundingBox().grow(6.0D), (p_239370_0_) ->
+            {
+                return true;
+            }).collect(Collectors.toList());
+        }
 
-      for(VoxelShape voxelshape : this.shapes) {
-         WorldRenderer.renderVoxelShape(p_225619_1_, ivertexbuilder, voxelshape, -p_225619_3_, -p_225619_5_, -p_225619_7_, 1.0F, 1.0F, 1.0F, 1.0F);
-      }
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getLines());
 
-   }
+        for (VoxelShape voxelshape : this.collisionData)
+        {
+            WorldRenderer.drawVoxelShapeParts(matrixStackIn, ivertexbuilder, voxelshape, -camX, -camY, -camZ, 1.0F, 1.0F, 1.0F, 1.0F);
+        }
+    }
 }

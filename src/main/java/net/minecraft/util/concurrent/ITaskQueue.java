@@ -4,86 +4,106 @@ import com.google.common.collect.Queues;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
-public interface ITaskQueue<T, F> {
-   @Nullable
-   F pop();
+public interface ITaskQueue<T, F>
+{
+    @Nullable
+    F poll();
 
-   boolean push(T p_212828_1_);
+    boolean enqueue(T value);
 
-   boolean isEmpty();
+    boolean isEmpty();
 
-   public static final class Priority implements ITaskQueue<ITaskQueue.RunnableWithPriority, Runnable> {
-      private final List<Queue<Runnable>> queueList;
+    public static final class Priority implements ITaskQueue<ITaskQueue.RunnableWithPriority, Runnable>
+    {
+        private final List<ConcurrentLinkedQueue<Runnable>> queues;
 
-      public Priority(int p_i50964_1_) {
-         this.queueList = IntStream.range(0, p_i50964_1_).mapToObj((p_219948_0_) -> {
-            return Queues.<Runnable>newConcurrentLinkedQueue();
-         }).collect(Collectors.toList());
-      }
+        public Priority(int queueCount)
+        {
+            this.queues = IntStream.range(0, queueCount).mapToObj((p_219948_0_) ->
+            {
+                return Queues.<Runnable>newConcurrentLinkedQueue();
+            }).collect(Collectors.toList());
+        }
 
-      @Nullable
-      public Runnable pop() {
-         for(Queue<Runnable> queue : this.queueList) {
-            Runnable runnable = queue.poll();
-            if (runnable != null) {
-               return runnable;
+        @Nullable
+        public Runnable poll()
+        {
+            for (ConcurrentLinkedQueue<Runnable> queue : this.queues)
+            {
+                Runnable runnable = (Runnable) queue.poll();
+
+                if (runnable != null)
+                {
+                    return runnable;
+                }
             }
-         }
 
-         return null;
-      }
+            return null;
+        }
 
-      public boolean push(ITaskQueue.RunnableWithPriority p_212828_1_) {
-         int i = p_212828_1_.getPriority();
-         this.queueList.get(i).add(p_212828_1_);
-         return true;
-      }
+        public boolean enqueue(ITaskQueue.RunnableWithPriority value)
+        {
+            int i = value.getPriority();
+            this.queues.get(i).add(value);
+            return true;
+        }
 
-      public boolean isEmpty() {
-         return this.queueList.stream().allMatch(Collection::isEmpty);
-      }
-   }
+        public boolean isEmpty()
+        {
+            return this.queues.stream().allMatch(Collection::isEmpty);
+        }
+    }
 
-   public static final class RunnableWithPriority implements Runnable {
-      private final int priority;
-      private final Runnable task;
+    public static final class RunnableWithPriority implements Runnable
+    {
+        private final int priority;
+        private final Runnable runnable;
 
-      public RunnableWithPriority(int p_i50963_1_, Runnable p_i50963_2_) {
-         this.priority = p_i50963_1_;
-         this.task = p_i50963_2_;
-      }
+        public RunnableWithPriority(int priorityIn, Runnable runnableIn)
+        {
+            this.priority = priorityIn;
+            this.runnable = runnableIn;
+        }
 
-      public void run() {
-         this.task.run();
-      }
+        public void run()
+        {
+            this.runnable.run();
+        }
 
-      public int getPriority() {
-         return this.priority;
-      }
-   }
+        public int getPriority()
+        {
+            return this.priority;
+        }
+    }
 
-   public static final class Single<T> implements ITaskQueue<T, T> {
-      private final Queue<T> queue;
+    public static final class Single<T> implements ITaskQueue<T, T>
+    {
+        private final Queue<T> queue;
 
-      public Single(Queue<T> p_i50962_1_) {
-         this.queue = p_i50962_1_;
-      }
+        public Single(Queue<T> queueIn)
+        {
+            this.queue = queueIn;
+        }
 
-      @Nullable
-      public T pop() {
-         return this.queue.poll();
-      }
+        @Nullable
+        public T poll()
+        {
+            return this.queue.poll();
+        }
 
-      public boolean push(T p_212828_1_) {
-         return this.queue.add(p_212828_1_);
-      }
+        public boolean enqueue(T value)
+        {
+            return this.queue.add(value);
+        }
 
-      public boolean isEmpty() {
-         return this.queue.isEmpty();
-      }
-   }
+        public boolean isEmpty()
+        {
+            return this.queue.isEmpty();
+        }
+    }
 }

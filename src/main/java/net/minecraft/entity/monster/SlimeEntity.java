@@ -45,444 +45,600 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biomes;
 
-public class SlimeEntity extends MobEntity implements IMob {
-   private static final DataParameter<Integer> ID_SIZE = EntityDataManager.defineId(SlimeEntity.class, DataSerializers.INT);
-   public float targetSquish;
-   public float squish;
-   public float oSquish;
-   private boolean wasOnGround;
+public class SlimeEntity extends MobEntity implements IMob
+{
+    private static final DataParameter<Integer> SLIME_SIZE = EntityDataManager.createKey(SlimeEntity.class, DataSerializers.VARINT);
+    public float squishAmount;
+    public float squishFactor;
+    public float prevSquishFactor;
+    private boolean wasOnGround;
 
-   public SlimeEntity(EntityType<? extends SlimeEntity> p_i48552_1_, World p_i48552_2_) {
-      super(p_i48552_1_, p_i48552_2_);
-      this.moveControl = new SlimeEntity.MoveHelperController(this);
-   }
+    public SlimeEntity(EntityType <? extends SlimeEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+        this.moveController = new SlimeEntity.MoveHelperController(this);
+    }
 
-   protected void registerGoals() {
-      this.goalSelector.addGoal(1, new SlimeEntity.FloatGoal(this));
-      this.goalSelector.addGoal(2, new SlimeEntity.AttackGoal(this));
-      this.goalSelector.addGoal(3, new SlimeEntity.FaceRandomGoal(this));
-      this.goalSelector.addGoal(5, new SlimeEntity.HopGoal(this));
-      this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, (p_213811_1_) -> {
-         return Math.abs(p_213811_1_.getY() - this.getY()) <= 4.0D;
-      }));
-      this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolemEntity.class, true));
-   }
+    protected void registerGoals()
+    {
+        this.goalSelector.addGoal(1, new SlimeEntity.FloatGoal(this));
+        this.goalSelector.addGoal(2, new SlimeEntity.AttackGoal(this));
+        this.goalSelector.addGoal(3, new SlimeEntity.FaceRandomGoal(this));
+        this.goalSelector.addGoal(5, new SlimeEntity.HopGoal(this));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, (p_213811_1_) ->
+        {
+            return Math.abs(p_213811_1_.getPosY() - this.getPosY()) <= 4.0D;
+        }));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolemEntity.class, true));
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(ID_SIZE, 1);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(SLIME_SIZE, 1);
+    }
 
-   protected void setSize(int p_70799_1_, boolean p_70799_2_) {
-      this.entityData.set(ID_SIZE, p_70799_1_);
-      this.reapplyPosition();
-      this.refreshDimensions();
-      this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)(p_70799_1_ * p_70799_1_));
-      this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double)(0.2F + 0.1F * (float)p_70799_1_));
-      this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue((double)p_70799_1_);
-      if (p_70799_2_) {
-         this.setHealth(this.getMaxHealth());
-      }
+    protected void setSlimeSize(int size, boolean resetHealth)
+    {
+        this.dataManager.set(SLIME_SIZE, size);
+        this.recenterBoundingBox();
+        this.recalculateSize();
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)(size * size));
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double)(0.2F + 0.1F * (float)size));
+        this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue((double)size);
 
-      this.xpReward = p_70799_1_;
-   }
+        if (resetHealth)
+        {
+            this.setHealth(this.getMaxHealth());
+        }
 
-   public int getSize() {
-      return this.entityData.get(ID_SIZE);
-   }
+        this.experienceValue = size;
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putInt("Size", this.getSize() - 1);
-      p_213281_1_.putBoolean("wasOnGround", this.wasOnGround);
-   }
+    /**
+     * Returns the size of the slime.
+     */
+    public int getSlimeSize()
+    {
+        return this.dataManager.get(SLIME_SIZE);
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      int i = p_70037_1_.getInt("Size");
-      if (i < 0) {
-         i = 0;
-      }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putInt("Size", this.getSlimeSize() - 1);
+        compound.putBoolean("wasOnGround", this.wasOnGround);
+    }
 
-      this.setSize(i + 1, false);
-      super.readAdditionalSaveData(p_70037_1_);
-      this.wasOnGround = p_70037_1_.getBoolean("wasOnGround");
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        int i = compound.getInt("Size");
 
-   public boolean isTiny() {
-      return this.getSize() <= 1;
-   }
+        if (i < 0)
+        {
+            i = 0;
+        }
 
-   protected IParticleData getParticleType() {
-      return ParticleTypes.ITEM_SLIME;
-   }
+        this.setSlimeSize(i + 1, false);
+        super.readAdditional(compound);
+        this.wasOnGround = compound.getBoolean("wasOnGround");
+    }
 
-   protected boolean shouldDespawnInPeaceful() {
-      return this.getSize() > 0;
-   }
+    public boolean isSmallSlime()
+    {
+        return this.getSlimeSize() <= 1;
+    }
 
-   public void tick() {
-      this.squish += (this.targetSquish - this.squish) * 0.5F;
-      this.oSquish = this.squish;
-      super.tick();
-      if (this.onGround && !this.wasOnGround) {
-         int i = this.getSize();
+    protected IParticleData getSquishParticle()
+    {
+        return ParticleTypes.ITEM_SLIME;
+    }
 
-         for(int j = 0; j < i * 8; ++j) {
-            float f = this.random.nextFloat() * ((float)Math.PI * 2F);
-            float f1 = this.random.nextFloat() * 0.5F + 0.5F;
-            float f2 = MathHelper.sin(f) * (float)i * 0.5F * f1;
-            float f3 = MathHelper.cos(f) * (float)i * 0.5F * f1;
-            this.level.addParticle(this.getParticleType(), this.getX() + (double)f2, this.getY(), this.getZ() + (double)f3, 0.0D, 0.0D, 0.0D);
-         }
+    protected boolean isDespawnPeaceful()
+    {
+        return this.getSlimeSize() > 0;
+    }
 
-         this.playSound(this.getSquishSound(), this.getSoundVolume(), ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) / 0.8F);
-         this.targetSquish = -0.5F;
-      } else if (!this.onGround && this.wasOnGround) {
-         this.targetSquish = 1.0F;
-      }
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void tick()
+    {
+        this.squishFactor += (this.squishAmount - this.squishFactor) * 0.5F;
+        this.prevSquishFactor = this.squishFactor;
+        super.tick();
 
-      this.wasOnGround = this.onGround;
-      this.decreaseSquish();
-   }
+        if (this.onGround && !this.wasOnGround)
+        {
+            int i = this.getSlimeSize();
 
-   protected void decreaseSquish() {
-      this.targetSquish *= 0.6F;
-   }
-
-   protected int getJumpDelay() {
-      return this.random.nextInt(20) + 10;
-   }
-
-   public void refreshDimensions() {
-      double d0 = this.getX();
-      double d1 = this.getY();
-      double d2 = this.getZ();
-      super.refreshDimensions();
-      this.setPos(d0, d1, d2);
-   }
-
-   public void onSyncedDataUpdated(DataParameter<?> p_184206_1_) {
-      if (ID_SIZE.equals(p_184206_1_)) {
-         this.refreshDimensions();
-         this.yRot = this.yHeadRot;
-         this.yBodyRot = this.yHeadRot;
-         if (this.isInWater() && this.random.nextInt(20) == 0) {
-            this.doWaterSplashEffect();
-         }
-      }
-
-      super.onSyncedDataUpdated(p_184206_1_);
-   }
-
-   public EntityType<? extends SlimeEntity> getType() {
-      return (EntityType<? extends SlimeEntity>)super.getType();
-   }
-
-   public void remove() {
-      int i = this.getSize();
-      if (!this.level.isClientSide && i > 1 && this.isDeadOrDying()) {
-         ITextComponent itextcomponent = this.getCustomName();
-         boolean flag = this.isNoAi();
-         float f = (float)i / 4.0F;
-         int j = i / 2;
-         int k = 2 + this.random.nextInt(3);
-
-         for(int l = 0; l < k; ++l) {
-            float f1 = ((float)(l % 2) - 0.5F) * f;
-            float f2 = ((float)(l / 2) - 0.5F) * f;
-            SlimeEntity slimeentity = this.getType().create(this.level);
-            if (this.isPersistenceRequired()) {
-               slimeentity.setPersistenceRequired();
+            for (int j = 0; j < i * 8; ++j)
+            {
+                float f = this.rand.nextFloat() * ((float)Math.PI * 2F);
+                float f1 = this.rand.nextFloat() * 0.5F + 0.5F;
+                float f2 = MathHelper.sin(f) * (float)i * 0.5F * f1;
+                float f3 = MathHelper.cos(f) * (float)i * 0.5F * f1;
+                this.world.addParticle(this.getSquishParticle(), this.getPosX() + (double)f2, this.getPosY(), this.getPosZ() + (double)f3, 0.0D, 0.0D, 0.0D);
             }
 
-            slimeentity.setCustomName(itextcomponent);
-            slimeentity.setNoAi(flag);
-            slimeentity.setInvulnerable(this.isInvulnerable());
-            slimeentity.setSize(j, true);
-            slimeentity.moveTo(this.getX() + (double)f1, this.getY() + 0.5D, this.getZ() + (double)f2, this.random.nextFloat() * 360.0F, 0.0F);
-            this.level.addFreshEntity(slimeentity);
-         }
-      }
+            this.playSound(this.getSquishSound(), this.getSoundVolume(), ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F) / 0.8F);
+            this.squishAmount = -0.5F;
+        }
+        else if (!this.onGround && this.wasOnGround)
+        {
+            this.squishAmount = 1.0F;
+        }
 
-      super.remove();
-   }
+        this.wasOnGround = this.onGround;
+        this.alterSquishAmount();
+    }
 
-   public void push(Entity p_70108_1_) {
-      super.push(p_70108_1_);
-      if (p_70108_1_ instanceof IronGolemEntity && this.isDealsDamage()) {
-         this.dealDamage((LivingEntity)p_70108_1_);
-      }
+    protected void alterSquishAmount()
+    {
+        this.squishAmount *= 0.6F;
+    }
 
-   }
+    /**
+     * Gets the amount of time the slime needs to wait between jumps.
+     */
+    protected int getJumpDelay()
+    {
+        return this.rand.nextInt(20) + 10;
+    }
 
-   public void playerTouch(PlayerEntity p_70100_1_) {
-      if (this.isDealsDamage()) {
-         this.dealDamage(p_70100_1_);
-      }
+    public void recalculateSize()
+    {
+        double d0 = this.getPosX();
+        double d1 = this.getPosY();
+        double d2 = this.getPosZ();
+        super.recalculateSize();
+        this.setPosition(d0, d1, d2);
+    }
 
-   }
+    public void notifyDataManagerChange(DataParameter<?> key)
+    {
+        if (SLIME_SIZE.equals(key))
+        {
+            this.recalculateSize();
+            this.rotationYaw = this.rotationYawHead;
+            this.renderYawOffset = this.rotationYawHead;
 
-   protected void dealDamage(LivingEntity p_175451_1_) {
-      if (this.isAlive()) {
-         int i = this.getSize();
-         if (this.distanceToSqr(p_175451_1_) < 0.6D * (double)i * 0.6D * (double)i && this.canSee(p_175451_1_) && p_175451_1_.hurt(DamageSource.mobAttack(this), this.getAttackDamage())) {
-            this.playSound(SoundEvents.SLIME_ATTACK, 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
-            this.doEnchantDamageEffects(this, p_175451_1_);
-         }
-      }
+            if (this.isInWater() && this.rand.nextInt(20) == 0)
+            {
+                this.doWaterSplashEffect();
+            }
+        }
 
-   }
+        super.notifyDataManagerChange(key);
+    }
 
-   protected float getStandingEyeHeight(Pose p_213348_1_, EntitySize p_213348_2_) {
-      return 0.625F * p_213348_2_.height;
-   }
+    public EntityType <? extends SlimeEntity > getType()
+    {
+        return (EntityType <? extends SlimeEntity >)super.getType();
+    }
 
-   protected boolean isDealsDamage() {
-      return !this.isTiny() && this.isEffectiveAi();
-   }
+    /**
+     * Queues the entity for removal from the world on the next tick.
+     */
+    public void remove()
+    {
+        int i = this.getSlimeSize();
 
-   protected float getAttackDamage() {
-      return (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-   }
+        if (!this.world.isRemote && i > 1 && this.getShouldBeDead())
+        {
+            ITextComponent itextcomponent = this.getCustomName();
+            boolean flag = this.isAIDisabled();
+            float f = (float)i / 4.0F;
+            int j = i / 2;
+            int k = 2 + this.rand.nextInt(3);
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return this.isTiny() ? SoundEvents.SLIME_HURT_SMALL : SoundEvents.SLIME_HURT;
-   }
+            for (int l = 0; l < k; ++l)
+            {
+                float f1 = ((float)(l % 2) - 0.5F) * f;
+                float f2 = ((float)(l / 2) - 0.5F) * f;
+                SlimeEntity slimeentity = this.getType().create(this.world);
 
-   protected SoundEvent getDeathSound() {
-      return this.isTiny() ? SoundEvents.SLIME_DEATH_SMALL : SoundEvents.SLIME_DEATH;
-   }
+                if (this.isNoDespawnRequired())
+                {
+                    slimeentity.enablePersistence();
+                }
 
-   protected SoundEvent getSquishSound() {
-      return this.isTiny() ? SoundEvents.SLIME_SQUISH_SMALL : SoundEvents.SLIME_SQUISH;
-   }
+                slimeentity.setCustomName(itextcomponent);
+                slimeentity.setNoAI(flag);
+                slimeentity.setInvulnerable(this.isInvulnerable());
+                slimeentity.setSlimeSize(j, true);
+                slimeentity.setLocationAndAngles(this.getPosX() + (double)f1, this.getPosY() + 0.5D, this.getPosZ() + (double)f2, this.rand.nextFloat() * 360.0F, 0.0F);
+                this.world.addEntity(slimeentity);
+            }
+        }
 
-   protected ResourceLocation getDefaultLootTable() {
-      return this.getSize() == 1 ? this.getType().getDefaultLootTable() : LootTables.EMPTY;
-   }
+        super.remove();
+    }
 
-   public static boolean checkSlimeSpawnRules(EntityType<SlimeEntity> p_223366_0_, IWorld p_223366_1_, SpawnReason p_223366_2_, BlockPos p_223366_3_, Random p_223366_4_) {
-      if (p_223366_1_.getDifficulty() != Difficulty.PEACEFUL) {
-         if (Objects.equals(p_223366_1_.getBiomeName(p_223366_3_), Optional.of(Biomes.SWAMP)) && p_223366_3_.getY() > 50 && p_223366_3_.getY() < 70 && p_223366_4_.nextFloat() < 0.5F && p_223366_4_.nextFloat() < p_223366_1_.getMoonBrightness() && p_223366_1_.getMaxLocalRawBrightness(p_223366_3_) <= p_223366_4_.nextInt(8)) {
-            return checkMobSpawnRules(p_223366_0_, p_223366_1_, p_223366_2_, p_223366_3_, p_223366_4_);
-         }
+    /**
+     * Applies a velocity to the entities, to push them away from eachother.
+     */
+    public void applyEntityCollision(Entity entityIn)
+    {
+        super.applyEntityCollision(entityIn);
 
-         if (!(p_223366_1_ instanceof ISeedReader)) {
-            return false;
-         }
+        if (entityIn instanceof IronGolemEntity && this.canDamagePlayer())
+        {
+            this.dealDamage((LivingEntity)entityIn);
+        }
+    }
 
-         ChunkPos chunkpos = new ChunkPos(p_223366_3_);
-         boolean flag = SharedSeedRandom.seedSlimeChunk(chunkpos.x, chunkpos.z, ((ISeedReader)p_223366_1_).getSeed(), 987234911L).nextInt(10) == 0;
-         if (p_223366_4_.nextInt(10) == 0 && flag && p_223366_3_.getY() < 40) {
-            return checkMobSpawnRules(p_223366_0_, p_223366_1_, p_223366_2_, p_223366_3_, p_223366_4_);
-         }
-      }
+    /**
+     * Called by a player entity when they collide with an entity
+     */
+    public void onCollideWithPlayer(PlayerEntity entityIn)
+    {
+        if (this.canDamagePlayer())
+        {
+            this.dealDamage(entityIn);
+        }
+    }
 
-      return false;
-   }
+    protected void dealDamage(LivingEntity entityIn)
+    {
+        if (this.isAlive())
+        {
+            int i = this.getSlimeSize();
 
-   protected float getSoundVolume() {
-      return 0.4F * (float)this.getSize();
-   }
+            if (this.getDistanceSq(entityIn) < 0.6D * (double)i * 0.6D * (double)i && this.canEntityBeSeen(entityIn) && entityIn.attackEntityFrom(DamageSource.causeMobDamage(this), this.func_225512_er_()))
+            {
+                this.playSound(SoundEvents.ENTITY_SLIME_ATTACK, 1.0F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+                this.applyEnchantments(this, entityIn);
+            }
+        }
+    }
 
-   public int getMaxHeadXRot() {
-      return 0;
-   }
+    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return 0.625F * sizeIn.height;
+    }
 
-   protected boolean doPlayJumpSound() {
-      return this.getSize() > 0;
-   }
+    /**
+     * Indicates weather the slime is able to damage the player (based upon the slime's size)
+     */
+    protected boolean canDamagePlayer()
+    {
+        return !this.isSmallSlime() && this.isServerWorld();
+    }
 
-   protected void jumpFromGround() {
-      Vector3d vector3d = this.getDeltaMovement();
-      this.setDeltaMovement(vector3d.x, (double)this.getJumpPower(), vector3d.z);
-      this.hasImpulse = true;
-   }
+    protected float func_225512_er_()
+    {
+        return (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      int i = this.random.nextInt(3);
-      if (i < 2 && this.random.nextFloat() < 0.5F * p_213386_2_.getSpecialMultiplier()) {
-         ++i;
-      }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_SLIME_HURT_SMALL : SoundEvents.ENTITY_SLIME_HURT;
+    }
 
-      int j = 1 << i;
-      this.setSize(j, true);
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_SLIME_DEATH_SMALL : SoundEvents.ENTITY_SLIME_DEATH;
+    }
 
-   private float getSoundPitch() {
-      float f = this.isTiny() ? 1.4F : 0.8F;
-      return ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * f;
-   }
+    protected SoundEvent getSquishSound()
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_SLIME_SQUISH_SMALL : SoundEvents.ENTITY_SLIME_SQUISH;
+    }
 
-   protected SoundEvent getJumpSound() {
-      return this.isTiny() ? SoundEvents.SLIME_JUMP_SMALL : SoundEvents.SLIME_JUMP;
-   }
+    protected ResourceLocation getLootTable()
+    {
+        return this.getSlimeSize() == 1 ? this.getType().getLootTable() : LootTables.EMPTY;
+    }
 
-   public EntitySize getDimensions(Pose p_213305_1_) {
-      return super.getDimensions(p_213305_1_).scale(0.255F * (float)this.getSize());
-   }
-
-   static class AttackGoal extends Goal {
-      private final SlimeEntity slime;
-      private int growTiredTimer;
-
-      public AttackGoal(SlimeEntity p_i45824_1_) {
-         this.slime = p_i45824_1_;
-         this.setFlags(EnumSet.of(Goal.Flag.LOOK));
-      }
-
-      public boolean canUse() {
-         LivingEntity livingentity = this.slime.getTarget();
-         if (livingentity == null) {
-            return false;
-         } else if (!livingentity.isAlive()) {
-            return false;
-         } else {
-            return livingentity instanceof PlayerEntity && ((PlayerEntity)livingentity).abilities.invulnerable ? false : this.slime.getMoveControl() instanceof SlimeEntity.MoveHelperController;
-         }
-      }
-
-      public void start() {
-         this.growTiredTimer = 300;
-         super.start();
-      }
-
-      public boolean canContinueToUse() {
-         LivingEntity livingentity = this.slime.getTarget();
-         if (livingentity == null) {
-            return false;
-         } else if (!livingentity.isAlive()) {
-            return false;
-         } else if (livingentity instanceof PlayerEntity && ((PlayerEntity)livingentity).abilities.invulnerable) {
-            return false;
-         } else {
-            return --this.growTiredTimer > 0;
-         }
-      }
-
-      public void tick() {
-         this.slime.lookAt(this.slime.getTarget(), 10.0F, 10.0F);
-         ((SlimeEntity.MoveHelperController)this.slime.getMoveControl()).setDirection(this.slime.yRot, this.slime.isDealsDamage());
-      }
-   }
-
-   static class FaceRandomGoal extends Goal {
-      private final SlimeEntity slime;
-      private float chosenDegrees;
-      private int nextRandomizeTime;
-
-      public FaceRandomGoal(SlimeEntity p_i45820_1_) {
-         this.slime = p_i45820_1_;
-         this.setFlags(EnumSet.of(Goal.Flag.LOOK));
-      }
-
-      public boolean canUse() {
-         return this.slime.getTarget() == null && (this.slime.onGround || this.slime.isInWater() || this.slime.isInLava() || this.slime.hasEffect(Effects.LEVITATION)) && this.slime.getMoveControl() instanceof SlimeEntity.MoveHelperController;
-      }
-
-      public void tick() {
-         if (--this.nextRandomizeTime <= 0) {
-            this.nextRandomizeTime = 40 + this.slime.getRandom().nextInt(60);
-            this.chosenDegrees = (float)this.slime.getRandom().nextInt(360);
-         }
-
-         ((SlimeEntity.MoveHelperController)this.slime.getMoveControl()).setDirection(this.chosenDegrees, false);
-      }
-   }
-
-   static class FloatGoal extends Goal {
-      private final SlimeEntity slime;
-
-      public FloatGoal(SlimeEntity p_i45823_1_) {
-         this.slime = p_i45823_1_;
-         this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
-         p_i45823_1_.getNavigation().setCanFloat(true);
-      }
-
-      public boolean canUse() {
-         return (this.slime.isInWater() || this.slime.isInLava()) && this.slime.getMoveControl() instanceof SlimeEntity.MoveHelperController;
-      }
-
-      public void tick() {
-         if (this.slime.getRandom().nextFloat() < 0.8F) {
-            this.slime.getJumpControl().jump();
-         }
-
-         ((SlimeEntity.MoveHelperController)this.slime.getMoveControl()).setWantedMovement(1.2D);
-      }
-   }
-
-   static class HopGoal extends Goal {
-      private final SlimeEntity slime;
-
-      public HopGoal(SlimeEntity p_i45822_1_) {
-         this.slime = p_i45822_1_;
-         this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
-      }
-
-      public boolean canUse() {
-         return !this.slime.isPassenger();
-      }
-
-      public void tick() {
-         ((SlimeEntity.MoveHelperController)this.slime.getMoveControl()).setWantedMovement(1.0D);
-      }
-   }
-
-   static class MoveHelperController extends MovementController {
-      private float yRot;
-      private int jumpDelay;
-      private final SlimeEntity slime;
-      private boolean isAggressive;
-
-      public MoveHelperController(SlimeEntity p_i45821_1_) {
-         super(p_i45821_1_);
-         this.slime = p_i45821_1_;
-         this.yRot = 180.0F * p_i45821_1_.yRot / (float)Math.PI;
-      }
-
-      public void setDirection(float p_179920_1_, boolean p_179920_2_) {
-         this.yRot = p_179920_1_;
-         this.isAggressive = p_179920_2_;
-      }
-
-      public void setWantedMovement(double p_179921_1_) {
-         this.speedModifier = p_179921_1_;
-         this.operation = MovementController.Action.MOVE_TO;
-      }
-
-      public void tick() {
-         this.mob.yRot = this.rotlerp(this.mob.yRot, this.yRot, 90.0F);
-         this.mob.yHeadRot = this.mob.yRot;
-         this.mob.yBodyRot = this.mob.yRot;
-         if (this.operation != MovementController.Action.MOVE_TO) {
-            this.mob.setZza(0.0F);
-         } else {
-            this.operation = MovementController.Action.WAIT;
-            if (this.mob.isOnGround()) {
-               this.mob.setSpeed((float)(this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
-               if (this.jumpDelay-- <= 0) {
-                  this.jumpDelay = this.slime.getJumpDelay();
-                  if (this.isAggressive) {
-                     this.jumpDelay /= 3;
-                  }
-
-                  this.slime.getJumpControl().jump();
-                  if (this.slime.doPlayJumpSound()) {
-                     this.slime.playSound(this.slime.getJumpSound(), this.slime.getSoundVolume(), this.slime.getSoundPitch());
-                  }
-               } else {
-                  this.slime.xxa = 0.0F;
-                  this.slime.zza = 0.0F;
-                  this.mob.setSpeed(0.0F);
-               }
-            } else {
-               this.mob.setSpeed((float)(this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
+    public static boolean func_223366_c(EntityType<SlimeEntity> p_223366_0_, IWorld p_223366_1_, SpawnReason reason, BlockPos p_223366_3_, Random randomIn)
+    {
+        if (p_223366_1_.getDifficulty() != Difficulty.PEACEFUL)
+        {
+            if (Objects.equals(p_223366_1_.func_242406_i(p_223366_3_), Optional.of(Biomes.SWAMP)) && p_223366_3_.getY() > 50 && p_223366_3_.getY() < 70 && randomIn.nextFloat() < 0.5F && randomIn.nextFloat() < p_223366_1_.getMoonFactor() && p_223366_1_.getLight(p_223366_3_) <= randomIn.nextInt(8))
+            {
+                return canSpawnOn(p_223366_0_, p_223366_1_, reason, p_223366_3_, randomIn);
             }
 
-         }
-      }
-   }
+            if (!(p_223366_1_ instanceof ISeedReader))
+            {
+                return false;
+            }
+
+            ChunkPos chunkpos = new ChunkPos(p_223366_3_);
+            boolean flag = SharedSeedRandom.seedSlimeChunk(chunkpos.x, chunkpos.z, ((ISeedReader)p_223366_1_).getSeed(), 987234911L).nextInt(10) == 0;
+
+            if (randomIn.nextInt(10) == 0 && flag && p_223366_3_.getY() < 40)
+            {
+                return canSpawnOn(p_223366_0_, p_223366_1_, reason, p_223366_3_, randomIn);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the volume for the sounds this mob makes.
+     */
+    protected float getSoundVolume()
+    {
+        return 0.4F * (float)this.getSlimeSize();
+    }
+
+    /**
+     * The speed it takes to move the entityliving's rotationPitch through the faceEntity method. This is only currently
+     * use in wolves.
+     */
+    public int getVerticalFaceSpeed()
+    {
+        return 0;
+    }
+
+    /**
+     * Returns true if the slime makes a sound when it jumps (based upon the slime's size)
+     */
+    protected boolean makesSoundOnJump()
+    {
+        return this.getSlimeSize() > 0;
+    }
+
+    /**
+     * Causes this entity to do an upwards motion (jumping).
+     */
+    protected void jump()
+    {
+        Vector3d vector3d = this.getMotion();
+        this.setMotion(vector3d.x, (double)this.getJumpUpwardsMotion(), vector3d.z);
+        this.isAirBorne = true;
+    }
+
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        int i = this.rand.nextInt(3);
+
+        if (i < 2 && this.rand.nextFloat() < 0.5F * difficultyIn.getClampedAdditionalDifficulty())
+        {
+            ++i;
+        }
+
+        int j = 1 << i;
+        this.setSlimeSize(j, true);
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
+
+    private float func_234304_m_()
+    {
+        float f = this.isSmallSlime() ? 1.4F : 0.8F;
+        return ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F) * f;
+    }
+
+    protected SoundEvent getJumpSound()
+    {
+        return this.isSmallSlime() ? SoundEvents.ENTITY_SLIME_JUMP_SMALL : SoundEvents.ENTITY_SLIME_JUMP;
+    }
+
+    public EntitySize getSize(Pose poseIn)
+    {
+        return super.getSize(poseIn).scale(0.255F * (float)this.getSlimeSize());
+    }
+
+    static class AttackGoal extends Goal
+    {
+        private final SlimeEntity slime;
+        private int growTieredTimer;
+
+        public AttackGoal(SlimeEntity slimeIn)
+        {
+            this.slime = slimeIn;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.LOOK));
+        }
+
+        public boolean shouldExecute()
+        {
+            LivingEntity livingentity = this.slime.getAttackTarget();
+
+            if (livingentity == null)
+            {
+                return false;
+            }
+            else if (!livingentity.isAlive())
+            {
+                return false;
+            }
+            else
+            {
+                return livingentity instanceof PlayerEntity && ((PlayerEntity)livingentity).abilities.disableDamage ? false : this.slime.getMoveHelper() instanceof SlimeEntity.MoveHelperController;
+            }
+        }
+
+        public void startExecuting()
+        {
+            this.growTieredTimer = 300;
+            super.startExecuting();
+        }
+
+        public boolean shouldContinueExecuting()
+        {
+            LivingEntity livingentity = this.slime.getAttackTarget();
+
+            if (livingentity == null)
+            {
+                return false;
+            }
+            else if (!livingentity.isAlive())
+            {
+                return false;
+            }
+            else if (livingentity instanceof PlayerEntity && ((PlayerEntity)livingentity).abilities.disableDamage)
+            {
+                return false;
+            }
+            else
+            {
+                return --this.growTieredTimer > 0;
+            }
+        }
+
+        public void tick()
+        {
+            this.slime.faceEntity(this.slime.getAttackTarget(), 10.0F, 10.0F);
+            ((SlimeEntity.MoveHelperController)this.slime.getMoveHelper()).setDirection(this.slime.rotationYaw, this.slime.canDamagePlayer());
+        }
+    }
+
+    static class FaceRandomGoal extends Goal
+    {
+        private final SlimeEntity slime;
+        private float chosenDegrees;
+        private int nextRandomizeTime;
+
+        public FaceRandomGoal(SlimeEntity slimeIn)
+        {
+            this.slime = slimeIn;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.LOOK));
+        }
+
+        public boolean shouldExecute()
+        {
+            return this.slime.getAttackTarget() == null && (this.slime.onGround || this.slime.isInWater() || this.slime.isInLava() || this.slime.isPotionActive(Effects.LEVITATION)) && this.slime.getMoveHelper() instanceof SlimeEntity.MoveHelperController;
+        }
+
+        public void tick()
+        {
+            if (--this.nextRandomizeTime <= 0)
+            {
+                this.nextRandomizeTime = 40 + this.slime.getRNG().nextInt(60);
+                this.chosenDegrees = (float)this.slime.getRNG().nextInt(360);
+            }
+
+            ((SlimeEntity.MoveHelperController)this.slime.getMoveHelper()).setDirection(this.chosenDegrees, false);
+        }
+    }
+
+    static class FloatGoal extends Goal
+    {
+        private final SlimeEntity slime;
+
+        public FloatGoal(SlimeEntity slimeIn)
+        {
+            this.slime = slimeIn;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
+            slimeIn.getNavigator().setCanSwim(true);
+        }
+
+        public boolean shouldExecute()
+        {
+            return (this.slime.isInWater() || this.slime.isInLava()) && this.slime.getMoveHelper() instanceof SlimeEntity.MoveHelperController;
+        }
+
+        public void tick()
+        {
+            if (this.slime.getRNG().nextFloat() < 0.8F)
+            {
+                this.slime.getJumpController().setJumping();
+            }
+
+            ((SlimeEntity.MoveHelperController)this.slime.getMoveHelper()).setSpeed(1.2D);
+        }
+    }
+
+    static class HopGoal extends Goal
+    {
+        private final SlimeEntity slime;
+
+        public HopGoal(SlimeEntity slimeIn)
+        {
+            this.slime = slimeIn;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
+        }
+
+        public boolean shouldExecute()
+        {
+            return !this.slime.isPassenger();
+        }
+
+        public void tick()
+        {
+            ((SlimeEntity.MoveHelperController)this.slime.getMoveHelper()).setSpeed(1.0D);
+        }
+    }
+
+    static class MoveHelperController extends MovementController
+    {
+        private float yRot;
+        private int jumpDelay;
+        private final SlimeEntity slime;
+        private boolean isAggressive;
+
+        public MoveHelperController(SlimeEntity slimeIn)
+        {
+            super(slimeIn);
+            this.slime = slimeIn;
+            this.yRot = 180.0F * slimeIn.rotationYaw / (float)Math.PI;
+        }
+
+        public void setDirection(float yRotIn, boolean aggressive)
+        {
+            this.yRot = yRotIn;
+            this.isAggressive = aggressive;
+        }
+
+        public void setSpeed(double speedIn)
+        {
+            this.speed = speedIn;
+            this.action = MovementController.Action.MOVE_TO;
+        }
+
+        public void tick()
+        {
+            this.mob.rotationYaw = this.limitAngle(this.mob.rotationYaw, this.yRot, 90.0F);
+            this.mob.rotationYawHead = this.mob.rotationYaw;
+            this.mob.renderYawOffset = this.mob.rotationYaw;
+
+            if (this.action != MovementController.Action.MOVE_TO)
+            {
+                this.mob.setMoveForward(0.0F);
+            }
+            else
+            {
+                this.action = MovementController.Action.WAIT;
+
+                if (this.mob.isOnGround())
+                {
+                    this.mob.setAIMoveSpeed((float)(this.speed * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
+
+                    if (this.jumpDelay-- <= 0)
+                    {
+                        this.jumpDelay = this.slime.getJumpDelay();
+
+                        if (this.isAggressive)
+                        {
+                            this.jumpDelay /= 3;
+                        }
+
+                        this.slime.getJumpController().setJumping();
+
+                        if (this.slime.makesSoundOnJump())
+                        {
+                            this.slime.playSound(this.slime.getJumpSound(), this.slime.getSoundVolume(), this.slime.func_234304_m_());
+                        }
+                    }
+                    else
+                    {
+                        this.slime.moveStrafing = 0.0F;
+                        this.slime.moveForward = 0.0F;
+                        this.mob.setAIMoveSpeed(0.0F);
+                    }
+                }
+                else
+                {
+                    this.mob.setAIMoveSpeed((float)(this.speed * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
+                }
+            }
+        }
+    }
 }

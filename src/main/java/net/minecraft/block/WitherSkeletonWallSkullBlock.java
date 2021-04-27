@@ -6,12 +6,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class WitherSkeletonWallSkullBlock extends WallSkullBlock {
-   protected WitherSkeletonWallSkullBlock(AbstractBlock.Properties p_i48292_1_) {
-      super(SkullBlock.Types.WITHER_SKELETON, p_i48292_1_);
-   }
+public class WitherSkeletonWallSkullBlock extends WallSkullBlock
+{
+    protected WitherSkeletonWallSkullBlock(AbstractBlock.Properties properties)
+    {
+        super(SkullBlock.Types.WITHER_SKELETON, properties);
+    }
 
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, @Nullable LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      Blocks.WITHER_SKELETON_SKULL.setPlacedBy(p_180633_1_, p_180633_2_, p_180633_3_, p_180633_4_, p_180633_5_);
-   }
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack)
+    {
+        Blocks.WITHER_SKELETON_SKULL.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+    }
 }

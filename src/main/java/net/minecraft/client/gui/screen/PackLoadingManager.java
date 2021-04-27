@@ -13,221 +13,255 @@ import net.minecraft.resources.ResourcePackInfo;
 import net.minecraft.resources.ResourcePackList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class PackLoadingManager {
-   private final ResourcePackList repository;
-   private final List<ResourcePackInfo> selected;
-   private final List<ResourcePackInfo> unselected;
-   private final Function<ResourcePackInfo, ResourceLocation> iconGetter;
-   private final Runnable onListChanged;
-   private final Consumer<ResourcePackList> output;
+public class PackLoadingManager
+{
+    private final ResourcePackList field_241617_a_;
+    private final List<ResourcePackInfo> field_238860_a_;
+    private final List<ResourcePackInfo> field_238861_b_;
+    private final Function<ResourcePackInfo, ResourceLocation> field_243388_d;
+    private final Runnable field_238863_d_;
+    private final Consumer<ResourcePackList> field_238864_e_;
 
-   public PackLoadingManager(Runnable p_i242059_1_, Function<ResourcePackInfo, ResourceLocation> p_i242059_2_, ResourcePackList p_i242059_3_, Consumer<ResourcePackList> p_i242059_4_) {
-      this.onListChanged = p_i242059_1_;
-      this.iconGetter = p_i242059_2_;
-      this.repository = p_i242059_3_;
-      this.selected = Lists.newArrayList(p_i242059_3_.getSelectedPacks());
-      Collections.reverse(this.selected);
-      this.unselected = Lists.newArrayList(p_i242059_3_.getAvailablePacks());
-      this.unselected.removeAll(this.selected);
-      this.output = p_i242059_4_;
-   }
+    public PackLoadingManager(Runnable p_i242059_1_, Function<ResourcePackInfo, ResourceLocation> p_i242059_2_, ResourcePackList p_i242059_3_, Consumer<ResourcePackList> p_i242059_4_)
+    {
+        this.field_238863_d_ = p_i242059_1_;
+        this.field_243388_d = p_i242059_2_;
+        this.field_241617_a_ = p_i242059_3_;
+        this.field_238860_a_ = Lists.newArrayList(p_i242059_3_.getEnabledPacks());
+        Collections.reverse(this.field_238860_a_);
+        this.field_238861_b_ = Lists.newArrayList(p_i242059_3_.getAllPacks());
+        this.field_238861_b_.removeAll(this.field_238860_a_);
+        this.field_238864_e_ = p_i242059_4_;
+    }
 
-   public Stream<PackLoadingManager.IPack> getUnselected() {
-      return this.unselected.stream().map((p_238870_1_) -> {
-         return new PackLoadingManager.DisabledPack(p_238870_1_);
-      });
-   }
+    public Stream<PackLoadingManager.IPack> func_238865_a_()
+    {
+        return this.field_238861_b_.stream().map((p_238870_1_) ->
+        {
+            return new PackLoadingManager.DisabledPack(p_238870_1_);
+        });
+    }
 
-   public Stream<PackLoadingManager.IPack> getSelected() {
-      return this.selected.stream().map((p_238866_1_) -> {
-         return new PackLoadingManager.EnabledPack(p_238866_1_);
-      });
-   }
+    public Stream<PackLoadingManager.IPack> func_238869_b_()
+    {
+        return this.field_238860_a_.stream().map((p_238866_1_) ->
+        {
+            return new PackLoadingManager.EnabledPack(p_238866_1_);
+        });
+    }
 
-   public void commit() {
-      this.repository.setSelected(Lists.reverse(this.selected).stream().map(ResourcePackInfo::getId).collect(ImmutableList.toImmutableList()));
-      this.output.accept(this.repository);
-   }
+    public void func_241618_c_()
+    {
+        this.field_241617_a_.setEnabledPacks(Lists.reverse(this.field_238860_a_).stream().map(ResourcePackInfo::getName).collect(ImmutableList.toImmutableList()));
+        this.field_238864_e_.accept(this.field_241617_a_);
+    }
 
-   public void findNewPacks() {
-      this.repository.reload();
-      this.selected.retainAll(this.repository.getAvailablePacks());
-      this.unselected.clear();
-      this.unselected.addAll(this.repository.getAvailablePacks());
-      this.unselected.removeAll(this.selected);
-   }
+    public void func_241619_d_()
+    {
+        this.field_241617_a_.reloadPacksFromFinders();
+        this.field_238860_a_.retainAll(this.field_241617_a_.getAllPacks());
+        this.field_238861_b_.clear();
+        this.field_238861_b_.addAll(this.field_241617_a_.getAllPacks());
+        this.field_238861_b_.removeAll(this.field_238860_a_);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   abstract class AbstractPack implements PackLoadingManager.IPack {
-      private final ResourcePackInfo pack;
+    abstract class AbstractPack implements PackLoadingManager.IPack
+    {
+        private final ResourcePackInfo field_238878_b_;
 
-      public AbstractPack(ResourcePackInfo p_i232297_2_) {
-         this.pack = p_i232297_2_;
-      }
+        public AbstractPack(ResourcePackInfo p_i232297_2_)
+        {
+            this.field_238878_b_ = p_i232297_2_;
+        }
 
-      protected abstract List<ResourcePackInfo> getSelfList();
+        protected abstract List<ResourcePackInfo> func_230474_q_();
 
-      protected abstract List<ResourcePackInfo> getOtherList();
+        protected abstract List<ResourcePackInfo> func_230475_r_();
 
-      public ResourceLocation getIconTexture() {
-         return PackLoadingManager.this.iconGetter.apply(this.pack);
-      }
+        public ResourceLocation func_241868_a()
+        {
+            return PackLoadingManager.this.field_243388_d.apply(this.field_238878_b_);
+        }
 
-      public PackCompatibility getCompatibility() {
-         return this.pack.getCompatibility();
-      }
+        public PackCompatibility func_230460_a_()
+        {
+            return this.field_238878_b_.getCompatibility();
+        }
 
-      public ITextComponent getTitle() {
-         return this.pack.getTitle();
-      }
+        public ITextComponent func_230462_b_()
+        {
+            return this.field_238878_b_.getTitle();
+        }
 
-      public ITextComponent getDescription() {
-         return this.pack.getDescription();
-      }
+        public ITextComponent func_230463_c_()
+        {
+            return this.field_238878_b_.getDescription();
+        }
 
-      public IPackNameDecorator getPackSource() {
-         return this.pack.getPackSource();
-      }
+        public IPackNameDecorator func_230464_d_()
+        {
+            return this.field_238878_b_.getDecorator();
+        }
 
-      public boolean isFixedPosition() {
-         return this.pack.isFixedPosition();
-      }
+        public boolean func_230465_f_()
+        {
+            return this.field_238878_b_.isOrderLocked();
+        }
 
-      public boolean isRequired() {
-         return this.pack.isRequired();
-      }
+        public boolean func_230466_g_()
+        {
+            return this.field_238878_b_.isAlwaysEnabled();
+        }
 
-      protected void toggleSelection() {
-         this.getSelfList().remove(this.pack);
-         this.pack.getDefaultPosition().insert(this.getOtherList(), this.pack, Function.identity(), true);
-         PackLoadingManager.this.onListChanged.run();
-      }
+        protected void func_238880_s_()
+        {
+            this.func_230474_q_().remove(this.field_238878_b_);
+            this.field_238878_b_.getPriority().insert(this.func_230475_r_(), this.field_238878_b_, Function.identity(), true);
+            PackLoadingManager.this.field_238863_d_.run();
+        }
 
-      protected void move(int p_238879_1_) {
-         List<ResourcePackInfo> list = this.getSelfList();
-         int i = list.indexOf(this.pack);
-         list.remove(i);
-         list.add(i + p_238879_1_, this.pack);
-         PackLoadingManager.this.onListChanged.run();
-      }
+        protected void func_238879_a_(int p_238879_1_)
+        {
+            List<ResourcePackInfo> list = this.func_230474_q_();
+            int i = list.indexOf(this.field_238878_b_);
+            list.remove(i);
+            list.add(i + p_238879_1_, this.field_238878_b_);
+            PackLoadingManager.this.field_238863_d_.run();
+        }
 
-      public boolean canMoveUp() {
-         List<ResourcePackInfo> list = this.getSelfList();
-         int i = list.indexOf(this.pack);
-         return i > 0 && !list.get(i - 1).isFixedPosition();
-      }
+        public boolean func_230469_o_()
+        {
+            List<ResourcePackInfo> list = this.func_230474_q_();
+            int i = list.indexOf(this.field_238878_b_);
+            return i > 0 && !list.get(i - 1).isOrderLocked();
+        }
 
-      public void moveUp() {
-         this.move(-1);
-      }
+        public void func_230467_j_()
+        {
+            this.func_238879_a_(-1);
+        }
 
-      public boolean canMoveDown() {
-         List<ResourcePackInfo> list = this.getSelfList();
-         int i = list.indexOf(this.pack);
-         return i >= 0 && i < list.size() - 1 && !list.get(i + 1).isFixedPosition();
-      }
+        public boolean func_230470_p_()
+        {
+            List<ResourcePackInfo> list = this.func_230474_q_();
+            int i = list.indexOf(this.field_238878_b_);
+            return i >= 0 && i < list.size() - 1 && !list.get(i + 1).isOrderLocked();
+        }
 
-      public void moveDown() {
-         this.move(1);
-      }
-   }
+        public void func_230468_k_()
+        {
+            this.func_238879_a_(1);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   class DisabledPack extends PackLoadingManager.AbstractPack {
-      public DisabledPack(ResourcePackInfo p_i232299_2_) {
-         super(p_i232299_2_);
-      }
+    class DisabledPack extends PackLoadingManager.AbstractPack
+    {
+        public DisabledPack(ResourcePackInfo p_i232299_2_)
+        {
+            super(p_i232299_2_);
+        }
 
-      protected List<ResourcePackInfo> getSelfList() {
-         return PackLoadingManager.this.unselected;
-      }
+        protected List<ResourcePackInfo> func_230474_q_()
+        {
+            return PackLoadingManager.this.field_238861_b_;
+        }
 
-      protected List<ResourcePackInfo> getOtherList() {
-         return PackLoadingManager.this.selected;
-      }
+        protected List<ResourcePackInfo> func_230475_r_()
+        {
+            return PackLoadingManager.this.field_238860_a_;
+        }
 
-      public boolean isSelected() {
-         return false;
-      }
+        public boolean func_230473_l_()
+        {
+            return false;
+        }
 
-      public void select() {
-         this.toggleSelection();
-      }
+        public void func_230471_h_()
+        {
+            this.func_238880_s_();
+        }
 
-      public void unselect() {
-      }
-   }
+        public void func_230472_i_()
+        {
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   class EnabledPack extends PackLoadingManager.AbstractPack {
-      public EnabledPack(ResourcePackInfo p_i232298_2_) {
-         super(p_i232298_2_);
-      }
+    class EnabledPack extends PackLoadingManager.AbstractPack
+    {
+        public EnabledPack(ResourcePackInfo p_i232298_2_)
+        {
+            super(p_i232298_2_);
+        }
 
-      protected List<ResourcePackInfo> getSelfList() {
-         return PackLoadingManager.this.selected;
-      }
+        protected List<ResourcePackInfo> func_230474_q_()
+        {
+            return PackLoadingManager.this.field_238860_a_;
+        }
 
-      protected List<ResourcePackInfo> getOtherList() {
-         return PackLoadingManager.this.unselected;
-      }
+        protected List<ResourcePackInfo> func_230475_r_()
+        {
+            return PackLoadingManager.this.field_238861_b_;
+        }
 
-      public boolean isSelected() {
-         return true;
-      }
+        public boolean func_230473_l_()
+        {
+            return true;
+        }
 
-      public void select() {
-      }
+        public void func_230471_h_()
+        {
+        }
 
-      public void unselect() {
-         this.toggleSelection();
-      }
-   }
+        public void func_230472_i_()
+        {
+            this.func_238880_s_();
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public interface IPack {
-      ResourceLocation getIconTexture();
+    public interface IPack
+    {
+        ResourceLocation func_241868_a();
 
-      PackCompatibility getCompatibility();
+        PackCompatibility func_230460_a_();
 
-      ITextComponent getTitle();
+        ITextComponent func_230462_b_();
 
-      ITextComponent getDescription();
+        ITextComponent func_230463_c_();
 
-      IPackNameDecorator getPackSource();
+        IPackNameDecorator func_230464_d_();
 
-      default ITextComponent getExtendedDescription() {
-         return this.getPackSource().decorate(this.getDescription());
-      }
+    default ITextComponent func_243390_f()
+        {
+            return this.func_230464_d_().decorate(this.func_230463_c_());
+        }
 
-      boolean isFixedPosition();
+        boolean func_230465_f_();
 
-      boolean isRequired();
+        boolean func_230466_g_();
 
-      void select();
+        void func_230471_h_();
 
-      void unselect();
+        void func_230472_i_();
 
-      void moveUp();
+        void func_230467_j_();
 
-      void moveDown();
+        void func_230468_k_();
 
-      boolean isSelected();
+        boolean func_230473_l_();
 
-      default boolean canSelect() {
-         return !this.isSelected();
-      }
+    default boolean func_238875_m_()
+        {
+            return !this.func_230473_l_();
+        }
 
-      default boolean canUnselect() {
-         return this.isSelected() && !this.isRequired();
-      }
+    default boolean func_238876_n_()
+        {
+            return this.func_230473_l_() && !this.func_230466_g_();
+        }
 
-      boolean canMoveUp();
+        boolean func_230469_o_();
 
-      boolean canMoveDown();
-   }
+        boolean func_230470_p_();
+    }
 }

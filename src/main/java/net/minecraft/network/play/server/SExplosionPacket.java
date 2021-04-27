@@ -9,124 +9,140 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SExplosionPacket implements IPacket<IClientPlayNetHandler> {
-   private double x;
-   private double y;
-   private double z;
-   private float power;
-   private List<BlockPos> toBlow;
-   private float knockbackX;
-   private float knockbackY;
-   private float knockbackZ;
+public class SExplosionPacket implements IPacket<IClientPlayNetHandler>
+{
+    private double posX;
+    private double posY;
+    private double posZ;
+    private float strength;
+    private List<BlockPos> affectedBlockPositions;
+    private float motionX;
+    private float motionY;
+    private float motionZ;
 
-   public SExplosionPacket() {
-   }
+    public SExplosionPacket()
+    {
+    }
 
-   public SExplosionPacket(double p_i47099_1_, double p_i47099_3_, double p_i47099_5_, float p_i47099_7_, List<BlockPos> p_i47099_8_, Vector3d p_i47099_9_) {
-      this.x = p_i47099_1_;
-      this.y = p_i47099_3_;
-      this.z = p_i47099_5_;
-      this.power = p_i47099_7_;
-      this.toBlow = Lists.newArrayList(p_i47099_8_);
-      if (p_i47099_9_ != null) {
-         this.knockbackX = (float)p_i47099_9_.x;
-         this.knockbackY = (float)p_i47099_9_.y;
-         this.knockbackZ = (float)p_i47099_9_.z;
-      }
+    public SExplosionPacket(double xIn, double yIn, double zIn, float strengthIn, List<BlockPos> affectedBlockPositionsIn, Vector3d motion)
+    {
+        this.posX = xIn;
+        this.posY = yIn;
+        this.posZ = zIn;
+        this.strength = strengthIn;
+        this.affectedBlockPositions = Lists.newArrayList(affectedBlockPositionsIn);
 
-   }
+        if (motion != null)
+        {
+            this.motionX = (float)motion.x;
+            this.motionY = (float)motion.y;
+            this.motionZ = (float)motion.z;
+        }
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.x = (double)p_148837_1_.readFloat();
-      this.y = (double)p_148837_1_.readFloat();
-      this.z = (double)p_148837_1_.readFloat();
-      this.power = p_148837_1_.readFloat();
-      int i = p_148837_1_.readInt();
-      this.toBlow = Lists.newArrayListWithCapacity(i);
-      int j = MathHelper.floor(this.x);
-      int k = MathHelper.floor(this.y);
-      int l = MathHelper.floor(this.z);
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.posX = (double)buf.readFloat();
+        this.posY = (double)buf.readFloat();
+        this.posZ = (double)buf.readFloat();
+        this.strength = buf.readFloat();
+        int i = buf.readInt();
+        this.affectedBlockPositions = Lists.newArrayListWithCapacity(i);
+        int j = MathHelper.floor(this.posX);
+        int k = MathHelper.floor(this.posY);
+        int l = MathHelper.floor(this.posZ);
 
-      for(int i1 = 0; i1 < i; ++i1) {
-         int j1 = p_148837_1_.readByte() + j;
-         int k1 = p_148837_1_.readByte() + k;
-         int l1 = p_148837_1_.readByte() + l;
-         this.toBlow.add(new BlockPos(j1, k1, l1));
-      }
+        for (int i1 = 0; i1 < i; ++i1)
+        {
+            int j1 = buf.readByte() + j;
+            int k1 = buf.readByte() + k;
+            int l1 = buf.readByte() + l;
+            this.affectedBlockPositions.add(new BlockPos(j1, k1, l1));
+        }
 
-      this.knockbackX = p_148837_1_.readFloat();
-      this.knockbackY = p_148837_1_.readFloat();
-      this.knockbackZ = p_148837_1_.readFloat();
-   }
+        this.motionX = buf.readFloat();
+        this.motionY = buf.readFloat();
+        this.motionZ = buf.readFloat();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeFloat((float)this.x);
-      p_148840_1_.writeFloat((float)this.y);
-      p_148840_1_.writeFloat((float)this.z);
-      p_148840_1_.writeFloat(this.power);
-      p_148840_1_.writeInt(this.toBlow.size());
-      int i = MathHelper.floor(this.x);
-      int j = MathHelper.floor(this.y);
-      int k = MathHelper.floor(this.z);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeFloat((float)this.posX);
+        buf.writeFloat((float)this.posY);
+        buf.writeFloat((float)this.posZ);
+        buf.writeFloat(this.strength);
+        buf.writeInt(this.affectedBlockPositions.size());
+        int i = MathHelper.floor(this.posX);
+        int j = MathHelper.floor(this.posY);
+        int k = MathHelper.floor(this.posZ);
 
-      for(BlockPos blockpos : this.toBlow) {
-         int l = blockpos.getX() - i;
-         int i1 = blockpos.getY() - j;
-         int j1 = blockpos.getZ() - k;
-         p_148840_1_.writeByte(l);
-         p_148840_1_.writeByte(i1);
-         p_148840_1_.writeByte(j1);
-      }
+        for (BlockPos blockpos : this.affectedBlockPositions)
+        {
+            int l = blockpos.getX() - i;
+            int i1 = blockpos.getY() - j;
+            int j1 = blockpos.getZ() - k;
+            buf.writeByte(l);
+            buf.writeByte(i1);
+            buf.writeByte(j1);
+        }
 
-      p_148840_1_.writeFloat(this.knockbackX);
-      p_148840_1_.writeFloat(this.knockbackY);
-      p_148840_1_.writeFloat(this.knockbackZ);
-   }
+        buf.writeFloat(this.motionX);
+        buf.writeFloat(this.motionY);
+        buf.writeFloat(this.motionZ);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleExplosion(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleExplosion(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getKnockbackX() {
-      return this.knockbackX;
-   }
+    public float getMotionX()
+    {
+        return this.motionX;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getKnockbackY() {
-      return this.knockbackY;
-   }
+    public float getMotionY()
+    {
+        return this.motionY;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getKnockbackZ() {
-      return this.knockbackZ;
-   }
+    public float getMotionZ()
+    {
+        return this.motionZ;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getX() {
-      return this.x;
-   }
+    public double getX()
+    {
+        return this.posX;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getY() {
-      return this.y;
-   }
+    public double getY()
+    {
+        return this.posY;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ()
+    {
+        return this.posZ;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public float getPower() {
-      return this.power;
-   }
+    public float getStrength()
+    {
+        return this.strength;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public List<BlockPos> getToBlow() {
-      return this.toBlow;
-   }
+    public List<BlockPos> getAffectedBlockPositions()
+    {
+        return this.affectedBlockPositions;
+    }
 }

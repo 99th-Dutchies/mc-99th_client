@@ -17,53 +17,69 @@ import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class Vec3Argument implements ArgumentType<ILocationArgument> {
-   private static final Collection<String> EXAMPLES = Arrays.asList("0 0 0", "~ ~ ~", "^ ^ ^", "^1 ^ ^-5", "0.1 -0.5 .9", "~0.5 ~1 ~-5");
-   public static final SimpleCommandExceptionType ERROR_NOT_COMPLETE = new SimpleCommandExceptionType(new TranslationTextComponent("argument.pos3d.incomplete"));
-   public static final SimpleCommandExceptionType ERROR_MIXED_TYPE = new SimpleCommandExceptionType(new TranslationTextComponent("argument.pos.mixed"));
-   private final boolean centerCorrect;
+public class Vec3Argument implements ArgumentType<ILocationArgument>
+{
+    private static final Collection<String> EXAMPLES = Arrays.asList("0 0 0", "~ ~ ~", "^ ^ ^", "^1 ^ ^-5", "0.1 -0.5 .9", "~0.5 ~1 ~-5");
+    public static final SimpleCommandExceptionType POS_INCOMPLETE = new SimpleCommandExceptionType(new TranslationTextComponent("argument.pos3d.incomplete"));
+    public static final SimpleCommandExceptionType POS_MIXED_TYPES = new SimpleCommandExceptionType(new TranslationTextComponent("argument.pos.mixed"));
+    private final boolean centerIntegers;
 
-   public Vec3Argument(boolean p_i47964_1_) {
-      this.centerCorrect = p_i47964_1_;
-   }
+    public Vec3Argument(boolean centerIntegersIn)
+    {
+        this.centerIntegers = centerIntegersIn;
+    }
 
-   public static Vec3Argument vec3() {
-      return new Vec3Argument(true);
-   }
+    public static Vec3Argument vec3()
+    {
+        return new Vec3Argument(true);
+    }
 
-   public static Vec3Argument vec3(boolean p_197303_0_) {
-      return new Vec3Argument(p_197303_0_);
-   }
+    public static Vec3Argument vec3(boolean centerIntegersIn)
+    {
+        return new Vec3Argument(centerIntegersIn);
+    }
 
-   public static Vector3d getVec3(CommandContext<CommandSource> p_197300_0_, String p_197300_1_) throws CommandSyntaxException {
-      return p_197300_0_.getArgument(p_197300_1_, ILocationArgument.class).getPosition(p_197300_0_.getSource());
-   }
+    public static Vector3d getVec3(CommandContext<CommandSource> context, String name) throws CommandSyntaxException
+    {
+        return context.getArgument(name, ILocationArgument.class).getPosition(context.getSource());
+    }
 
-   public static ILocationArgument getCoordinates(CommandContext<CommandSource> p_200385_0_, String p_200385_1_) {
-      return p_200385_0_.getArgument(p_200385_1_, ILocationArgument.class);
-   }
+    public static ILocationArgument getLocation(CommandContext<CommandSource> context, String name)
+    {
+        return context.getArgument(name, ILocationArgument.class);
+    }
 
-   public ILocationArgument parse(StringReader p_parse_1_) throws CommandSyntaxException {
-      return (ILocationArgument)(p_parse_1_.canRead() && p_parse_1_.peek() == '^' ? LocalLocationArgument.parse(p_parse_1_) : LocationInput.parseDouble(p_parse_1_, this.centerCorrect));
-   }
+    public ILocationArgument parse(StringReader p_parse_1_) throws CommandSyntaxException
+    {
+        return (ILocationArgument)(p_parse_1_.canRead() && p_parse_1_.peek() == '^' ? LocalLocationArgument.parse(p_parse_1_) : LocationInput.parseDouble(p_parse_1_, this.centerIntegers));
+    }
 
-   public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_listSuggestions_1_, SuggestionsBuilder p_listSuggestions_2_) {
-      if (!(p_listSuggestions_1_.getSource() instanceof ISuggestionProvider)) {
-         return Suggestions.empty();
-      } else {
-         String s = p_listSuggestions_2_.getRemaining();
-         Collection<ISuggestionProvider.Coordinates> collection;
-         if (!s.isEmpty() && s.charAt(0) == '^') {
-            collection = Collections.singleton(ISuggestionProvider.Coordinates.DEFAULT_LOCAL);
-         } else {
-            collection = ((ISuggestionProvider)p_listSuggestions_1_.getSource()).getAbsoluteCoordinates();
-         }
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_listSuggestions_1_, SuggestionsBuilder p_listSuggestions_2_)
+    {
+        if (!(p_listSuggestions_1_.getSource() instanceof ISuggestionProvider))
+        {
+            return Suggestions.empty();
+        }
+        else
+        {
+            String s = p_listSuggestions_2_.getRemaining();
+            Collection<ISuggestionProvider.Coordinates> collection;
 
-         return ISuggestionProvider.suggestCoordinates(s, collection, p_listSuggestions_2_, Commands.createValidator(this::parse));
-      }
-   }
+            if (!s.isEmpty() && s.charAt(0) == '^')
+            {
+                collection = Collections.singleton(ISuggestionProvider.Coordinates.DEFAULT_LOCAL);
+            }
+            else
+            {
+                collection = ((ISuggestionProvider)p_listSuggestions_1_.getSource()).func_217293_r();
+            }
 
-   public Collection<String> getExamples() {
-      return EXAMPLES;
-   }
+            return ISuggestionProvider.func_209000_a(s, collection, p_listSuggestions_2_, Commands.predicate(this::parse));
+        }
+    }
+
+    public Collection<String> getExamples()
+    {
+        return EXAMPLES;
+    }
 }

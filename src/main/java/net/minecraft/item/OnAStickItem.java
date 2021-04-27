@@ -9,40 +9,54 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
-public class OnAStickItem<T extends Entity & IRideable> extends Item {
-   private final EntityType<T> canInteractWith;
-   private final int consumeItemDamage;
+public class OnAStickItem<T extends Entity & IRideable> extends Item
+{
+    private final EntityType<T> temptedEntity;
+    private final int damageAmount;
 
-   public OnAStickItem(Item.Properties p_i231594_1_, EntityType<T> p_i231594_2_, int p_i231594_3_) {
-      super(p_i231594_1_);
-      this.canInteractWith = p_i231594_2_;
-      this.consumeItemDamage = p_i231594_3_;
-   }
+    public OnAStickItem(Item.Properties properties, EntityType<T> temptedEntity, int damageAmount)
+    {
+        super(properties);
+        this.temptedEntity = temptedEntity;
+        this.damageAmount = damageAmount;
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      if (p_77659_1_.isClientSide) {
-         return ActionResult.pass(itemstack);
-      } else {
-         Entity entity = p_77659_2_.getVehicle();
-         if (p_77659_2_.isPassenger() && entity instanceof IRideable && entity.getType() == this.canInteractWith) {
-            IRideable irideable = (IRideable)entity;
-            if (irideable.boost()) {
-               itemstack.hurtAndBreak(this.consumeItemDamage, p_77659_2_, (p_234682_1_) -> {
-                  p_234682_1_.broadcastBreakEvent(p_77659_3_);
-               });
-               if (itemstack.isEmpty()) {
-                  ItemStack itemstack1 = new ItemStack(Items.FISHING_ROD);
-                  itemstack1.setTag(itemstack.getTag());
-                  return ActionResult.success(itemstack1);
-               }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
 
-               return ActionResult.success(itemstack);
+        if (worldIn.isRemote)
+        {
+            return ActionResult.resultPass(itemstack);
+        }
+        else
+        {
+            Entity entity = playerIn.getRidingEntity();
+
+            if (playerIn.isPassenger() && entity instanceof IRideable && entity.getType() == this.temptedEntity)
+            {
+                IRideable irideable = (IRideable)entity;
+
+                if (irideable.boost())
+                {
+                    itemstack.damageItem(this.damageAmount, playerIn, (player) ->
+                    {
+                        player.sendBreakAnimation(handIn);
+                    });
+
+                    if (itemstack.isEmpty())
+                    {
+                        ItemStack itemstack1 = new ItemStack(Items.FISHING_ROD);
+                        itemstack1.setTag(itemstack.getTag());
+                        return ActionResult.resultSuccess(itemstack1);
+                    }
+
+                    return ActionResult.resultSuccess(itemstack);
+                }
             }
-         }
 
-         p_77659_2_.awardStat(Stats.ITEM_USED.get(this));
-         return ActionResult.pass(itemstack);
-      }
-   }
+            playerIn.addStat(Stats.ITEM_USED.get(this));
+            return ActionResult.resultPass(itemstack);
+        }
+    }
 }

@@ -9,137 +9,150 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SSpawnMobPacket implements IPacket<IClientPlayNetHandler> {
-   private int id;
-   private UUID uuid;
-   private int type;
-   private double x;
-   private double y;
-   private double z;
-   private int xd;
-   private int yd;
-   private int zd;
-   private byte yRot;
-   private byte xRot;
-   private byte yHeadRot;
+public class SSpawnMobPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private UUID uniqueId;
+    private int type;
+    private double x;
+    private double y;
+    private double z;
+    private int velocityX;
+    private int velocityY;
+    private int velocityZ;
+    private byte yaw;
+    private byte pitch;
+    private byte headPitch;
 
-   public SSpawnMobPacket() {
-   }
+    public SSpawnMobPacket()
+    {
+    }
 
-   public SSpawnMobPacket(LivingEntity p_i46973_1_) {
-      this.id = p_i46973_1_.getId();
-      this.uuid = p_i46973_1_.getUUID();
-      this.type = Registry.ENTITY_TYPE.getId(p_i46973_1_.getType());
-      this.x = p_i46973_1_.getX();
-      this.y = p_i46973_1_.getY();
-      this.z = p_i46973_1_.getZ();
-      this.yRot = (byte)((int)(p_i46973_1_.yRot * 256.0F / 360.0F));
-      this.xRot = (byte)((int)(p_i46973_1_.xRot * 256.0F / 360.0F));
-      this.yHeadRot = (byte)((int)(p_i46973_1_.yHeadRot * 256.0F / 360.0F));
-      double d0 = 3.9D;
-      Vector3d vector3d = p_i46973_1_.getDeltaMovement();
-      double d1 = MathHelper.clamp(vector3d.x, -3.9D, 3.9D);
-      double d2 = MathHelper.clamp(vector3d.y, -3.9D, 3.9D);
-      double d3 = MathHelper.clamp(vector3d.z, -3.9D, 3.9D);
-      this.xd = (int)(d1 * 8000.0D);
-      this.yd = (int)(d2 * 8000.0D);
-      this.zd = (int)(d3 * 8000.0D);
-   }
+    public SSpawnMobPacket(LivingEntity entityIn)
+    {
+        this.entityId = entityIn.getEntityId();
+        this.uniqueId = entityIn.getUniqueID();
+        this.type = Registry.ENTITY_TYPE.getId(entityIn.getType());
+        this.x = entityIn.getPosX();
+        this.y = entityIn.getPosY();
+        this.z = entityIn.getPosZ();
+        this.yaw = (byte)((int)(entityIn.rotationYaw * 256.0F / 360.0F));
+        this.pitch = (byte)((int)(entityIn.rotationPitch * 256.0F / 360.0F));
+        this.headPitch = (byte)((int)(entityIn.rotationYawHead * 256.0F / 360.0F));
+        double d0 = 3.9D;
+        Vector3d vector3d = entityIn.getMotion();
+        double d1 = MathHelper.clamp(vector3d.x, -3.9D, 3.9D);
+        double d2 = MathHelper.clamp(vector3d.y, -3.9D, 3.9D);
+        double d3 = MathHelper.clamp(vector3d.z, -3.9D, 3.9D);
+        this.velocityX = (int)(d1 * 8000.0D);
+        this.velocityY = (int)(d2 * 8000.0D);
+        this.velocityZ = (int)(d3 * 8000.0D);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readVarInt();
-      this.uuid = p_148837_1_.readUUID();
-      this.type = p_148837_1_.readVarInt();
-      this.x = p_148837_1_.readDouble();
-      this.y = p_148837_1_.readDouble();
-      this.z = p_148837_1_.readDouble();
-      this.yRot = p_148837_1_.readByte();
-      this.xRot = p_148837_1_.readByte();
-      this.yHeadRot = p_148837_1_.readByte();
-      this.xd = p_148837_1_.readShort();
-      this.yd = p_148837_1_.readShort();
-      this.zd = p_148837_1_.readShort();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.uniqueId = buf.readUniqueId();
+        this.type = buf.readVarInt();
+        this.x = buf.readDouble();
+        this.y = buf.readDouble();
+        this.z = buf.readDouble();
+        this.yaw = buf.readByte();
+        this.pitch = buf.readByte();
+        this.headPitch = buf.readByte();
+        this.velocityX = buf.readShort();
+        this.velocityY = buf.readShort();
+        this.velocityZ = buf.readShort();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.id);
-      p_148840_1_.writeUUID(this.uuid);
-      p_148840_1_.writeVarInt(this.type);
-      p_148840_1_.writeDouble(this.x);
-      p_148840_1_.writeDouble(this.y);
-      p_148840_1_.writeDouble(this.z);
-      p_148840_1_.writeByte(this.yRot);
-      p_148840_1_.writeByte(this.xRot);
-      p_148840_1_.writeByte(this.yHeadRot);
-      p_148840_1_.writeShort(this.xd);
-      p_148840_1_.writeShort(this.yd);
-      p_148840_1_.writeShort(this.zd);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeUniqueId(this.uniqueId);
+        buf.writeVarInt(this.type);
+        buf.writeDouble(this.x);
+        buf.writeDouble(this.y);
+        buf.writeDouble(this.z);
+        buf.writeByte(this.yaw);
+        buf.writeByte(this.pitch);
+        buf.writeByte(this.headPitch);
+        buf.writeShort(this.velocityX);
+        buf.writeShort(this.velocityY);
+        buf.writeShort(this.velocityZ);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleAddMob(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleSpawnMob(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int getEntityID()
+    {
+        return this.entityId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public UUID getUUID() {
-      return this.uuid;
-   }
+    public UUID getUniqueId()
+    {
+        return this.uniqueId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getType() {
-      return this.type;
-   }
+    public int getEntityType()
+    {
+        return this.type;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getX() {
-      return this.x;
-   }
+    public double getX()
+    {
+        return this.x;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getY() {
-      return this.y;
-   }
+    public double getY()
+    {
+        return this.y;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ()
+    {
+        return this.z;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getXd() {
-      return this.xd;
-   }
+    public int getVelocityX()
+    {
+        return this.velocityX;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getYd() {
-      return this.yd;
-   }
+    public int getVelocityY()
+    {
+        return this.velocityY;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getZd() {
-      return this.zd;
-   }
+    public int getVelocityZ()
+    {
+        return this.velocityZ;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getyRot() {
-      return this.yRot;
-   }
+    public byte getYaw()
+    {
+        return this.yaw;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getxRot() {
-      return this.xRot;
-   }
+    public byte getPitch()
+    {
+        return this.pitch;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getyHeadRot() {
-      return this.yHeadRot;
-   }
+    public byte getHeadPitch()
+    {
+        return this.headPitch;
+    }
 }

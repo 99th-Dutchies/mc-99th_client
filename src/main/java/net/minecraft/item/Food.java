@@ -5,87 +5,103 @@ import com.mojang.datafixers.util.Pair;
 import java.util.List;
 import net.minecraft.potion.EffectInstance;
 
-public class Food {
-   private final int nutrition;
-   private final float saturationModifier;
-   private final boolean isMeat;
-   private final boolean canAlwaysEat;
-   private final boolean fastFood;
-   private final List<Pair<EffectInstance, Float>> effects;
+public class Food
+{
+    private final int value;
+    private final float saturation;
+    private final boolean meat;
+    private final boolean canEatWhenFull;
+    private final boolean fastToEat;
+    private final List<Pair<EffectInstance, Float>> effects;
 
-   private Food(int p_i50106_1_, float p_i50106_2_, boolean p_i50106_3_, boolean p_i50106_4_, boolean p_i50106_5_, List<Pair<EffectInstance, Float>> p_i50106_6_) {
-      this.nutrition = p_i50106_1_;
-      this.saturationModifier = p_i50106_2_;
-      this.isMeat = p_i50106_3_;
-      this.canAlwaysEat = p_i50106_4_;
-      this.fastFood = p_i50106_5_;
-      this.effects = p_i50106_6_;
-   }
+    private Food(int healing, float saturationIn, boolean isMeat, boolean alwaysEdible, boolean fastEdible, List<Pair<EffectInstance, Float>> effectsIn)
+    {
+        this.value = healing;
+        this.saturation = saturationIn;
+        this.meat = isMeat;
+        this.canEatWhenFull = alwaysEdible;
+        this.fastToEat = fastEdible;
+        this.effects = effectsIn;
+    }
 
-   public int getNutrition() {
-      return this.nutrition;
-   }
+    public int getHealing()
+    {
+        return this.value;
+    }
 
-   public float getSaturationModifier() {
-      return this.saturationModifier;
-   }
+    public float getSaturation()
+    {
+        return this.saturation;
+    }
 
-   public boolean isMeat() {
-      return this.isMeat;
-   }
+    public boolean isMeat()
+    {
+        return this.meat;
+    }
 
-   public boolean canAlwaysEat() {
-      return this.canAlwaysEat;
-   }
+    public boolean canEatWhenFull()
+    {
+        return this.canEatWhenFull;
+    }
 
-   public boolean isFastFood() {
-      return this.fastFood;
-   }
+    public boolean isFastEating()
+    {
+        return this.fastToEat;
+    }
 
-   public List<Pair<EffectInstance, Float>> getEffects() {
-      return this.effects;
-   }
+    public List<Pair<EffectInstance, Float>> getEffects()
+    {
+        return this.effects;
+    }
 
-   public static class Builder {
-      private int nutrition;
-      private float saturationModifier;
-      private boolean isMeat;
-      private boolean canAlwaysEat;
-      private boolean fastFood;
-      private final List<Pair<EffectInstance, Float>> effects = Lists.newArrayList();
+    public static class Builder
+    {
+        private int value;
+        private float saturation;
+        private boolean meat;
+        private boolean alwaysEdible;
+        private boolean fastToEat;
+        private final List<Pair<EffectInstance, Float>> effects = Lists.newArrayList();
 
-      public Food.Builder nutrition(int p_221456_1_) {
-         this.nutrition = p_221456_1_;
-         return this;
-      }
+        public Food.Builder hunger(int hungerIn)
+        {
+            this.value = hungerIn;
+            return this;
+        }
 
-      public Food.Builder saturationMod(float p_221454_1_) {
-         this.saturationModifier = p_221454_1_;
-         return this;
-      }
+        public Food.Builder saturation(float saturationIn)
+        {
+            this.saturation = saturationIn;
+            return this;
+        }
 
-      public Food.Builder meat() {
-         this.isMeat = true;
-         return this;
-      }
+        public Food.Builder meat()
+        {
+            this.meat = true;
+            return this;
+        }
 
-      public Food.Builder alwaysEat() {
-         this.canAlwaysEat = true;
-         return this;
-      }
+        public Food.Builder setAlwaysEdible()
+        {
+            this.alwaysEdible = true;
+            return this;
+        }
 
-      public Food.Builder fast() {
-         this.fastFood = true;
-         return this;
-      }
+        public Food.Builder fastToEat()
+        {
+            this.fastToEat = true;
+            return this;
+        }
 
-      public Food.Builder effect(EffectInstance p_221452_1_, float p_221452_2_) {
-         this.effects.add(Pair.of(p_221452_1_, p_221452_2_));
-         return this;
-      }
+        public Food.Builder effect(EffectInstance effectIn, float probability)
+        {
+            this.effects.add(Pair.of(effectIn, probability));
+            return this;
+        }
 
-      public Food build() {
-         return new Food(this.nutrition, this.saturationModifier, this.isMeat, this.canAlwaysEat, this.fastFood, this.effects);
-      }
-   }
+        public Food build()
+        {
+            return new Food(this.value, this.saturation, this.meat, this.alwaysEdible, this.fastToEat, this.effects);
+        }
+    }
 }

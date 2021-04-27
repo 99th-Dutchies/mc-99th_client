@@ -16,147 +16,210 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3f;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
+import net.optifine.SmartAnimations;
+import net.optifine.reflect.Reflector;
+import net.optifine.shaders.Shaders;
+import org.apache.commons.lang3.tuple.Pair;
 
-@OnlyIn(Dist.CLIENT)
-public class OverlayRenderer {
-   private static final ResourceLocation UNDERWATER_LOCATION = new ResourceLocation("textures/misc/underwater.png");
+public class OverlayRenderer
+{
+    private static final ResourceLocation TEXTURE_UNDERWATER = new ResourceLocation("textures/misc/underwater.png");
 
-   public static void renderScreenEffect(Minecraft p_228734_0_, MatrixStack p_228734_1_) {
-      RenderSystem.disableAlphaTest();
-      PlayerEntity playerentity = p_228734_0_.player;
-      if (!playerentity.noPhysics) {
-         BlockState blockstate = getViewBlockingState(playerentity);
-         if (blockstate != null) {
-            renderTex(p_228734_0_, p_228734_0_.getBlockRenderer().getBlockModelShaper().getParticleIcon(blockstate), p_228734_1_);
-         }
-      }
+    public static void renderOverlays(Minecraft minecraftIn, MatrixStack matrixStackIn)
+    {
+        RenderSystem.disableAlphaTest();
+        PlayerEntity playerentity = minecraftIn.player;
 
-      if (!p_228734_0_.player.isSpectator()) {
-         if (p_228734_0_.player.isEyeInFluid(FluidTags.WATER)) {
-            renderWater(p_228734_0_, p_228734_1_);
-         }
+        if (!playerentity.noClip)
+        {
+            if (Reflector.ForgeEventFactory_renderBlockOverlay.exists() && Reflector.ForgeBlockModelShapes_getTexture3.exists())
+            {
+                Pair<BlockState, BlockPos> pair = getOverlayBlock(playerentity);
 
-         if (p_228734_0_.player.isOnFire()) {
-            renderFire(p_228734_0_, p_228734_1_);
-         }
-      }
+                if (pair != null)
+                {
+                    Object object = Reflector.getFieldValue(Reflector.RenderBlockOverlayEvent_OverlayType_BLOCK);
 
-      RenderSystem.enableAlphaTest();
-   }
+                    if (!Reflector.ForgeEventFactory_renderBlockOverlay.callBoolean(playerentity, matrixStackIn, object, pair.getLeft(), pair.getRight()))
+                    {
+                        TextureAtlasSprite textureatlassprite = (TextureAtlasSprite)Reflector.call(minecraftIn.getBlockRendererDispatcher().getBlockModelShapes(), Reflector.ForgeBlockModelShapes_getTexture3, pair.getLeft(), minecraftIn.world, pair.getRight());
+                        renderTexture(minecraftIn, textureatlassprite, matrixStackIn);
+                    }
+                }
+            }
+            else
+            {
+                BlockState blockstate = getViewBlockingState(playerentity);
 
-   @Nullable
-   private static BlockState getViewBlockingState(PlayerEntity p_230018_0_) {
-      BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+                if (blockstate != null)
+                {
+                    renderTexture(minecraftIn, minecraftIn.getBlockRendererDispatcher().getBlockModelShapes().getTexture(blockstate), matrixStackIn);
+                }
+            }
+        }
 
-      for(int i = 0; i < 8; ++i) {
-         double d0 = p_230018_0_.getX() + (double)(((float)((i >> 0) % 2) - 0.5F) * p_230018_0_.getBbWidth() * 0.8F);
-         double d1 = p_230018_0_.getEyeY() + (double)(((float)((i >> 1) % 2) - 0.5F) * 0.1F);
-         double d2 = p_230018_0_.getZ() + (double)(((float)((i >> 2) % 2) - 0.5F) * p_230018_0_.getBbWidth() * 0.8F);
-         blockpos$mutable.set(d0, d1, d2);
-         BlockState blockstate = p_230018_0_.level.getBlockState(blockpos$mutable);
-         if (blockstate.getRenderShape() != BlockRenderType.INVISIBLE && blockstate.isViewBlocking(p_230018_0_.level, blockpos$mutable)) {
-            return blockstate;
-         }
-      }
+        if (!minecraftIn.player.isSpectator())
+        {
+            if (minecraftIn.player.areEyesInFluid(FluidTags.WATER) && !Reflector.ForgeEventFactory_renderWaterOverlay.callBoolean(playerentity, matrixStackIn))
+            {
+                renderUnderwater(minecraftIn, matrixStackIn);
+            }
 
-      return null;
-   }
+            if (minecraftIn.player.isBurning() && !Reflector.ForgeEventFactory_renderFireOverlay.callBoolean(playerentity, matrixStackIn))
+            {
+                renderFire(minecraftIn, matrixStackIn);
+            }
+        }
 
-   private static void renderTex(Minecraft p_228735_0_, TextureAtlasSprite p_228735_1_, MatrixStack p_228735_2_) {
-      p_228735_0_.getTextureManager().bind(p_228735_1_.atlas().location());
-      BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
-      float f = 0.1F;
-      float f1 = -1.0F;
-      float f2 = 1.0F;
-      float f3 = -1.0F;
-      float f4 = 1.0F;
-      float f5 = -0.5F;
-      float f6 = p_228735_1_.getU0();
-      float f7 = p_228735_1_.getU1();
-      float f8 = p_228735_1_.getV0();
-      float f9 = p_228735_1_.getV1();
-      Matrix4f matrix4f = p_228735_2_.last().pose();
-      bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR_TEX);
-      bufferbuilder.vertex(matrix4f, -1.0F, -1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).uv(f7, f9).endVertex();
-      bufferbuilder.vertex(matrix4f, 1.0F, -1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).uv(f6, f9).endVertex();
-      bufferbuilder.vertex(matrix4f, 1.0F, 1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).uv(f6, f8).endVertex();
-      bufferbuilder.vertex(matrix4f, -1.0F, 1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).uv(f7, f8).endVertex();
-      bufferbuilder.end();
-      WorldVertexBufferUploader.end(bufferbuilder);
-   }
+        RenderSystem.enableAlphaTest();
+    }
 
-   private static void renderWater(Minecraft p_228736_0_, MatrixStack p_228736_1_) {
-      RenderSystem.enableTexture();
-      p_228736_0_.getTextureManager().bind(UNDERWATER_LOCATION);
-      BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
-      float f = p_228736_0_.player.getBrightness();
-      RenderSystem.enableBlend();
-      RenderSystem.defaultBlendFunc();
-      float f1 = 4.0F;
-      float f2 = -1.0F;
-      float f3 = 1.0F;
-      float f4 = -1.0F;
-      float f5 = 1.0F;
-      float f6 = -0.5F;
-      float f7 = -p_228736_0_.player.yRot / 64.0F;
-      float f8 = p_228736_0_.player.xRot / 64.0F;
-      Matrix4f matrix4f = p_228736_1_.last().pose();
-      bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR_TEX);
-      bufferbuilder.vertex(matrix4f, -1.0F, -1.0F, -0.5F).color(f, f, f, 0.1F).uv(4.0F + f7, 4.0F + f8).endVertex();
-      bufferbuilder.vertex(matrix4f, 1.0F, -1.0F, -0.5F).color(f, f, f, 0.1F).uv(0.0F + f7, 4.0F + f8).endVertex();
-      bufferbuilder.vertex(matrix4f, 1.0F, 1.0F, -0.5F).color(f, f, f, 0.1F).uv(0.0F + f7, 0.0F + f8).endVertex();
-      bufferbuilder.vertex(matrix4f, -1.0F, 1.0F, -0.5F).color(f, f, f, 0.1F).uv(4.0F + f7, 0.0F + f8).endVertex();
-      bufferbuilder.end();
-      WorldVertexBufferUploader.end(bufferbuilder);
-      RenderSystem.disableBlend();
-   }
+    @Nullable
+    private static BlockState getViewBlockingState(PlayerEntity playerIn)
+    {
+        Pair<BlockState, BlockPos> pair = getOverlayBlock(playerIn);
+        return pair == null ? null : pair.getLeft();
+    }
 
-   private static void renderFire(Minecraft p_228737_0_, MatrixStack p_228737_1_) {
-      BufferBuilder bufferbuilder = Tessellator.getInstance().getBuilder();
-      RenderSystem.depthFunc(519);
-      RenderSystem.depthMask(false);
-      RenderSystem.enableBlend();
-      RenderSystem.defaultBlendFunc();
-      RenderSystem.enableTexture();
-      TextureAtlasSprite textureatlassprite = ModelBakery.FIRE_1.sprite();
-      p_228737_0_.getTextureManager().bind(textureatlassprite.atlas().location());
-      float f = textureatlassprite.getU0();
-      float f1 = textureatlassprite.getU1();
-      float f2 = (f + f1) / 2.0F;
-      float f3 = textureatlassprite.getV0();
-      float f4 = textureatlassprite.getV1();
-      float f5 = (f3 + f4) / 2.0F;
-      float f6 = textureatlassprite.uvShrinkRatio();
-      float f7 = MathHelper.lerp(f6, f, f2);
-      float f8 = MathHelper.lerp(f6, f1, f2);
-      float f9 = MathHelper.lerp(f6, f3, f5);
-      float f10 = MathHelper.lerp(f6, f4, f5);
-      float f11 = 1.0F;
+    private static Pair<BlockState, BlockPos> getOverlayBlock(PlayerEntity p_getOverlayBlock_0_)
+    {
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
-      for(int i = 0; i < 2; ++i) {
-         p_228737_1_.pushPose();
-         float f12 = -0.5F;
-         float f13 = 0.5F;
-         float f14 = -0.5F;
-         float f15 = 0.5F;
-         float f16 = -0.5F;
-         p_228737_1_.translate((double)((float)(-(i * 2 - 1)) * 0.24F), (double)-0.3F, 0.0D);
-         p_228737_1_.mulPose(Vector3f.YP.rotationDegrees((float)(i * 2 - 1) * 10.0F));
-         Matrix4f matrix4f = p_228737_1_.last().pose();
-         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR_TEX);
-         bufferbuilder.vertex(matrix4f, -0.5F, -0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).uv(f8, f10).endVertex();
-         bufferbuilder.vertex(matrix4f, 0.5F, -0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).uv(f7, f10).endVertex();
-         bufferbuilder.vertex(matrix4f, 0.5F, 0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).uv(f7, f9).endVertex();
-         bufferbuilder.vertex(matrix4f, -0.5F, 0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).uv(f8, f9).endVertex();
-         bufferbuilder.end();
-         WorldVertexBufferUploader.end(bufferbuilder);
-         p_228737_1_.popPose();
-      }
+        for (int i = 0; i < 8; ++i)
+        {
+            double d0 = p_getOverlayBlock_0_.getPosX() + (double)(((float)((i >> 0) % 2) - 0.5F) * p_getOverlayBlock_0_.getWidth() * 0.8F);
+            double d1 = p_getOverlayBlock_0_.getPosYEye() + (double)(((float)((i >> 1) % 2) - 0.5F) * 0.1F);
+            double d2 = p_getOverlayBlock_0_.getPosZ() + (double)(((float)((i >> 2) % 2) - 0.5F) * p_getOverlayBlock_0_.getWidth() * 0.8F);
+            blockpos$mutable.setPos(d0, d1, d2);
+            BlockState blockstate = p_getOverlayBlock_0_.world.getBlockState(blockpos$mutable);
 
-      RenderSystem.disableBlend();
-      RenderSystem.depthMask(true);
-      RenderSystem.depthFunc(515);
-   }
+            if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && blockstate.causesSuffocation(p_getOverlayBlock_0_.world, blockpos$mutable))
+            {
+                return Pair.of(blockstate, blockpos$mutable.toImmutable());
+            }
+        }
+
+        return null;
+    }
+
+    private static void renderTexture(Minecraft minecraftIn, TextureAtlasSprite spriteIn, MatrixStack matrixStackIn)
+    {
+        if (SmartAnimations.isActive())
+        {
+            SmartAnimations.spriteRendered(spriteIn);
+        }
+
+        minecraftIn.getTextureManager().bindTexture(spriteIn.getAtlasTexture().getTextureLocation());
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        float f = 0.1F;
+        float f1 = -1.0F;
+        float f2 = 1.0F;
+        float f3 = -1.0F;
+        float f4 = 1.0F;
+        float f5 = -0.5F;
+        float f6 = spriteIn.getMinU();
+        float f7 = spriteIn.getMaxU();
+        float f8 = spriteIn.getMinV();
+        float f9 = spriteIn.getMaxV();
+        Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR_TEX);
+        bufferbuilder.pos(matrix4f, -1.0F, -1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).tex(f7, f9).endVertex();
+        bufferbuilder.pos(matrix4f, 1.0F, -1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).tex(f6, f9).endVertex();
+        bufferbuilder.pos(matrix4f, 1.0F, 1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).tex(f6, f8).endVertex();
+        bufferbuilder.pos(matrix4f, -1.0F, 1.0F, -0.5F).color(0.1F, 0.1F, 0.1F, 1.0F).tex(f7, f8).endVertex();
+        bufferbuilder.finishDrawing();
+        WorldVertexBufferUploader.draw(bufferbuilder);
+    }
+
+    private static void renderUnderwater(Minecraft minecraftIn, MatrixStack matrixStackIn)
+    {
+        if (!Config.isShaders() || Shaders.isUnderwaterOverlay())
+        {
+            RenderSystem.enableTexture();
+            minecraftIn.getTextureManager().bindTexture(TEXTURE_UNDERWATER);
+
+            if (SmartAnimations.isActive())
+            {
+                SmartAnimations.textureRendered(minecraftIn.getTextureManager().getTexture(TEXTURE_UNDERWATER).getGlTextureId());
+            }
+
+            BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+            float f = minecraftIn.player.getBrightness();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            float f1 = 4.0F;
+            float f2 = -1.0F;
+            float f3 = 1.0F;
+            float f4 = -1.0F;
+            float f5 = 1.0F;
+            float f6 = -0.5F;
+            float f7 = -minecraftIn.player.rotationYaw / 64.0F;
+            float f8 = minecraftIn.player.rotationPitch / 64.0F;
+            Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR_TEX);
+            bufferbuilder.pos(matrix4f, -1.0F, -1.0F, -0.5F).color(f, f, f, 0.1F).tex(4.0F + f7, 4.0F + f8).endVertex();
+            bufferbuilder.pos(matrix4f, 1.0F, -1.0F, -0.5F).color(f, f, f, 0.1F).tex(0.0F + f7, 4.0F + f8).endVertex();
+            bufferbuilder.pos(matrix4f, 1.0F, 1.0F, -0.5F).color(f, f, f, 0.1F).tex(0.0F + f7, 0.0F + f8).endVertex();
+            bufferbuilder.pos(matrix4f, -1.0F, 1.0F, -0.5F).color(f, f, f, 0.1F).tex(4.0F + f7, 0.0F + f8).endVertex();
+            bufferbuilder.finishDrawing();
+            WorldVertexBufferUploader.draw(bufferbuilder);
+            RenderSystem.disableBlend();
+        }
+    }
+
+    private static void renderFire(Minecraft minecraftIn, MatrixStack matrixStackIn)
+    {
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        RenderSystem.depthFunc(519);
+        RenderSystem.depthMask(false);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.enableTexture();
+        TextureAtlasSprite textureatlassprite = ModelBakery.LOCATION_FIRE_1.getSprite();
+
+        if (SmartAnimations.isActive())
+        {
+            SmartAnimations.spriteRendered(textureatlassprite);
+        }
+
+        minecraftIn.getTextureManager().bindTexture(textureatlassprite.getAtlasTexture().getTextureLocation());
+        float f = textureatlassprite.getMinU();
+        float f1 = textureatlassprite.getMaxU();
+        float f2 = (f + f1) / 2.0F;
+        float f3 = textureatlassprite.getMinV();
+        float f4 = textureatlassprite.getMaxV();
+        float f5 = (f3 + f4) / 2.0F;
+        float f6 = textureatlassprite.getUvShrinkRatio();
+        float f7 = MathHelper.lerp(f6, f, f2);
+        float f8 = MathHelper.lerp(f6, f1, f2);
+        float f9 = MathHelper.lerp(f6, f3, f5);
+        float f10 = MathHelper.lerp(f6, f4, f5);
+        float f11 = 1.0F;
+
+        for (int i = 0; i < 2; ++i)
+        {
+            matrixStackIn.push();
+            float f12 = -0.5F;
+            float f13 = 0.5F;
+            float f14 = -0.5F;
+            float f15 = 0.5F;
+            float f16 = -0.5F;
+            matrixStackIn.translate((double)((float)(-(i * 2 - 1)) * 0.24F), (double) - 0.3F, 0.0D);
+            matrixStackIn.rotate(Vector3f.YP.rotationDegrees((float)(i * 2 - 1) * 10.0F));
+            Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR_TEX);
+            bufferbuilder.pos(matrix4f, -0.5F, -0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).tex(f8, f10).endVertex();
+            bufferbuilder.pos(matrix4f, 0.5F, -0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).tex(f7, f10).endVertex();
+            bufferbuilder.pos(matrix4f, 0.5F, 0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).tex(f7, f9).endVertex();
+            bufferbuilder.pos(matrix4f, -0.5F, 0.5F, -0.5F).color(1.0F, 1.0F, 1.0F, 0.9F).tex(f8, f9).endVertex();
+            bufferbuilder.finishDrawing();
+            WorldVertexBufferUploader.draw(bufferbuilder);
+            matrixStackIn.pop();
+        }
+
+        RenderSystem.disableBlend();
+        RenderSystem.depthMask(true);
+        RenderSystem.depthFunc(515);
+    }
 }

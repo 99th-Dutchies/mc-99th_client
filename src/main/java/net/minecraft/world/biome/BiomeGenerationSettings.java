@@ -29,132 +29,163 @@ import net.minecraft.world.gen.surfacebuilders.ISurfaceBuilderConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BiomeGenerationSettings {
-   public static final Logger LOGGER = LogManager.getLogger();
-   public static final BiomeGenerationSettings EMPTY = new BiomeGenerationSettings(() -> {
-      return ConfiguredSurfaceBuilders.NOPE;
-   }, ImmutableMap.of(), ImmutableList.of(), ImmutableList.of());
-   public static final MapCodec<BiomeGenerationSettings> CODEC = RecordCodecBuilder.mapCodec((p_242495_0_) -> {
-      return p_242495_0_.group(ConfiguredSurfaceBuilder.CODEC.fieldOf("surface_builder").forGetter((p_242501_0_) -> {
-         return p_242501_0_.surfaceBuilder;
-      }), Codec.simpleMap(GenerationStage.Carving.CODEC, ConfiguredCarver.LIST_CODEC.promotePartial(Util.prefix("Carver: ", LOGGER::error)), IStringSerializable.keys(GenerationStage.Carving.values())).fieldOf("carvers").forGetter((p_242499_0_) -> {
-         return p_242499_0_.carvers;
-      }), ConfiguredFeature.LIST_CODEC.promotePartial(Util.prefix("Feature: ", LOGGER::error)).listOf().fieldOf("features").forGetter((p_242497_0_) -> {
-         return p_242497_0_.features;
-      }), StructureFeature.LIST_CODEC.promotePartial(Util.prefix("Structure start: ", LOGGER::error)).fieldOf("starts").forGetter((p_242488_0_) -> {
-         return p_242488_0_.structureStarts;
-      })).apply(p_242495_0_, BiomeGenerationSettings::new);
-   });
-   private final Supplier<ConfiguredSurfaceBuilder<?>> surfaceBuilder;
-   private final Map<GenerationStage.Carving, List<Supplier<ConfiguredCarver<?>>>> carvers;
-   private final List<List<Supplier<ConfiguredFeature<?, ?>>>> features;
-   private final List<Supplier<StructureFeature<?, ?>>> structureStarts;
-   private final List<ConfiguredFeature<?, ?>> flowerFeatures;
+public class BiomeGenerationSettings
+{
+    public static final Logger LOGGER = LogManager.getLogger();
+    public static final BiomeGenerationSettings DEFAULT_SETTINGS = new BiomeGenerationSettings(() ->
+    {
+        return ConfiguredSurfaceBuilders.field_244184_p;
+    }, ImmutableMap.of(), ImmutableList.of(), ImmutableList.of());
+    public static final MapCodec<BiomeGenerationSettings> CODEC = RecordCodecBuilder.mapCodec((builder) ->
+    {
+        return builder.group(ConfiguredSurfaceBuilder.field_244393_b_.fieldOf("surface_builder").forGetter((settings) -> {
+            return settings.surfaceBuilder;
+        }), Codec.simpleMap(GenerationStage.Carving.field_236074_c_, ConfiguredCarver.field_242759_c.promotePartial(Util.func_240982_a_("Carver: ", LOGGER::error)), IStringSerializable.createKeyable(GenerationStage.Carving.values())).fieldOf("carvers").forGetter((settings) -> {
+            return settings.carvers;
+        }), ConfiguredFeature.field_242764_c.promotePartial(Util.func_240982_a_("Feature: ", LOGGER::error)).listOf().fieldOf("features").forGetter((settings) -> {
+            return settings.features;
+        }), StructureFeature.field_242770_c.promotePartial(Util.func_240982_a_("Structure start: ", LOGGER::error)).fieldOf("starts").forGetter((settings) -> {
+            return settings.structures;
+        })).apply(builder, BiomeGenerationSettings::new);
+    });
+    private final Supplier < ConfiguredSurfaceBuilder<? >> surfaceBuilder;
+    private final Map < GenerationStage.Carving, List < Supplier < ConfiguredCarver<? >>> > carvers;
+    private final List < List < Supplier < ConfiguredFeature <? , ? >>> > features;
+    private final List < Supplier < StructureFeature <? , ? >>> structures;
+    private final List < ConfiguredFeature <? , ? >> flowerFeatures;
 
-   private BiomeGenerationSettings(Supplier<ConfiguredSurfaceBuilder<?>> p_i241935_1_, Map<GenerationStage.Carving, List<Supplier<ConfiguredCarver<?>>>> p_i241935_2_, List<List<Supplier<ConfiguredFeature<?, ?>>>> p_i241935_3_, List<Supplier<StructureFeature<?, ?>>> p_i241935_4_) {
-      this.surfaceBuilder = p_i241935_1_;
-      this.carvers = p_i241935_2_;
-      this.features = p_i241935_3_;
-      this.structureStarts = p_i241935_4_;
-      this.flowerFeatures = p_i241935_3_.stream().flatMap(Collection::stream).map(Supplier::get).flatMap(ConfiguredFeature::getFeatures).filter((p_242490_0_) -> {
-         return p_242490_0_.feature == Feature.FLOWER;
-      }).collect(ImmutableList.toImmutableList());
-   }
+    private BiomeGenerationSettings(Supplier < ConfiguredSurfaceBuilder<? >> surfaceBuilder, Map < GenerationStage.Carving, List < Supplier < ConfiguredCarver<? >>> > carvers, List < List < Supplier < ConfiguredFeature <? , ? >>> > features, List < Supplier < StructureFeature <? , ? >>> structures)
+    {
+        this.surfaceBuilder = surfaceBuilder;
+        this.carvers = carvers;
+        this.features = features;
+        this.structures = structures;
+        this.flowerFeatures = features.stream().flatMap(Collection::stream).map(Supplier::get).flatMap(ConfiguredFeature::func_242768_d).filter((configuredFeature) ->
+        {
+            return configuredFeature.feature == Feature.FLOWER;
+        }).collect(ImmutableList.toImmutableList());
+    }
 
-   public List<Supplier<ConfiguredCarver<?>>> getCarvers(GenerationStage.Carving p_242489_1_) {
-      return this.carvers.getOrDefault(p_242489_1_, ImmutableList.of());
-   }
+    public List < Supplier < ConfiguredCarver<? >>> getCarvers(GenerationStage.Carving carvingType)
+    {
+        return this.carvers.getOrDefault(carvingType, ImmutableList.of());
+    }
 
-   public boolean isValidStart(Structure<?> p_242493_1_) {
-      return this.structureStarts.stream().anyMatch((p_242494_1_) -> {
-         return (p_242494_1_.get()).feature == p_242493_1_;
-      });
-   }
+    public boolean hasStructure(Structure<?> structure)
+    {
+        return this.structures.stream().anyMatch((structureIn) ->
+        {
+            return (structureIn.get()).field_236268_b_ == structure;
+        });
+    }
 
-   public Collection<Supplier<StructureFeature<?, ?>>> structures() {
-      return this.structureStarts;
-   }
+    public Collection < Supplier < StructureFeature <? , ? >>> getStructures()
+    {
+        return this.structures;
+    }
 
-   public StructureFeature<?, ?> withBiomeConfig(StructureFeature<?, ?> p_242491_1_) {
-      return DataFixUtils.orElse(this.structureStarts.stream().map(Supplier::get).filter((p_242492_1_) -> {
-         return p_242492_1_.feature == p_242491_1_.feature;
-      }).findAny(), p_242491_1_);
-   }
+    public StructureFeature <? , ? > getStructure(StructureFeature <? , ? > structure)
+    {
+        return DataFixUtils.orElse(this.structures.stream().map(Supplier::get).filter((structureIn) ->
+        {
+            return structureIn.field_236268_b_ == structure.field_236268_b_;
+        }).findAny(), structure);
+    }
 
-   public List<ConfiguredFeature<?, ?>> getFlowerFeatures() {
-      return this.flowerFeatures;
-   }
+    public List < ConfiguredFeature <? , ? >> getFlowerFeatures()
+    {
+        return this.flowerFeatures;
+    }
 
-   public List<List<Supplier<ConfiguredFeature<?, ?>>>> features() {
-      return this.features;
-   }
+    public List < List < Supplier < ConfiguredFeature <? , ? >>> > getFeatures()
+    {
+        return this.features;
+    }
 
-   public Supplier<ConfiguredSurfaceBuilder<?>> getSurfaceBuilder() {
-      return this.surfaceBuilder;
-   }
+    public Supplier < ConfiguredSurfaceBuilder<? >> getSurfaceBuilder()
+    {
+        return this.surfaceBuilder;
+    }
 
-   public ISurfaceBuilderConfig getSurfaceBuilderConfig() {
-      return this.surfaceBuilder.get().config();
-   }
+    public ISurfaceBuilderConfig getSurfaceBuilderConfig()
+    {
+        return this.surfaceBuilder.get().getConfig();
+    }
 
-   public static class Builder {
-      private Optional<Supplier<ConfiguredSurfaceBuilder<?>>> surfaceBuilder = Optional.empty();
-      private final Map<GenerationStage.Carving, List<Supplier<ConfiguredCarver<?>>>> carvers = Maps.newLinkedHashMap();
-      private final List<List<Supplier<ConfiguredFeature<?, ?>>>> features = Lists.newArrayList();
-      private final List<Supplier<StructureFeature<?, ?>>> structureStarts = Lists.newArrayList();
+    public static class Builder
+    {
+        private Optional < Supplier < ConfiguredSurfaceBuilder<? >>> surfaceBuilder = Optional.empty();
+        private final Map < GenerationStage.Carving, List < Supplier < ConfiguredCarver<? >>> > carvers = Maps.newLinkedHashMap();
+        private final List < List < Supplier < ConfiguredFeature <? , ? >>> > features = Lists.newArrayList();
+        private final List < Supplier < StructureFeature <? , ? >>> structures = Lists.newArrayList();
 
-      public BiomeGenerationSettings.Builder surfaceBuilder(ConfiguredSurfaceBuilder<?> p_242517_1_) {
-         return this.surfaceBuilder(() -> {
-            return p_242517_1_;
-         });
-      }
+        public BiomeGenerationSettings.Builder withSurfaceBuilder(ConfiguredSurfaceBuilder<?> configuredSurfaceBuilder)
+        {
+            return this.withSurfaceBuilder(() ->
+            {
+                return configuredSurfaceBuilder;
+            });
+        }
 
-      public BiomeGenerationSettings.Builder surfaceBuilder(Supplier<ConfiguredSurfaceBuilder<?>> p_242519_1_) {
-         this.surfaceBuilder = Optional.of(p_242519_1_);
-         return this;
-      }
+        public BiomeGenerationSettings.Builder withSurfaceBuilder(Supplier < ConfiguredSurfaceBuilder<? >> configuredSurfaceBuilderSupplier)
+        {
+            this.surfaceBuilder = Optional.of(configuredSurfaceBuilderSupplier);
+            return this;
+        }
 
-      public BiomeGenerationSettings.Builder addFeature(GenerationStage.Decoration p_242513_1_, ConfiguredFeature<?, ?> p_242513_2_) {
-         return this.addFeature(p_242513_1_.ordinal(), () -> {
-            return p_242513_2_;
-         });
-      }
+        public BiomeGenerationSettings.Builder withFeature(GenerationStage.Decoration decorationStage, ConfiguredFeature <? , ? > feature)
+        {
+            return this.withFeature(decorationStage.ordinal(), () ->
+            {
+                return feature;
+            });
+        }
 
-      public BiomeGenerationSettings.Builder addFeature(int p_242510_1_, Supplier<ConfiguredFeature<?, ?>> p_242510_2_) {
-         this.addFeatureStepsUpTo(p_242510_1_);
-         this.features.get(p_242510_1_).add(p_242510_2_);
-         return this;
-      }
+        public BiomeGenerationSettings.Builder withFeature(int stage, Supplier < ConfiguredFeature <? , ? >> features)
+        {
+            this.populateStageEntries(stage);
+            this.features.get(stage).add(features);
+            return this;
+        }
 
-      public <C extends ICarverConfig> BiomeGenerationSettings.Builder addCarver(GenerationStage.Carving p_242512_1_, ConfiguredCarver<C> p_242512_2_) {
-         this.carvers.computeIfAbsent(p_242512_1_, (p_242511_0_) -> {
-            return Lists.newArrayList();
-         }).add(() -> {
-            return p_242512_2_;
-         });
-         return this;
-      }
+        public <C extends ICarverConfig> BiomeGenerationSettings.Builder withCarver(GenerationStage.Carving carvingStage, ConfiguredCarver<C> carver)
+        {
+            this.carvers.computeIfAbsent(carvingStage, (stage) ->
+            {
+                return Lists.newArrayList();
+            }).add(() ->
+            {
+                return carver;
+            });
+            return this;
+        }
 
-      public BiomeGenerationSettings.Builder addStructureStart(StructureFeature<?, ?> p_242516_1_) {
-         this.structureStarts.add(() -> {
-            return p_242516_1_;
-         });
-         return this;
-      }
+        public BiomeGenerationSettings.Builder withStructure(StructureFeature <? , ? > structure)
+        {
+            this.structures.add(() ->
+            {
+                return structure;
+            });
+            return this;
+        }
 
-      private void addFeatureStepsUpTo(int p_242509_1_) {
-         while(this.features.size() <= p_242509_1_) {
-            this.features.add(Lists.newArrayList());
-         }
+        private void populateStageEntries(int stage)
+        {
+            while (this.features.size() <= stage)
+            {
+                this.features.add(Lists.newArrayList());
+            }
+        }
 
-      }
-
-      public BiomeGenerationSettings build() {
-         return new BiomeGenerationSettings(this.surfaceBuilder.orElseThrow(() -> {
-            return new IllegalStateException("Missing surface builder");
-         }), this.carvers.entrySet().stream().collect(ImmutableMap.toImmutableMap(Entry::getKey, (p_242518_0_) -> {
-            return ImmutableList.copyOf((Collection)p_242518_0_.getValue());
-         })), this.features.stream().map(ImmutableList::copyOf).collect(ImmutableList.toImmutableList()), ImmutableList.copyOf(this.structureStarts));
-      }
-   }
+        public BiomeGenerationSettings build()
+        {
+            return new BiomeGenerationSettings(this.surfaceBuilder.orElseThrow(() ->
+            {
+                return new IllegalStateException("Missing surface builder");
+            }), this.carvers.entrySet().stream().collect(ImmutableMap.toImmutableMap(Entry::getKey, (entry) ->
+            {
+                return ImmutableList.copyOf((Collection)entry.getValue());
+            })), this.features.stream().map(ImmutableList::copyOf).collect(ImmutableList.toImmutableList()), ImmutableList.copyOf(this.structures));
+        }
+    }
 }

@@ -4,13 +4,16 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 
-public class TallBlockItem extends BlockItem {
-   public TallBlockItem(Block p_i48511_1_, Item.Properties p_i48511_2_) {
-      super(p_i48511_1_, p_i48511_2_);
-   }
+public class TallBlockItem extends BlockItem
+{
+    public TallBlockItem(Block blockIn, Item.Properties builder)
+    {
+        super(blockIn, builder);
+    }
 
-   protected boolean placeBlock(BlockItemUseContext p_195941_1_, BlockState p_195941_2_) {
-      p_195941_1_.getLevel().setBlock(p_195941_1_.getClickedPos().above(), Blocks.AIR.defaultBlockState(), 27);
-      return super.placeBlock(p_195941_1_, p_195941_2_);
-   }
+    protected boolean placeBlock(BlockItemUseContext context, BlockState state)
+    {
+        context.getWorld().setBlockState(context.getPos().up(), Blocks.AIR.getDefaultState(), 27);
+        return super.placeBlock(context, state);
+    }
 }

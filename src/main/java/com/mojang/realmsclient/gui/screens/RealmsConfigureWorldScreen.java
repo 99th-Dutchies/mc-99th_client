@@ -21,459 +21,577 @@ import net.minecraft.realms.action.SwitchMinigameRealmsAction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class RealmsConfigureWorldScreen extends NotifableRealmsScreen {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final ResourceLocation ON_ICON_LOCATION = new ResourceLocation("realms", "textures/gui/realms/on_icon.png");
-   private static final ResourceLocation OFF_ICON_LOCATION = new ResourceLocation("realms", "textures/gui/realms/off_icon.png");
-   private static final ResourceLocation EXPIRED_ICON_LOCATION = new ResourceLocation("realms", "textures/gui/realms/expired_icon.png");
-   private static final ResourceLocation EXPIRES_SOON_ICON_LOCATION = new ResourceLocation("realms", "textures/gui/realms/expires_soon_icon.png");
-   private static final ITextComponent TITLE = new TranslationTextComponent("mco.configure.worlds.title");
-   private static final ITextComponent WORLD_TITLE = new TranslationTextComponent("mco.configure.world.title");
-   private static final ITextComponent MINIGAME_PREFIX = (new TranslationTextComponent("mco.configure.current.minigame")).append(": ");
-   private static final ITextComponent SERVER_EXPIRED_TOOLTIP = new TranslationTextComponent("mco.selectServer.expired");
-   private static final ITextComponent SERVER_EXPIRING_SOON_TOOLTIP = new TranslationTextComponent("mco.selectServer.expires.soon");
-   private static final ITextComponent SERVER_EXPIRING_IN_DAY_TOOLTIP = new TranslationTextComponent("mco.selectServer.expires.day");
-   private static final ITextComponent SERVER_OPEN_TOOLTIP = new TranslationTextComponent("mco.selectServer.open");
-   private static final ITextComponent SERVER_CLOSED_TOOLTIP = new TranslationTextComponent("mco.selectServer.closed");
-   @Nullable
-   private ITextComponent toolTip;
-   private final RealmsMainScreen lastScreen;
-   @Nullable
-   private RealmsServer serverData;
-   private final long serverId;
-   private int leftX;
-   private int rightX;
-   private Button playersButton;
-   private Button settingsButton;
-   private Button subscriptionButton;
-   private Button optionsButton;
-   private Button backupButton;
-   private Button resetWorldButton;
-   private Button switchMinigameButton;
-   private boolean stateChanged;
-   private int animTick;
-   private int clicks;
+public class RealmsConfigureWorldScreen extends NotifableRealmsScreen
+{
+    private static final Logger field_224413_a = LogManager.getLogger();
+    private static final ResourceLocation field_237787_b_ = new ResourceLocation("realms", "textures/gui/realms/on_icon.png");
+    private static final ResourceLocation field_237788_c_ = new ResourceLocation("realms", "textures/gui/realms/off_icon.png");
+    private static final ResourceLocation field_237789_p_ = new ResourceLocation("realms", "textures/gui/realms/expired_icon.png");
+    private static final ResourceLocation field_237790_q_ = new ResourceLocation("realms", "textures/gui/realms/expires_soon_icon.png");
+    private static final ITextComponent field_243108_r = new TranslationTextComponent("mco.configure.worlds.title");
+    private static final ITextComponent field_243109_s = new TranslationTextComponent("mco.configure.world.title");
+    private static final ITextComponent field_243110_t = (new TranslationTextComponent("mco.configure.current.minigame")).appendString(": ");
+    private static final ITextComponent field_243111_u = new TranslationTextComponent("mco.selectServer.expired");
+    private static final ITextComponent field_243112_v = new TranslationTextComponent("mco.selectServer.expires.soon");
+    private static final ITextComponent field_243113_w = new TranslationTextComponent("mco.selectServer.expires.day");
+    private static final ITextComponent field_243114_x = new TranslationTextComponent("mco.selectServer.open");
+    private static final ITextComponent field_243115_y = new TranslationTextComponent("mco.selectServer.closed");
+    @Nullable
+    private ITextComponent field_224414_b;
+    private final RealmsMainScreen field_224415_c;
+    @Nullable
+    private RealmsServer field_224416_d;
+    private final long field_224417_e;
+    private int field_224418_f;
+    private int field_224419_g;
+    private Button field_224422_j;
+    private Button field_224423_k;
+    private Button field_224424_l;
+    private Button field_224425_m;
+    private Button field_224426_n;
+    private Button field_224427_o;
+    private Button field_224428_p;
+    private boolean field_224429_q;
+    private int field_224430_r;
+    private int field_224431_s;
 
-   public RealmsConfigureWorldScreen(RealmsMainScreen p_i51774_1_, long p_i51774_2_) {
-      this.lastScreen = p_i51774_1_;
-      this.serverId = p_i51774_2_;
-   }
+    public RealmsConfigureWorldScreen(RealmsMainScreen p_i51774_1_, long p_i51774_2_)
+    {
+        this.field_224415_c = p_i51774_1_;
+        this.field_224417_e = p_i51774_2_;
+    }
 
-   public void init() {
-      if (this.serverData == null) {
-         this.fetchServerData(this.serverId);
-      }
+    public void init()
+    {
+        if (this.field_224416_d == null)
+        {
+            this.func_224387_a(this.field_224417_e);
+        }
 
-      this.leftX = this.width / 2 - 187;
-      this.rightX = this.width / 2 + 190;
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      this.playersButton = this.addButton(new Button(this.centerButton(0, 3), row(0), 100, 20, new TranslationTextComponent("mco.configure.world.buttons.players"), (p_237818_1_) -> {
-         this.minecraft.setScreen(new RealmsPlayerScreen(this, this.serverData));
-      }));
-      this.settingsButton = this.addButton(new Button(this.centerButton(1, 3), row(0), 100, 20, new TranslationTextComponent("mco.configure.world.buttons.settings"), (p_237817_1_) -> {
-         this.minecraft.setScreen(new RealmsSettingsScreen(this, this.serverData.clone()));
-      }));
-      this.subscriptionButton = this.addButton(new Button(this.centerButton(2, 3), row(0), 100, 20, new TranslationTextComponent("mco.configure.world.buttons.subscription"), (p_237816_1_) -> {
-         this.minecraft.setScreen(new RealmsSubscriptionInfoScreen(this, this.serverData.clone(), this.lastScreen));
-      }));
+        this.field_224418_f = this.width / 2 - 187;
+        this.field_224419_g = this.width / 2 + 190;
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
+        this.field_224422_j = this.addButton(new Button(this.func_224374_a(0, 3), func_239562_k_(0), 100, 20, new TranslationTextComponent("mco.configure.world.buttons.players"), (p_237818_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new RealmsPlayerScreen(this, this.field_224416_d));
+        }));
+        this.field_224423_k = this.addButton(new Button(this.func_224374_a(1, 3), func_239562_k_(0), 100, 20, new TranslationTextComponent("mco.configure.world.buttons.settings"), (p_237817_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new RealmsSettingsScreen(this, this.field_224416_d.clone()));
+        }));
+        this.field_224424_l = this.addButton(new Button(this.func_224374_a(2, 3), func_239562_k_(0), 100, 20, new TranslationTextComponent("mco.configure.world.buttons.subscription"), (p_237816_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new RealmsSubscriptionInfoScreen(this, this.field_224416_d.clone(), this.field_224415_c));
+        }));
 
-      for(int i = 1; i < 5; ++i) {
-         this.addSlotButton(i);
-      }
+        for (int i = 1; i < 5; ++i)
+        {
+            this.func_224402_a(i);
+        }
 
-      this.switchMinigameButton = this.addButton(new Button(this.leftButton(0), row(13) - 5, 100, 20, new TranslationTextComponent("mco.configure.world.buttons.switchminigame"), (p_237815_1_) -> {
-         RealmsSelectWorldTemplateScreen realmsselectworldtemplatescreen = new RealmsSelectWorldTemplateScreen(this, RealmsServer.ServerType.MINIGAME);
-         realmsselectworldtemplatescreen.setTitle(new TranslationTextComponent("mco.template.title.minigame"));
-         this.minecraft.setScreen(realmsselectworldtemplatescreen);
-      }));
-      this.optionsButton = this.addButton(new Button(this.leftButton(0), row(13) - 5, 90, 20, new TranslationTextComponent("mco.configure.world.buttons.options"), (p_237814_1_) -> {
-         this.minecraft.setScreen(new RealmsSlotOptionsScreen(this, this.serverData.slots.get(this.serverData.activeSlot).clone(), this.serverData.worldType, this.serverData.activeSlot));
-      }));
-      this.backupButton = this.addButton(new Button(this.leftButton(1), row(13) - 5, 90, 20, new TranslationTextComponent("mco.configure.world.backup"), (p_237812_1_) -> {
-         this.minecraft.setScreen(new RealmsBackupScreen(this, this.serverData.clone(), this.serverData.activeSlot));
-      }));
-      this.resetWorldButton = this.addButton(new Button(this.leftButton(2), row(13) - 5, 90, 20, new TranslationTextComponent("mco.configure.world.buttons.resetworld"), (p_237810_1_) -> {
-         this.minecraft.setScreen(new RealmsResetWorldScreen(this, this.serverData.clone(), () -> {
-            this.minecraft.setScreen(this.getNewScreen());
-         }, () -> {
-            this.minecraft.setScreen(this.getNewScreen());
-         }));
-      }));
-      this.addButton(new Button(this.rightX - 80 + 8, row(13) - 5, 70, 20, DialogTexts.GUI_BACK, (p_237808_1_) -> {
-         this.backButtonClicked();
-      }));
-      this.backupButton.active = true;
-      if (this.serverData == null) {
-         this.hideMinigameButtons();
-         this.hideRegularButtons();
-         this.playersButton.active = false;
-         this.settingsButton.active = false;
-         this.subscriptionButton.active = false;
-      } else {
-         this.disableButtons();
-         if (this.isMinigame()) {
-            this.hideRegularButtons();
-         } else {
-            this.hideMinigameButtons();
-         }
-      }
-
-   }
-
-   private void addSlotButton(int p_224402_1_) {
-      int i = this.frame(p_224402_1_);
-      int j = row(5) + 5;
-      RealmsServerSlotButton realmsserverslotbutton = new RealmsServerSlotButton(i, j, 80, 80, () -> {
-         return this.serverData;
-      }, (p_237801_1_) -> {
-         this.toolTip = p_237801_1_;
-      }, p_224402_1_, (p_237795_2_) -> {
-         RealmsServerSlotButton.ServerData realmsserverslotbutton$serverdata = ((RealmsServerSlotButton)p_237795_2_).getState();
-         if (realmsserverslotbutton$serverdata != null) {
-            switch(realmsserverslotbutton$serverdata.action) {
-            case NOTHING:
-               break;
-            case JOIN:
-               this.joinRealm(this.serverData);
-               break;
-            case SWITCH_SLOT:
-               if (realmsserverslotbutton$serverdata.minigame) {
-                  this.switchToMinigame();
-               } else if (realmsserverslotbutton$serverdata.empty) {
-                  this.switchToEmptySlot(p_224402_1_, this.serverData);
-               } else {
-                  this.switchToFullSlot(p_224402_1_, this.serverData);
-               }
-               break;
-            default:
-               throw new IllegalStateException("Unknown action " + realmsserverslotbutton$serverdata.action);
-            }
-         }
-
-      });
-      this.addButton(realmsserverslotbutton);
-   }
-
-   private int leftButton(int p_224411_1_) {
-      return this.leftX + p_224411_1_ * 95;
-   }
-
-   private int centerButton(int p_224374_1_, int p_224374_2_) {
-      return this.width / 2 - (p_224374_2_ * 105 - 5) / 2 + p_224374_1_ * 105;
-   }
-
-   public void tick() {
-      super.tick();
-      ++this.animTick;
-      --this.clicks;
-      if (this.clicks < 0) {
-         this.clicks = 0;
-      }
-
-   }
-
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.toolTip = null;
-      this.renderBackground(p_230430_1_);
-      drawCenteredString(p_230430_1_, this.font, TITLE, this.width / 2, row(4), 16777215);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      if (this.serverData == null) {
-         drawCenteredString(p_230430_1_, this.font, WORLD_TITLE, this.width / 2, 17, 16777215);
-      } else {
-         String s = this.serverData.getName();
-         int i = this.font.width(s);
-         int j = this.serverData.state == RealmsServer.Status.CLOSED ? 10526880 : 8388479;
-         int k = this.font.width(WORLD_TITLE);
-         drawCenteredString(p_230430_1_, this.font, WORLD_TITLE, this.width / 2, 12, 16777215);
-         drawCenteredString(p_230430_1_, this.font, s, this.width / 2, 24, j);
-         int l = Math.min(this.centerButton(2, 3) + 80 - 11, this.width / 2 + i / 2 + k / 2 + 10);
-         this.drawServerStatus(p_230430_1_, l, 7, p_230430_2_, p_230430_3_);
-         if (this.isMinigame()) {
-            this.font.draw(p_230430_1_, MINIGAME_PREFIX.copy().append(this.serverData.getMinigameName()), (float)(this.leftX + 80 + 20 + 10), (float)row(13), 16777215);
-         }
-
-         if (this.toolTip != null) {
-            this.renderMousehoverTooltip(p_230430_1_, this.toolTip, p_230430_2_, p_230430_3_);
-         }
-
-      }
-   }
-
-   private int frame(int p_224368_1_) {
-      return this.leftX + (p_224368_1_ - 1) * 98;
-   }
-
-   public void removed() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-   }
-
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (p_231046_1_ == 256) {
-         this.backButtonClicked();
-         return true;
-      } else {
-         return super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-      }
-   }
-
-   private void backButtonClicked() {
-      if (this.stateChanged) {
-         this.lastScreen.removeSelection();
-      }
-
-      this.minecraft.setScreen(this.lastScreen);
-   }
-
-   private void fetchServerData(long p_224387_1_) {
-      (new Thread(() -> {
-         RealmsClient realmsclient = RealmsClient.create();
-
-         try {
-            this.serverData = realmsclient.getOwnWorld(p_224387_1_);
-            this.disableButtons();
-            if (this.isMinigame()) {
-               this.show(this.switchMinigameButton);
-            } else {
-               this.show(this.optionsButton);
-               this.show(this.backupButton);
-               this.show(this.resetWorldButton);
-            }
-         } catch (RealmsServiceException realmsserviceexception) {
-            LOGGER.error("Couldn't get own world");
-            this.minecraft.execute(() -> {
-               this.minecraft.setScreen(new RealmsGenericErrorScreen(ITextComponent.nullToEmpty(realmsserviceexception.getMessage()), this.lastScreen));
-            });
-         }
-
-      })).start();
-   }
-
-   private void disableButtons() {
-      this.playersButton.active = !this.serverData.expired;
-      this.settingsButton.active = !this.serverData.expired;
-      this.subscriptionButton.active = true;
-      this.switchMinigameButton.active = !this.serverData.expired;
-      this.optionsButton.active = !this.serverData.expired;
-      this.resetWorldButton.active = !this.serverData.expired;
-   }
-
-   private void joinRealm(RealmsServer p_224385_1_) {
-      if (this.serverData.state == RealmsServer.Status.OPEN) {
-         this.lastScreen.play(p_224385_1_, new RealmsConfigureWorldScreen(this.lastScreen.newScreen(), this.serverId));
-      } else {
-         this.openTheWorld(true, new RealmsConfigureWorldScreen(this.lastScreen.newScreen(), this.serverId));
-      }
-
-   }
-
-   private void switchToMinigame() {
-      RealmsSelectWorldTemplateScreen realmsselectworldtemplatescreen = new RealmsSelectWorldTemplateScreen(this, RealmsServer.ServerType.MINIGAME);
-      realmsselectworldtemplatescreen.setTitle(new TranslationTextComponent("mco.template.title.minigame"));
-      realmsselectworldtemplatescreen.setWarning(new TranslationTextComponent("mco.minigame.world.info.line1"), new TranslationTextComponent("mco.minigame.world.info.line2"));
-      this.minecraft.setScreen(realmsselectworldtemplatescreen);
-   }
-
-   private void switchToFullSlot(int p_224403_1_, RealmsServer p_224403_2_) {
-      ITextComponent itextcomponent = new TranslationTextComponent("mco.configure.world.slot.switch.question.line1");
-      ITextComponent itextcomponent1 = new TranslationTextComponent("mco.configure.world.slot.switch.question.line2");
-      this.minecraft.setScreen(new RealmsLongConfirmationScreen((p_237805_3_) -> {
-         if (p_237805_3_) {
-            this.minecraft.setScreen(new RealmsLongRunningMcoTaskScreen(this.lastScreen, new SwitchMinigameRealmsAction(p_224403_2_.id, p_224403_1_, () -> {
-               this.minecraft.setScreen(this.getNewScreen());
-            })));
-         } else {
-            this.minecraft.setScreen(this);
-         }
-
-      }, RealmsLongConfirmationScreen.Type.Info, itextcomponent, itextcomponent1, true));
-   }
-
-   private void switchToEmptySlot(int p_224388_1_, RealmsServer p_224388_2_) {
-      ITextComponent itextcomponent = new TranslationTextComponent("mco.configure.world.slot.switch.question.line1");
-      ITextComponent itextcomponent1 = new TranslationTextComponent("mco.configure.world.slot.switch.question.line2");
-      this.minecraft.setScreen(new RealmsLongConfirmationScreen((p_237797_3_) -> {
-         if (p_237797_3_) {
-            RealmsResetWorldScreen realmsresetworldscreen = new RealmsResetWorldScreen(this, p_224388_2_, new TranslationTextComponent("mco.configure.world.switch.slot"), new TranslationTextComponent("mco.configure.world.switch.slot.subtitle"), 10526880, DialogTexts.GUI_CANCEL, () -> {
-               this.minecraft.setScreen(this.getNewScreen());
+        this.field_224428_p = this.addButton(new Button(this.func_224411_b(0), func_239562_k_(13) - 5, 100, 20, new TranslationTextComponent("mco.configure.world.buttons.switchminigame"), (p_237815_1_) ->
+        {
+            RealmsSelectWorldTemplateScreen realmsselectworldtemplatescreen = new RealmsSelectWorldTemplateScreen(this, RealmsServer.ServerType.MINIGAME);
+            realmsselectworldtemplatescreen.func_238001_a_(new TranslationTextComponent("mco.template.title.minigame"));
+            this.minecraft.displayGuiScreen(realmsselectworldtemplatescreen);
+        }));
+        this.field_224425_m = this.addButton(new Button(this.func_224411_b(0), func_239562_k_(13) - 5, 90, 20, new TranslationTextComponent("mco.configure.world.buttons.options"), (p_237814_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new RealmsSlotOptionsScreen(this, this.field_224416_d.field_230590_i_.get(this.field_224416_d.field_230595_n_).clone(), this.field_224416_d.field_230594_m_, this.field_224416_d.field_230595_n_));
+        }));
+        this.field_224426_n = this.addButton(new Button(this.func_224411_b(1), func_239562_k_(13) - 5, 90, 20, new TranslationTextComponent("mco.configure.world.backup"), (p_237812_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new RealmsBackupScreen(this, this.field_224416_d.clone(), this.field_224416_d.field_230595_n_));
+        }));
+        this.field_224427_o = this.addButton(new Button(this.func_224411_b(2), func_239562_k_(13) - 5, 90, 20, new TranslationTextComponent("mco.configure.world.buttons.resetworld"), (p_237810_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new RealmsResetWorldScreen(this, this.field_224416_d.clone(), () -> {
+                this.minecraft.displayGuiScreen(this.func_224407_b());
             }, () -> {
-               this.minecraft.setScreen(this.getNewScreen());
-            });
-            realmsresetworldscreen.setSlot(p_224388_1_);
-            realmsresetworldscreen.setResetTitle(new TranslationTextComponent("mco.create.world.reset.title"));
-            this.minecraft.setScreen(realmsresetworldscreen);
-         } else {
-            this.minecraft.setScreen(this);
-         }
+                this.minecraft.displayGuiScreen(this.func_224407_b());
+            }));
+        }));
+        this.addButton(new Button(this.field_224419_g - 80 + 8, func_239562_k_(13) - 5, 70, 20, DialogTexts.GUI_BACK, (p_237808_1_) ->
+        {
+            this.func_224390_d();
+        }));
+        this.field_224426_n.active = true;
 
-      }, RealmsLongConfirmationScreen.Type.Info, itextcomponent, itextcomponent1, true));
-   }
+        if (this.field_224416_d == null)
+        {
+            this.func_224412_j();
+            this.func_224377_h();
+            this.field_224422_j.active = false;
+            this.field_224423_k.active = false;
+            this.field_224424_l.active = false;
+        }
+        else
+        {
+            this.func_224400_e();
 
-   protected void renderMousehoverTooltip(MatrixStack p_237796_1_, @Nullable ITextComponent p_237796_2_, int p_237796_3_, int p_237796_4_) {
-      int i = p_237796_3_ + 12;
-      int j = p_237796_4_ - 12;
-      int k = this.font.width(p_237796_2_);
-      if (i + k + 3 > this.rightX) {
-         i = i - k - 20;
-      }
+            if (this.func_224376_g())
+            {
+                this.func_224377_h();
+            }
+            else
+            {
+                this.func_224412_j();
+            }
+        }
+    }
 
-      this.fillGradient(p_237796_1_, i - 3, j - 3, i + k + 3, j + 8 + 3, -1073741824, -1073741824);
-      this.font.drawShadow(p_237796_1_, p_237796_2_, (float)i, (float)j, 16777215);
-   }
+    private void func_224402_a(int p_224402_1_)
+    {
+        int i = this.func_224368_c(p_224402_1_);
+        int j = func_239562_k_(5) + 5;
+        RealmsServerSlotButton realmsserverslotbutton = new RealmsServerSlotButton(i, j, 80, 80, () ->
+        {
+            return this.field_224416_d;
+        }, (p_237801_1_) ->
+        {
+            this.field_224414_b = p_237801_1_;
+        }, p_224402_1_, (p_237795_2_) ->
+        {
+            RealmsServerSlotButton.ServerData realmsserverslotbutton$serverdata = ((RealmsServerSlotButton)p_237795_2_).func_237717_a_();
 
-   private void drawServerStatus(MatrixStack p_237807_1_, int p_237807_2_, int p_237807_3_, int p_237807_4_, int p_237807_5_) {
-      if (this.serverData.expired) {
-         this.drawExpired(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_);
-      } else if (this.serverData.state == RealmsServer.Status.CLOSED) {
-         this.drawClose(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_);
-      } else if (this.serverData.state == RealmsServer.Status.OPEN) {
-         if (this.serverData.daysLeft < 7) {
-            this.drawExpiring(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_, this.serverData.daysLeft);
-         } else {
-            this.drawOpen(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_);
-         }
-      }
+            if (realmsserverslotbutton$serverdata != null)
+            {
+                switch (realmsserverslotbutton$serverdata.field_225116_g)
+                {
+                    case NOTHING:
+                        break;
 
-   }
+                    case JOIN:
+                        this.func_224385_a(this.field_224416_d);
+                        break;
 
-   private void drawExpired(MatrixStack p_237809_1_, int p_237809_2_, int p_237809_3_, int p_237809_4_, int p_237809_5_) {
-      this.minecraft.getTextureManager().bind(EXPIRED_ICON_LOCATION);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      AbstractGui.blit(p_237809_1_, p_237809_2_, p_237809_3_, 0.0F, 0.0F, 10, 28, 10, 28);
-      if (p_237809_4_ >= p_237809_2_ && p_237809_4_ <= p_237809_2_ + 9 && p_237809_5_ >= p_237809_3_ && p_237809_5_ <= p_237809_3_ + 27) {
-         this.toolTip = SERVER_EXPIRED_TOOLTIP;
-      }
+                    case SWITCH_SLOT:
+                        if (realmsserverslotbutton$serverdata.field_225115_f)
+                        {
+                            this.func_224401_f();
+                        }
+                        else if (realmsserverslotbutton$serverdata.field_225114_e)
+                        {
+                            this.func_224388_b(p_224402_1_, this.field_224416_d);
+                        }
+                        else
+                        {
+                            this.func_224403_a(p_224402_1_, this.field_224416_d);
+                        }
 
-   }
+                        break;
 
-   private void drawExpiring(MatrixStack p_237804_1_, int p_237804_2_, int p_237804_3_, int p_237804_4_, int p_237804_5_, int p_237804_6_) {
-      this.minecraft.getTextureManager().bind(EXPIRES_SOON_ICON_LOCATION);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      if (this.animTick % 20 < 10) {
-         AbstractGui.blit(p_237804_1_, p_237804_2_, p_237804_3_, 0.0F, 0.0F, 10, 28, 20, 28);
-      } else {
-         AbstractGui.blit(p_237804_1_, p_237804_2_, p_237804_3_, 10.0F, 0.0F, 10, 28, 20, 28);
-      }
+                    default:
+                        throw new IllegalStateException("Unknown action " + realmsserverslotbutton$serverdata.field_225116_g);
+                }
+            }
+        });
+        this.addButton(realmsserverslotbutton);
+    }
 
-      if (p_237804_4_ >= p_237804_2_ && p_237804_4_ <= p_237804_2_ + 9 && p_237804_5_ >= p_237804_3_ && p_237804_5_ <= p_237804_3_ + 27) {
-         if (p_237804_6_ <= 0) {
-            this.toolTip = SERVER_EXPIRING_SOON_TOOLTIP;
-         } else if (p_237804_6_ == 1) {
-            this.toolTip = SERVER_EXPIRING_IN_DAY_TOOLTIP;
-         } else {
-            this.toolTip = new TranslationTextComponent("mco.selectServer.expires.days", p_237804_6_);
-         }
-      }
+    private int func_224411_b(int p_224411_1_)
+    {
+        return this.field_224418_f + p_224411_1_ * 95;
+    }
 
-   }
+    private int func_224374_a(int p_224374_1_, int p_224374_2_)
+    {
+        return this.width / 2 - (p_224374_2_ * 105 - 5) / 2 + p_224374_1_ * 105;
+    }
 
-   private void drawOpen(MatrixStack p_237811_1_, int p_237811_2_, int p_237811_3_, int p_237811_4_, int p_237811_5_) {
-      this.minecraft.getTextureManager().bind(ON_ICON_LOCATION);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      AbstractGui.blit(p_237811_1_, p_237811_2_, p_237811_3_, 0.0F, 0.0F, 10, 28, 10, 28);
-      if (p_237811_4_ >= p_237811_2_ && p_237811_4_ <= p_237811_2_ + 9 && p_237811_5_ >= p_237811_3_ && p_237811_5_ <= p_237811_3_ + 27) {
-         this.toolTip = SERVER_OPEN_TOOLTIP;
-      }
+    public void tick()
+    {
+        super.tick();
+        ++this.field_224430_r;
+        --this.field_224431_s;
 
-   }
+        if (this.field_224431_s < 0)
+        {
+            this.field_224431_s = 0;
+        }
+    }
 
-   private void drawClose(MatrixStack p_237813_1_, int p_237813_2_, int p_237813_3_, int p_237813_4_, int p_237813_5_) {
-      this.minecraft.getTextureManager().bind(OFF_ICON_LOCATION);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      AbstractGui.blit(p_237813_1_, p_237813_2_, p_237813_3_, 0.0F, 0.0F, 10, 28, 10, 28);
-      if (p_237813_4_ >= p_237813_2_ && p_237813_4_ <= p_237813_2_ + 9 && p_237813_5_ >= p_237813_3_ && p_237813_5_ <= p_237813_3_ + 27) {
-         this.toolTip = SERVER_CLOSED_TOOLTIP;
-      }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.field_224414_b = null;
+        this.renderBackground(matrixStack);
+        drawCenteredString(matrixStack, this.font, field_243108_r, this.width / 2, func_239562_k_(4), 16777215);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
 
-   }
+        if (this.field_224416_d == null)
+        {
+            drawCenteredString(matrixStack, this.font, field_243109_s, this.width / 2, 17, 16777215);
+        }
+        else
+        {
+            String s = this.field_224416_d.func_230775_b_();
+            int i = this.font.getStringWidth(s);
+            int j = this.field_224416_d.field_230586_e_ == RealmsServer.Status.CLOSED ? 10526880 : 8388479;
+            int k = this.font.getStringPropertyWidth(field_243109_s);
+            drawCenteredString(matrixStack, this.font, field_243109_s, this.width / 2, 12, 16777215);
+            drawCenteredString(matrixStack, this.font, s, this.width / 2, 24, j);
+            int l = Math.min(this.func_224374_a(2, 3) + 80 - 11, this.width / 2 + i / 2 + k / 2 + 10);
+            this.func_237807_c_(matrixStack, l, 7, mouseX, mouseY);
 
-   private boolean isMinigame() {
-      return this.serverData != null && this.serverData.worldType == RealmsServer.ServerType.MINIGAME;
-   }
+            if (this.func_224376_g())
+            {
+                this.font.func_243248_b(matrixStack, field_243110_t.deepCopy().appendString(this.field_224416_d.func_230778_c_()), (float)(this.field_224418_f + 80 + 20 + 10), (float)func_239562_k_(13), 16777215);
+            }
 
-   private void hideRegularButtons() {
-      this.hide(this.optionsButton);
-      this.hide(this.backupButton);
-      this.hide(this.resetWorldButton);
-   }
+            if (this.field_224414_b != null)
+            {
+                this.func_237796_a_(matrixStack, this.field_224414_b, mouseX, mouseY);
+            }
+        }
+    }
 
-   private void hide(Button p_237799_1_) {
-      p_237799_1_.visible = false;
-      this.children.remove(p_237799_1_);
-      this.buttons.remove(p_237799_1_);
-   }
+    private int func_224368_c(int p_224368_1_)
+    {
+        return this.field_224418_f + (p_224368_1_ - 1) * 98;
+    }
 
-   private void show(Button p_237806_1_) {
-      p_237806_1_.visible = true;
-      this.addButton(p_237806_1_);
-   }
+    public void onClose()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+    }
 
-   private void hideMinigameButtons() {
-      this.hide(this.switchMinigameButton);
-   }
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (keyCode == 256)
+        {
+            this.func_224390_d();
+            return true;
+        }
+        else
+        {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+    }
 
-   public void saveSlotSettings(RealmsWorldOptions p_224386_1_) {
-      RealmsWorldOptions realmsworldoptions = this.serverData.slots.get(this.serverData.activeSlot);
-      p_224386_1_.templateId = realmsworldoptions.templateId;
-      p_224386_1_.templateImage = realmsworldoptions.templateImage;
-      RealmsClient realmsclient = RealmsClient.create();
+    private void func_224390_d()
+    {
+        if (this.field_224429_q)
+        {
+            this.field_224415_c.func_223978_e();
+        }
 
-      try {
-         realmsclient.updateSlot(this.serverData.id, this.serverData.activeSlot, p_224386_1_);
-         this.serverData.slots.put(this.serverData.activeSlot, p_224386_1_);
-      } catch (RealmsServiceException realmsserviceexception) {
-         LOGGER.error("Couldn't save slot settings");
-         this.minecraft.setScreen(new RealmsGenericErrorScreen(realmsserviceexception, this));
-         return;
-      }
+        this.minecraft.displayGuiScreen(this.field_224415_c);
+    }
 
-      this.minecraft.setScreen(this);
-   }
+    private void func_224387_a(long p_224387_1_)
+    {
+        (new Thread(() ->
+        {
+            RealmsClient realmsclient = RealmsClient.func_224911_a();
 
-   public void saveSettings(String p_224410_1_, String p_224410_2_) {
-      String s = p_224410_2_.trim().isEmpty() ? null : p_224410_2_;
-      RealmsClient realmsclient = RealmsClient.create();
+            try {
+                this.field_224416_d = realmsclient.func_224935_a(p_224387_1_);
+                this.func_224400_e();
 
-      try {
-         realmsclient.update(this.serverData.id, p_224410_1_, s);
-         this.serverData.setName(p_224410_1_);
-         this.serverData.setDescription(s);
-      } catch (RealmsServiceException realmsserviceexception) {
-         LOGGER.error("Couldn't save settings");
-         this.minecraft.setScreen(new RealmsGenericErrorScreen(realmsserviceexception, this));
-         return;
-      }
+                if (this.func_224376_g())
+                {
+                    this.func_237806_b_(this.field_224428_p);
+                }
+                else {
+                    this.func_237806_b_(this.field_224425_m);
+                    this.func_237806_b_(this.field_224426_n);
+                    this.func_237806_b_(this.field_224427_o);
+                }
+            }
+            catch (RealmsServiceException realmsserviceexception)
+            {
+                field_224413_a.error("Couldn't get own world");
+                this.minecraft.execute(() ->
+                {
+                    this.minecraft.displayGuiScreen(new RealmsGenericErrorScreen(ITextComponent.getTextComponentOrEmpty(realmsserviceexception.getMessage()), this.field_224415_c));
+                });
+            }
+        })).start();
+    }
 
-      this.minecraft.setScreen(this);
-   }
+    private void func_224400_e()
+    {
+        this.field_224422_j.active = !this.field_224416_d.field_230591_j_;
+        this.field_224423_k.active = !this.field_224416_d.field_230591_j_;
+        this.field_224424_l.active = true;
+        this.field_224428_p.active = !this.field_224416_d.field_230591_j_;
+        this.field_224425_m.active = !this.field_224416_d.field_230591_j_;
+        this.field_224427_o.active = !this.field_224416_d.field_230591_j_;
+    }
 
-   public void openTheWorld(boolean p_237802_1_, Screen p_237802_2_) {
-      this.minecraft.setScreen(new RealmsLongRunningMcoTaskScreen(p_237802_2_, new OpeningWorldRealmsAction(this.serverData, this, this.lastScreen, p_237802_1_)));
-   }
+    private void func_224385_a(RealmsServer p_224385_1_)
+    {
+        if (this.field_224416_d.field_230586_e_ == RealmsServer.Status.OPEN)
+        {
+            this.field_224415_c.func_223911_a(p_224385_1_, new RealmsConfigureWorldScreen(this.field_224415_c.func_223942_f(), this.field_224417_e));
+        }
+        else
+        {
+            this.func_237802_a_(true, new RealmsConfigureWorldScreen(this.field_224415_c.func_223942_f(), this.field_224417_e));
+        }
+    }
 
-   public void closeTheWorld(Screen p_237800_1_) {
-      this.minecraft.setScreen(new RealmsLongRunningMcoTaskScreen(p_237800_1_, new CloseRealmsAction(this.serverData, this)));
-   }
+    private void func_224401_f()
+    {
+        RealmsSelectWorldTemplateScreen realmsselectworldtemplatescreen = new RealmsSelectWorldTemplateScreen(this, RealmsServer.ServerType.MINIGAME);
+        realmsselectworldtemplatescreen.func_238001_a_(new TranslationTextComponent("mco.template.title.minigame"));
+        realmsselectworldtemplatescreen.func_238002_a_(new TranslationTextComponent("mco.minigame.world.info.line1"), new TranslationTextComponent("mco.minigame.world.info.line2"));
+        this.minecraft.displayGuiScreen(realmsselectworldtemplatescreen);
+    }
 
-   public void stateChanged() {
-      this.stateChanged = true;
-   }
+    private void func_224403_a(int p_224403_1_, RealmsServer p_224403_2_)
+    {
+        ITextComponent itextcomponent = new TranslationTextComponent("mco.configure.world.slot.switch.question.line1");
+        ITextComponent itextcomponent1 = new TranslationTextComponent("mco.configure.world.slot.switch.question.line2");
+        this.minecraft.displayGuiScreen(new RealmsLongConfirmationScreen((p_237805_3_) ->
+        {
+            if (p_237805_3_)
+            {
+                this.minecraft.displayGuiScreen(new RealmsLongRunningMcoTaskScreen(this.field_224415_c, new SwitchMinigameRealmsAction(p_224403_2_.field_230582_a_, p_224403_1_, () ->
+                {
+                    this.minecraft.displayGuiScreen(this.func_224407_b());
+                })));
+            }
+            else {
+                this.minecraft.displayGuiScreen(this);
+            }
+        }, RealmsLongConfirmationScreen.Type.Info, itextcomponent, itextcomponent1, true));
+    }
 
-   protected void callback(@Nullable WorldTemplate p_223627_1_) {
-      if (p_223627_1_ != null) {
-         if (WorldTemplate.Type.MINIGAME == p_223627_1_.type) {
-            this.minecraft.setScreen(new RealmsLongRunningMcoTaskScreen(this.lastScreen, new StartMinigameRealmsAction(this.serverData.id, p_223627_1_, this.getNewScreen())));
-         }
+    private void func_224388_b(int p_224388_1_, RealmsServer p_224388_2_)
+    {
+        ITextComponent itextcomponent = new TranslationTextComponent("mco.configure.world.slot.switch.question.line1");
+        ITextComponent itextcomponent1 = new TranslationTextComponent("mco.configure.world.slot.switch.question.line2");
+        this.minecraft.displayGuiScreen(new RealmsLongConfirmationScreen((p_237797_3_) ->
+        {
+            if (p_237797_3_)
+            {
+                RealmsResetWorldScreen realmsresetworldscreen = new RealmsResetWorldScreen(this, p_224388_2_, new TranslationTextComponent("mco.configure.world.switch.slot"), new TranslationTextComponent("mco.configure.world.switch.slot.subtitle"), 10526880, DialogTexts.GUI_CANCEL, () ->
+                {
+                    this.minecraft.displayGuiScreen(this.func_224407_b());
+                }, () ->
+                {
+                    this.minecraft.displayGuiScreen(this.func_224407_b());
+                });
+                realmsresetworldscreen.func_224445_b(p_224388_1_);
+                realmsresetworldscreen.func_224432_a(new TranslationTextComponent("mco.create.world.reset.title"));
+                this.minecraft.displayGuiScreen(realmsresetworldscreen);
+            }
+            else {
+                this.minecraft.displayGuiScreen(this);
+            }
+        }, RealmsLongConfirmationScreen.Type.Info, itextcomponent, itextcomponent1, true));
+    }
 
-      }
-   }
+    protected void func_237796_a_(MatrixStack p_237796_1_, @Nullable ITextComponent p_237796_2_, int p_237796_3_, int p_237796_4_)
+    {
+        int i = p_237796_3_ + 12;
+        int j = p_237796_4_ - 12;
+        int k = this.font.getStringPropertyWidth(p_237796_2_);
 
-   public RealmsConfigureWorldScreen getNewScreen() {
-      return new RealmsConfigureWorldScreen(this.lastScreen, this.serverId);
-   }
+        if (i + k + 3 > this.field_224419_g)
+        {
+            i = i - k - 20;
+        }
+
+        this.fillGradient(p_237796_1_, i - 3, j - 3, i + k + 3, j + 8 + 3, -1073741824, -1073741824);
+        this.font.func_243246_a(p_237796_1_, p_237796_2_, (float)i, (float)j, 16777215);
+    }
+
+    private void func_237807_c_(MatrixStack p_237807_1_, int p_237807_2_, int p_237807_3_, int p_237807_4_, int p_237807_5_)
+    {
+        if (this.field_224416_d.field_230591_j_)
+        {
+            this.func_237809_d_(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_);
+        }
+        else if (this.field_224416_d.field_230586_e_ == RealmsServer.Status.CLOSED)
+        {
+            this.func_237813_f_(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_);
+        }
+        else if (this.field_224416_d.field_230586_e_ == RealmsServer.Status.OPEN)
+        {
+            if (this.field_224416_d.field_230593_l_ < 7)
+            {
+                this.func_237804_b_(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_, this.field_224416_d.field_230593_l_);
+            }
+            else
+            {
+                this.func_237811_e_(p_237807_1_, p_237807_2_, p_237807_3_, p_237807_4_, p_237807_5_);
+            }
+        }
+    }
+
+    private void func_237809_d_(MatrixStack p_237809_1_, int p_237809_2_, int p_237809_3_, int p_237809_4_, int p_237809_5_)
+    {
+        this.minecraft.getTextureManager().bindTexture(field_237789_p_);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        AbstractGui.blit(p_237809_1_, p_237809_2_, p_237809_3_, 0.0F, 0.0F, 10, 28, 10, 28);
+
+        if (p_237809_4_ >= p_237809_2_ && p_237809_4_ <= p_237809_2_ + 9 && p_237809_5_ >= p_237809_3_ && p_237809_5_ <= p_237809_3_ + 27)
+        {
+            this.field_224414_b = field_243111_u;
+        }
+    }
+
+    private void func_237804_b_(MatrixStack p_237804_1_, int p_237804_2_, int p_237804_3_, int p_237804_4_, int p_237804_5_, int p_237804_6_)
+    {
+        this.minecraft.getTextureManager().bindTexture(field_237790_q_);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+        if (this.field_224430_r % 20 < 10)
+        {
+            AbstractGui.blit(p_237804_1_, p_237804_2_, p_237804_3_, 0.0F, 0.0F, 10, 28, 20, 28);
+        }
+        else
+        {
+            AbstractGui.blit(p_237804_1_, p_237804_2_, p_237804_3_, 10.0F, 0.0F, 10, 28, 20, 28);
+        }
+
+        if (p_237804_4_ >= p_237804_2_ && p_237804_4_ <= p_237804_2_ + 9 && p_237804_5_ >= p_237804_3_ && p_237804_5_ <= p_237804_3_ + 27)
+        {
+            if (p_237804_6_ <= 0)
+            {
+                this.field_224414_b = field_243112_v;
+            }
+            else if (p_237804_6_ == 1)
+            {
+                this.field_224414_b = field_243113_w;
+            }
+            else
+            {
+                this.field_224414_b = new TranslationTextComponent("mco.selectServer.expires.days", p_237804_6_);
+            }
+        }
+    }
+
+    private void func_237811_e_(MatrixStack p_237811_1_, int p_237811_2_, int p_237811_3_, int p_237811_4_, int p_237811_5_)
+    {
+        this.minecraft.getTextureManager().bindTexture(field_237787_b_);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        AbstractGui.blit(p_237811_1_, p_237811_2_, p_237811_3_, 0.0F, 0.0F, 10, 28, 10, 28);
+
+        if (p_237811_4_ >= p_237811_2_ && p_237811_4_ <= p_237811_2_ + 9 && p_237811_5_ >= p_237811_3_ && p_237811_5_ <= p_237811_3_ + 27)
+        {
+            this.field_224414_b = field_243114_x;
+        }
+    }
+
+    private void func_237813_f_(MatrixStack p_237813_1_, int p_237813_2_, int p_237813_3_, int p_237813_4_, int p_237813_5_)
+    {
+        this.minecraft.getTextureManager().bindTexture(field_237788_c_);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        AbstractGui.blit(p_237813_1_, p_237813_2_, p_237813_3_, 0.0F, 0.0F, 10, 28, 10, 28);
+
+        if (p_237813_4_ >= p_237813_2_ && p_237813_4_ <= p_237813_2_ + 9 && p_237813_5_ >= p_237813_3_ && p_237813_5_ <= p_237813_3_ + 27)
+        {
+            this.field_224414_b = field_243115_y;
+        }
+    }
+
+    private boolean func_224376_g()
+    {
+        return this.field_224416_d != null && this.field_224416_d.field_230594_m_ == RealmsServer.ServerType.MINIGAME;
+    }
+
+    private void func_224377_h()
+    {
+        this.func_237799_a_(this.field_224425_m);
+        this.func_237799_a_(this.field_224426_n);
+        this.func_237799_a_(this.field_224427_o);
+    }
+
+    private void func_237799_a_(Button p_237799_1_)
+    {
+        p_237799_1_.visible = false;
+        this.children.remove(p_237799_1_);
+        this.buttons.remove(p_237799_1_);
+    }
+
+    private void func_237806_b_(Button p_237806_1_)
+    {
+        p_237806_1_.visible = true;
+        this.addButton(p_237806_1_);
+    }
+
+    private void func_224412_j()
+    {
+        this.func_237799_a_(this.field_224428_p);
+    }
+
+    public void func_224386_a(RealmsWorldOptions p_224386_1_)
+    {
+        RealmsWorldOptions realmsworldoptions = this.field_224416_d.field_230590_i_.get(this.field_224416_d.field_230595_n_);
+        p_224386_1_.field_230624_k_ = realmsworldoptions.field_230624_k_;
+        p_224386_1_.field_230625_l_ = realmsworldoptions.field_230625_l_;
+        RealmsClient realmsclient = RealmsClient.func_224911_a();
+
+        try
+        {
+            realmsclient.func_224925_a(this.field_224416_d.field_230582_a_, this.field_224416_d.field_230595_n_, p_224386_1_);
+            this.field_224416_d.field_230590_i_.put(this.field_224416_d.field_230595_n_, p_224386_1_);
+        }
+        catch (RealmsServiceException realmsserviceexception)
+        {
+            field_224413_a.error("Couldn't save slot settings");
+            this.minecraft.displayGuiScreen(new RealmsGenericErrorScreen(realmsserviceexception, this));
+            return;
+        }
+
+        this.minecraft.displayGuiScreen(this);
+    }
+
+    public void func_224410_a(String p_224410_1_, String p_224410_2_)
+    {
+        String s = p_224410_2_.trim().isEmpty() ? null : p_224410_2_;
+        RealmsClient realmsclient = RealmsClient.func_224911_a();
+
+        try
+        {
+            realmsclient.func_224922_b(this.field_224416_d.field_230582_a_, p_224410_1_, s);
+            this.field_224416_d.func_230773_a_(p_224410_1_);
+            this.field_224416_d.func_230777_b_(s);
+        }
+        catch (RealmsServiceException realmsserviceexception)
+        {
+            field_224413_a.error("Couldn't save settings");
+            this.minecraft.displayGuiScreen(new RealmsGenericErrorScreen(realmsserviceexception, this));
+            return;
+        }
+
+        this.minecraft.displayGuiScreen(this);
+    }
+
+    public void func_237802_a_(boolean p_237802_1_, Screen p_237802_2_)
+    {
+        this.minecraft.displayGuiScreen(new RealmsLongRunningMcoTaskScreen(p_237802_2_, new OpeningWorldRealmsAction(this.field_224416_d, this, this.field_224415_c, p_237802_1_)));
+    }
+
+    public void func_237800_a_(Screen p_237800_1_)
+    {
+        this.minecraft.displayGuiScreen(new RealmsLongRunningMcoTaskScreen(p_237800_1_, new CloseRealmsAction(this.field_224416_d, this)));
+    }
+
+    public void func_224398_a()
+    {
+        this.field_224429_q = true;
+    }
+
+    protected void func_223627_a_(@Nullable WorldTemplate p_223627_1_)
+    {
+        if (p_223627_1_ != null)
+        {
+            if (WorldTemplate.Type.MINIGAME == p_223627_1_.field_230655_i_)
+            {
+                this.minecraft.displayGuiScreen(new RealmsLongRunningMcoTaskScreen(this.field_224415_c, new StartMinigameRealmsAction(this.field_224416_d.field_230582_a_, p_223627_1_, this.func_224407_b())));
+            }
+        }
+    }
+
+    public RealmsConfigureWorldScreen func_224407_b()
+    {
+        return new RealmsConfigureWorldScreen(this.field_224415_c, this.field_224417_e);
+    }
 }

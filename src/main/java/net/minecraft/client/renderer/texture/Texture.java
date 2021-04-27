@@ -6,75 +6,127 @@ import java.io.IOException;
 import java.util.concurrent.Executor;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
+import net.optifine.shaders.MultiTexID;
+import net.optifine.shaders.ShadersTex;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class Texture implements AutoCloseable {
-   protected int id = -1;
-   protected boolean blur;
-   protected boolean mipmap;
+public abstract class Texture implements AutoCloseable
+{
+    protected int glTextureId = -1;
+    protected boolean blur;
+    protected boolean mipmap;
+    public MultiTexID multiTex;
+    private boolean blurMipmapSet;
+    private boolean lastBlur;
+    private boolean lastMipmap;
 
-   public void setFilter(boolean p_174937_1_, boolean p_174937_2_) {
-      RenderSystem.assertThread(RenderSystem::isOnRenderThreadOrInit);
-      this.blur = p_174937_1_;
-      this.mipmap = p_174937_2_;
-      int i;
-      int j;
-      if (p_174937_1_) {
-         i = p_174937_2_ ? 9987 : 9729;
-         j = 9729;
-      } else {
-         i = p_174937_2_ ? 9986 : 9728;
-         j = 9728;
-      }
+    public void setBlurMipmapDirect(boolean blurIn, boolean mipmapIn)
+    {
+        RenderSystem.assertThread(RenderSystem::isOnRenderThreadOrInit);
 
-      GlStateManager._texParameter(3553, 10241, i);
-      GlStateManager._texParameter(3553, 10240, j);
-   }
+        if (!this.blurMipmapSet || this.blur != blurIn || this.mipmap != mipmapIn)
+        {
+            this.blurMipmapSet = true;
+            this.blur = blurIn;
+            this.mipmap = mipmapIn;
+            int i;
+            int j;
 
-   public int getId() {
-      RenderSystem.assertThread(RenderSystem::isOnRenderThreadOrInit);
-      if (this.id == -1) {
-         this.id = TextureUtil.generateTextureId();
-      }
-
-      return this.id;
-   }
-
-   public void releaseId() {
-      if (!RenderSystem.isOnRenderThread()) {
-         RenderSystem.recordRenderCall(() -> {
-            if (this.id != -1) {
-               TextureUtil.releaseTextureId(this.id);
-               this.id = -1;
+            if (blurIn)
+            {
+                i = mipmapIn ? 9987 : 9729;
+                j = 9729;
+            }
+            else
+            {
+                int k = Config.getMipmapType();
+                i = mipmapIn ? k : 9728;
+                j = 9728;
             }
 
-         });
-      } else if (this.id != -1) {
-         TextureUtil.releaseTextureId(this.id);
-         this.id = -1;
-      }
+            GlStateManager.bindTexture(this.getGlTextureId());
+            GlStateManager.texParameter(3553, 10241, i);
+            GlStateManager.texParameter(3553, 10240, j);
+        }
+    }
 
-   }
+    public int getGlTextureId()
+    {
+        RenderSystem.assertThread(RenderSystem::isOnRenderThreadOrInit);
 
-   public abstract void load(IResourceManager p_195413_1_) throws IOException;
+        if (this.glTextureId == -1)
+        {
+            this.glTextureId = TextureUtil.generateTextureId();
+        }
 
-   public void bind() {
-      if (!RenderSystem.isOnRenderThreadOrInit()) {
-         RenderSystem.recordRenderCall(() -> {
-            GlStateManager._bindTexture(this.getId());
-         });
-      } else {
-         GlStateManager._bindTexture(this.getId());
-      }
+        return this.glTextureId;
+    }
 
-   }
+    public void deleteGlTexture()
+    {
+        if (!RenderSystem.isOnRenderThread())
+        {
+            RenderSystem.recordRenderCall(() ->
+            {
+                ShadersTex.deleteTextures(this, this.glTextureId);
+                this.blurMipmapSet = false;
 
-   public void reset(TextureManager p_215244_1_, IResourceManager p_215244_2_, ResourceLocation p_215244_3_, Executor p_215244_4_) {
-      p_215244_1_.register(p_215244_3_, this);
-   }
+                if (this.glTextureId != -1)
+                {
+                    TextureUtil.releaseTextureId(this.glTextureId);
+                    this.glTextureId = -1;
+                }
+            });
+        }
+        else if (this.glTextureId != -1)
+        {
+            ShadersTex.deleteTextures(this, this.glTextureId);
+            this.blurMipmapSet = false;
+            TextureUtil.releaseTextureId(this.glTextureId);
+            this.glTextureId = -1;
+        }
+    }
 
-   public void close() {
-   }
+    public abstract void loadTexture(IResourceManager manager) throws IOException;
+
+    public void bindTexture()
+    {
+        if (!RenderSystem.isOnRenderThreadOrInit())
+        {
+            RenderSystem.recordRenderCall(() ->
+            {
+                GlStateManager.bindTexture(this.getGlTextureId());
+            });
+        }
+        else
+        {
+            GlStateManager.bindTexture(this.getGlTextureId());
+        }
+    }
+
+    public void loadTexture(TextureManager textureManagerIn, IResourceManager resourceManagerIn, ResourceLocation resourceLocationIn, Executor executorIn)
+    {
+        textureManagerIn.loadTexture(resourceLocationIn, this);
+    }
+
+    public void close()
+    {
+    }
+
+    public MultiTexID getMultiTexID()
+    {
+        return ShadersTex.getMultiTexID(this);
+    }
+
+    public void setBlurMipmap(boolean p_setBlurMipmap_1_, boolean p_setBlurMipmap_2_)
+    {
+        this.lastBlur = this.blur;
+        this.lastMipmap = this.mipmap;
+        this.setBlurMipmapDirect(p_setBlurMipmap_1_, p_setBlurMipmap_2_);
+    }
+
+    public void restoreLastBlurMipmap()
+    {
+        this.setBlurMipmapDirect(this.lastBlur, this.lastMipmap);
+    }
 }

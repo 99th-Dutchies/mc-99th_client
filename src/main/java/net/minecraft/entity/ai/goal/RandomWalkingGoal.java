@@ -6,82 +6,122 @@ import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class RandomWalkingGoal extends Goal {
-   protected final CreatureEntity mob;
-   protected double wantedX;
-   protected double wantedY;
-   protected double wantedZ;
-   protected final double speedModifier;
-   protected int interval;
-   protected boolean forceTrigger;
-   private boolean checkNoActionTime;
+public class RandomWalkingGoal extends Goal
+{
+    protected final CreatureEntity creature;
+    protected double x;
+    protected double y;
+    protected double z;
+    protected final double speed;
+    protected int executionChance;
+    protected boolean mustUpdate;
+    private boolean field_234053_h_;
 
-   public RandomWalkingGoal(CreatureEntity p_i1648_1_, double p_i1648_2_) {
-      this(p_i1648_1_, p_i1648_2_, 120);
-   }
+    public RandomWalkingGoal(CreatureEntity creatureIn, double speedIn)
+    {
+        this(creatureIn, speedIn, 120);
+    }
 
-   public RandomWalkingGoal(CreatureEntity p_i45887_1_, double p_i45887_2_, int p_i45887_4_) {
-      this(p_i45887_1_, p_i45887_2_, p_i45887_4_, true);
-   }
+    public RandomWalkingGoal(CreatureEntity creatureIn, double speedIn, int chance)
+    {
+        this(creatureIn, speedIn, chance, true);
+    }
 
-   public RandomWalkingGoal(CreatureEntity p_i231550_1_, double p_i231550_2_, int p_i231550_4_, boolean p_i231550_5_) {
-      this.mob = p_i231550_1_;
-      this.speedModifier = p_i231550_2_;
-      this.interval = p_i231550_4_;
-      this.checkNoActionTime = p_i231550_5_;
-      this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-   }
+    public RandomWalkingGoal(CreatureEntity creature, double speed, int chance, boolean p_i231550_5_)
+    {
+        this.creature = creature;
+        this.speed = speed;
+        this.executionChance = chance;
+        this.field_234053_h_ = p_i231550_5_;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+    }
 
-   public boolean canUse() {
-      if (this.mob.isVehicle()) {
-         return false;
-      } else {
-         if (!this.forceTrigger) {
-            if (this.checkNoActionTime && this.mob.getNoActionTime() >= 100) {
-               return false;
-            }
-
-            if (this.mob.getRandom().nextInt(this.interval) != 0) {
-               return false;
-            }
-         }
-
-         Vector3d vector3d = this.getPosition();
-         if (vector3d == null) {
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        if (this.creature.isBeingRidden())
+        {
             return false;
-         } else {
-            this.wantedX = vector3d.x;
-            this.wantedY = vector3d.y;
-            this.wantedZ = vector3d.z;
-            this.forceTrigger = false;
-            return true;
-         }
-      }
-   }
+        }
+        else
+        {
+            if (!this.mustUpdate)
+            {
+                if (this.field_234053_h_ && this.creature.getIdleTime() >= 100)
+                {
+                    return false;
+                }
 
-   @Nullable
-   protected Vector3d getPosition() {
-      return RandomPositionGenerator.getPos(this.mob, 10, 7);
-   }
+                if (this.creature.getRNG().nextInt(this.executionChance) != 0)
+                {
+                    return false;
+                }
+            }
 
-   public boolean canContinueToUse() {
-      return !this.mob.getNavigation().isDone() && !this.mob.isVehicle();
-   }
+            Vector3d vector3d = this.getPosition();
 
-   public void start() {
-      this.mob.getNavigation().moveTo(this.wantedX, this.wantedY, this.wantedZ, this.speedModifier);
-   }
+            if (vector3d == null)
+            {
+                return false;
+            }
+            else
+            {
+                this.x = vector3d.x;
+                this.y = vector3d.y;
+                this.z = vector3d.z;
+                this.mustUpdate = false;
+                return true;
+            }
+        }
+    }
 
-   public void stop() {
-      this.mob.getNavigation().stop();
-      super.stop();
-   }
+    @Nullable
+    protected Vector3d getPosition()
+    {
+        return RandomPositionGenerator.findRandomTarget(this.creature, 10, 7);
+    }
 
-   public void trigger() {
-      this.forceTrigger = true;
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        return !this.creature.getNavigator().noPath() && !this.creature.isBeingRidden();
+    }
 
-   public void setInterval(int p_179479_1_) {
-      this.interval = p_179479_1_;
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.creature.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, this.speed);
+    }
+
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        this.creature.getNavigator().clearPath();
+        super.resetTask();
+    }
+
+    /**
+     * Makes task to bypass chance
+     */
+    public void makeUpdate()
+    {
+        this.mustUpdate = true;
+    }
+
+    /**
+     * Changes task random possibility for execution
+     */
+    public void setExecutionChance(int newchance)
+    {
+        this.executionChance = newchance;
+    }
 }

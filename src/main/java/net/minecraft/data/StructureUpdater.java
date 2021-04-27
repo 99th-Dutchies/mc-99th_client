@@ -8,31 +8,38 @@ import net.minecraft.world.gen.feature.template.Template;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class StructureUpdater implements SNBTToNBTConverter.ITransformer {
-   private static final Logger LOGGER = LogManager.getLogger();
+public class StructureUpdater implements SNBTToNBTConverter.ITransformer
+{
+    private static final Logger LOGGER = LogManager.getLogger();
 
-   public CompoundNBT apply(String p_225371_1_, CompoundNBT p_225371_2_) {
-      return p_225371_1_.startsWith("data/minecraft/structures/") ? updateStructure(p_225371_1_, patchVersion(p_225371_2_)) : p_225371_2_;
-   }
+    public CompoundNBT func_225371_a(String p_225371_1_, CompoundNBT p_225371_2_)
+    {
+        return p_225371_1_.startsWith("data/minecraft/structures/") ? updateSNBT(p_225371_1_, addDataVersion(p_225371_2_)) : p_225371_2_;
+    }
 
-   private static CompoundNBT patchVersion(CompoundNBT p_225372_0_) {
-      if (!p_225372_0_.contains("DataVersion", 99)) {
-         p_225372_0_.putInt("DataVersion", 500);
-      }
+    private static CompoundNBT addDataVersion(CompoundNBT nbt)
+    {
+        if (!nbt.contains("DataVersion", 99))
+        {
+            nbt.putInt("DataVersion", 500);
+        }
 
-      return p_225372_0_;
-   }
+        return nbt;
+    }
 
-   private static CompoundNBT updateStructure(String p_240519_0_, CompoundNBT p_240519_1_) {
-      Template template = new Template();
-      int i = p_240519_1_.getInt("DataVersion");
-      int j = 2532;
-      if (i < 2532) {
-         LOGGER.warn("SNBT Too old, do not forget to update: " + i + " < " + 2532 + ": " + p_240519_0_);
-      }
+    private static CompoundNBT updateSNBT(String name, CompoundNBT nbt)
+    {
+        Template template = new Template();
+        int i = nbt.getInt("DataVersion");
+        int j = 2532;
 
-      CompoundNBT compoundnbt = NBTUtil.update(DataFixesManager.getDataFixer(), DefaultTypeReferences.STRUCTURE, p_240519_1_, i);
-      template.load(compoundnbt);
-      return template.save(new CompoundNBT());
-   }
+        if (i < 2532)
+        {
+            LOGGER.warn("SNBT Too old, do not forget to update: " + i + " < " + 2532 + ": " + name);
+        }
+
+        CompoundNBT compoundnbt = NBTUtil.update(DataFixesManager.getDataFixer(), DefaultTypeReferences.STRUCTURE, nbt, i);
+        template.read(compoundnbt);
+        return template.writeToNBT(new CompoundNBT());
+    }
 }

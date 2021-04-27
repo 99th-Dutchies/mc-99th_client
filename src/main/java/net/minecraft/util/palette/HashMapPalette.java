@@ -8,101 +8,120 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.IntIdentityHashBiMap;
 import net.minecraft.util.ObjectIntIdentityMap;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class HashMapPalette<T> implements IPalette<T> {
-   private final ObjectIntIdentityMap<T> registry;
-   private final IntIdentityHashBiMap<T> values;
-   private final IResizeCallback<T> resizeHandler;
-   private final Function<CompoundNBT, T> reader;
-   private final Function<T, CompoundNBT> writer;
-   private final int bits;
+public class HashMapPalette<T> implements IPalette<T>
+{
+    private final ObjectIntIdentityMap<T> registry;
+    private final IntIdentityHashBiMap<T> statePaletteMap;
+    private final IResizeCallback<T> paletteResizer;
+    private final Function<CompoundNBT, T> deserializer;
+    private final Function<T, CompoundNBT> serializer;
+    private final int bits;
 
-   public HashMapPalette(ObjectIntIdentityMap<T> p_i48964_1_, int p_i48964_2_, IResizeCallback<T> p_i48964_3_, Function<CompoundNBT, T> p_i48964_4_, Function<T, CompoundNBT> p_i48964_5_) {
-      this.registry = p_i48964_1_;
-      this.bits = p_i48964_2_;
-      this.resizeHandler = p_i48964_3_;
-      this.reader = p_i48964_4_;
-      this.writer = p_i48964_5_;
-      this.values = new IntIdentityHashBiMap<>(1 << p_i48964_2_);
-   }
+    public HashMapPalette(ObjectIntIdentityMap<T> backingRegistry, int bitsIn, IResizeCallback<T> paletteResizerIn, Function<CompoundNBT, T> deserializerIn, Function<T, CompoundNBT> p_i48964_5_)
+    {
+        this.registry = backingRegistry;
+        this.bits = bitsIn;
+        this.paletteResizer = paletteResizerIn;
+        this.deserializer = deserializerIn;
+        this.serializer = p_i48964_5_;
+        this.statePaletteMap = new IntIdentityHashBiMap<>(1 << bitsIn);
+    }
 
-   public int idFor(T p_186041_1_) {
-      int i = this.values.getId(p_186041_1_);
-      if (i == -1) {
-         i = this.values.add(p_186041_1_);
-         if (i >= 1 << this.bits) {
-            i = this.resizeHandler.onResize(this.bits + 1, p_186041_1_);
-         }
-      }
+    public int idFor(T state)
+    {
+        int i = this.statePaletteMap.getId(state);
 
-      return i;
-   }
+        if (i == -1)
+        {
+            i = this.statePaletteMap.add(state);
 
-   public boolean maybeHas(Predicate<T> p_230341_1_) {
-      for(int i = 0; i < this.getSize(); ++i) {
-         if (p_230341_1_.test(this.values.byId(i))) {
-            return true;
-         }
-      }
+            if (i >= 1 << this.bits)
+            {
+                i = this.paletteResizer.onResize(this.bits + 1, state);
+            }
+        }
 
-      return false;
-   }
+        return i;
+    }
 
-   @Nullable
-   public T valueFor(int p_186039_1_) {
-      return this.values.byId(p_186039_1_);
-   }
+    public boolean func_230341_a_(Predicate<T> p_230341_1_)
+    {
+        for (int i = 0; i < this.getPaletteSize(); ++i)
+        {
+            if (p_230341_1_.test(this.statePaletteMap.getByValue(i)))
+            {
+                return true;
+            }
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public void read(PacketBuffer p_186038_1_) {
-      this.values.clear();
-      int i = p_186038_1_.readVarInt();
+        return false;
+    }
 
-      for(int j = 0; j < i; ++j) {
-         this.values.add(this.registry.byId(p_186038_1_.readVarInt()));
-      }
+    @Nullable
 
-   }
+    /**
+     * Gets the block state by the palette id.
+     */
+    public T get(int indexKey)
+    {
+        return this.statePaletteMap.getByValue(indexKey);
+    }
 
-   public void write(PacketBuffer p_186037_1_) {
-      int i = this.getSize();
-      p_186037_1_.writeVarInt(i);
+    public void read(PacketBuffer buf)
+    {
+        this.statePaletteMap.clear();
+        int i = buf.readVarInt();
 
-      for(int j = 0; j < i; ++j) {
-         p_186037_1_.writeVarInt(this.registry.getId(this.values.byId(j)));
-      }
+        for (int j = 0; j < i; ++j)
+        {
+            this.statePaletteMap.add(this.registry.getByValue(buf.readVarInt()));
+        }
+    }
 
-   }
+    public void write(PacketBuffer buf)
+    {
+        int i = this.getPaletteSize();
+        buf.writeVarInt(i);
 
-   public int getSerializedSize() {
-      int i = PacketBuffer.getVarIntSize(this.getSize());
+        for (int j = 0; j < i; ++j)
+        {
+            buf.writeVarInt(this.registry.getId(this.statePaletteMap.getByValue(j)));
+        }
+    }
 
-      for(int j = 0; j < this.getSize(); ++j) {
-         i += PacketBuffer.getVarIntSize(this.registry.getId(this.values.byId(j)));
-      }
+    public int getSerializedSize()
+    {
+        int i = PacketBuffer.getVarIntSize(this.getPaletteSize());
 
-      return i;
-   }
+        for (int j = 0; j < this.getPaletteSize(); ++j)
+        {
+            i += PacketBuffer.getVarIntSize(this.registry.getId(this.statePaletteMap.getByValue(j)));
+        }
 
-   public int getSize() {
-      return this.values.size();
-   }
+        return i;
+    }
 
-   public void read(ListNBT p_196968_1_) {
-      this.values.clear();
+    public int getPaletteSize()
+    {
+        return this.statePaletteMap.size();
+    }
 
-      for(int i = 0; i < p_196968_1_.size(); ++i) {
-         this.values.add(this.reader.apply(p_196968_1_.getCompound(i)));
-      }
+    public void read(ListNBT nbt)
+    {
+        this.statePaletteMap.clear();
 
-   }
+        for (int i = 0; i < nbt.size(); ++i)
+        {
+            this.statePaletteMap.add(this.deserializer.apply(nbt.getCompound(i)));
+        }
+    }
 
-   public void write(ListNBT p_196969_1_) {
-      for(int i = 0; i < this.getSize(); ++i) {
-         p_196969_1_.add(this.writer.apply(this.values.byId(i)));
-      }
-
-   }
+    public void writePaletteToList(ListNBT paletteList)
+    {
+        for (int i = 0; i < this.getPaletteSize(); ++i)
+        {
+            paletteList.add(this.serializer.apply(this.statePaletteMap.getByValue(i)));
+        }
+    }
 }

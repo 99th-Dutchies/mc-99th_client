@@ -7,12 +7,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 
-public class FletchingTableBlock extends CraftingTableBlock {
-   protected FletchingTableBlock(AbstractBlock.Properties p_i49985_1_) {
-      super(p_i49985_1_);
-   }
+public class FletchingTableBlock extends CraftingTableBlock
+{
+    protected FletchingTableBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      return ActionResultType.PASS;
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        return ActionResultType.PASS;
+    }
 }

@@ -1,30 +1,31 @@
 package net.minecraft.util;
 
 import net.minecraft.client.GameSettings;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class MovementInputFromOptions extends MovementInput {
-   private final GameSettings options;
+public class MovementInputFromOptions extends MovementInput
+{
+    private final GameSettings gameSettings;
 
-   public MovementInputFromOptions(GameSettings p_i1237_1_) {
-      this.options = p_i1237_1_;
-   }
+    public MovementInputFromOptions(GameSettings gameSettingsIn)
+    {
+        this.gameSettings = gameSettingsIn;
+    }
 
-   public void tick(boolean p_225607_1_) {
-      this.up = this.options.keyUp.isDown();
-      this.down = this.options.keyDown.isDown();
-      this.left = this.options.keyLeft.isDown();
-      this.right = this.options.keyRight.isDown();
-      this.forwardImpulse = this.up == this.down ? 0.0F : (this.up ? 1.0F : -1.0F);
-      this.leftImpulse = this.left == this.right ? 0.0F : (this.left ? 1.0F : -1.0F);
-      this.jumping = this.options.keyJump.isDown();
-      this.shiftKeyDown = this.options.keyShift.isDown();
-      if (p_225607_1_) {
-         this.leftImpulse = (float)((double)this.leftImpulse * 0.3D);
-         this.forwardImpulse = (float)((double)this.forwardImpulse * 0.3D);
-      }
+    public void tickMovement(boolean p_225607_1_)
+    {
+        this.forwardKeyDown = this.gameSettings.keyBindForward.isKeyDown();
+        this.backKeyDown = this.gameSettings.keyBindBack.isKeyDown();
+        this.leftKeyDown = this.gameSettings.keyBindLeft.isKeyDown();
+        this.rightKeyDown = this.gameSettings.keyBindRight.isKeyDown();
+        this.moveForward = this.forwardKeyDown == this.backKeyDown ? 0.0F : (this.forwardKeyDown ? 1.0F : -1.0F);
+        this.moveStrafe = this.leftKeyDown == this.rightKeyDown ? 0.0F : (this.leftKeyDown ? 1.0F : -1.0F);
+        this.jump = this.gameSettings.keyBindJump.isKeyDown();
+        this.sneaking = this.gameSettings.keyBindSneak.isKeyDown();
 
-   }
+        if (p_225607_1_)
+        {
+            this.moveStrafe = (float)((double)this.moveStrafe * 0.3D);
+            this.moveForward = (float)((double)this.moveForward * 0.3D);
+        }
+    }
 }

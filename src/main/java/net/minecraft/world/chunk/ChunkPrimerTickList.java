@@ -10,56 +10,70 @@ import net.minecraft.world.ITickList;
 import net.minecraft.world.TickPriority;
 import net.minecraft.world.chunk.storage.ChunkSerializer;
 
-public class ChunkPrimerTickList<T> implements ITickList<T> {
-   protected final Predicate<T> ignore;
-   private final ChunkPos chunkPos;
-   private final ShortList[] toBeTicked = new ShortList[16];
+public class ChunkPrimerTickList<T> implements ITickList<T>
+{
+    protected final Predicate<T> filter;
+    private final ChunkPos pos;
+    private final ShortList[] packedPositions = new ShortList[16];
 
-   public ChunkPrimerTickList(Predicate<T> p_i51495_1_, ChunkPos p_i51495_2_) {
-      this(p_i51495_1_, p_i51495_2_, new ListNBT());
-   }
+    public ChunkPrimerTickList(Predicate<T> filter, ChunkPos pos)
+    {
+        this(filter, pos, new ListNBT());
+    }
 
-   public ChunkPrimerTickList(Predicate<T> p_i51496_1_, ChunkPos p_i51496_2_, ListNBT p_i51496_3_) {
-      this.ignore = p_i51496_1_;
-      this.chunkPos = p_i51496_2_;
+    public ChunkPrimerTickList(Predicate<T> filter, ChunkPos pos, ListNBT p_i51496_3_)
+    {
+        this.filter = filter;
+        this.pos = pos;
 
-      for(int i = 0; i < p_i51496_3_.size(); ++i) {
-         ListNBT listnbt = p_i51496_3_.getList(i);
+        for (int i = 0; i < p_i51496_3_.size(); ++i)
+        {
+            ListNBT listnbt = p_i51496_3_.getList(i);
 
-         for(int j = 0; j < listnbt.size(); ++j) {
-            IChunk.getOrCreateOffsetList(this.toBeTicked, i).add(listnbt.getShort(j));
-         }
-      }
-
-   }
-
-   public ListNBT save() {
-      return ChunkSerializer.packOffsets(this.toBeTicked);
-   }
-
-   public void copyOut(ITickList<T> p_205381_1_, Function<BlockPos, T> p_205381_2_) {
-      for(int i = 0; i < this.toBeTicked.length; ++i) {
-         if (this.toBeTicked[i] != null) {
-            for(Short oshort : this.toBeTicked[i]) {
-               BlockPos blockpos = ChunkPrimer.unpackOffsetCoordinates(oshort, i, this.chunkPos);
-               p_205381_1_.scheduleTick(blockpos, p_205381_2_.apply(blockpos), 0);
+            for (int j = 0; j < listnbt.size(); ++j)
+            {
+                IChunk.getList(this.packedPositions, i).add(listnbt.getShort(j));
             }
+        }
+    }
 
-            this.toBeTicked[i].clear();
-         }
-      }
+    public ListNBT write()
+    {
+        return ChunkSerializer.toNbt(this.packedPositions);
+    }
 
-   }
+    public void postProcess(ITickList<T> tickList, Function<BlockPos, T> func)
+    {
+        for (int i = 0; i < this.packedPositions.length; ++i)
+        {
+            if (this.packedPositions[i] != null)
+            {
+                for (Short oshort : this.packedPositions[i])
+                {
+                    BlockPos blockpos = ChunkPrimer.unpackToWorld(oshort, i, this.pos);
+                    tickList.scheduleTick(blockpos, func.apply(blockpos), 0);
+                }
 
-   public boolean hasScheduledTick(BlockPos p_205359_1_, T p_205359_2_) {
-      return false;
-   }
+                this.packedPositions[i].clear();
+            }
+        }
+    }
 
-   public void scheduleTick(BlockPos p_205362_1_, T p_205362_2_, int p_205362_3_, TickPriority p_205362_4_) {
-      IChunk.getOrCreateOffsetList(this.toBeTicked, p_205362_1_.getY() >> 4).add(ChunkPrimer.packOffsetCoordinates(p_205362_1_));
-   }
+    public boolean isTickScheduled(BlockPos pos, T itemIn)
+    {
+        return false;
+    }
 
-   public boolean willTickThisTick(BlockPos p_205361_1_, T p_205361_2_) {
-      return false;
-   }
+    public void scheduleTick(BlockPos pos, T itemIn, int scheduledTime, TickPriority priority)
+    {
+        IChunk.getList(this.packedPositions, pos.getY() >> 4).add(ChunkPrimer.packToLocal(pos));
+    }
+
+    /**
+     * Checks if this position/item is scheduled to be updated this tick
+     */
+    public boolean isTickPending(BlockPos pos, T obj)
+    {
+        return false;
+    }
 }

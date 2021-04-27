@@ -23,248 +23,372 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class BrewingStandTileEntity extends LockableTileEntity implements ISidedInventory, ITickableTileEntity {
-   private static final int[] SLOTS_FOR_UP = new int[]{3};
-   private static final int[] SLOTS_FOR_DOWN = new int[]{0, 1, 2, 3};
-   private static final int[] SLOTS_FOR_SIDES = new int[]{0, 1, 2, 4};
-   private NonNullList<ItemStack> items = NonNullList.withSize(5, ItemStack.EMPTY);
-   private int brewTime;
-   private boolean[] lastPotionCount;
-   private Item ingredient;
-   private int fuel;
-   protected final IIntArray dataAccess = new IIntArray() {
-      public int get(int p_221476_1_) {
-         switch(p_221476_1_) {
-         case 0:
-            return BrewingStandTileEntity.this.brewTime;
-         case 1:
-            return BrewingStandTileEntity.this.fuel;
-         default:
-            return 0;
-         }
-      }
+public class BrewingStandTileEntity extends LockableTileEntity implements ISidedInventory, ITickableTileEntity
+{
+    /** an array of the input slot indices */
+    private static final int[] SLOTS_FOR_UP = new int[] {3};
+    private static final int[] SLOTS_FOR_DOWN = new int[] {0, 1, 2, 3};
 
-      public void set(int p_221477_1_, int p_221477_2_) {
-         switch(p_221477_1_) {
-         case 0:
-            BrewingStandTileEntity.this.brewTime = p_221477_2_;
-            break;
-         case 1:
-            BrewingStandTileEntity.this.fuel = p_221477_2_;
-         }
+    /** an array of the output slot indices */
+    private static final int[] OUTPUT_SLOTS = new int[] {0, 1, 2, 4};
+    private NonNullList<ItemStack> brewingItemStacks = NonNullList.withSize(5, ItemStack.EMPTY);
+    private int brewTime;
 
-      }
+    /**
+     * an integer with each bit specifying whether that slot of the stand contains a potion
+     */
+    private boolean[] filledSlots;
 
-      public int getCount() {
-         return 2;
-      }
-   };
+    /**
+     * used to check if the current ingredient has been removed from the brewing stand during brewing
+     */
+    private Item ingredientID;
+    private int fuel;
+    protected final IIntArray field_213954_a = new IIntArray()
+    {
+        public int get(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return BrewingStandTileEntity.this.brewTime;
 
-   public BrewingStandTileEntity() {
-      super(TileEntityType.BREWING_STAND);
-   }
+                case 1:
+                    return BrewingStandTileEntity.this.fuel;
 
-   protected ITextComponent getDefaultName() {
-      return new TranslationTextComponent("container.brewing");
-   }
+                default:
+                    return 0;
+            }
+        }
+        public void set(int index, int value)
+        {
+            switch (index)
+            {
+                case 0:
+                    BrewingStandTileEntity.this.brewTime = value;
+                    break;
 
-   public int getContainerSize() {
-      return this.items.size();
-   }
+                case 1:
+                    BrewingStandTileEntity.this.fuel = value;
+            }
+        }
+        public int size()
+        {
+            return 2;
+        }
+    };
 
-   public boolean isEmpty() {
-      for(ItemStack itemstack : this.items) {
-         if (!itemstack.isEmpty()) {
+    public BrewingStandTileEntity()
+    {
+        super(TileEntityType.BREWING_STAND);
+    }
+
+    protected ITextComponent getDefaultName()
+    {
+        return new TranslationTextComponent("container.brewing");
+    }
+
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return this.brewingItemStacks.size();
+    }
+
+    public boolean isEmpty()
+    {
+        for (ItemStack itemstack : this.brewingItemStacks)
+        {
+            if (!itemstack.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void tick()
+    {
+        ItemStack itemstack = this.brewingItemStacks.get(4);
+
+        if (this.fuel <= 0 && itemstack.getItem() == Items.BLAZE_POWDER)
+        {
+            this.fuel = 20;
+            itemstack.shrink(1);
+            this.markDirty();
+        }
+
+        boolean flag = this.canBrew();
+        boolean flag1 = this.brewTime > 0;
+        ItemStack itemstack1 = this.brewingItemStacks.get(3);
+
+        if (flag1)
+        {
+            --this.brewTime;
+            boolean flag2 = this.brewTime == 0;
+
+            if (flag2 && flag)
+            {
+                this.brewPotions();
+                this.markDirty();
+            }
+            else if (!flag)
+            {
+                this.brewTime = 0;
+                this.markDirty();
+            }
+            else if (this.ingredientID != itemstack1.getItem())
+            {
+                this.brewTime = 0;
+                this.markDirty();
+            }
+        }
+        else if (flag && this.fuel > 0)
+        {
+            --this.fuel;
+            this.brewTime = 400;
+            this.ingredientID = itemstack1.getItem();
+            this.markDirty();
+        }
+
+        if (!this.world.isRemote)
+        {
+            boolean[] aboolean = this.createFilledSlotsArray();
+
+            if (!Arrays.equals(aboolean, this.filledSlots))
+            {
+                this.filledSlots = aboolean;
+                BlockState blockstate = this.world.getBlockState(this.getPos());
+
+                if (!(blockstate.getBlock() instanceof BrewingStandBlock))
+                {
+                    return;
+                }
+
+                for (int i = 0; i < BrewingStandBlock.HAS_BOTTLE.length; ++i)
+                {
+                    blockstate = blockstate.with(BrewingStandBlock.HAS_BOTTLE[i], Boolean.valueOf(aboolean[i]));
+                }
+
+                this.world.setBlockState(this.pos, blockstate, 2);
+            }
+        }
+    }
+
+    /**
+     * Creates an array of boolean values, each value represents a potion input slot, value is true if the slot is not
+     * null.
+     */
+    public boolean[] createFilledSlotsArray()
+    {
+        boolean[] aboolean = new boolean[3];
+
+        for (int i = 0; i < 3; ++i)
+        {
+            if (!this.brewingItemStacks.get(i).isEmpty())
+            {
+                aboolean[i] = true;
+            }
+        }
+
+        return aboolean;
+    }
+
+    private boolean canBrew()
+    {
+        ItemStack itemstack = this.brewingItemStacks.get(3);
+
+        if (itemstack.isEmpty())
+        {
             return false;
-         }
-      }
+        }
+        else if (!PotionBrewing.isReagent(itemstack))
+        {
+            return false;
+        }
+        else
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                ItemStack itemstack1 = this.brewingItemStacks.get(i);
 
-      return true;
-   }
-
-   public void tick() {
-      ItemStack itemstack = this.items.get(4);
-      if (this.fuel <= 0 && itemstack.getItem() == Items.BLAZE_POWDER) {
-         this.fuel = 20;
-         itemstack.shrink(1);
-         this.setChanged();
-      }
-
-      boolean flag = this.isBrewable();
-      boolean flag1 = this.brewTime > 0;
-      ItemStack itemstack1 = this.items.get(3);
-      if (flag1) {
-         --this.brewTime;
-         boolean flag2 = this.brewTime == 0;
-         if (flag2 && flag) {
-            this.doBrew();
-            this.setChanged();
-         } else if (!flag) {
-            this.brewTime = 0;
-            this.setChanged();
-         } else if (this.ingredient != itemstack1.getItem()) {
-            this.brewTime = 0;
-            this.setChanged();
-         }
-      } else if (flag && this.fuel > 0) {
-         --this.fuel;
-         this.brewTime = 400;
-         this.ingredient = itemstack1.getItem();
-         this.setChanged();
-      }
-
-      if (!this.level.isClientSide) {
-         boolean[] aboolean = this.getPotionBits();
-         if (!Arrays.equals(aboolean, this.lastPotionCount)) {
-            this.lastPotionCount = aboolean;
-            BlockState blockstate = this.level.getBlockState(this.getBlockPos());
-            if (!(blockstate.getBlock() instanceof BrewingStandBlock)) {
-               return;
+                if (!itemstack1.isEmpty() && PotionBrewing.hasConversions(itemstack1, itemstack))
+                {
+                    return true;
+                }
             }
 
-            for(int i = 0; i < BrewingStandBlock.HAS_BOTTLE.length; ++i) {
-               blockstate = blockstate.setValue(BrewingStandBlock.HAS_BOTTLE[i], Boolean.valueOf(aboolean[i]));
+            return false;
+        }
+    }
+
+    private void brewPotions()
+    {
+        ItemStack itemstack = this.brewingItemStacks.get(3);
+
+        for (int i = 0; i < 3; ++i)
+        {
+            this.brewingItemStacks.set(i, PotionBrewing.doReaction(itemstack, this.brewingItemStacks.get(i)));
+        }
+
+        itemstack.shrink(1);
+        BlockPos blockpos = this.getPos();
+
+        if (itemstack.getItem().hasContainerItem())
+        {
+            ItemStack itemstack1 = new ItemStack(itemstack.getItem().getContainerItem());
+
+            if (itemstack.isEmpty())
+            {
+                itemstack = itemstack1;
             }
-
-            this.level.setBlock(this.worldPosition, blockstate, 2);
-         }
-      }
-
-   }
-
-   public boolean[] getPotionBits() {
-      boolean[] aboolean = new boolean[3];
-
-      for(int i = 0; i < 3; ++i) {
-         if (!this.items.get(i).isEmpty()) {
-            aboolean[i] = true;
-         }
-      }
-
-      return aboolean;
-   }
-
-   private boolean isBrewable() {
-      ItemStack itemstack = this.items.get(3);
-      if (itemstack.isEmpty()) {
-         return false;
-      } else if (!PotionBrewing.isIngredient(itemstack)) {
-         return false;
-      } else {
-         for(int i = 0; i < 3; ++i) {
-            ItemStack itemstack1 = this.items.get(i);
-            if (!itemstack1.isEmpty() && PotionBrewing.hasMix(itemstack1, itemstack)) {
-               return true;
+            else if (!this.world.isRemote)
+            {
+                InventoryHelper.spawnItemStack(this.world, (double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), itemstack1);
             }
-         }
+        }
 
-         return false;
-      }
-   }
+        this.brewingItemStacks.set(3, itemstack);
+        this.world.playEvent(1035, blockpos, 0);
+    }
 
-   private void doBrew() {
-      ItemStack itemstack = this.items.get(3);
+    public void read(BlockState state, CompoundNBT nbt)
+    {
+        super.read(state, nbt);
+        this.brewingItemStacks = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
+        ItemStackHelper.loadAllItems(nbt, this.brewingItemStacks);
+        this.brewTime = nbt.getShort("BrewTime");
+        this.fuel = nbt.getByte("Fuel");
+    }
 
-      for(int i = 0; i < 3; ++i) {
-         this.items.set(i, PotionBrewing.mix(itemstack, this.items.get(i)));
-      }
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        super.write(compound);
+        compound.putShort("BrewTime", (short)this.brewTime);
+        ItemStackHelper.saveAllItems(compound, this.brewingItemStacks);
+        compound.putByte("Fuel", (byte)this.fuel);
+        return compound;
+    }
 
-      itemstack.shrink(1);
-      BlockPos blockpos = this.getBlockPos();
-      if (itemstack.getItem().hasCraftingRemainingItem()) {
-         ItemStack itemstack1 = new ItemStack(itemstack.getItem().getCraftingRemainingItem());
-         if (itemstack.isEmpty()) {
-            itemstack = itemstack1;
-         } else if (!this.level.isClientSide) {
-            InventoryHelper.dropItemStack(this.level, (double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), itemstack1);
-         }
-      }
+    /**
+     * Returns the stack in the given slot.
+     */
+    public ItemStack getStackInSlot(int index)
+    {
+        return index >= 0 && index < this.brewingItemStacks.size() ? this.brewingItemStacks.get(index) : ItemStack.EMPTY;
+    }
 
-      this.items.set(3, itemstack);
-      this.level.levelEvent(1035, blockpos, 0);
-   }
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    public ItemStack decrStackSize(int index, int count)
+    {
+        return ItemStackHelper.getAndSplit(this.brewingItemStacks, index, count);
+    }
 
-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
-      super.load(p_230337_1_, p_230337_2_);
-      this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-      ItemStackHelper.loadAllItems(p_230337_2_, this.items);
-      this.brewTime = p_230337_2_.getShort("BrewTime");
-      this.fuel = p_230337_2_.getByte("Fuel");
-   }
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    public ItemStack removeStackFromSlot(int index)
+    {
+        return ItemStackHelper.getAndRemove(this.brewingItemStacks, index);
+    }
 
-   public CompoundNBT save(CompoundNBT p_189515_1_) {
-      super.save(p_189515_1_);
-      p_189515_1_.putShort("BrewTime", (short)this.brewTime);
-      ItemStackHelper.saveAllItems(p_189515_1_, this.items);
-      p_189515_1_.putByte("Fuel", (byte)this.fuel);
-      return p_189515_1_;
-   }
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int index, ItemStack stack)
+    {
+        if (index >= 0 && index < this.brewingItemStacks.size())
+        {
+            this.brewingItemStacks.set(index, stack);
+        }
+    }
 
-   public ItemStack getItem(int p_70301_1_) {
-      return p_70301_1_ >= 0 && p_70301_1_ < this.items.size() ? this.items.get(p_70301_1_) : ItemStack.EMPTY;
-   }
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
+    public boolean isUsableByPlayer(PlayerEntity player)
+    {
+        if (this.world.getTileEntity(this.pos) != this)
+        {
+            return false;
+        }
+        else
+        {
+            return !(player.getDistanceSq((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) > 64.0D);
+        }
+    }
 
-   public ItemStack removeItem(int p_70298_1_, int p_70298_2_) {
-      return ItemStackHelper.removeItem(this.items, p_70298_1_, p_70298_2_);
-   }
+    /**
+     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
+     * guis use Slot.isItemValid
+     */
+    public boolean isItemValidForSlot(int index, ItemStack stack)
+    {
+        if (index == 3)
+        {
+            return PotionBrewing.isReagent(stack);
+        }
+        else
+        {
+            Item item = stack.getItem();
 
-   public ItemStack removeItemNoUpdate(int p_70304_1_) {
-      return ItemStackHelper.takeItem(this.items, p_70304_1_);
-   }
+            if (index == 4)
+            {
+                return item == Items.BLAZE_POWDER;
+            }
+            else
+            {
+                return (item == Items.POTION || item == Items.SPLASH_POTION || item == Items.LINGERING_POTION || item == Items.GLASS_BOTTLE) && this.getStackInSlot(index).isEmpty();
+            }
+        }
+    }
 
-   public void setItem(int p_70299_1_, ItemStack p_70299_2_) {
-      if (p_70299_1_ >= 0 && p_70299_1_ < this.items.size()) {
-         this.items.set(p_70299_1_, p_70299_2_);
-      }
+    public int[] getSlotsForFace(Direction side)
+    {
+        if (side == Direction.UP)
+        {
+            return SLOTS_FOR_UP;
+        }
+        else
+        {
+            return side == Direction.DOWN ? SLOTS_FOR_DOWN : OUTPUT_SLOTS;
+        }
+    }
 
-   }
+    /**
+     * Returns true if automation can insert the given item in the given slot from the given side.
+     */
+    public boolean canInsertItem(int index, ItemStack itemStackIn, @Nullable Direction direction)
+    {
+        return this.isItemValidForSlot(index, itemStackIn);
+    }
 
-   public boolean stillValid(PlayerEntity p_70300_1_) {
-      if (this.level.getBlockEntity(this.worldPosition) != this) {
-         return false;
-      } else {
-         return !(p_70300_1_.distanceToSqr((double)this.worldPosition.getX() + 0.5D, (double)this.worldPosition.getY() + 0.5D, (double)this.worldPosition.getZ() + 0.5D) > 64.0D);
-      }
-   }
+    /**
+     * Returns true if automation can extract the given item in the given slot from the given side.
+     */
+    public boolean canExtractItem(int index, ItemStack stack, Direction direction)
+    {
+        if (index == 3)
+        {
+            return stack.getItem() == Items.GLASS_BOTTLE;
+        }
+        else
+        {
+            return true;
+        }
+    }
 
-   public boolean canPlaceItem(int p_94041_1_, ItemStack p_94041_2_) {
-      if (p_94041_1_ == 3) {
-         return PotionBrewing.isIngredient(p_94041_2_);
-      } else {
-         Item item = p_94041_2_.getItem();
-         if (p_94041_1_ == 4) {
-            return item == Items.BLAZE_POWDER;
-         } else {
-            return (item == Items.POTION || item == Items.SPLASH_POTION || item == Items.LINGERING_POTION || item == Items.GLASS_BOTTLE) && this.getItem(p_94041_1_).isEmpty();
-         }
-      }
-   }
+    public void clear()
+    {
+        this.brewingItemStacks.clear();
+    }
 
-   public int[] getSlotsForFace(Direction p_180463_1_) {
-      if (p_180463_1_ == Direction.UP) {
-         return SLOTS_FOR_UP;
-      } else {
-         return p_180463_1_ == Direction.DOWN ? SLOTS_FOR_DOWN : SLOTS_FOR_SIDES;
-      }
-   }
-
-   public boolean canPlaceItemThroughFace(int p_180462_1_, ItemStack p_180462_2_, @Nullable Direction p_180462_3_) {
-      return this.canPlaceItem(p_180462_1_, p_180462_2_);
-   }
-
-   public boolean canTakeItemThroughFace(int p_180461_1_, ItemStack p_180461_2_, Direction p_180461_3_) {
-      if (p_180461_1_ == 3) {
-         return p_180461_2_.getItem() == Items.GLASS_BOTTLE;
-      } else {
-         return true;
-      }
-   }
-
-   public void clearContent() {
-      this.items.clear();
-   }
-
-   protected Container createMenu(int p_213906_1_, PlayerInventory p_213906_2_) {
-      return new BrewingStandContainer(p_213906_1_, p_213906_2_, this, this.dataAccess);
-   }
+    protected Container createMenu(int id, PlayerInventory player)
+    {
+        return new BrewingStandContainer(id, player, this, this.field_213954_a);
+    }
 }

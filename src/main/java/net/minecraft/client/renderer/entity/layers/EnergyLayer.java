@@ -10,30 +10,31 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.IChargeableMob;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class EnergyLayer<T extends Entity & IChargeableMob, M extends EntityModel<T>> extends LayerRenderer<T, M> {
-   public EnergyLayer(IEntityRenderer<T, M> p_i226038_1_) {
-      super(p_i226038_1_);
-   }
+public abstract class EnergyLayer<T extends Entity & IChargeableMob, M extends EntityModel<T>> extends LayerRenderer<T, M>
+{
+    public EnergyLayer(IEntityRenderer<T, M> p_i226038_1_)
+    {
+        super(p_i226038_1_);
+    }
 
-   public void render(MatrixStack p_225628_1_, IRenderTypeBuffer p_225628_2_, int p_225628_3_, T p_225628_4_, float p_225628_5_, float p_225628_6_, float p_225628_7_, float p_225628_8_, float p_225628_9_, float p_225628_10_) {
-      if (p_225628_4_.isPowered()) {
-         float f = (float)p_225628_4_.tickCount + p_225628_7_;
-         EntityModel<T> entitymodel = this.model();
-         entitymodel.prepareMobModel(p_225628_4_, p_225628_5_, p_225628_6_, p_225628_7_);
-         this.getParentModel().copyPropertiesTo(entitymodel);
-         IVertexBuilder ivertexbuilder = p_225628_2_.getBuffer(RenderType.energySwirl(this.getTextureLocation(), this.xOffset(f), f * 0.01F));
-         entitymodel.setupAnim(p_225628_4_, p_225628_5_, p_225628_6_, p_225628_8_, p_225628_9_, p_225628_10_);
-         entitymodel.renderToBuffer(p_225628_1_, ivertexbuilder, p_225628_3_, OverlayTexture.NO_OVERLAY, 0.5F, 0.5F, 0.5F, 1.0F);
-      }
-   }
+    public void render(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn, T entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        if (entitylivingbaseIn.isCharged())
+        {
+            float f = (float)entitylivingbaseIn.ticksExisted + partialTicks;
+            EntityModel<T> entitymodel = this.func_225635_b_();
+            entitymodel.setLivingAnimations(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks);
+            this.getEntityModel().copyModelAttributesTo(entitymodel);
+            IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getEnergySwirl(this.func_225633_a_(), this.func_225634_a_(f), f * 0.01F));
+            entitymodel.setRotationAngles(entitylivingbaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+            entitymodel.render(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 0.5F, 0.5F, 0.5F, 1.0F);
+        }
+    }
 
-   protected abstract float xOffset(float p_225634_1_);
+    protected abstract float func_225634_a_(float p_225634_1_);
 
-   protected abstract ResourceLocation getTextureLocation();
+    protected abstract ResourceLocation func_225633_a_();
 
-   protected abstract EntityModel<T> model();
+    protected abstract EntityModel<T> func_225635_b_();
 }

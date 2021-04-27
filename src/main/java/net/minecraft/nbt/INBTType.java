@@ -3,30 +3,35 @@ package net.minecraft.nbt;
 import java.io.DataInput;
 import java.io.IOException;
 
-public interface INBTType<T extends INBT> {
-   T load(DataInput p_225649_1_, int p_225649_2_, NBTSizeTracker p_225649_3_) throws IOException;
+public interface INBTType<T extends INBT>
+{
+    T readNBT(DataInput input, int depth, NBTSizeTracker accounter) throws IOException;
 
-   default boolean isValue() {
-      return false;
-   }
+default boolean isPrimitive()
+    {
+        return false;
+    }
 
-   String getName();
+    String getName();
 
-   String getPrettyName();
+    String getTagName();
 
-   static INBTType<EndNBT> createInvalid(final int p_229707_0_) {
-      return new INBTType<EndNBT>() {
-         public EndNBT load(DataInput p_225649_1_, int p_225649_2_, NBTSizeTracker p_225649_3_) throws IOException {
-            throw new IllegalArgumentException("Invalid tag id: " + p_229707_0_);
-         }
-
-         public String getName() {
-            return "INVALID[" + p_229707_0_ + "]";
-         }
-
-         public String getPrettyName() {
-            return "UNKNOWN_" + p_229707_0_;
-         }
-      };
-   }
+    static INBTType<EndNBT> getEndNBT(final int id)
+    {
+        return new INBTType<EndNBT>()
+        {
+            public EndNBT readNBT(DataInput input, int depth, NBTSizeTracker accounter) throws IOException
+            {
+                throw new IllegalArgumentException("Invalid tag id: " + id);
+            }
+            public String getName()
+            {
+                return "INVALID[" + id + "]";
+            }
+            public String getTagName()
+            {
+                return "UNKNOWN_" + id;
+            }
+        };
+    }
 }

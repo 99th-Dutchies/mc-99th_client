@@ -6,100 +6,132 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class LookController {
-   protected final MobEntity mob;
-   protected float yMaxRotSpeed;
-   protected float xMaxRotAngle;
-   protected boolean hasWanted;
-   protected double wantedX;
-   protected double wantedY;
-   protected double wantedZ;
+public class LookController
+{
+    protected final MobEntity mob;
+    protected float deltaLookYaw;
+    protected float deltaLookPitch;
+    protected boolean isLooking;
+    protected double posX;
+    protected double posY;
+    protected double posZ;
 
-   public LookController(MobEntity p_i1613_1_) {
-      this.mob = p_i1613_1_;
-   }
+    public LookController(MobEntity mob)
+    {
+        this.mob = mob;
+    }
 
-   public void setLookAt(Vector3d p_220674_1_) {
-      this.setLookAt(p_220674_1_.x, p_220674_1_.y, p_220674_1_.z);
-   }
+    public void setLookPosition(Vector3d lookVector)
+    {
+        this.setLookPosition(lookVector.x, lookVector.y, lookVector.z);
+    }
 
-   public void setLookAt(Entity p_75651_1_, float p_75651_2_, float p_75651_3_) {
-      this.setLookAt(p_75651_1_.getX(), getWantedY(p_75651_1_), p_75651_1_.getZ(), p_75651_2_, p_75651_3_);
-   }
+    /**
+     * Sets position to look at using entity
+     */
+    public void setLookPositionWithEntity(Entity entityIn, float deltaYaw, float deltaPitch)
+    {
+        this.setLookPosition(entityIn.getPosX(), getEyePosition(entityIn), entityIn.getPosZ(), deltaYaw, deltaPitch);
+    }
 
-   public void setLookAt(double p_220679_1_, double p_220679_3_, double p_220679_5_) {
-      this.setLookAt(p_220679_1_, p_220679_3_, p_220679_5_, (float)this.mob.getHeadRotSpeed(), (float)this.mob.getMaxHeadXRot());
-   }
+    public void setLookPosition(double x, double y, double z)
+    {
+        this.setLookPosition(x, y, z, (float)this.mob.getFaceRotSpeed(), (float)this.mob.getVerticalFaceSpeed());
+    }
 
-   public void setLookAt(double p_75650_1_, double p_75650_3_, double p_75650_5_, float p_75650_7_, float p_75650_8_) {
-      this.wantedX = p_75650_1_;
-      this.wantedY = p_75650_3_;
-      this.wantedZ = p_75650_5_;
-      this.yMaxRotSpeed = p_75650_7_;
-      this.xMaxRotAngle = p_75650_8_;
-      this.hasWanted = true;
-   }
+    /**
+     * Sets position to look at
+     */
+    public void setLookPosition(double x, double y, double z, float deltaYaw, float deltaPitch)
+    {
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+        this.deltaLookYaw = deltaYaw;
+        this.deltaLookPitch = deltaPitch;
+        this.isLooking = true;
+    }
 
-   public void tick() {
-      if (this.resetXRotOnTick()) {
-         this.mob.xRot = 0.0F;
-      }
+    /**
+     * Updates look
+     */
+    public void tick()
+    {
+        if (this.shouldResetPitch())
+        {
+            this.mob.rotationPitch = 0.0F;
+        }
 
-      if (this.hasWanted) {
-         this.hasWanted = false;
-         this.mob.yHeadRot = this.rotateTowards(this.mob.yHeadRot, this.getYRotD(), this.yMaxRotSpeed);
-         this.mob.xRot = this.rotateTowards(this.mob.xRot, this.getXRotD(), this.xMaxRotAngle);
-      } else {
-         this.mob.yHeadRot = this.rotateTowards(this.mob.yHeadRot, this.mob.yBodyRot, 10.0F);
-      }
+        if (this.isLooking)
+        {
+            this.isLooking = false;
+            this.mob.rotationYawHead = this.clampedRotate(this.mob.rotationYawHead, this.getTargetYaw(), this.deltaLookYaw);
+            this.mob.rotationPitch = this.clampedRotate(this.mob.rotationPitch, this.getTargetPitch(), this.deltaLookPitch);
+        }
+        else
+        {
+            this.mob.rotationYawHead = this.clampedRotate(this.mob.rotationYawHead, this.mob.renderYawOffset, 10.0F);
+        }
 
-      if (!this.mob.getNavigation().isDone()) {
-         this.mob.yHeadRot = MathHelper.rotateIfNecessary(this.mob.yHeadRot, this.mob.yBodyRot, (float)this.mob.getMaxHeadYRot());
-      }
+        if (!this.mob.getNavigator().noPath())
+        {
+            this.mob.rotationYawHead = MathHelper.func_219800_b(this.mob.rotationYawHead, this.mob.renderYawOffset, (float)this.mob.getHorizontalFaceSpeed());
+        }
+    }
 
-   }
+    protected boolean shouldResetPitch()
+    {
+        return true;
+    }
 
-   protected boolean resetXRotOnTick() {
-      return true;
-   }
+    public boolean getIsLooking()
+    {
+        return this.isLooking;
+    }
 
-   public boolean isHasWanted() {
-      return this.hasWanted;
-   }
+    public double getLookPosX()
+    {
+        return this.posX;
+    }
 
-   public double getWantedX() {
-      return this.wantedX;
-   }
+    public double getLookPosY()
+    {
+        return this.posY;
+    }
 
-   public double getWantedY() {
-      return this.wantedY;
-   }
+    public double getLookPosZ()
+    {
+        return this.posZ;
+    }
 
-   public double getWantedZ() {
-      return this.wantedZ;
-   }
+    protected float getTargetPitch()
+    {
+        double d0 = this.posX - this.mob.getPosX();
+        double d1 = this.posY - this.mob.getPosYEye();
+        double d2 = this.posZ - this.mob.getPosZ();
+        double d3 = (double)MathHelper.sqrt(d0 * d0 + d2 * d2);
+        return (float)(-(MathHelper.atan2(d1, d3) * (double)(180F / (float)Math.PI)));
+    }
 
-   protected float getXRotD() {
-      double d0 = this.wantedX - this.mob.getX();
-      double d1 = this.wantedY - this.mob.getEyeY();
-      double d2 = this.wantedZ - this.mob.getZ();
-      double d3 = (double)MathHelper.sqrt(d0 * d0 + d2 * d2);
-      return (float)(-(MathHelper.atan2(d1, d3) * (double)(180F / (float)Math.PI)));
-   }
+    protected float getTargetYaw()
+    {
+        double d0 = this.posX - this.mob.getPosX();
+        double d1 = this.posZ - this.mob.getPosZ();
+        return (float)(MathHelper.atan2(d1, d0) * (double)(180F / (float)Math.PI)) - 90.0F;
+    }
 
-   protected float getYRotD() {
-      double d0 = this.wantedX - this.mob.getX();
-      double d1 = this.wantedZ - this.mob.getZ();
-      return (float)(MathHelper.atan2(d1, d0) * (double)(180F / (float)Math.PI)) - 90.0F;
-   }
+    /**
+     * Rotate as much as possible from {@code from} to {@code to} within the bounds of {@code maxDelta}
+     */
+    protected float clampedRotate(float from, float to, float maxDelta)
+    {
+        float f = MathHelper.wrapSubtractDegrees(from, to);
+        float f1 = MathHelper.clamp(f, -maxDelta, maxDelta);
+        return from + f1;
+    }
 
-   protected float rotateTowards(float p_220675_1_, float p_220675_2_, float p_220675_3_) {
-      float f = MathHelper.degreesDifference(p_220675_1_, p_220675_2_);
-      float f1 = MathHelper.clamp(f, -p_220675_3_, p_220675_3_);
-      return p_220675_1_ + f1;
-   }
-
-   private static double getWantedY(Entity p_220676_0_) {
-      return p_220676_0_ instanceof LivingEntity ? p_220676_0_.getEyeY() : (p_220676_0_.getBoundingBox().minY + p_220676_0_.getBoundingBox().maxY) / 2.0D;
-   }
+    private static double getEyePosition(Entity entity)
+    {
+        return entity instanceof LivingEntity ? entity.getPosYEye() : (entity.getBoundingBox().minY + entity.getBoundingBox().maxY) / 2.0D;
+    }
 }

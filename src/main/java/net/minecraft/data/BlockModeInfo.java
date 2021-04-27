@@ -4,36 +4,44 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.function.Function;
 
-public class BlockModeInfo<T> {
-   private final String key;
-   private final Function<T, JsonElement> serializer;
+public class BlockModeInfo<T>
+{
+    private final String property;
+    private final Function<T, JsonElement> value;
 
-   public BlockModeInfo(String p_i232543_1_, Function<T, JsonElement> p_i232543_2_) {
-      this.key = p_i232543_1_;
-      this.serializer = p_i232543_2_;
-   }
+    public BlockModeInfo(String property, Function<T, JsonElement> value)
+    {
+        this.property = property;
+        this.value = value;
+    }
 
-   public BlockModeInfo<T>.Field withValue(T p_240213_1_) {
-      return new BlockModeInfo.Field(p_240213_1_);
-   }
+    public BlockModeInfo<T>.Field getFieldInfo(T element)
+    {
+        return new BlockModeInfo.Field(element);
+    }
 
-   public String toString() {
-      return this.key;
-   }
+    public String toString()
+    {
+        return this.property;
+    }
 
-   public class Field {
-      private final T value;
+    public class Field
+    {
+        private final T element;
 
-      public Field(T p_i232544_2_) {
-         this.value = p_i232544_2_;
-      }
+        public Field(T element)
+        {
+            this.element = element;
+        }
 
-      public void addToVariant(JsonObject p_240217_1_) {
-         p_240217_1_.add(BlockModeInfo.this.key, BlockModeInfo.this.serializer.apply(this.value));
-      }
+        public void serialize(JsonObject json)
+        {
+            json.add(BlockModeInfo.this.property, BlockModeInfo.this.value.apply(this.element));
+        }
 
-      public String toString() {
-         return BlockModeInfo.this.key + "=" + this.value;
-      }
-   }
+        public String toString()
+        {
+            return BlockModeInfo.this.property + "=" + this.element;
+        }
+    }
 }

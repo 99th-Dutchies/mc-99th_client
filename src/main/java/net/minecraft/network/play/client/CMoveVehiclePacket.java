@@ -6,61 +6,81 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 
-public class CMoveVehiclePacket implements IPacket<IServerPlayNetHandler> {
-   private double x;
-   private double y;
-   private double z;
-   private float yRot;
-   private float xRot;
+public class CMoveVehiclePacket implements IPacket<IServerPlayNetHandler>
+{
+    private double x;
+    private double y;
+    private double z;
+    private float yaw;
+    private float pitch;
 
-   public CMoveVehiclePacket() {
-   }
+    public CMoveVehiclePacket()
+    {
+    }
 
-   public CMoveVehiclePacket(Entity p_i46874_1_) {
-      this.x = p_i46874_1_.getX();
-      this.y = p_i46874_1_.getY();
-      this.z = p_i46874_1_.getZ();
-      this.yRot = p_i46874_1_.yRot;
-      this.xRot = p_i46874_1_.xRot;
-   }
+    public CMoveVehiclePacket(Entity entityIn)
+    {
+        this.x = entityIn.getPosX();
+        this.y = entityIn.getPosY();
+        this.z = entityIn.getPosZ();
+        this.yaw = entityIn.rotationYaw;
+        this.pitch = entityIn.rotationPitch;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.x = p_148837_1_.readDouble();
-      this.y = p_148837_1_.readDouble();
-      this.z = p_148837_1_.readDouble();
-      this.yRot = p_148837_1_.readFloat();
-      this.xRot = p_148837_1_.readFloat();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.x = buf.readDouble();
+        this.y = buf.readDouble();
+        this.z = buf.readDouble();
+        this.yaw = buf.readFloat();
+        this.pitch = buf.readFloat();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeDouble(this.x);
-      p_148840_1_.writeDouble(this.y);
-      p_148840_1_.writeDouble(this.z);
-      p_148840_1_.writeFloat(this.yRot);
-      p_148840_1_.writeFloat(this.xRot);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeDouble(this.x);
+        buf.writeDouble(this.y);
+        buf.writeDouble(this.z);
+        buf.writeFloat(this.yaw);
+        buf.writeFloat(this.pitch);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleMoveVehicle(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processVehicleMove(this);
+    }
 
-   public double getX() {
-      return this.x;
-   }
+    public double getX()
+    {
+        return this.x;
+    }
 
-   public double getY() {
-      return this.y;
-   }
+    public double getY()
+    {
+        return this.y;
+    }
 
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ()
+    {
+        return this.z;
+    }
 
-   public float getYRot() {
-      return this.yRot;
-   }
+    public float getYaw()
+    {
+        return this.yaw;
+    }
 
-   public float getXRot() {
-      return this.xRot;
-   }
+    public float getPitch()
+    {
+        return this.pitch;
+    }
 }

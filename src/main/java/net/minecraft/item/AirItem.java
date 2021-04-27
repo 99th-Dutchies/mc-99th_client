@@ -6,24 +6,31 @@ import net.minecraft.block.Block;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class AirItem extends Item {
-   private final Block block;
+public class AirItem extends Item
+{
+    private final Block block;
 
-   public AirItem(Block p_i48535_1_, Item.Properties p_i48535_2_) {
-      super(p_i48535_2_);
-      this.block = p_i48535_1_;
-   }
+    public AirItem(Block blockIn, Item.Properties properties)
+    {
+        super(properties);
+        this.block = blockIn;
+    }
 
-   public String getDescriptionId() {
-      return this.block.getDescriptionId();
-   }
+    /**
+     * Returns the unlocalized name of this item.
+     */
+    public String getTranslationKey()
+    {
+        return this.block.getTranslationKey();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(ItemStack p_77624_1_, @Nullable World p_77624_2_, List<ITextComponent> p_77624_3_, ITooltipFlag p_77624_4_) {
-      super.appendHoverText(p_77624_1_, p_77624_2_, p_77624_3_, p_77624_4_);
-      this.block.appendHoverText(p_77624_1_, p_77624_2_, p_77624_3_, p_77624_4_);
-   }
+    /**
+     * allows items to add custom lines of information to the mouseover description
+     */
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+    {
+        super.addInformation(stack, worldIn, tooltip, flagIn);
+        this.block.addInformation(stack, worldIn, tooltip, flagIn);
+    }
 }

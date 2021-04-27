@@ -11,79 +11,118 @@ import net.minecraft.pathfinding.PathNavigator;
 import net.minecraft.util.EntityPredicates;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class AvoidEntityGoal<T extends LivingEntity> extends Goal {
-   protected final CreatureEntity mob;
-   private final double walkSpeedModifier;
-   private final double sprintSpeedModifier;
-   protected T toAvoid;
-   protected final float maxDist;
-   protected Path path;
-   protected final PathNavigator pathNav;
-   protected final Class<T> avoidClass;
-   protected final Predicate<LivingEntity> avoidPredicate;
-   protected final Predicate<LivingEntity> predicateOnAvoidEntity;
-   private final EntityPredicate avoidEntityTargeting;
+public class AvoidEntityGoal<T extends LivingEntity> extends Goal
+{
+    protected final CreatureEntity entity;
+    private final double farSpeed;
+    private final double nearSpeed;
+    protected T avoidTarget;
+    protected final float avoidDistance;
+    protected Path path;
+    protected final PathNavigator navigation;
+    protected final Class<T> classToAvoid;
+    protected final Predicate<LivingEntity> avoidTargetSelector;
+    protected final Predicate<LivingEntity> field_203784_k;
+    private final EntityPredicate builtTargetSelector;
 
-   public AvoidEntityGoal(CreatureEntity p_i46404_1_, Class<T> p_i46404_2_, float p_i46404_3_, double p_i46404_4_, double p_i46404_6_) {
-      this(p_i46404_1_, p_i46404_2_, (p_200828_0_) -> {
-         return true;
-      }, p_i46404_3_, p_i46404_4_, p_i46404_6_, EntityPredicates.NO_CREATIVE_OR_SPECTATOR::test);
-   }
+    public AvoidEntityGoal(CreatureEntity entityIn, Class<T> classToAvoidIn, float avoidDistanceIn, double farSpeedIn, double nearSpeedIn)
+    {
+        this(entityIn, classToAvoidIn, (p_200828_0_) ->
+        {
+            return true;
+        }, avoidDistanceIn, farSpeedIn, nearSpeedIn, EntityPredicates.CAN_AI_TARGET::test);
+    }
 
-   public AvoidEntityGoal(CreatureEntity p_i48859_1_, Class<T> p_i48859_2_, Predicate<LivingEntity> p_i48859_3_, float p_i48859_4_, double p_i48859_5_, double p_i48859_7_, Predicate<LivingEntity> p_i48859_9_) {
-      this.mob = p_i48859_1_;
-      this.avoidClass = p_i48859_2_;
-      this.avoidPredicate = p_i48859_3_;
-      this.maxDist = p_i48859_4_;
-      this.walkSpeedModifier = p_i48859_5_;
-      this.sprintSpeedModifier = p_i48859_7_;
-      this.predicateOnAvoidEntity = p_i48859_9_;
-      this.pathNav = p_i48859_1_.getNavigation();
-      this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      this.avoidEntityTargeting = (new EntityPredicate()).range((double)p_i48859_4_).selector(p_i48859_9_.and(p_i48859_3_));
-   }
+    public AvoidEntityGoal(CreatureEntity entityIn, Class<T> avoidClass, Predicate<LivingEntity> targetPredicate, float distance, double nearSpeedIn, double farSpeedIn, Predicate<LivingEntity> p_i48859_9_)
+    {
+        this.entity = entityIn;
+        this.classToAvoid = avoidClass;
+        this.avoidTargetSelector = targetPredicate;
+        this.avoidDistance = distance;
+        this.farSpeed = nearSpeedIn;
+        this.nearSpeed = farSpeedIn;
+        this.field_203784_k = p_i48859_9_;
+        this.navigation = entityIn.getNavigator();
+        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        this.builtTargetSelector = (new EntityPredicate()).setDistance((double)distance).setCustomPredicate(p_i48859_9_.and(targetPredicate));
+    }
 
-   public AvoidEntityGoal(CreatureEntity p_i48860_1_, Class<T> p_i48860_2_, float p_i48860_3_, double p_i48860_4_, double p_i48860_6_, Predicate<LivingEntity> p_i48860_8_) {
-      this(p_i48860_1_, p_i48860_2_, (p_203782_0_) -> {
-         return true;
-      }, p_i48860_3_, p_i48860_4_, p_i48860_6_, p_i48860_8_);
-   }
+    public AvoidEntityGoal(CreatureEntity entityIn, Class<T> avoidClass, float distance, double nearSpeedIn, double farSpeedIn, Predicate<LivingEntity> targetPredicate)
+    {
+        this(entityIn, avoidClass, (p_203782_0_) ->
+        {
+            return true;
+        }, distance, nearSpeedIn, farSpeedIn, targetPredicate);
+    }
 
-   public boolean canUse() {
-      this.toAvoid = this.mob.level.getNearestLoadedEntity(this.avoidClass, this.avoidEntityTargeting, this.mob, this.mob.getX(), this.mob.getY(), this.mob.getZ(), this.mob.getBoundingBox().inflate((double)this.maxDist, 3.0D, (double)this.maxDist));
-      if (this.toAvoid == null) {
-         return false;
-      } else {
-         Vector3d vector3d = RandomPositionGenerator.getPosAvoid(this.mob, 16, 7, this.toAvoid.position());
-         if (vector3d == null) {
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        this.avoidTarget = this.entity.world.func_225318_b(this.classToAvoid, this.builtTargetSelector, this.entity, this.entity.getPosX(), this.entity.getPosY(), this.entity.getPosZ(), this.entity.getBoundingBox().grow((double)this.avoidDistance, 3.0D, (double)this.avoidDistance));
+
+        if (this.avoidTarget == null)
+        {
             return false;
-         } else if (this.toAvoid.distanceToSqr(vector3d.x, vector3d.y, vector3d.z) < this.toAvoid.distanceToSqr(this.mob)) {
-            return false;
-         } else {
-            this.path = this.pathNav.createPath(vector3d.x, vector3d.y, vector3d.z, 0);
-            return this.path != null;
-         }
-      }
-   }
+        }
+        else
+        {
+            Vector3d vector3d = RandomPositionGenerator.findRandomTargetBlockAwayFrom(this.entity, 16, 7, this.avoidTarget.getPositionVec());
 
-   public boolean canContinueToUse() {
-      return !this.pathNav.isDone();
-   }
+            if (vector3d == null)
+            {
+                return false;
+            }
+            else if (this.avoidTarget.getDistanceSq(vector3d.x, vector3d.y, vector3d.z) < this.avoidTarget.getDistanceSq(this.entity))
+            {
+                return false;
+            }
+            else
+            {
+                this.path = this.navigation.getPathToPos(vector3d.x, vector3d.y, vector3d.z, 0);
+                return this.path != null;
+            }
+        }
+    }
 
-   public void start() {
-      this.pathNav.moveTo(this.path, this.walkSpeedModifier);
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        return !this.navigation.noPath();
+    }
 
-   public void stop() {
-      this.toAvoid = null;
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.navigation.setPath(this.path, this.farSpeed);
+    }
 
-   public void tick() {
-      if (this.mob.distanceToSqr(this.toAvoid) < 49.0D) {
-         this.mob.getNavigation().setSpeedModifier(this.sprintSpeedModifier);
-      } else {
-         this.mob.getNavigation().setSpeedModifier(this.walkSpeedModifier);
-      }
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        this.avoidTarget = null;
+    }
 
-   }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        if (this.entity.getDistanceSq(this.avoidTarget) < 49.0D)
+        {
+            this.entity.getNavigator().setSpeed(this.nearSpeed);
+        }
+        else
+        {
+            this.entity.getNavigator().setSpeed(this.farSpeed);
+        }
+    }
 }

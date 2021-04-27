@@ -1,20 +1,24 @@
 package net.minecraft.util;
 
-public enum ActionResultType {
-   SUCCESS,
-   CONSUME,
-   PASS,
-   FAIL;
+public enum ActionResultType
+{
+    SUCCESS,
+    CONSUME,
+    PASS,
+    FAIL;
 
-   public boolean consumesAction() {
-      return this == SUCCESS || this == CONSUME;
-   }
+    public boolean isSuccessOrConsume()
+    {
+        return this == SUCCESS || this == CONSUME;
+    }
 
-   public boolean shouldSwing() {
-      return this == SUCCESS;
-   }
+    public boolean isSuccess()
+    {
+        return this == SUCCESS;
+    }
 
-   public static ActionResultType sidedSuccess(boolean p_233537_0_) {
-      return p_233537_0_ ? SUCCESS : CONSUME;
-   }
+    public static ActionResultType func_233537_a_(boolean p_233537_0_)
+    {
+        return p_233537_0_ ? SUCCESS : CONSUME;
+    }
 }

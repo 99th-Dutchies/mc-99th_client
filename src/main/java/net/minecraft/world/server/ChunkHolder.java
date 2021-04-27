@@ -33,381 +33,484 @@ import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.lighting.WorldLightManager;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class ChunkHolder {
-   public static final Either<IChunk, ChunkHolder.IChunkLoadingError> UNLOADED_CHUNK = Either.right(ChunkHolder.IChunkLoadingError.UNLOADED);
-   public static final CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> UNLOADED_CHUNK_FUTURE = CompletableFuture.completedFuture(UNLOADED_CHUNK);
-   public static final Either<Chunk, ChunkHolder.IChunkLoadingError> UNLOADED_LEVEL_CHUNK = Either.right(ChunkHolder.IChunkLoadingError.UNLOADED);
-   private static final CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> UNLOADED_LEVEL_CHUNK_FUTURE = CompletableFuture.completedFuture(UNLOADED_LEVEL_CHUNK);
-   private static final List<ChunkStatus> CHUNK_STATUSES = ChunkStatus.getStatusList();
-   private static final ChunkHolder.LocationType[] FULL_CHUNK_STATUSES = ChunkHolder.LocationType.values();
-   private final AtomicReferenceArray<CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>>> futures = new AtomicReferenceArray<>(CHUNK_STATUSES.size());
-   private volatile CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> fullChunkFuture = UNLOADED_LEVEL_CHUNK_FUTURE;
-   private volatile CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> tickingChunkFuture = UNLOADED_LEVEL_CHUNK_FUTURE;
-   private volatile CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> entityTickingChunkFuture = UNLOADED_LEVEL_CHUNK_FUTURE;
-   private CompletableFuture<IChunk> chunkToSave = CompletableFuture.completedFuture((IChunk)null);
-   private int oldTicketLevel;
-   private int ticketLevel;
-   private int queueLevel;
-   private final ChunkPos pos;
-   private boolean hasChangedSections;
-   private final ShortSet[] changedBlocksPerSection = new ShortSet[16];
-   private int blockChangedLightSectionFilter;
-   private int skyChangedLightSectionFilter;
-   private final WorldLightManager lightEngine;
-   private final ChunkHolder.IListener onLevelChange;
-   private final ChunkHolder.IPlayerProvider playerProvider;
-   private boolean wasAccessibleSinceLastSave;
-   private boolean resendLight;
+public class ChunkHolder
+{
+    public static final Either<IChunk, ChunkHolder.IChunkLoadingError> MISSING_CHUNK = Either.right(ChunkHolder.IChunkLoadingError.UNLOADED);
+    public static final CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> MISSING_CHUNK_FUTURE = CompletableFuture.completedFuture(MISSING_CHUNK);
+    public static final Either<Chunk, ChunkHolder.IChunkLoadingError> UNLOADED_CHUNK = Either.right(ChunkHolder.IChunkLoadingError.UNLOADED);
+    private static final CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> UNLOADED_CHUNK_FUTURE = CompletableFuture.completedFuture(UNLOADED_CHUNK);
+    private static final List<ChunkStatus> CHUNK_STATUS_LIST = ChunkStatus.getAll();
+    private static final ChunkHolder.LocationType[] LOCATION_TYPES = ChunkHolder.LocationType.values();
+    private final AtomicReferenceArray<CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>>> field_219312_g = new AtomicReferenceArray<>(CHUNK_STATUS_LIST.size());
+    private volatile CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> borderFuture = UNLOADED_CHUNK_FUTURE;
+    private volatile CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> tickingFuture = UNLOADED_CHUNK_FUTURE;
+    private volatile CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> entityTickingFuture = UNLOADED_CHUNK_FUTURE;
+    private CompletableFuture<IChunk> field_219315_j = CompletableFuture.completedFuture((IChunk)null);
+    private int prevChunkLevel;
+    private int chunkLevel;
+    private int field_219318_m;
+    private final ChunkPos pos;
+    private boolean field_244382_p;
+    private final ShortSet[] field_244383_q = new ShortSet[16];
+    private int blockLightChangeMask;
+    private int skyLightChangeMask;
+    private final WorldLightManager lightManager;
+    private final ChunkHolder.IListener field_219327_v;
+    private final ChunkHolder.IPlayerProvider playerProvider;
+    private boolean accessible;
+    private boolean field_244384_x;
 
-   public ChunkHolder(ChunkPos p_i50716_1_, int p_i50716_2_, WorldLightManager p_i50716_3_, ChunkHolder.IListener p_i50716_4_, ChunkHolder.IPlayerProvider p_i50716_5_) {
-      this.pos = p_i50716_1_;
-      this.lightEngine = p_i50716_3_;
-      this.onLevelChange = p_i50716_4_;
-      this.playerProvider = p_i50716_5_;
-      this.oldTicketLevel = ChunkManager.MAX_CHUNK_DISTANCE + 1;
-      this.ticketLevel = this.oldTicketLevel;
-      this.queueLevel = this.oldTicketLevel;
-      this.setTicketLevel(p_i50716_2_);
-   }
+    public ChunkHolder(ChunkPos chunkPos, int level, WorldLightManager lightManager, ChunkHolder.IListener p_i50716_4_, ChunkHolder.IPlayerProvider playerProvider)
+    {
+        this.pos = chunkPos;
+        this.lightManager = lightManager;
+        this.field_219327_v = p_i50716_4_;
+        this.playerProvider = playerProvider;
+        this.prevChunkLevel = ChunkManager.MAX_LOADED_LEVEL + 1;
+        this.chunkLevel = this.prevChunkLevel;
+        this.field_219318_m = this.prevChunkLevel;
+        this.setChunkLevel(level);
+    }
 
-   public CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> getFutureIfPresentUnchecked(ChunkStatus p_219301_1_) {
-      CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.futures.get(p_219301_1_.getIndex());
-      return completablefuture == null ? UNLOADED_CHUNK_FUTURE : completablefuture;
-   }
+    public CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> func_219301_a(ChunkStatus p_219301_1_)
+    {
+        CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.field_219312_g.get(p_219301_1_.ordinal());
+        return completablefuture == null ? MISSING_CHUNK_FUTURE : completablefuture;
+    }
 
-   public CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> getFutureIfPresent(ChunkStatus p_225410_1_) {
-      return getStatus(this.ticketLevel).isOrAfter(p_225410_1_) ? this.getFutureIfPresentUnchecked(p_225410_1_) : UNLOADED_CHUNK_FUTURE;
-   }
+    public CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> func_225410_b(ChunkStatus p_225410_1_)
+    {
+        return getChunkStatusFromLevel(this.chunkLevel).isAtLeast(p_225410_1_) ? this.func_219301_a(p_225410_1_) : MISSING_CHUNK_FUTURE;
+    }
 
-   public CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> getTickingChunkFuture() {
-      return this.tickingChunkFuture;
-   }
+    public CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> getTickingFuture()
+    {
+        return this.tickingFuture;
+    }
 
-   public CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> getEntityTickingChunkFuture() {
-      return this.entityTickingChunkFuture;
-   }
+    public CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> getEntityTickingFuture()
+    {
+        return this.entityTickingFuture;
+    }
 
-   public CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> getFullChunkFuture() {
-      return this.fullChunkFuture;
-   }
+    public CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> getBorderFuture()
+    {
+        return this.borderFuture;
+    }
 
-   @Nullable
-   public Chunk getTickingChunk() {
-      CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.getTickingChunkFuture();
-      Either<Chunk, ChunkHolder.IChunkLoadingError> either = completablefuture.getNow((Either<Chunk, ChunkHolder.IChunkLoadingError>)null);
-      return either == null ? null : either.left().orElse((Chunk)null);
-   }
+    @Nullable
+    public Chunk getChunkIfComplete()
+    {
+        CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.getTickingFuture();
+        Either<Chunk, ChunkHolder.IChunkLoadingError> either = completablefuture.getNow((Either<Chunk, ChunkHolder.IChunkLoadingError>)null);
+        return either == null ? null : either.left().orElse((Chunk)null);
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public ChunkStatus getLastAvailableStatus() {
-      for(int i = CHUNK_STATUSES.size() - 1; i >= 0; --i) {
-         ChunkStatus chunkstatus = CHUNK_STATUSES.get(i);
-         CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.getFutureIfPresentUnchecked(chunkstatus);
-         if (completablefuture.getNow(UNLOADED_CHUNK).left().isPresent()) {
-            return chunkstatus;
-         }
-      }
+    @Nullable
+    public ChunkStatus func_219285_d()
+    {
+        for (int i = CHUNK_STATUS_LIST.size() - 1; i >= 0; --i)
+        {
+            ChunkStatus chunkstatus = CHUNK_STATUS_LIST.get(i);
+            CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.func_219301_a(chunkstatus);
 
-      return null;
-   }
-
-   @Nullable
-   public IChunk getLastAvailable() {
-      for(int i = CHUNK_STATUSES.size() - 1; i >= 0; --i) {
-         ChunkStatus chunkstatus = CHUNK_STATUSES.get(i);
-         CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.getFutureIfPresentUnchecked(chunkstatus);
-         if (!completablefuture.isCompletedExceptionally()) {
-            Optional<IChunk> optional = completablefuture.getNow(UNLOADED_CHUNK).left();
-            if (optional.isPresent()) {
-               return optional.get();
+            if (completablefuture.getNow(MISSING_CHUNK).left().isPresent())
+            {
+                return chunkstatus;
             }
-         }
-      }
+        }
 
-      return null;
-   }
+        return null;
+    }
 
-   public CompletableFuture<IChunk> getChunkToSave() {
-      return this.chunkToSave;
-   }
+    @Nullable
+    public IChunk func_219287_e()
+    {
+        for (int i = CHUNK_STATUS_LIST.size() - 1; i >= 0; --i)
+        {
+            ChunkStatus chunkstatus = CHUNK_STATUS_LIST.get(i);
+            CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.func_219301_a(chunkstatus);
 
-   public void blockChanged(BlockPos p_244386_1_) {
-      Chunk chunk = this.getTickingChunk();
-      if (chunk != null) {
-         byte b0 = (byte)SectionPos.blockToSectionCoord(p_244386_1_.getY());
-         if (this.changedBlocksPerSection[b0] == null) {
-            this.hasChangedSections = true;
-            this.changedBlocksPerSection[b0] = new ShortArraySet();
-         }
+            if (!completablefuture.isCompletedExceptionally())
+            {
+                Optional<IChunk> optional = completablefuture.getNow(MISSING_CHUNK).left();
 
-         this.changedBlocksPerSection[b0].add(SectionPos.sectionRelativePos(p_244386_1_));
-      }
-   }
-
-   public void sectionLightChanged(LightType p_219280_1_, int p_219280_2_) {
-      Chunk chunk = this.getTickingChunk();
-      if (chunk != null) {
-         chunk.setUnsaved(true);
-         if (p_219280_1_ == LightType.SKY) {
-            this.skyChangedLightSectionFilter |= 1 << p_219280_2_ - -1;
-         } else {
-            this.blockChangedLightSectionFilter |= 1 << p_219280_2_ - -1;
-         }
-
-      }
-   }
-
-   public void broadcastChanges(Chunk p_219274_1_) {
-      if (this.hasChangedSections || this.skyChangedLightSectionFilter != 0 || this.blockChangedLightSectionFilter != 0) {
-         World world = p_219274_1_.getLevel();
-         int i = 0;
-
-         for(int j = 0; j < this.changedBlocksPerSection.length; ++j) {
-            i += this.changedBlocksPerSection[j] != null ? this.changedBlocksPerSection[j].size() : 0;
-         }
-
-         this.resendLight |= i >= 64;
-         if (this.skyChangedLightSectionFilter != 0 || this.blockChangedLightSectionFilter != 0) {
-            this.broadcast(new SUpdateLightPacket(p_219274_1_.getPos(), this.lightEngine, this.skyChangedLightSectionFilter, this.blockChangedLightSectionFilter, true), !this.resendLight);
-            this.skyChangedLightSectionFilter = 0;
-            this.blockChangedLightSectionFilter = 0;
-         }
-
-         for(int k = 0; k < this.changedBlocksPerSection.length; ++k) {
-            ShortSet shortset = this.changedBlocksPerSection[k];
-            if (shortset != null) {
-               SectionPos sectionpos = SectionPos.of(p_219274_1_.getPos(), k);
-               if (shortset.size() == 1) {
-                  BlockPos blockpos = sectionpos.relativeToBlockPos(shortset.iterator().nextShort());
-                  BlockState blockstate = world.getBlockState(blockpos);
-                  this.broadcast(new SChangeBlockPacket(blockpos, blockstate), false);
-                  this.broadcastBlockEntityIfNeeded(world, blockpos, blockstate);
-               } else {
-                  ChunkSection chunksection = p_219274_1_.getSections()[sectionpos.getY()];
-                  SMultiBlockChangePacket smultiblockchangepacket = new SMultiBlockChangePacket(sectionpos, shortset, chunksection, this.resendLight);
-                  this.broadcast(smultiblockchangepacket, false);
-                  smultiblockchangepacket.runUpdates((p_244387_2_, p_244387_3_) -> {
-                     this.broadcastBlockEntityIfNeeded(world, p_244387_2_, p_244387_3_);
-                  });
-               }
-
-               this.changedBlocksPerSection[k] = null;
+                if (optional.isPresent())
+                {
+                    return optional.get();
+                }
             }
-         }
+        }
 
-         this.hasChangedSections = false;
-      }
-   }
+        return null;
+    }
 
-   private void broadcastBlockEntityIfNeeded(World p_244385_1_, BlockPos p_244385_2_, BlockState p_244385_3_) {
-      if (p_244385_3_.getBlock().isEntityBlock()) {
-         this.broadcastBlockEntity(p_244385_1_, p_244385_2_);
-      }
+    public CompletableFuture<IChunk> func_219302_f()
+    {
+        return this.field_219315_j;
+    }
 
-   }
+    public void func_244386_a(BlockPos p_244386_1_)
+    {
+        Chunk chunk = this.getChunkIfComplete();
 
-   private void broadcastBlockEntity(World p_219305_1_, BlockPos p_219305_2_) {
-      TileEntity tileentity = p_219305_1_.getBlockEntity(p_219305_2_);
-      if (tileentity != null) {
-         SUpdateTileEntityPacket supdatetileentitypacket = tileentity.getUpdatePacket();
-         if (supdatetileentitypacket != null) {
-            this.broadcast(supdatetileentitypacket, false);
-         }
-      }
+        if (chunk != null)
+        {
+            byte b0 = (byte)SectionPos.toChunk(p_244386_1_.getY());
 
-   }
-
-   private void broadcast(IPacket<?> p_219293_1_, boolean p_219293_2_) {
-      this.playerProvider.getPlayers(this.pos, p_219293_2_).forEach((p_219304_1_) -> {
-         p_219304_1_.connection.send(p_219293_1_);
-      });
-   }
-
-   public CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> getOrScheduleFuture(ChunkStatus p_219276_1_, ChunkManager p_219276_2_) {
-      int i = p_219276_1_.getIndex();
-      CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.futures.get(i);
-      if (completablefuture != null) {
-         Either<IChunk, ChunkHolder.IChunkLoadingError> either = completablefuture.getNow((Either<IChunk, ChunkHolder.IChunkLoadingError>)null);
-         if (either == null || either.left().isPresent()) {
-            return completablefuture;
-         }
-      }
-
-      if (getStatus(this.ticketLevel).isOrAfter(p_219276_1_)) {
-         CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture1 = p_219276_2_.schedule(this, p_219276_1_);
-         this.updateChunkToSave(completablefuture1);
-         this.futures.set(i, completablefuture1);
-         return completablefuture1;
-      } else {
-         return completablefuture == null ? UNLOADED_CHUNK_FUTURE : completablefuture;
-      }
-   }
-
-   private void updateChunkToSave(CompletableFuture<? extends Either<? extends IChunk, ChunkHolder.IChunkLoadingError>> p_219284_1_) {
-      this.chunkToSave = this.chunkToSave.thenCombine(p_219284_1_, (p_219295_0_, p_219295_1_) -> {
-         return p_219295_1_.map((p_219283_0_) -> {
-            return p_219283_0_;
-         }, (p_219288_1_) -> {
-            return p_219295_0_;
-         });
-      });
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public ChunkHolder.LocationType getFullStatus() {
-      return getFullChunkStatus(this.ticketLevel);
-   }
-
-   public ChunkPos getPos() {
-      return this.pos;
-   }
-
-   public int getTicketLevel() {
-      return this.ticketLevel;
-   }
-
-   public int getQueueLevel() {
-      return this.queueLevel;
-   }
-
-   private void setQueueLevel(int p_219275_1_) {
-      this.queueLevel = p_219275_1_;
-   }
-
-   public void setTicketLevel(int p_219292_1_) {
-      this.ticketLevel = p_219292_1_;
-   }
-
-   protected void updateFutures(ChunkManager p_219291_1_) {
-      ChunkStatus chunkstatus = getStatus(this.oldTicketLevel);
-      ChunkStatus chunkstatus1 = getStatus(this.ticketLevel);
-      boolean flag = this.oldTicketLevel <= ChunkManager.MAX_CHUNK_DISTANCE;
-      boolean flag1 = this.ticketLevel <= ChunkManager.MAX_CHUNK_DISTANCE;
-      ChunkHolder.LocationType chunkholder$locationtype = getFullChunkStatus(this.oldTicketLevel);
-      ChunkHolder.LocationType chunkholder$locationtype1 = getFullChunkStatus(this.ticketLevel);
-      if (flag) {
-         Either<IChunk, ChunkHolder.IChunkLoadingError> either = Either.right(new ChunkHolder.IChunkLoadingError() {
-            public String toString() {
-               return "Unloaded ticket level " + ChunkHolder.this.pos.toString();
+            if (this.field_244383_q[b0] == null)
+            {
+                this.field_244382_p = true;
+                this.field_244383_q[b0] = new ShortArraySet();
             }
-         });
 
-         for(int i = flag1 ? chunkstatus1.getIndex() + 1 : 0; i <= chunkstatus.getIndex(); ++i) {
-            CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.futures.get(i);
-            if (completablefuture != null) {
-               completablefuture.complete(either);
-            } else {
-               this.futures.set(i, CompletableFuture.completedFuture(either));
+            this.field_244383_q[b0].add(SectionPos.toRelativeOffset(p_244386_1_));
+        }
+    }
+
+    public void markLightChanged(LightType type, int sectionY)
+    {
+        Chunk chunk = this.getChunkIfComplete();
+
+        if (chunk != null)
+        {
+            chunk.setModified(true);
+
+            if (type == LightType.SKY)
+            {
+                this.skyLightChangeMask |= 1 << sectionY - -1;
             }
-         }
-      }
-
-      boolean flag5 = chunkholder$locationtype.isOrAfter(ChunkHolder.LocationType.BORDER);
-      boolean flag6 = chunkholder$locationtype1.isOrAfter(ChunkHolder.LocationType.BORDER);
-      this.wasAccessibleSinceLastSave |= flag6;
-      if (!flag5 && flag6) {
-         this.fullChunkFuture = p_219291_1_.unpackTicks(this);
-         this.updateChunkToSave(this.fullChunkFuture);
-      }
-
-      if (flag5 && !flag6) {
-         CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> completablefuture1 = this.fullChunkFuture;
-         this.fullChunkFuture = UNLOADED_LEVEL_CHUNK_FUTURE;
-         this.updateChunkToSave(completablefuture1.thenApply((p_222982_1_) -> {
-            return p_222982_1_.ifLeft(p_219291_1_::packTicks);
-         }));
-      }
-
-      boolean flag7 = chunkholder$locationtype.isOrAfter(ChunkHolder.LocationType.TICKING);
-      boolean flag2 = chunkholder$locationtype1.isOrAfter(ChunkHolder.LocationType.TICKING);
-      if (!flag7 && flag2) {
-         this.tickingChunkFuture = p_219291_1_.postProcess(this);
-         this.updateChunkToSave(this.tickingChunkFuture);
-      }
-
-      if (flag7 && !flag2) {
-         this.tickingChunkFuture.complete(UNLOADED_LEVEL_CHUNK);
-         this.tickingChunkFuture = UNLOADED_LEVEL_CHUNK_FUTURE;
-      }
-
-      boolean flag3 = chunkholder$locationtype.isOrAfter(ChunkHolder.LocationType.ENTITY_TICKING);
-      boolean flag4 = chunkholder$locationtype1.isOrAfter(ChunkHolder.LocationType.ENTITY_TICKING);
-      if (!flag3 && flag4) {
-         if (this.entityTickingChunkFuture != UNLOADED_LEVEL_CHUNK_FUTURE) {
-            throw (IllegalStateException)Util.pauseInIde(new IllegalStateException());
-         }
-
-         this.entityTickingChunkFuture = p_219291_1_.getEntityTickingRangeFuture(this.pos);
-         this.updateChunkToSave(this.entityTickingChunkFuture);
-      }
-
-      if (flag3 && !flag4) {
-         this.entityTickingChunkFuture.complete(UNLOADED_LEVEL_CHUNK);
-         this.entityTickingChunkFuture = UNLOADED_LEVEL_CHUNK_FUTURE;
-      }
-
-      this.onLevelChange.onLevelChange(this.pos, this::getQueueLevel, this.ticketLevel, this::setQueueLevel);
-      this.oldTicketLevel = this.ticketLevel;
-   }
-
-   public static ChunkStatus getStatus(int p_219278_0_) {
-      return p_219278_0_ < 33 ? ChunkStatus.FULL : ChunkStatus.getStatus(p_219278_0_ - 33);
-   }
-
-   public static ChunkHolder.LocationType getFullChunkStatus(int p_219286_0_) {
-      return FULL_CHUNK_STATUSES[MathHelper.clamp(33 - p_219286_0_ + 1, 0, FULL_CHUNK_STATUSES.length - 1)];
-   }
-
-   public boolean wasAccessibleSinceLastSave() {
-      return this.wasAccessibleSinceLastSave;
-   }
-
-   public void refreshAccessibility() {
-      this.wasAccessibleSinceLastSave = getFullChunkStatus(this.ticketLevel).isOrAfter(ChunkHolder.LocationType.BORDER);
-   }
-
-   public void replaceProtoChunk(ChunkPrimerWrapper p_219294_1_) {
-      for(int i = 0; i < this.futures.length(); ++i) {
-         CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.futures.get(i);
-         if (completablefuture != null) {
-            Optional<IChunk> optional = completablefuture.getNow(UNLOADED_CHUNK).left();
-            if (optional.isPresent() && optional.get() instanceof ChunkPrimer) {
-               this.futures.set(i, CompletableFuture.completedFuture(Either.left(p_219294_1_)));
+            else
+            {
+                this.blockLightChangeMask |= 1 << sectionY - -1;
             }
-         }
-      }
+        }
+    }
 
-      this.updateChunkToSave(CompletableFuture.completedFuture(Either.left(p_219294_1_.getWrapped())));
-   }
+    public void sendChanges(Chunk chunkIn)
+    {
+        if (this.field_244382_p || this.skyLightChangeMask != 0 || this.blockLightChangeMask != 0)
+        {
+            World world = chunkIn.getWorld();
+            int i = 0;
 
-   public interface IChunkLoadingError {
-      ChunkHolder.IChunkLoadingError UNLOADED = new ChunkHolder.IChunkLoadingError() {
-         public String toString() {
-            return "UNLOADED";
-         }
-      };
-   }
+            for (int j = 0; j < this.field_244383_q.length; ++j)
+            {
+                i += this.field_244383_q[j] != null ? this.field_244383_q[j].size() : 0;
+            }
 
-   public interface IListener {
-      void onLevelChange(ChunkPos p_219066_1_, IntSupplier p_219066_2_, int p_219066_3_, IntConsumer p_219066_4_);
-   }
+            this.field_244384_x |= i >= 64;
 
-   public interface IPlayerProvider {
-      Stream<ServerPlayerEntity> getPlayers(ChunkPos p_219097_1_, boolean p_219097_2_);
-   }
+            if (this.skyLightChangeMask != 0 || this.blockLightChangeMask != 0)
+            {
+                this.sendToTracking(new SUpdateLightPacket(chunkIn.getPos(), this.lightManager, this.skyLightChangeMask, this.blockLightChangeMask, true), !this.field_244384_x);
+                this.skyLightChangeMask = 0;
+                this.blockLightChangeMask = 0;
+            }
 
-   public static enum LocationType {
-      INACCESSIBLE,
-      BORDER,
-      TICKING,
-      ENTITY_TICKING;
+            for (int k = 0; k < this.field_244383_q.length; ++k)
+            {
+                ShortSet shortset = this.field_244383_q[k];
 
-      public boolean isOrAfter(ChunkHolder.LocationType p_219065_1_) {
-         return this.ordinal() >= p_219065_1_.ordinal();
-      }
-   }
+                if (shortset != null)
+                {
+                    SectionPos sectionpos = SectionPos.from(chunkIn.getPos(), k);
+
+                    if (shortset.size() == 1)
+                    {
+                        BlockPos blockpos = sectionpos.func_243647_g(shortset.iterator().nextShort());
+                        BlockState blockstate = world.getBlockState(blockpos);
+                        this.sendToTracking(new SChangeBlockPacket(blockpos, blockstate), false);
+                        this.func_244385_a(world, blockpos, blockstate);
+                    }
+                    else
+                    {
+                        ChunkSection chunksection = chunkIn.getSections()[sectionpos.getY()];
+                        SMultiBlockChangePacket smultiblockchangepacket = new SMultiBlockChangePacket(sectionpos, shortset, chunksection, this.field_244384_x);
+                        this.sendToTracking(smultiblockchangepacket, false);
+                        smultiblockchangepacket.func_244310_a((p_244387_2_, p_244387_3_) ->
+                        {
+                            this.func_244385_a(world, p_244387_2_, p_244387_3_);
+                        });
+                    }
+
+                    this.field_244383_q[k] = null;
+                }
+            }
+
+            this.field_244382_p = false;
+        }
+    }
+
+    private void func_244385_a(World p_244385_1_, BlockPos p_244385_2_, BlockState p_244385_3_)
+    {
+        if (p_244385_3_.getBlock().isTileEntityProvider())
+        {
+            this.sendTileEntity(p_244385_1_, p_244385_2_);
+        }
+    }
+
+    private void sendTileEntity(World worldIn, BlockPos posIn)
+    {
+        TileEntity tileentity = worldIn.getTileEntity(posIn);
+
+        if (tileentity != null)
+        {
+            SUpdateTileEntityPacket supdatetileentitypacket = tileentity.getUpdatePacket();
+
+            if (supdatetileentitypacket != null)
+            {
+                this.sendToTracking(supdatetileentitypacket, false);
+            }
+        }
+    }
+
+    private void sendToTracking(IPacket<?> packetIn, boolean boundaryOnly)
+    {
+        this.playerProvider.getTrackingPlayers(this.pos, boundaryOnly).forEach((p_219304_1_) ->
+        {
+            p_219304_1_.connection.sendPacket(packetIn);
+        });
+    }
+
+    public CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> func_219276_a(ChunkStatus p_219276_1_, ChunkManager p_219276_2_)
+    {
+        int i = p_219276_1_.ordinal();
+        CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.field_219312_g.get(i);
+
+        if (completablefuture != null)
+        {
+            Either<IChunk, ChunkHolder.IChunkLoadingError> either = completablefuture.getNow((Either<IChunk, ChunkHolder.IChunkLoadingError>)null);
+
+            if (either == null || either.left().isPresent())
+            {
+                return completablefuture;
+            }
+        }
+
+        if (getChunkStatusFromLevel(this.chunkLevel).isAtLeast(p_219276_1_))
+        {
+            CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture1 = p_219276_2_.func_219244_a(this, p_219276_1_);
+            this.chain(completablefuture1);
+            this.field_219312_g.set(i, completablefuture1);
+            return completablefuture1;
+        }
+        else
+        {
+            return completablefuture == null ? MISSING_CHUNK_FUTURE : completablefuture;
+        }
+    }
+
+    private void chain(CompletableFuture <? extends Either <? extends IChunk, ChunkHolder.IChunkLoadingError >> eitherChunk)
+    {
+        this.field_219315_j = this.field_219315_j.thenCombine(eitherChunk, (p_219295_0_, p_219295_1_) ->
+        {
+            return p_219295_1_.map((p_219283_0_) -> {
+                return p_219283_0_;
+            }, (p_219288_1_) -> {
+                return p_219295_0_;
+            });
+        });
+    }
+
+    public ChunkHolder.LocationType func_219300_g()
+    {
+        return getLocationTypeFromLevel(this.chunkLevel);
+    }
+
+    public ChunkPos getPosition()
+    {
+        return this.pos;
+    }
+
+    public int getChunkLevel()
+    {
+        return this.chunkLevel;
+    }
+
+    public int func_219281_j()
+    {
+        return this.field_219318_m;
+    }
+
+    private void func_219275_d(int p_219275_1_)
+    {
+        this.field_219318_m = p_219275_1_;
+    }
+
+    public void setChunkLevel(int level)
+    {
+        this.chunkLevel = level;
+    }
+
+    /**
+     * Updates chunk futures based on current chunk level
+     */
+    protected void processUpdates(ChunkManager chunkManagerIn)
+    {
+        ChunkStatus chunkstatus = getChunkStatusFromLevel(this.prevChunkLevel);
+        ChunkStatus chunkstatus1 = getChunkStatusFromLevel(this.chunkLevel);
+        boolean flag = this.prevChunkLevel <= ChunkManager.MAX_LOADED_LEVEL;
+        boolean flag1 = this.chunkLevel <= ChunkManager.MAX_LOADED_LEVEL;
+        ChunkHolder.LocationType chunkholder$locationtype = getLocationTypeFromLevel(this.prevChunkLevel);
+        ChunkHolder.LocationType chunkholder$locationtype1 = getLocationTypeFromLevel(this.chunkLevel);
+
+        if (flag)
+        {
+            Either<IChunk, ChunkHolder.IChunkLoadingError> either = Either.right(new ChunkHolder.IChunkLoadingError()
+            {
+                public String toString()
+                {
+                    return "Unloaded ticket level " + ChunkHolder.this.pos.toString();
+                }
+            });
+
+            for (int i = flag1 ? chunkstatus1.ordinal() + 1 : 0; i <= chunkstatus.ordinal(); ++i)
+            {
+                CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.field_219312_g.get(i);
+
+                if (completablefuture != null)
+                {
+                    completablefuture.complete(either);
+                }
+                else
+                {
+                    this.field_219312_g.set(i, CompletableFuture.completedFuture(either));
+                }
+            }
+        }
+
+        boolean flag5 = chunkholder$locationtype.isAtLeast(ChunkHolder.LocationType.BORDER);
+        boolean flag6 = chunkholder$locationtype1.isAtLeast(ChunkHolder.LocationType.BORDER);
+        this.accessible |= flag6;
+
+        if (!flag5 && flag6)
+        {
+            this.borderFuture = chunkManagerIn.func_222961_b(this);
+            this.chain(this.borderFuture);
+        }
+
+        if (flag5 && !flag6)
+        {
+            CompletableFuture<Either<Chunk, ChunkHolder.IChunkLoadingError>> completablefuture1 = this.borderFuture;
+            this.borderFuture = UNLOADED_CHUNK_FUTURE;
+            this.chain(completablefuture1.thenApply((p_222982_1_) ->
+            {
+                return p_222982_1_.ifLeft(chunkManagerIn::func_222973_a);
+            }));
+        }
+
+        boolean flag7 = chunkholder$locationtype.isAtLeast(ChunkHolder.LocationType.TICKING);
+        boolean flag2 = chunkholder$locationtype1.isAtLeast(ChunkHolder.LocationType.TICKING);
+
+        if (!flag7 && flag2)
+        {
+            this.tickingFuture = chunkManagerIn.func_219179_a(this);
+            this.chain(this.tickingFuture);
+        }
+
+        if (flag7 && !flag2)
+        {
+            this.tickingFuture.complete(UNLOADED_CHUNK);
+            this.tickingFuture = UNLOADED_CHUNK_FUTURE;
+        }
+
+        boolean flag3 = chunkholder$locationtype.isAtLeast(ChunkHolder.LocationType.ENTITY_TICKING);
+        boolean flag4 = chunkholder$locationtype1.isAtLeast(ChunkHolder.LocationType.ENTITY_TICKING);
+
+        if (!flag3 && flag4)
+        {
+            if (this.entityTickingFuture != UNLOADED_CHUNK_FUTURE)
+            {
+                throw(IllegalStateException)Util.pauseDevMode(new IllegalStateException());
+            }
+
+            this.entityTickingFuture = chunkManagerIn.func_219188_b(this.pos);
+            this.chain(this.entityTickingFuture);
+        }
+
+        if (flag3 && !flag4)
+        {
+            this.entityTickingFuture.complete(UNLOADED_CHUNK);
+            this.entityTickingFuture = UNLOADED_CHUNK_FUTURE;
+        }
+
+        this.field_219327_v.func_219066_a(this.pos, this::func_219281_j, this.chunkLevel, this::func_219275_d);
+        this.prevChunkLevel = this.chunkLevel;
+    }
+
+    public static ChunkStatus getChunkStatusFromLevel(int level)
+    {
+        return level < 33 ? ChunkStatus.FULL : ChunkStatus.getStatus(level - 33);
+    }
+
+    public static ChunkHolder.LocationType getLocationTypeFromLevel(int level)
+    {
+        return LOCATION_TYPES[MathHelper.clamp(33 - level + 1, 0, LOCATION_TYPES.length - 1)];
+    }
+
+    public boolean isAccessible()
+    {
+        return this.accessible;
+    }
+
+    public void updateAccessible()
+    {
+        this.accessible = getLocationTypeFromLevel(this.chunkLevel).isAtLeast(ChunkHolder.LocationType.BORDER);
+    }
+
+    public void func_219294_a(ChunkPrimerWrapper p_219294_1_)
+    {
+        for (int i = 0; i < this.field_219312_g.length(); ++i)
+        {
+            CompletableFuture<Either<IChunk, ChunkHolder.IChunkLoadingError>> completablefuture = this.field_219312_g.get(i);
+
+            if (completablefuture != null)
+            {
+                Optional<IChunk> optional = completablefuture.getNow(MISSING_CHUNK).left();
+
+                if (optional.isPresent() && optional.get() instanceof ChunkPrimer)
+                {
+                    this.field_219312_g.set(i, CompletableFuture.completedFuture(Either.left(p_219294_1_)));
+                }
+            }
+        }
+
+        this.chain(CompletableFuture.completedFuture(Either.left(p_219294_1_.getChunk())));
+    }
+
+    public interface IChunkLoadingError
+    {
+        ChunkHolder.IChunkLoadingError UNLOADED = new ChunkHolder.IChunkLoadingError()
+        {
+            public String toString()
+            {
+                return "UNLOADED";
+            }
+        };
+    }
+
+    public interface IListener
+    {
+        void func_219066_a(ChunkPos pos, IntSupplier p_219066_2_, int p_219066_3_, IntConsumer p_219066_4_);
+    }
+
+    public interface IPlayerProvider
+    {
+        Stream<ServerPlayerEntity> getTrackingPlayers(ChunkPos pos, boolean boundaryOnly);
+    }
+
+    public static enum LocationType
+    {
+        INACCESSIBLE,
+        BORDER,
+        TICKING,
+        ENTITY_TICKING;
+
+        public boolean isAtLeast(ChunkHolder.LocationType type)
+        {
+            return this.ordinal() >= type.ordinal();
+        }
+    }
 }

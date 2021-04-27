@@ -8,54 +8,70 @@ import net.minecraft.inventory.container.RecipeBookContainer;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 
-public class ServerRecipePlacerFurnace<C extends IInventory> extends ServerRecipePlacer<C> {
-   private boolean recipeMatchesPlaced;
+public class ServerRecipePlacerFurnace<C extends IInventory> extends ServerRecipePlacer<C>
+{
+    private boolean matches;
 
-   public ServerRecipePlacerFurnace(RecipeBookContainer<C> p_i50751_1_) {
-      super(p_i50751_1_);
-   }
+    public ServerRecipePlacerFurnace(RecipeBookContainer<C> recipeBookContainer)
+    {
+        super(recipeBookContainer);
+    }
 
-   protected void handleRecipeClicked(IRecipe<C> p_201508_1_, boolean p_201508_2_) {
-      this.recipeMatchesPlaced = this.menu.recipeMatches(p_201508_1_);
-      int i = this.stackedContents.getBiggestCraftableStack(p_201508_1_, (IntList)null);
-      if (this.recipeMatchesPlaced) {
-         ItemStack itemstack = this.menu.getSlot(0).getItem();
-         if (itemstack.isEmpty() || i <= itemstack.getCount()) {
-            return;
-         }
-      }
+    protected void tryPlaceRecipe(IRecipe<C> recipe, boolean placeAll)
+    {
+        this.matches = this.recipeBookContainer.matches(recipe);
+        int i = this.recipeItemHelper.getBiggestCraftableStack(recipe, (IntList)null);
 
-      int j = this.getStackSize(p_201508_2_, i, this.recipeMatchesPlaced);
-      IntList intlist = new IntArrayList();
-      if (this.stackedContents.canCraft(p_201508_1_, intlist, j)) {
-         if (!this.recipeMatchesPlaced) {
-            this.moveItemToInventory(this.menu.getResultSlotIndex());
-            this.moveItemToInventory(0);
-         }
+        if (this.matches)
+        {
+            ItemStack itemstack = this.recipeBookContainer.getSlot(0).getStack();
 
-         this.placeRecipe(j, intlist);
-      }
-   }
+            if (itemstack.isEmpty() || i <= itemstack.getCount())
+            {
+                return;
+            }
+        }
 
-   protected void clearGrid() {
-      this.moveItemToInventory(this.menu.getResultSlotIndex());
-      super.clearGrid();
-   }
+        int j = this.getMaxAmount(placeAll, i, this.matches);
+        IntList intlist = new IntArrayList();
 
-   protected void placeRecipe(int p_201516_1_, IntList p_201516_2_) {
-      Iterator<Integer> iterator = p_201516_2_.iterator();
-      Slot slot = this.menu.getSlot(0);
-      ItemStack itemstack = RecipeItemHelper.fromStackingIndex(iterator.next());
-      if (!itemstack.isEmpty()) {
-         int i = Math.min(itemstack.getMaxStackSize(), p_201516_1_);
-         if (this.recipeMatchesPlaced) {
-            i -= slot.getItem().getCount();
-         }
+        if (this.recipeItemHelper.canCraft(recipe, intlist, j))
+        {
+            if (!this.matches)
+            {
+                this.giveToPlayer(this.recipeBookContainer.getOutputSlot());
+                this.giveToPlayer(0);
+            }
 
-         for(int j = 0; j < i; ++j) {
-            this.moveItemToGrid(slot, itemstack);
-         }
+            this.func_201516_a(j, intlist);
+        }
+    }
 
-      }
-   }
+    protected void clear()
+    {
+        this.giveToPlayer(this.recipeBookContainer.getOutputSlot());
+        super.clear();
+    }
+
+    protected void func_201516_a(int p_201516_1_, IntList p_201516_2_)
+    {
+        Iterator<Integer> iterator = p_201516_2_.iterator();
+        Slot slot = this.recipeBookContainer.getSlot(0);
+        ItemStack itemstack = RecipeItemHelper.unpack(iterator.next());
+
+        if (!itemstack.isEmpty())
+        {
+            int i = Math.min(itemstack.getMaxStackSize(), p_201516_1_);
+
+            if (this.matches)
+            {
+                i -= slot.getStack().getCount();
+            }
+
+            for (int j = 0; j < i; ++j)
+            {
+                this.consumeIngredient(slot, itemstack);
+            }
+        }
+    }
 }

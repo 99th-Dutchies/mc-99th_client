@@ -26,105 +26,128 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class ClientSuggestionProvider implements ISuggestionProvider {
-   private final ClientPlayNetHandler connection;
-   private final Minecraft minecraft;
-   private int pendingSuggestionsId = -1;
-   private CompletableFuture<Suggestions> pendingSuggestionsFuture;
+public class ClientSuggestionProvider implements ISuggestionProvider
+{
+    private final ClientPlayNetHandler connection;
+    private final Minecraft mc;
+    private int currentTransaction = -1;
+    private CompletableFuture<Suggestions> future;
 
-   public ClientSuggestionProvider(ClientPlayNetHandler p_i49558_1_, Minecraft p_i49558_2_) {
-      this.connection = p_i49558_1_;
-      this.minecraft = p_i49558_2_;
-   }
+    public ClientSuggestionProvider(ClientPlayNetHandler p_i49558_1_, Minecraft p_i49558_2_)
+    {
+        this.connection = p_i49558_1_;
+        this.mc = p_i49558_2_;
+    }
 
-   public Collection<String> getOnlinePlayerNames() {
-      List<String> list = Lists.newArrayList();
+    public Collection<String> getPlayerNames()
+    {
+        List<String> list = Lists.newArrayList();
 
-      for(NetworkPlayerInfo networkplayerinfo : this.connection.getOnlinePlayers()) {
-         list.add(networkplayerinfo.getProfile().getName());
-      }
+        for (NetworkPlayerInfo networkplayerinfo : this.connection.getPlayerInfoMap())
+        {
+            list.add(networkplayerinfo.getGameProfile().getName());
+        }
 
-      return list;
-   }
+        return list;
+    }
 
-   public Collection<String> getSelectedEntities() {
-      return (Collection<String>)(this.minecraft.hitResult != null && this.minecraft.hitResult.getType() == RayTraceResult.Type.ENTITY ? Collections.singleton(((EntityRayTraceResult)this.minecraft.hitResult).getEntity().getStringUUID()) : Collections.emptyList());
-   }
+    public Collection<String> getTargetedEntity()
+    {
+        return (Collection<String>)(this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.ENTITY ? Collections.singleton(((EntityRayTraceResult)this.mc.objectMouseOver).getEntity().getCachedUniqueIdString()) : Collections.emptyList());
+    }
 
-   public Collection<String> getAllTeams() {
-      return this.connection.getLevel().getScoreboard().getTeamNames();
-   }
+    public Collection<String> getTeamNames()
+    {
+        return this.connection.getWorld().getScoreboard().getTeamNames();
+    }
 
-   public Collection<ResourceLocation> getAvailableSoundEvents() {
-      return this.minecraft.getSoundManager().getAvailableSounds();
-   }
+    public Collection<ResourceLocation> getSoundResourceLocations()
+    {
+        return this.mc.getSoundHandler().getAvailableSounds();
+    }
 
-   public Stream<ResourceLocation> getRecipeNames() {
-      return this.connection.getRecipeManager().getRecipeIds();
-   }
+    public Stream<ResourceLocation> getRecipeResourceLocations()
+    {
+        return this.connection.getRecipeManager().getKeys();
+    }
 
-   public boolean hasPermission(int p_197034_1_) {
-      ClientPlayerEntity clientplayerentity = this.minecraft.player;
-      return clientplayerentity != null ? clientplayerentity.hasPermissions(p_197034_1_) : p_197034_1_ == 0;
-   }
+    public boolean hasPermissionLevel(int level)
+    {
+        ClientPlayerEntity clientplayerentity = this.mc.player;
+        return clientplayerentity != null ? clientplayerentity.hasPermissionLevel(level) : level == 0;
+    }
 
-   public CompletableFuture<Suggestions> customSuggestion(CommandContext<ISuggestionProvider> p_197009_1_, SuggestionsBuilder p_197009_2_) {
-      if (this.pendingSuggestionsFuture != null) {
-         this.pendingSuggestionsFuture.cancel(false);
-      }
+    public CompletableFuture<Suggestions> getSuggestionsFromServer(CommandContext<ISuggestionProvider> context, SuggestionsBuilder suggestionsBuilder)
+    {
+        if (this.future != null)
+        {
+            this.future.cancel(false);
+        }
 
-      this.pendingSuggestionsFuture = new CompletableFuture<>();
-      int i = ++this.pendingSuggestionsId;
-      this.connection.send(new CTabCompletePacket(i, p_197009_1_.getInput()));
-      return this.pendingSuggestionsFuture;
-   }
+        this.future = new CompletableFuture<>();
+        int i = ++this.currentTransaction;
+        this.connection.sendPacket(new CTabCompletePacket(i, context.getInput()));
+        return this.future;
+    }
 
-   private static String prettyPrint(double p_209001_0_) {
-      return String.format(Locale.ROOT, "%.2f", p_209001_0_);
-   }
+    private static String formatDouble(double p_209001_0_)
+    {
+        return String.format(Locale.ROOT, "%.2f", p_209001_0_);
+    }
 
-   private static String prettyPrint(int p_209002_0_) {
-      return Integer.toString(p_209002_0_);
-   }
+    private static String formatInt(int p_209002_0_)
+    {
+        return Integer.toString(p_209002_0_);
+    }
 
-   public Collection<ISuggestionProvider.Coordinates> getRelevantCoordinates() {
-      RayTraceResult raytraceresult = this.minecraft.hitResult;
-      if (raytraceresult != null && raytraceresult.getType() == RayTraceResult.Type.BLOCK) {
-         BlockPos blockpos = ((BlockRayTraceResult)raytraceresult).getBlockPos();
-         return Collections.singleton(new ISuggestionProvider.Coordinates(prettyPrint(blockpos.getX()), prettyPrint(blockpos.getY()), prettyPrint(blockpos.getZ())));
-      } else {
-         return ISuggestionProvider.super.getRelevantCoordinates();
-      }
-   }
+    public Collection<ISuggestionProvider.Coordinates> func_217294_q()
+    {
+        RayTraceResult raytraceresult = this.mc.objectMouseOver;
 
-   public Collection<ISuggestionProvider.Coordinates> getAbsoluteCoordinates() {
-      RayTraceResult raytraceresult = this.minecraft.hitResult;
-      if (raytraceresult != null && raytraceresult.getType() == RayTraceResult.Type.BLOCK) {
-         Vector3d vector3d = raytraceresult.getLocation();
-         return Collections.singleton(new ISuggestionProvider.Coordinates(prettyPrint(vector3d.x), prettyPrint(vector3d.y), prettyPrint(vector3d.z)));
-      } else {
-         return ISuggestionProvider.super.getAbsoluteCoordinates();
-      }
-   }
+        if (raytraceresult != null && raytraceresult.getType() == RayTraceResult.Type.BLOCK)
+        {
+            BlockPos blockpos = ((BlockRayTraceResult)raytraceresult).getPos();
+            return Collections.singleton(new ISuggestionProvider.Coordinates(formatInt(blockpos.getX()), formatInt(blockpos.getY()), formatInt(blockpos.getZ())));
+        }
+        else
+        {
+            return ISuggestionProvider.super.func_217294_q();
+        }
+    }
 
-   public Set<RegistryKey<World>> levels() {
-      return this.connection.levels();
-   }
+    public Collection<ISuggestionProvider.Coordinates> func_217293_r()
+    {
+        RayTraceResult raytraceresult = this.mc.objectMouseOver;
 
-   public DynamicRegistries registryAccess() {
-      return this.connection.registryAccess();
-   }
+        if (raytraceresult != null && raytraceresult.getType() == RayTraceResult.Type.BLOCK)
+        {
+            Vector3d vector3d = raytraceresult.getHitVec();
+            return Collections.singleton(new ISuggestionProvider.Coordinates(formatDouble(vector3d.x), formatDouble(vector3d.y), formatDouble(vector3d.z)));
+        }
+        else
+        {
+            return ISuggestionProvider.super.func_217293_r();
+        }
+    }
 
-   public void completeCustomSuggestions(int p_197015_1_, Suggestions p_197015_2_) {
-      if (p_197015_1_ == this.pendingSuggestionsId) {
-         this.pendingSuggestionsFuture.complete(p_197015_2_);
-         this.pendingSuggestionsFuture = null;
-         this.pendingSuggestionsId = -1;
-      }
+    public Set<RegistryKey<World>> func_230390_p_()
+    {
+        return this.connection.func_239164_m_();
+    }
 
-   }
+    public DynamicRegistries func_241861_q()
+    {
+        return this.connection.func_239165_n_();
+    }
+
+    public void handleResponse(int transaction, Suggestions result)
+    {
+        if (transaction == this.currentTransaction)
+        {
+            this.future.complete(result);
+            this.future = null;
+            this.currentTransaction = -1;
+        }
+    }
 }

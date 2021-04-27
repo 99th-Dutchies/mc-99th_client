@@ -1,12 +1,14 @@
 package net.minecraft.world;
 
-public enum LightType {
-   SKY(15),
-   BLOCK(0);
+public enum LightType
+{
+    SKY(15),
+    BLOCK(0);
 
-   public final int surrounding;
+    public final int defaultLightValue;
 
-   private LightType(int p_i1961_3_) {
-      this.surrounding = p_i1961_3_;
-   }
+    private LightType(int defaultLightValueIn)
+    {
+        this.defaultLightValue = defaultLightValueIn;
+    }
 }

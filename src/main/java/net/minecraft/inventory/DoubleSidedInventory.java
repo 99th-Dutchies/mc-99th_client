@@ -3,85 +3,137 @@ package net.minecraft.inventory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 
-public class DoubleSidedInventory implements IInventory {
-   private final IInventory container1;
-   private final IInventory container2;
+public class DoubleSidedInventory implements IInventory
+{
+    private final IInventory upperChest;
+    private final IInventory lowerChest;
 
-   public DoubleSidedInventory(IInventory p_i50399_1_, IInventory p_i50399_2_) {
-      if (p_i50399_1_ == null) {
-         p_i50399_1_ = p_i50399_2_;
-      }
+    public DoubleSidedInventory(IInventory upperChest, IInventory lowerChest)
+    {
+        if (upperChest == null)
+        {
+            upperChest = lowerChest;
+        }
 
-      if (p_i50399_2_ == null) {
-         p_i50399_2_ = p_i50399_1_;
-      }
+        if (lowerChest == null)
+        {
+            lowerChest = upperChest;
+        }
 
-      this.container1 = p_i50399_1_;
-      this.container2 = p_i50399_2_;
-   }
+        this.upperChest = upperChest;
+        this.lowerChest = lowerChest;
+    }
 
-   public int getContainerSize() {
-      return this.container1.getContainerSize() + this.container2.getContainerSize();
-   }
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return this.upperChest.getSizeInventory() + this.lowerChest.getSizeInventory();
+    }
 
-   public boolean isEmpty() {
-      return this.container1.isEmpty() && this.container2.isEmpty();
-   }
+    public boolean isEmpty()
+    {
+        return this.upperChest.isEmpty() && this.lowerChest.isEmpty();
+    }
 
-   public boolean contains(IInventory p_90010_1_) {
-      return this.container1 == p_90010_1_ || this.container2 == p_90010_1_;
-   }
+    /**
+     * Return whether the given inventory is part of this large chest.
+     */
+    public boolean isPartOfLargeChest(IInventory inventoryIn)
+    {
+        return this.upperChest == inventoryIn || this.lowerChest == inventoryIn;
+    }
 
-   public ItemStack getItem(int p_70301_1_) {
-      return p_70301_1_ >= this.container1.getContainerSize() ? this.container2.getItem(p_70301_1_ - this.container1.getContainerSize()) : this.container1.getItem(p_70301_1_);
-   }
+    /**
+     * Returns the stack in the given slot.
+     */
+    public ItemStack getStackInSlot(int index)
+    {
+        return index >= this.upperChest.getSizeInventory() ? this.lowerChest.getStackInSlot(index - this.upperChest.getSizeInventory()) : this.upperChest.getStackInSlot(index);
+    }
 
-   public ItemStack removeItem(int p_70298_1_, int p_70298_2_) {
-      return p_70298_1_ >= this.container1.getContainerSize() ? this.container2.removeItem(p_70298_1_ - this.container1.getContainerSize(), p_70298_2_) : this.container1.removeItem(p_70298_1_, p_70298_2_);
-   }
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    public ItemStack decrStackSize(int index, int count)
+    {
+        return index >= this.upperChest.getSizeInventory() ? this.lowerChest.decrStackSize(index - this.upperChest.getSizeInventory(), count) : this.upperChest.decrStackSize(index, count);
+    }
 
-   public ItemStack removeItemNoUpdate(int p_70304_1_) {
-      return p_70304_1_ >= this.container1.getContainerSize() ? this.container2.removeItemNoUpdate(p_70304_1_ - this.container1.getContainerSize()) : this.container1.removeItemNoUpdate(p_70304_1_);
-   }
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    public ItemStack removeStackFromSlot(int index)
+    {
+        return index >= this.upperChest.getSizeInventory() ? this.lowerChest.removeStackFromSlot(index - this.upperChest.getSizeInventory()) : this.upperChest.removeStackFromSlot(index);
+    }
 
-   public void setItem(int p_70299_1_, ItemStack p_70299_2_) {
-      if (p_70299_1_ >= this.container1.getContainerSize()) {
-         this.container2.setItem(p_70299_1_ - this.container1.getContainerSize(), p_70299_2_);
-      } else {
-         this.container1.setItem(p_70299_1_, p_70299_2_);
-      }
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    public void setInventorySlotContents(int index, ItemStack stack)
+    {
+        if (index >= this.upperChest.getSizeInventory())
+        {
+            this.lowerChest.setInventorySlotContents(index - this.upperChest.getSizeInventory(), stack);
+        }
+        else
+        {
+            this.upperChest.setInventorySlotContents(index, stack);
+        }
+    }
 
-   }
+    /**
+     * Returns the maximum stack size for a inventory slot. Seems to always be 64, possibly will be extended.
+     */
+    public int getInventoryStackLimit()
+    {
+        return this.upperChest.getInventoryStackLimit();
+    }
 
-   public int getMaxStackSize() {
-      return this.container1.getMaxStackSize();
-   }
+    /**
+     * For tile entities, ensures the chunk containing the tile entity is saved to disk later - the game won't think it
+     * hasn't changed and skip it.
+     */
+    public void markDirty()
+    {
+        this.upperChest.markDirty();
+        this.lowerChest.markDirty();
+    }
 
-   public void setChanged() {
-      this.container1.setChanged();
-      this.container2.setChanged();
-   }
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
+    public boolean isUsableByPlayer(PlayerEntity player)
+    {
+        return this.upperChest.isUsableByPlayer(player) && this.lowerChest.isUsableByPlayer(player);
+    }
 
-   public boolean stillValid(PlayerEntity p_70300_1_) {
-      return this.container1.stillValid(p_70300_1_) && this.container2.stillValid(p_70300_1_);
-   }
+    public void openInventory(PlayerEntity player)
+    {
+        this.upperChest.openInventory(player);
+        this.lowerChest.openInventory(player);
+    }
 
-   public void startOpen(PlayerEntity p_174889_1_) {
-      this.container1.startOpen(p_174889_1_);
-      this.container2.startOpen(p_174889_1_);
-   }
+    public void closeInventory(PlayerEntity player)
+    {
+        this.upperChest.closeInventory(player);
+        this.lowerChest.closeInventory(player);
+    }
 
-   public void stopOpen(PlayerEntity p_174886_1_) {
-      this.container1.stopOpen(p_174886_1_);
-      this.container2.stopOpen(p_174886_1_);
-   }
+    /**
+     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
+     * guis use Slot.isItemValid
+     */
+    public boolean isItemValidForSlot(int index, ItemStack stack)
+    {
+        return index >= this.upperChest.getSizeInventory() ? this.lowerChest.isItemValidForSlot(index - this.upperChest.getSizeInventory(), stack) : this.upperChest.isItemValidForSlot(index, stack);
+    }
 
-   public boolean canPlaceItem(int p_94041_1_, ItemStack p_94041_2_) {
-      return p_94041_1_ >= this.container1.getContainerSize() ? this.container2.canPlaceItem(p_94041_1_ - this.container1.getContainerSize(), p_94041_2_) : this.container1.canPlaceItem(p_94041_1_, p_94041_2_);
-   }
-
-   public void clearContent() {
-      this.container1.clearContent();
-      this.container2.clearContent();
-   }
+    public void clear()
+    {
+        this.upperChest.clear();
+        this.lowerChest.clear();
+    }
 }

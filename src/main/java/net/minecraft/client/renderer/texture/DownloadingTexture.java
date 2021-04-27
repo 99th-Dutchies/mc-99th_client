@@ -1,208 +1,381 @@
 package net.minecraft.client.renderer.texture;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
+import java.net.Proxy.Type;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
+import net.optifine.http.HttpPipeline;
+import net.optifine.http.HttpRequest;
+import net.optifine.http.HttpResponse;
+import net.optifine.player.CapeImageBuffer;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class DownloadingTexture extends SimpleTexture {
-   private static final Logger LOGGER = LogManager.getLogger();
-   @Nullable
-   private final File file;
-   private final String urlString;
-   private final boolean processLegacySkin;
-   @Nullable
-   private final Runnable onDownloaded;
-   @Nullable
-   private CompletableFuture<?> future;
-   private boolean uploaded;
+public class DownloadingTexture extends SimpleTexture
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    @Nullable
+    private final File cacheFile;
+    private final String imageUrl;
+    private final boolean legacySkin;
+    @Nullable
+    private final Runnable processTask;
+    @Nullable
+    private CompletableFuture<?> future;
+    private boolean textureUploaded;
+    public Boolean imageFound = null;
+    public boolean pipeline = false;
+    private boolean uploadPending = false;
 
-   public DownloadingTexture(@Nullable File p_i226043_1_, String p_i226043_2_, ResourceLocation p_i226043_3_, boolean p_i226043_4_, @Nullable Runnable p_i226043_5_) {
-      super(p_i226043_3_);
-      this.file = p_i226043_1_;
-      this.urlString = p_i226043_2_;
-      this.processLegacySkin = p_i226043_4_;
-      this.onDownloaded = p_i226043_5_;
-   }
+    public DownloadingTexture(@Nullable File cacheFileIn, String imageUrlIn, ResourceLocation textureResourceLocation, boolean legacySkinIn, @Nullable Runnable processTaskIn)
+    {
+        super(textureResourceLocation);
+        this.cacheFile = cacheFileIn;
+        this.imageUrl = imageUrlIn;
+        this.legacySkin = legacySkinIn;
+        this.processTask = processTaskIn;
+    }
 
-   private void loadCallback(NativeImage p_195417_1_) {
-      if (this.onDownloaded != null) {
-         this.onDownloaded.run();
-      }
+    private void setImage(NativeImage nativeImageIn)
+    {
+        if (this.processTask instanceof CapeImageBuffer)
+        {
+            CapeImageBuffer capeimagebuffer = (CapeImageBuffer)this.processTask;
+            nativeImageIn = capeimagebuffer.parseUserSkin(nativeImageIn);
+            capeimagebuffer.skinAvailable();
+        }
 
-      Minecraft.getInstance().execute(() -> {
-         this.uploaded = true;
-         if (!RenderSystem.isOnRenderThread()) {
-            RenderSystem.recordRenderCall(() -> {
-               this.upload(p_195417_1_);
-            });
-         } else {
-            this.upload(p_195417_1_);
-         }
+        this.setImageImpl(nativeImageIn);
+    }
 
-      });
-   }
+    private void setImageImpl(NativeImage p_setImageImpl_1_)
+    {
+        if (this.processTask != null)
+        {
+            this.processTask.run();
+        }
 
-   private void upload(NativeImage p_229160_1_) {
-      TextureUtil.prepareImage(this.getId(), p_229160_1_.getWidth(), p_229160_1_.getHeight());
-      p_229160_1_.upload(0, 0, 0, true);
-   }
+        Minecraft.getInstance().execute(() ->
+        {
+            this.textureUploaded = true;
 
-   public void load(IResourceManager p_195413_1_) throws IOException {
-      Minecraft.getInstance().execute(() -> {
-         if (!this.uploaded) {
-            try {
-               super.load(p_195413_1_);
-            } catch (IOException ioexception) {
-               LOGGER.warn("Failed to load texture: {}", this.location, ioexception);
+            if (!RenderSystem.isOnRenderThread())
+            {
+                RenderSystem.recordRenderCall(() ->
+                {
+                    this.upload(p_setImageImpl_1_);
+                });
+            }
+            else {
+                this.upload(p_setImageImpl_1_);
+            }
+        });
+    }
+
+    private void upload(NativeImage imageIn)
+    {
+        TextureUtil.prepareImage(this.getGlTextureId(), imageIn.getWidth(), imageIn.getHeight());
+        imageIn.uploadTextureSub(0, 0, 0, true);
+        this.imageFound = imageIn != null;
+    }
+
+    public void loadTexture(IResourceManager manager) throws IOException
+    {
+        Minecraft.getInstance().execute(() ->
+        {
+            if (!this.textureUploaded)
+            {
+                try
+                {
+                    super.loadTexture(manager);
+                }
+                catch (IOException ioexception)
+                {
+                    LOGGER.warn("Failed to load texture: {}", this.textureLocation, ioexception);
+                }
+
+                this.textureUploaded = true;
+            }
+        });
+
+        if (this.future == null)
+        {
+            NativeImage nativeimage;
+
+            if (this.cacheFile != null && this.cacheFile.isFile())
+            {
+                LOGGER.debug("Loading http texture from local cache ({})", (Object)this.cacheFile);
+                FileInputStream fileinputstream = new FileInputStream(this.cacheFile);
+                nativeimage = this.loadTexture(fileinputstream);
+            }
+            else
+            {
+                nativeimage = null;
             }
 
-            this.uploaded = true;
-         }
+            if (nativeimage != null)
+            {
+                this.setImage(nativeimage);
+                this.loadingFinished();
+            }
+            else
+            {
+                this.future = CompletableFuture.runAsync(() ->
+                {
+                    HttpURLConnection httpurlconnection = null;
+                    LOGGER.debug("Downloading http texture from {} to {}", this.imageUrl, this.cacheFile);
 
-      });
-      if (this.future == null) {
-         NativeImage nativeimage;
-         if (this.file != null && this.file.isFile()) {
-            LOGGER.debug("Loading http texture from local cache ({})", (Object)this.file);
-            FileInputStream fileinputstream = new FileInputStream(this.file);
-            nativeimage = this.load(fileinputstream);
-         } else {
-            nativeimage = null;
-         }
+                    if (this.shouldPipeline())
+                    {
+                        this.loadPipelined();
+                    }
+                    else {
+                        try {
+                            httpurlconnection = (HttpURLConnection)(new URL(this.imageUrl)).openConnection(Minecraft.getInstance().getProxy());
+                            httpurlconnection.setDoInput(true);
+                            httpurlconnection.setDoOutput(false);
+                            httpurlconnection.connect();
 
-         if (nativeimage != null) {
-            this.loadCallback(nativeimage);
-         } else {
-            this.future = CompletableFuture.runAsync(() -> {
-               HttpURLConnection httpurlconnection = null;
-               LOGGER.debug("Downloading http texture from {} to {}", this.urlString, this.file);
+                            if (httpurlconnection.getResponseCode() / 100 != 2)
+                            {
+                                if (httpurlconnection.getErrorStream() != null)
+                                {
+                                    Config.readAll(httpurlconnection.getErrorStream());
+                                }
 
-               try {
-                  httpurlconnection = (HttpURLConnection)(new URL(this.urlString)).openConnection(Minecraft.getInstance().getProxy());
-                  httpurlconnection.setDoInput(true);
-                  httpurlconnection.setDoOutput(false);
-                  httpurlconnection.connect();
-                  if (httpurlconnection.getResponseCode() / 100 == 2) {
-                     InputStream inputstream;
-                     if (this.file != null) {
-                        FileUtils.copyInputStreamToFile(httpurlconnection.getInputStream(), this.file);
-                        inputstream = new FileInputStream(this.file);
-                     } else {
-                        inputstream = httpurlconnection.getInputStream();
-                     }
+                                return;
+                            }
 
-                     Minecraft.getInstance().execute(() -> {
-                        NativeImage nativeimage1 = this.load(inputstream);
-                        if (nativeimage1 != null) {
-                           this.loadCallback(nativeimage1);
+                            InputStream inputstream;
+
+                            if (this.cacheFile != null)
+                            {
+                                FileUtils.copyInputStreamToFile(httpurlconnection.getInputStream(), this.cacheFile);
+                                inputstream = new FileInputStream(this.cacheFile);
+                            }
+                            else {
+                                inputstream = httpurlconnection.getInputStream();
+                            }
+
+                            Minecraft.getInstance().execute(() -> {
+                                NativeImage nativeimage1 = this.loadTexture(inputstream);
+
+                                if (nativeimage1 != null)
+                                {
+                                    this.setImage(nativeimage1);
+                                    this.loadingFinished();
+                                }
+                            });
+                            this.uploadPending = true;
                         }
+                        catch (Exception exception1)
+                        {
+                            LOGGER.error("Couldn't download http texture", (Throwable)exception1);
+                            return;
+                        }
+                        finally {
+                            if (httpurlconnection != null)
+                            {
+                                httpurlconnection.disconnect();
+                            }
 
-                     });
-                     return;
-                  }
-               } catch (Exception exception) {
-                  LOGGER.error("Couldn't download http texture", (Throwable)exception);
-                  return;
-               } finally {
-                  if (httpurlconnection != null) {
-                     httpurlconnection.disconnect();
-                  }
-
-               }
-
-            }, Util.backgroundExecutor());
-         }
-      }
-   }
-
-   @Nullable
-   private NativeImage load(InputStream p_229159_1_) {
-      NativeImage nativeimage = null;
-
-      try {
-         nativeimage = NativeImage.read(p_229159_1_);
-         if (this.processLegacySkin) {
-            nativeimage = processLegacySkin(nativeimage);
-         }
-      } catch (IOException ioexception) {
-         LOGGER.warn("Error while loading the skin texture", (Throwable)ioexception);
-      }
-
-      return nativeimage;
-   }
-
-   private static NativeImage processLegacySkin(NativeImage p_229163_0_) {
-      boolean flag = p_229163_0_.getHeight() == 32;
-      if (flag) {
-         NativeImage nativeimage = new NativeImage(64, 64, true);
-         nativeimage.copyFrom(p_229163_0_);
-         p_229163_0_.close();
-         p_229163_0_ = nativeimage;
-         nativeimage.fillRect(0, 32, 64, 32, 0);
-         nativeimage.copyRect(4, 16, 16, 32, 4, 4, true, false);
-         nativeimage.copyRect(8, 16, 16, 32, 4, 4, true, false);
-         nativeimage.copyRect(0, 20, 24, 32, 4, 12, true, false);
-         nativeimage.copyRect(4, 20, 16, 32, 4, 12, true, false);
-         nativeimage.copyRect(8, 20, 8, 32, 4, 12, true, false);
-         nativeimage.copyRect(12, 20, 16, 32, 4, 12, true, false);
-         nativeimage.copyRect(44, 16, -8, 32, 4, 4, true, false);
-         nativeimage.copyRect(48, 16, -8, 32, 4, 4, true, false);
-         nativeimage.copyRect(40, 20, 0, 32, 4, 12, true, false);
-         nativeimage.copyRect(44, 20, -8, 32, 4, 12, true, false);
-         nativeimage.copyRect(48, 20, -16, 32, 4, 12, true, false);
-         nativeimage.copyRect(52, 20, -8, 32, 4, 12, true, false);
-      }
-
-      setNoAlpha(p_229163_0_, 0, 0, 32, 16);
-      if (flag) {
-         doNotchTransparencyHack(p_229163_0_, 32, 0, 64, 32);
-      }
-
-      setNoAlpha(p_229163_0_, 0, 16, 64, 32);
-      setNoAlpha(p_229163_0_, 16, 48, 48, 64);
-      return p_229163_0_;
-   }
-
-   private static void doNotchTransparencyHack(NativeImage p_229158_0_, int p_229158_1_, int p_229158_2_, int p_229158_3_, int p_229158_4_) {
-      for(int i = p_229158_1_; i < p_229158_3_; ++i) {
-         for(int j = p_229158_2_; j < p_229158_4_; ++j) {
-            int k = p_229158_0_.getPixelRGBA(i, j);
-            if ((k >> 24 & 255) < 128) {
-               return;
+                            this.loadingFinished();
+                        }
+                    }
+                }, this.getExecutor());
             }
-         }
-      }
+        }
+    }
 
-      for(int l = p_229158_1_; l < p_229158_3_; ++l) {
-         for(int i1 = p_229158_2_; i1 < p_229158_4_; ++i1) {
-            p_229158_0_.setPixelRGBA(l, i1, p_229158_0_.getPixelRGBA(l, i1) & 16777215);
-         }
-      }
+    @Nullable
+    private NativeImage loadTexture(InputStream inputStreamIn)
+    {
+        NativeImage nativeimage = null;
 
-   }
+        try
+        {
+            nativeimage = NativeImage.read(inputStreamIn);
 
-   private static void setNoAlpha(NativeImage p_229161_0_, int p_229161_1_, int p_229161_2_, int p_229161_3_, int p_229161_4_) {
-      for(int i = p_229161_1_; i < p_229161_3_; ++i) {
-         for(int j = p_229161_2_; j < p_229161_4_; ++j) {
-            p_229161_0_.setPixelRGBA(i, j, p_229161_0_.getPixelRGBA(i, j) | -16777216);
-         }
-      }
+            if (this.legacySkin)
+            {
+                nativeimage = processLegacySkin(nativeimage);
+            }
+        }
+        catch (IOException ioexception)
+        {
+            LOGGER.warn("Error while loading the skin texture", (Throwable)ioexception);
+        }
 
-   }
+        return nativeimage;
+    }
+
+    private boolean shouldPipeline()
+    {
+        if (!this.pipeline)
+        {
+            return false;
+        }
+        else
+        {
+            Proxy proxy = Minecraft.getInstance().getProxy();
+
+            if (proxy.type() != Type.DIRECT && proxy.type() != Type.SOCKS)
+            {
+                return false;
+            }
+            else
+            {
+                return this.imageUrl.startsWith("http://");
+            }
+        }
+    }
+
+    private void loadPipelined()
+    {
+        try
+        {
+            HttpRequest httprequest = HttpPipeline.makeRequest(this.imageUrl, Minecraft.getInstance().getProxy());
+            HttpResponse httpresponse = HttpPipeline.executeRequest(httprequest);
+
+            if (httpresponse.getStatus() / 100 != 2)
+            {
+                return;
+            }
+
+            byte[] abyte = httpresponse.getBody();
+            ByteArrayInputStream bytearrayinputstream = new ByteArrayInputStream(abyte);
+            NativeImage nativeimage;
+
+            if (this.cacheFile != null)
+            {
+                FileUtils.copyInputStreamToFile(bytearrayinputstream, this.cacheFile);
+                nativeimage = NativeImage.read(new FileInputStream(this.cacheFile));
+            }
+            else
+            {
+                nativeimage = NativeImage.read(bytearrayinputstream);
+            }
+
+            this.setImage(nativeimage);
+            this.uploadPending = true;
+        }
+        catch (Exception exception)
+        {
+            LOGGER.error("Couldn't download http texture: " + exception.getClass().getName() + ": " + exception.getMessage());
+            return;
+        }
+        finally
+        {
+            this.loadingFinished();
+        }
+    }
+
+    private void loadingFinished()
+    {
+        if (!this.uploadPending)
+        {
+            if (this.processTask instanceof CapeImageBuffer)
+            {
+                CapeImageBuffer capeimagebuffer = (CapeImageBuffer)this.processTask;
+                capeimagebuffer.cleanup();
+            }
+        }
+    }
+
+    public Runnable getProcessTask()
+    {
+        return this.processTask;
+    }
+
+    private Executor getExecutor()
+    {
+        return (Executor)(this.imageUrl.startsWith("http://s.optifine.net") ? Util.getCapeExecutor() : Util.getServerExecutor());
+    }
+
+    private static NativeImage processLegacySkin(NativeImage nativeImageIn)
+    {
+        boolean flag = nativeImageIn.getHeight() == 32;
+
+        if (flag)
+        {
+            NativeImage nativeimage = new NativeImage(64, 64, true);
+            nativeimage.copyImageData(nativeImageIn);
+            nativeImageIn.close();
+            nativeImageIn = nativeimage;
+            nativeimage.fillAreaRGBA(0, 32, 64, 32, 0);
+            nativeimage.copyAreaRGBA(4, 16, 16, 32, 4, 4, true, false);
+            nativeimage.copyAreaRGBA(8, 16, 16, 32, 4, 4, true, false);
+            nativeimage.copyAreaRGBA(0, 20, 24, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(4, 20, 16, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(8, 20, 8, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(12, 20, 16, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(44, 16, -8, 32, 4, 4, true, false);
+            nativeimage.copyAreaRGBA(48, 16, -8, 32, 4, 4, true, false);
+            nativeimage.copyAreaRGBA(40, 20, 0, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(44, 20, -8, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(48, 20, -16, 32, 4, 12, true, false);
+            nativeimage.copyAreaRGBA(52, 20, -8, 32, 4, 12, true, false);
+        }
+
+        setAreaOpaque(nativeImageIn, 0, 0, 32, 16);
+
+        if (flag)
+        {
+            setAreaTransparent(nativeImageIn, 32, 0, 64, 32);
+        }
+
+        setAreaOpaque(nativeImageIn, 0, 16, 64, 32);
+        setAreaOpaque(nativeImageIn, 16, 48, 48, 64);
+        return nativeImageIn;
+    }
+
+    private static void setAreaTransparent(NativeImage image, int x, int y, int width, int height)
+    {
+        for (int i = x; i < width; ++i)
+        {
+            for (int j = y; j < height; ++j)
+            {
+                int k = image.getPixelRGBA(i, j);
+
+                if ((k >> 24 & 255) < 128)
+                {
+                    return;
+                }
+            }
+        }
+
+        for (int l = x; l < width; ++l)
+        {
+            for (int i1 = y; i1 < height; ++i1)
+            {
+                image.setPixelRGBA(l, i1, image.getPixelRGBA(l, i1) & 16777215);
+            }
+        }
+    }
+
+    private static void setAreaOpaque(NativeImage image, int x, int y, int width, int height)
+    {
+        for (int i = x; i < width; ++i)
+        {
+            for (int j = y; j < height; ++j)
+            {
+                image.setPixelRGBA(i, j, image.getPixelRGBA(i, j) | -16777216);
+            }
+        }
+    }
 }

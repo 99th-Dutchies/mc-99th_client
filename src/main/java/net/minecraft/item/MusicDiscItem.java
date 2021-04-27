@@ -18,65 +18,81 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class MusicDiscItem extends Item {
-   private static final Map<SoundEvent, MusicDiscItem> BY_NAME = Maps.newHashMap();
-   private final int analogOutput;
-   private final SoundEvent sound;
+public class MusicDiscItem extends Item
+{
+    private static final Map<SoundEvent, MusicDiscItem> RECORDS = Maps.newHashMap();
+    private final int comparatorValue;
+    private final SoundEvent sound;
 
-   protected MusicDiscItem(int p_i48475_1_, SoundEvent p_i48475_2_, Item.Properties p_i48475_3_) {
-      super(p_i48475_3_);
-      this.analogOutput = p_i48475_1_;
-      this.sound = p_i48475_2_;
-      BY_NAME.put(this.sound, this);
-   }
+    protected MusicDiscItem(int comparatorValueIn, SoundEvent soundIn, Item.Properties builder)
+    {
+        super(builder);
+        this.comparatorValue = comparatorValueIn;
+        this.sound = soundIn;
+        RECORDS.put(this.sound, this);
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      World world = p_195939_1_.getLevel();
-      BlockPos blockpos = p_195939_1_.getClickedPos();
-      BlockState blockstate = world.getBlockState(blockpos);
-      if (blockstate.is(Blocks.JUKEBOX) && !blockstate.getValue(JukeboxBlock.HAS_RECORD)) {
-         ItemStack itemstack = p_195939_1_.getItemInHand();
-         if (!world.isClientSide) {
-            ((JukeboxBlock)Blocks.JUKEBOX).setRecord(world, blockpos, blockstate, itemstack);
-            world.levelEvent((PlayerEntity)null, 1010, blockpos, Item.getId(this));
-            itemstack.shrink(1);
-            PlayerEntity playerentity = p_195939_1_.getPlayer();
-            if (playerentity != null) {
-               playerentity.awardStat(Stats.PLAY_RECORD);
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        World world = context.getWorld();
+        BlockPos blockpos = context.getPos();
+        BlockState blockstate = world.getBlockState(blockpos);
+
+        if (blockstate.isIn(Blocks.JUKEBOX) && !blockstate.get(JukeboxBlock.HAS_RECORD))
+        {
+            ItemStack itemstack = context.getItem();
+
+            if (!world.isRemote)
+            {
+                ((JukeboxBlock)Blocks.JUKEBOX).insertRecord(world, blockpos, blockstate, itemstack);
+                world.playEvent((PlayerEntity)null, 1010, blockpos, Item.getIdFromItem(this));
+                itemstack.shrink(1);
+                PlayerEntity playerentity = context.getPlayer();
+
+                if (playerentity != null)
+                {
+                    playerentity.addStat(Stats.PLAY_RECORD);
+                }
             }
-         }
 
-         return ActionResultType.sidedSuccess(world.isClientSide);
-      } else {
-         return ActionResultType.PASS;
-      }
-   }
+            return ActionResultType.func_233537_a_(world.isRemote);
+        }
+        else
+        {
+            return ActionResultType.PASS;
+        }
+    }
 
-   public int getAnalogOutput() {
-      return this.analogOutput;
-   }
+    public int getComparatorValue()
+    {
+        return this.comparatorValue;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(ItemStack p_77624_1_, @Nullable World p_77624_2_, List<ITextComponent> p_77624_3_, ITooltipFlag p_77624_4_) {
-      p_77624_3_.add(this.getDisplayName().withStyle(TextFormatting.GRAY));
-   }
+    /**
+     * allows items to add custom lines of information to the mouseover description
+     */
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+    {
+        tooltip.add(this.getDescription().mergeStyle(TextFormatting.GRAY));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public IFormattableTextComponent getDisplayName() {
-      return new TranslationTextComponent(this.getDescriptionId() + ".desc");
-   }
+    public IFormattableTextComponent getDescription()
+    {
+        return new TranslationTextComponent(this.getTranslationKey() + ".desc");
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public static MusicDiscItem getBySound(SoundEvent p_185074_0_) {
-      return BY_NAME.get(p_185074_0_);
-   }
+    @Nullable
+    public static MusicDiscItem getBySound(SoundEvent soundIn)
+    {
+        return RECORDS.get(soundIn);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public SoundEvent getSound() {
-      return this.sound;
-   }
+    public SoundEvent getSound()
+    {
+        return this.sound;
+    }
 }

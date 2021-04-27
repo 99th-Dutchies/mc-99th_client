@@ -8,24 +8,33 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class TallFlowerBlock extends DoublePlantBlock implements IGrowable {
-   public TallFlowerBlock(AbstractBlock.Properties p_i48311_1_) {
-      super(p_i48311_1_);
-   }
+public class TallFlowerBlock extends DoublePlantBlock implements IGrowable
+{
+    public TallFlowerBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public boolean canBeReplaced(BlockState p_196253_1_, BlockItemUseContext p_196253_2_) {
-      return false;
-   }
+    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext)
+    {
+        return false;
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return true;
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return true;
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      popResource(p_225535_1_, p_225535_3_, new ItemStack(this));
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        spawnAsEntity(worldIn, pos, new ItemStack(this));
+    }
 }

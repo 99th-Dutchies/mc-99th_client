@@ -8,151 +8,229 @@ import net.minecraft.dispenser.IPosition;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 @Immutable
-public class Vector3i implements Comparable<Vector3i> {
-   public static final Codec<Vector3i> CODEC = Codec.INT_STREAM.comapFlatMap((p_239783_0_) -> {
-      return Util.fixedSize(p_239783_0_, 3).map((p_239784_0_) -> {
-         return new Vector3i(p_239784_0_[0], p_239784_0_[1], p_239784_0_[2]);
-      });
-   }, (p_239782_0_) -> {
-      return IntStream.of(p_239782_0_.getX(), p_239782_0_.getY(), p_239782_0_.getZ());
-   });
-   public static final Vector3i ZERO = new Vector3i(0, 0, 0);
-   private int x;
-   private int y;
-   private int z;
+public class Vector3i implements Comparable<Vector3i>
+{
+    public static final Codec<Vector3i> CODEC = Codec.INT_STREAM.comapFlatMap((stream) ->
+    {
+        return Util.validateIntStreamSize(stream, 3).map((componentArray) -> {
+            return new Vector3i(componentArray[0], componentArray[1], componentArray[2]);
+        });
+    }, (vector) ->
+    {
+        return IntStream.of(vector.getX(), vector.getY(), vector.getZ());
+    });
 
-   public Vector3i(int p_i46007_1_, int p_i46007_2_, int p_i46007_3_) {
-      this.x = p_i46007_1_;
-      this.y = p_i46007_2_;
-      this.z = p_i46007_3_;
-   }
+    /** An immutable vector with zero as all coordinates. */
+    public static final Vector3i NULL_VECTOR = new Vector3i(0, 0, 0);
+    private int x;
+    private int y;
+    private int z;
 
-   public Vector3i(double p_i46008_1_, double p_i46008_3_, double p_i46008_5_) {
-      this(MathHelper.floor(p_i46008_1_), MathHelper.floor(p_i46008_3_), MathHelper.floor(p_i46008_5_));
-   }
+    public Vector3i(int xIn, int yIn, int zIn)
+    {
+        this.x = xIn;
+        this.y = yIn;
+        this.z = zIn;
+    }
 
-   public boolean equals(Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else if (!(p_equals_1_ instanceof Vector3i)) {
-         return false;
-      } else {
-         Vector3i vector3i = (Vector3i)p_equals_1_;
-         if (this.getX() != vector3i.getX()) {
+    public Vector3i(double xIn, double yIn, double zIn)
+    {
+        this(MathHelper.floor(xIn), MathHelper.floor(yIn), MathHelper.floor(zIn));
+    }
+
+    public boolean equals(Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else if (!(p_equals_1_ instanceof Vector3i))
+        {
             return false;
-         } else if (this.getY() != vector3i.getY()) {
-            return false;
-         } else {
-            return this.getZ() == vector3i.getZ();
-         }
-      }
-   }
+        }
+        else
+        {
+            Vector3i vector3i = (Vector3i)p_equals_1_;
 
-   public int hashCode() {
-      return (this.getY() + this.getZ() * 31) * 31 + this.getX();
-   }
+            if (this.getX() != vector3i.getX())
+            {
+                return false;
+            }
+            else if (this.getY() != vector3i.getY())
+            {
+                return false;
+            }
+            else
+            {
+                return this.getZ() == vector3i.getZ();
+            }
+        }
+    }
 
-   public int compareTo(Vector3i p_compareTo_1_) {
-      if (this.getY() == p_compareTo_1_.getY()) {
-         return this.getZ() == p_compareTo_1_.getZ() ? this.getX() - p_compareTo_1_.getX() : this.getZ() - p_compareTo_1_.getZ();
-      } else {
-         return this.getY() - p_compareTo_1_.getY();
-      }
-   }
+    public int hashCode()
+    {
+        return (this.getY() + this.getZ() * 31) * 31 + this.getX();
+    }
 
-   public int getX() {
-      return this.x;
-   }
+    public int compareTo(Vector3i p_compareTo_1_)
+    {
+        if (this.getY() == p_compareTo_1_.getY())
+        {
+            return this.getZ() == p_compareTo_1_.getZ() ? this.getX() - p_compareTo_1_.getX() : this.getZ() - p_compareTo_1_.getZ();
+        }
+        else
+        {
+            return this.getY() - p_compareTo_1_.getY();
+        }
+    }
 
-   public int getY() {
-      return this.y;
-   }
+    /**
+     * Gets the X coordinate.
+     */
+    public int getX()
+    {
+        return this.x;
+    }
 
-   public int getZ() {
-      return this.z;
-   }
+    /**
+     * Gets the Y coordinate.
+     */
+    public int getY()
+    {
+        return this.y;
+    }
 
-   protected void setX(int p_223471_1_) {
-      this.x = p_223471_1_;
-   }
+    /**
+     * Gets the Z coordinate.
+     */
+    public int getZ()
+    {
+        return this.z;
+    }
 
-   protected void setY(int p_185336_1_) {
-      this.y = p_185336_1_;
-   }
+    /**
+     * Sets the X coordinate.
+     */
+    protected void setX(int xIn)
+    {
+        this.x = xIn;
+    }
 
-   protected void setZ(int p_223472_1_) {
-      this.z = p_223472_1_;
-   }
+    protected void setY(int yIn)
+    {
+        this.y = yIn;
+    }
 
-   public Vector3i above() {
-      return this.above(1);
-   }
+    /**
+     * Sets the Z coordinate.
+     */
+    protected void setZ(int zIn)
+    {
+        this.z = zIn;
+    }
 
-   public Vector3i above(int p_177981_1_) {
-      return this.relative(Direction.UP, p_177981_1_);
-   }
+    /**
+     * Offset this BlockPos 1 block up
+     */
+    public Vector3i up()
+    {
+        return this.up(1);
+    }
 
-   public Vector3i below() {
-      return this.below(1);
-   }
+    /**
+     * Offset this BlockPos n blocks up
+     */
+    public Vector3i up(int n)
+    {
+        return this.offset(Direction.UP, n);
+    }
 
-   public Vector3i below(int p_177979_1_) {
-      return this.relative(Direction.DOWN, p_177979_1_);
-   }
+    /**
+     * Offset this BlockPos 1 block down
+     */
+    public Vector3i down()
+    {
+        return this.down(1);
+    }
 
-   public Vector3i relative(Direction p_177967_1_, int p_177967_2_) {
-      return p_177967_2_ == 0 ? this : new Vector3i(this.getX() + p_177967_1_.getStepX() * p_177967_2_, this.getY() + p_177967_1_.getStepY() * p_177967_2_, this.getZ() + p_177967_1_.getStepZ() * p_177967_2_);
-   }
+    /**
+     * Offset this BlockPos n blocks down
+     */
+    public Vector3i down(int n)
+    {
+        return this.offset(Direction.DOWN, n);
+    }
 
-   public Vector3i cross(Vector3i p_177955_1_) {
-      return new Vector3i(this.getY() * p_177955_1_.getZ() - this.getZ() * p_177955_1_.getY(), this.getZ() * p_177955_1_.getX() - this.getX() * p_177955_1_.getZ(), this.getX() * p_177955_1_.getY() - this.getY() * p_177955_1_.getX());
-   }
+    /**
+     * Offsets this BlockPos n blocks in the given direction
+     */
+    public Vector3i offset(Direction facing, int n)
+    {
+        return n == 0 ? this : new Vector3i(this.getX() + facing.getXOffset() * n, this.getY() + facing.getYOffset() * n, this.getZ() + facing.getZOffset() * n);
+    }
 
-   public boolean closerThan(Vector3i p_218141_1_, double p_218141_2_) {
-      return this.distSqr((double)p_218141_1_.getX(), (double)p_218141_1_.getY(), (double)p_218141_1_.getZ(), false) < p_218141_2_ * p_218141_2_;
-   }
+    /**
+     * Calculate the cross product of this and the given Vector
+     */
+    public Vector3i crossProduct(Vector3i vec)
+    {
+        return new Vector3i(this.getY() * vec.getZ() - this.getZ() * vec.getY(), this.getZ() * vec.getX() - this.getX() * vec.getZ(), this.getX() * vec.getY() - this.getY() * vec.getX());
+    }
 
-   public boolean closerThan(IPosition p_218137_1_, double p_218137_2_) {
-      return this.distSqr(p_218137_1_.x(), p_218137_1_.y(), p_218137_1_.z(), true) < p_218137_2_ * p_218137_2_;
-   }
+    public boolean withinDistance(Vector3i vector, double distance)
+    {
+        return this.distanceSq((double)vector.getX(), (double)vector.getY(), (double)vector.getZ(), false) < distance * distance;
+    }
 
-   public double distSqr(Vector3i p_177951_1_) {
-      return this.distSqr((double)p_177951_1_.getX(), (double)p_177951_1_.getY(), (double)p_177951_1_.getZ(), true);
-   }
+    public boolean withinDistance(IPosition position, double distance)
+    {
+        return this.distanceSq(position.getX(), position.getY(), position.getZ(), true) < distance * distance;
+    }
 
-   public double distSqr(IPosition p_218138_1_, boolean p_218138_2_) {
-      return this.distSqr(p_218138_1_.x(), p_218138_1_.y(), p_218138_1_.z(), p_218138_2_);
-   }
+    /**
+     * Calculate squared distance to the given Vector
+     */
+    public double distanceSq(Vector3i to)
+    {
+        return this.distanceSq((double)to.getX(), (double)to.getY(), (double)to.getZ(), true);
+    }
 
-   public double distSqr(double p_218140_1_, double p_218140_3_, double p_218140_5_, boolean p_218140_7_) {
-      double d0 = p_218140_7_ ? 0.5D : 0.0D;
-      double d1 = (double)this.getX() + d0 - p_218140_1_;
-      double d2 = (double)this.getY() + d0 - p_218140_3_;
-      double d3 = (double)this.getZ() + d0 - p_218140_5_;
-      return d1 * d1 + d2 * d2 + d3 * d3;
-   }
+    public double distanceSq(IPosition position, boolean useCenter)
+    {
+        return this.distanceSq(position.getX(), position.getY(), position.getZ(), useCenter);
+    }
 
-   public int distManhattan(Vector3i p_218139_1_) {
-      float f = (float)Math.abs(p_218139_1_.getX() - this.getX());
-      float f1 = (float)Math.abs(p_218139_1_.getY() - this.getY());
-      float f2 = (float)Math.abs(p_218139_1_.getZ() - this.getZ());
-      return (int)(f + f1 + f2);
-   }
+    public double distanceSq(double x, double y, double z, boolean useCenter)
+    {
+        double d0 = useCenter ? 0.5D : 0.0D;
+        double d1 = (double)this.getX() + d0 - x;
+        double d2 = (double)this.getY() + d0 - y;
+        double d3 = (double)this.getZ() + d0 - z;
+        return d1 * d1 + d2 * d2 + d3 * d3;
+    }
 
-   public int get(Direction.Axis p_243648_1_) {
-      return p_243648_1_.choose(this.x, this.y, this.z);
-   }
+    public int manhattanDistance(Vector3i vector)
+    {
+        float f = (float)Math.abs(vector.getX() - this.getX());
+        float f1 = (float)Math.abs(vector.getY() - this.getY());
+        float f2 = (float)Math.abs(vector.getZ() - this.getZ());
+        return (int)(f + f1 + f2);
+    }
 
-   public String toString() {
-      return MoreObjects.toStringHelper(this).add("x", this.getX()).add("y", this.getY()).add("z", this.getZ()).toString();
-   }
+    public int func_243648_a(Direction.Axis p_243648_1_)
+    {
+        return p_243648_1_.getCoordinate(this.x, this.y, this.z);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String toShortString() {
-      return "" + this.getX() + ", " + this.getY() + ", " + this.getZ();
-   }
+    public String toString()
+    {
+        return MoreObjects.toStringHelper(this).add("x", this.getX()).add("y", this.getY()).add("z", this.getZ()).toString();
+    }
+
+    public String getCoordinatesAsString()
+    {
+        return "" + this.getX() + ", " + this.getY() + ", " + this.getZ();
+    }
 }

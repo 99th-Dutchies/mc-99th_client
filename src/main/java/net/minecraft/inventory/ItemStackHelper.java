@@ -7,79 +7,102 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.NonNullList;
 
-public class ItemStackHelper {
-   public static ItemStack removeItem(List<ItemStack> p_188382_0_, int p_188382_1_, int p_188382_2_) {
-      return p_188382_1_ >= 0 && p_188382_1_ < p_188382_0_.size() && !p_188382_0_.get(p_188382_1_).isEmpty() && p_188382_2_ > 0 ? p_188382_0_.get(p_188382_1_).split(p_188382_2_) : ItemStack.EMPTY;
-   }
+public class ItemStackHelper
+{
+    public static ItemStack getAndSplit(List<ItemStack> stacks, int index, int amount)
+    {
+        return index >= 0 && index < stacks.size() && !stacks.get(index).isEmpty() && amount > 0 ? stacks.get(index).split(amount) : ItemStack.EMPTY;
+    }
 
-   public static ItemStack takeItem(List<ItemStack> p_188383_0_, int p_188383_1_) {
-      return p_188383_1_ >= 0 && p_188383_1_ < p_188383_0_.size() ? p_188383_0_.set(p_188383_1_, ItemStack.EMPTY) : ItemStack.EMPTY;
-   }
+    public static ItemStack getAndRemove(List<ItemStack> stacks, int index)
+    {
+        return index >= 0 && index < stacks.size() ? stacks.set(index, ItemStack.EMPTY) : ItemStack.EMPTY;
+    }
 
-   public static CompoundNBT saveAllItems(CompoundNBT p_191282_0_, NonNullList<ItemStack> p_191282_1_) {
-      return saveAllItems(p_191282_0_, p_191282_1_, true);
-   }
+    public static CompoundNBT saveAllItems(CompoundNBT tag, NonNullList<ItemStack> list)
+    {
+        return saveAllItems(tag, list, true);
+    }
 
-   public static CompoundNBT saveAllItems(CompoundNBT p_191281_0_, NonNullList<ItemStack> p_191281_1_, boolean p_191281_2_) {
-      ListNBT listnbt = new ListNBT();
+    public static CompoundNBT saveAllItems(CompoundNBT tag, NonNullList<ItemStack> list, boolean saveEmpty)
+    {
+        ListNBT listnbt = new ListNBT();
 
-      for(int i = 0; i < p_191281_1_.size(); ++i) {
-         ItemStack itemstack = p_191281_1_.get(i);
-         if (!itemstack.isEmpty()) {
-            CompoundNBT compoundnbt = new CompoundNBT();
-            compoundnbt.putByte("Slot", (byte)i);
-            itemstack.save(compoundnbt);
-            listnbt.add(compoundnbt);
-         }
-      }
+        for (int i = 0; i < list.size(); ++i)
+        {
+            ItemStack itemstack = list.get(i);
 
-      if (!listnbt.isEmpty() || p_191281_2_) {
-         p_191281_0_.put("Items", listnbt);
-      }
+            if (!itemstack.isEmpty())
+            {
+                CompoundNBT compoundnbt = new CompoundNBT();
+                compoundnbt.putByte("Slot", (byte)i);
+                itemstack.write(compoundnbt);
+                listnbt.add(compoundnbt);
+            }
+        }
 
-      return p_191281_0_;
-   }
+        if (!listnbt.isEmpty() || saveEmpty)
+        {
+            tag.put("Items", listnbt);
+        }
 
-   public static void loadAllItems(CompoundNBT p_191283_0_, NonNullList<ItemStack> p_191283_1_) {
-      ListNBT listnbt = p_191283_0_.getList("Items", 10);
+        return tag;
+    }
 
-      for(int i = 0; i < listnbt.size(); ++i) {
-         CompoundNBT compoundnbt = listnbt.getCompound(i);
-         int j = compoundnbt.getByte("Slot") & 255;
-         if (j >= 0 && j < p_191283_1_.size()) {
-            p_191283_1_.set(j, ItemStack.of(compoundnbt));
-         }
-      }
+    public static void loadAllItems(CompoundNBT tag, NonNullList<ItemStack> list)
+    {
+        ListNBT listnbt = tag.getList("Items", 10);
 
-   }
+        for (int i = 0; i < listnbt.size(); ++i)
+        {
+            CompoundNBT compoundnbt = listnbt.getCompound(i);
+            int j = compoundnbt.getByte("Slot") & 255;
 
-   public static int clearOrCountMatchingItems(IInventory p_233534_0_, Predicate<ItemStack> p_233534_1_, int p_233534_2_, boolean p_233534_3_) {
-      int i = 0;
+            if (j >= 0 && j < list.size())
+            {
+                list.set(j, ItemStack.read(compoundnbt));
+            }
+        }
+    }
 
-      for(int j = 0; j < p_233534_0_.getContainerSize(); ++j) {
-         ItemStack itemstack = p_233534_0_.getItem(j);
-         int k = clearOrCountMatchingItems(itemstack, p_233534_1_, p_233534_2_ - i, p_233534_3_);
-         if (k > 0 && !p_233534_3_ && itemstack.isEmpty()) {
-            p_233534_0_.setItem(j, ItemStack.EMPTY);
-         }
+    public static int func_233534_a_(IInventory p_233534_0_, Predicate<ItemStack> p_233534_1_, int p_233534_2_, boolean p_233534_3_)
+    {
+        int i = 0;
 
-         i += k;
-      }
+        for (int j = 0; j < p_233534_0_.getSizeInventory(); ++j)
+        {
+            ItemStack itemstack = p_233534_0_.getStackInSlot(j);
+            int k = func_233535_a_(itemstack, p_233534_1_, p_233534_2_ - i, p_233534_3_);
 
-      return i;
-   }
+            if (k > 0 && !p_233534_3_ && itemstack.isEmpty())
+            {
+                p_233534_0_.setInventorySlotContents(j, ItemStack.EMPTY);
+            }
 
-   public static int clearOrCountMatchingItems(ItemStack p_233535_0_, Predicate<ItemStack> p_233535_1_, int p_233535_2_, boolean p_233535_3_) {
-      if (!p_233535_0_.isEmpty() && p_233535_1_.test(p_233535_0_)) {
-         if (p_233535_3_) {
-            return p_233535_0_.getCount();
-         } else {
-            int i = p_233535_2_ < 0 ? p_233535_0_.getCount() : Math.min(p_233535_2_, p_233535_0_.getCount());
-            p_233535_0_.shrink(i);
-            return i;
-         }
-      } else {
-         return 0;
-      }
-   }
+            i += k;
+        }
+
+        return i;
+    }
+
+    public static int func_233535_a_(ItemStack p_233535_0_, Predicate<ItemStack> p_233535_1_, int p_233535_2_, boolean p_233535_3_)
+    {
+        if (!p_233535_0_.isEmpty() && p_233535_1_.test(p_233535_0_))
+        {
+            if (p_233535_3_)
+            {
+                return p_233535_0_.getCount();
+            }
+            else
+            {
+                int i = p_233535_2_ < 0 ? p_233535_0_.getCount() : Math.min(p_233535_2_, p_233535_0_.getCount());
+                p_233535_0_.shrink(i);
+                return i;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
 }

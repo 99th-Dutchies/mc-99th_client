@@ -1,9 +1,10 @@
 package net.minecraft.util;
 
-public interface IIntArray {
-   int get(int p_221476_1_);
+public interface IIntArray
+{
+    int get(int index);
 
-   void set(int p_221477_1_, int p_221477_2_);
+    void set(int index, int value);
 
-   int getCount();
+    int size();
 }

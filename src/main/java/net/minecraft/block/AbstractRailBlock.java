@@ -13,121 +13,161 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-public abstract class AbstractRailBlock extends Block {
-   protected static final VoxelShape FLAT_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D);
-   protected static final VoxelShape HALF_BLOCK_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
-   private final boolean isStraight;
+public abstract class AbstractRailBlock extends Block
+{
+    protected static final VoxelShape FLAT_AABB = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D);
+    protected static final VoxelShape ASCENDING_AABB = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+    private final boolean disableCorners;
 
-   public static boolean isRail(World p_208488_0_, BlockPos p_208488_1_) {
-      return isRail(p_208488_0_.getBlockState(p_208488_1_));
-   }
+    public static boolean isRail(World worldIn, BlockPos pos)
+    {
+        return isRail(worldIn.getBlockState(pos));
+    }
 
-   public static boolean isRail(BlockState p_208487_0_) {
-      return p_208487_0_.is(BlockTags.RAILS) && p_208487_0_.getBlock() instanceof AbstractRailBlock;
-   }
+    public static boolean isRail(BlockState state)
+    {
+        return state.isIn(BlockTags.RAILS) && state.getBlock() instanceof AbstractRailBlock;
+    }
 
-   protected AbstractRailBlock(boolean p_i48444_1_, AbstractBlock.Properties p_i48444_2_) {
-      super(p_i48444_2_);
-      this.isStraight = p_i48444_1_;
-   }
+    protected AbstractRailBlock(boolean isDisableCorner, AbstractBlock.Properties builder)
+    {
+        super(builder);
+        this.disableCorners = isDisableCorner;
+    }
 
-   public boolean isStraight() {
-      return this.isStraight;
-   }
+    public boolean areCornersDisabled()
+    {
+        return this.disableCorners;
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      RailShape railshape = p_220053_1_.is(this) ? p_220053_1_.getValue(this.getShapeProperty()) : null;
-      return railshape != null && railshape.isAscending() ? HALF_BLOCK_AABB : FLAT_AABB;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        RailShape railshape = state.isIn(this) ? state.get(this.getShapeProperty()) : null;
+        return railshape != null && railshape.isAscending() ? ASCENDING_AABB : FLAT_AABB;
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      return canSupportRigidBlock(p_196260_2_, p_196260_3_.below());
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        return hasSolidSideOnTop(worldIn, pos.down());
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      if (!p_220082_4_.is(p_220082_1_.getBlock())) {
-         this.updateState(p_220082_1_, p_220082_2_, p_220082_3_, p_220082_5_);
-      }
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        if (!oldState.isIn(state.getBlock()))
+        {
+            this.updateRailState(state, worldIn, pos, isMoving);
+        }
+    }
 
-   protected BlockState updateState(BlockState p_235327_1_, World p_235327_2_, BlockPos p_235327_3_, boolean p_235327_4_) {
-      p_235327_1_ = this.updateDir(p_235327_2_, p_235327_3_, p_235327_1_, true);
-      if (this.isStraight) {
-         p_235327_1_.neighborChanged(p_235327_2_, p_235327_3_, this, p_235327_3_, p_235327_4_);
-      }
+    protected BlockState updateRailState(BlockState state, World world, BlockPos pos, boolean isMoving)
+    {
+        state = this.getUpdatedState(world, pos, state, true);
 
-      return p_235327_1_;
-   }
+        if (this.disableCorners)
+        {
+            state.neighborChanged(world, pos, this, pos, isMoving);
+        }
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      if (!p_220069_2_.isClientSide && p_220069_2_.getBlockState(p_220069_3_).is(this)) {
-         RailShape railshape = p_220069_1_.getValue(this.getShapeProperty());
-         if (shouldBeRemoved(p_220069_3_, p_220069_2_, railshape)) {
-            dropResources(p_220069_1_, p_220069_2_, p_220069_3_);
-            p_220069_2_.removeBlock(p_220069_3_, p_220069_6_);
-         } else {
-            this.updateState(p_220069_1_, p_220069_2_, p_220069_3_, p_220069_4_);
-         }
+        return state;
+    }
 
-      }
-   }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        if (!worldIn.isRemote && worldIn.getBlockState(pos).isIn(this))
+        {
+            RailShape railshape = state.get(this.getShapeProperty());
 
-   private static boolean shouldBeRemoved(BlockPos p_235328_0_, World p_235328_1_, RailShape p_235328_2_) {
-      if (!canSupportRigidBlock(p_235328_1_, p_235328_0_.below())) {
-         return true;
-      } else {
-         switch(p_235328_2_) {
-         case ASCENDING_EAST:
-            return !canSupportRigidBlock(p_235328_1_, p_235328_0_.east());
-         case ASCENDING_WEST:
-            return !canSupportRigidBlock(p_235328_1_, p_235328_0_.west());
-         case ASCENDING_NORTH:
-            return !canSupportRigidBlock(p_235328_1_, p_235328_0_.north());
-         case ASCENDING_SOUTH:
-            return !canSupportRigidBlock(p_235328_1_, p_235328_0_.south());
-         default:
-            return false;
-         }
-      }
-   }
+            if (isValidRailDirection(pos, worldIn, railshape))
+            {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, isMoving);
+            }
+            else
+            {
+                this.updateState(state, worldIn, pos, blockIn);
+            }
+        }
+    }
 
-   protected void updateState(BlockState p_189541_1_, World p_189541_2_, BlockPos p_189541_3_, Block p_189541_4_) {
-   }
+    private static boolean isValidRailDirection(BlockPos pos, World world, RailShape railShape)
+    {
+        if (!hasSolidSideOnTop(world, pos.down()))
+        {
+            return true;
+        }
+        else
+        {
+            switch (railShape)
+            {
+                case ASCENDING_EAST:
+                    return !hasSolidSideOnTop(world, pos.east());
 
-   protected BlockState updateDir(World p_208489_1_, BlockPos p_208489_2_, BlockState p_208489_3_, boolean p_208489_4_) {
-      if (p_208489_1_.isClientSide) {
-         return p_208489_3_;
-      } else {
-         RailShape railshape = p_208489_3_.getValue(this.getShapeProperty());
-         return (new RailState(p_208489_1_, p_208489_2_, p_208489_3_)).place(p_208489_1_.hasNeighborSignal(p_208489_2_), p_208489_4_, railshape).getState();
-      }
-   }
+                case ASCENDING_WEST:
+                    return !hasSolidSideOnTop(world, pos.west());
 
-   public PushReaction getPistonPushReaction(BlockState p_149656_1_) {
-      return PushReaction.NORMAL;
-   }
+                case ASCENDING_NORTH:
+                    return !hasSolidSideOnTop(world, pos.north());
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_5_) {
-         super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
-         if (p_196243_1_.getValue(this.getShapeProperty()).isAscending()) {
-            p_196243_2_.updateNeighborsAt(p_196243_3_.above(), this);
-         }
+                case ASCENDING_SOUTH:
+                    return !hasSolidSideOnTop(world, pos.south());
 
-         if (this.isStraight) {
-            p_196243_2_.updateNeighborsAt(p_196243_3_, this);
-            p_196243_2_.updateNeighborsAt(p_196243_3_.below(), this);
-         }
+                default:
+                    return false;
+            }
+        }
+    }
 
-      }
-   }
+    protected void updateState(BlockState state, World worldIn, BlockPos pos, Block blockIn)
+    {
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      BlockState blockstate = super.defaultBlockState();
-      Direction direction = p_196258_1_.getHorizontalDirection();
-      boolean flag = direction == Direction.EAST || direction == Direction.WEST;
-      return blockstate.setValue(this.getShapeProperty(), flag ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH);
-   }
+    protected BlockState getUpdatedState(World worldIn, BlockPos pos, BlockState state, boolean placing)
+    {
+        if (worldIn.isRemote)
+        {
+            return state;
+        }
+        else
+        {
+            RailShape railshape = state.get(this.getShapeProperty());
+            return (new RailState(worldIn, pos, state)).placeRail(worldIn.isBlockPowered(pos), placing, railshape).getNewState();
+        }
+    }
 
-   public abstract Property<RailShape> getShapeProperty();
+    /**
+     * @deprecated call via {@link IBlockState#getMobilityFlag()} whenever possible. Implementing/overriding is fine.
+     */
+    public PushReaction getPushReaction(BlockState state)
+    {
+        return PushReaction.NORMAL;
+    }
+
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!isMoving)
+        {
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+
+            if (state.get(this.getShapeProperty()).isAscending())
+            {
+                worldIn.notifyNeighborsOfStateChange(pos.up(), this);
+            }
+
+            if (this.disableCorners)
+            {
+                worldIn.notifyNeighborsOfStateChange(pos, this);
+                worldIn.notifyNeighborsOfStateChange(pos.down(), this);
+            }
+        }
+    }
+
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        BlockState blockstate = super.getDefaultState();
+        Direction direction = context.getPlacementHorizontalFacing();
+        boolean flag = direction == Direction.EAST || direction == Direction.WEST;
+        return blockstate.with(this.getShapeProperty(), flag ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH);
+    }
+
+    public abstract Property<RailShape> getShapeProperty();
 }

@@ -2,15 +2,18 @@ package net.minecraft.state.properties;
 
 import net.minecraft.util.IStringSerializable;
 
-public enum DoubleBlockHalf implements IStringSerializable {
-   UPPER,
-   LOWER;
+public enum DoubleBlockHalf implements IStringSerializable
+{
+    UPPER,
+    LOWER;
 
-   public String toString() {
-      return this.getSerializedName();
-   }
+    public String toString()
+    {
+        return this.getString();
+    }
 
-   public String getSerializedName() {
-      return this == UPPER ? "upper" : "lower";
-   }
+    public String getString()
+    {
+        return this == UPPER ? "upper" : "lower";
+    }
 }

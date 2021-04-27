@@ -35,226 +35,321 @@ import net.minecraft.world.gen.DimensionSettings;
 import net.minecraft.world.gen.FlatChunkGenerator;
 import net.minecraft.world.gen.FlatGenerationSettings;
 import net.minecraft.world.gen.NoiseChunkGenerator;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DimensionGeneratorSettings {
-   public static final Codec<DimensionGeneratorSettings> CODEC = RecordCodecBuilder.<DimensionGeneratorSettings>create((p_236214_0_) -> {
-      return p_236214_0_.group(Codec.LONG.fieldOf("seed").stable().forGetter(DimensionGeneratorSettings::seed), Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(DimensionGeneratorSettings::generateFeatures), Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(DimensionGeneratorSettings::generateBonusChest), SimpleRegistry.dataPackCodec(Registry.LEVEL_STEM_REGISTRY, Lifecycle.stable(), Dimension.CODEC).xmap(Dimension::sortMap, Function.identity()).fieldOf("dimensions").forGetter(DimensionGeneratorSettings::dimensions), Codec.STRING.optionalFieldOf("legacy_custom_options").stable().forGetter((p_236213_0_) -> {
-         return p_236213_0_.legacyCustomOptions;
-      })).apply(p_236214_0_, p_236214_0_.stable(DimensionGeneratorSettings::new));
-   }).comapFlatMap(DimensionGeneratorSettings::guardExperimental, Function.identity());
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final long seed;
-   private final boolean generateFeatures;
-   private final boolean generateBonusChest;
-   private final SimpleRegistry<Dimension> dimensions;
-   private final Optional<String> legacyCustomOptions;
+public class DimensionGeneratorSettings
+{
+    public static final Codec<DimensionGeneratorSettings> field_236201_a_ = RecordCodecBuilder.<DimensionGeneratorSettings>create((p_236214_0_) ->
+    {
+        return p_236214_0_.group(Codec.LONG.fieldOf("seed").stable().forGetter(DimensionGeneratorSettings::getSeed), Codec.BOOL.fieldOf("generate_features").orElse(true).stable().forGetter(DimensionGeneratorSettings::doesGenerateFeatures), Codec.BOOL.fieldOf("bonus_chest").orElse(false).stable().forGetter(DimensionGeneratorSettings::hasBonusChest), SimpleRegistry.getSimpleRegistryCodec(Registry.DIMENSION_KEY, Lifecycle.stable(), Dimension.CODEC).xmap(Dimension::func_236062_a_, Function.identity()).fieldOf("dimensions").forGetter(DimensionGeneratorSettings::func_236224_e_), Codec.STRING.optionalFieldOf("legacy_custom_options").stable().forGetter((p_236213_0_) -> {
+            return p_236213_0_.field_236209_i_;
+        })).apply(p_236214_0_, p_236214_0_.stable(DimensionGeneratorSettings::new));
+    }).comapFlatMap(DimensionGeneratorSettings::func_236233_n_, Function.identity());
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final long seed;
+    private final boolean generateFeatures;
+    private final boolean bonusChest;
+    private final SimpleRegistry<Dimension> field_236208_h_;
+    private final Optional<String> field_236209_i_;
 
-   private DataResult<DimensionGeneratorSettings> guardExperimental() {
-      Dimension dimension = this.dimensions.get(Dimension.OVERWORLD);
-      if (dimension == null) {
-         return DataResult.error("Overworld settings missing");
-      } else {
-         return this.stable() ? DataResult.success(this, Lifecycle.stable()) : DataResult.success(this);
-      }
-   }
+    private DataResult<DimensionGeneratorSettings> func_236233_n_()
+    {
+        Dimension dimension = this.field_236208_h_.getValueForKey(Dimension.OVERWORLD);
 
-   private boolean stable() {
-      return Dimension.stable(this.seed, this.dimensions);
-   }
+        if (dimension == null)
+        {
+            return DataResult.error("Overworld settings missing");
+        }
+        else
+        {
+            return this.func_236234_o_() ? DataResult.success(this, Lifecycle.stable()) : DataResult.success(this);
+        }
+    }
 
-   public DimensionGeneratorSettings(long p_i231914_1_, boolean p_i231914_3_, boolean p_i231914_4_, SimpleRegistry<Dimension> p_i231914_5_) {
-      this(p_i231914_1_, p_i231914_3_, p_i231914_4_, p_i231914_5_, Optional.empty());
-      Dimension dimension = p_i231914_5_.get(Dimension.OVERWORLD);
-      if (dimension == null) {
-         throw new IllegalStateException("Overworld settings missing");
-      }
-   }
+    private boolean func_236234_o_()
+    {
+        return Dimension.func_236060_a_(this.seed, this.field_236208_h_);
+    }
 
-   private DimensionGeneratorSettings(long p_i231915_1_, boolean p_i231915_3_, boolean p_i231915_4_, SimpleRegistry<Dimension> p_i231915_5_, Optional<String> p_i231915_6_) {
-      this.seed = p_i231915_1_;
-      this.generateFeatures = p_i231915_3_;
-      this.generateBonusChest = p_i231915_4_;
-      this.dimensions = p_i231915_5_;
-      this.legacyCustomOptions = p_i231915_6_;
-   }
+    public DimensionGeneratorSettings(long seed, boolean generateFeatures, boolean bonusChest, SimpleRegistry<Dimension> p_i231914_5_)
+    {
+        this(seed, generateFeatures, bonusChest, p_i231914_5_, Optional.empty());
+        Dimension dimension = p_i231914_5_.getValueForKey(Dimension.OVERWORLD);
 
-   public static DimensionGeneratorSettings demoSettings(DynamicRegistries p_242752_0_) {
-      Registry<Biome> registry = p_242752_0_.registryOrThrow(Registry.BIOME_REGISTRY);
-      int i = "North Carolina".hashCode();
-      Registry<DimensionType> registry1 = p_242752_0_.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
-      Registry<DimensionSettings> registry2 = p_242752_0_.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
-      return new DimensionGeneratorSettings((long)i, true, true, withOverworld(registry1, DimensionType.defaultDimensions(registry1, registry, registry2, (long)i), makeDefaultOverworld(registry, registry2, (long)i)));
-   }
+        if (dimension == null)
+        {
+            throw new IllegalStateException("Overworld settings missing");
+        }
+    }
 
-   public static DimensionGeneratorSettings makeDefault(Registry<DimensionType> p_242751_0_, Registry<Biome> p_242751_1_, Registry<DimensionSettings> p_242751_2_) {
-      long i = (new Random()).nextLong();
-      return new DimensionGeneratorSettings(i, true, false, withOverworld(p_242751_0_, DimensionType.defaultDimensions(p_242751_0_, p_242751_1_, p_242751_2_, i), makeDefaultOverworld(p_242751_1_, p_242751_2_, i)));
-   }
+    private DimensionGeneratorSettings(long seed, boolean generateFeatures, boolean bonusChest, SimpleRegistry<Dimension> p_i231915_5_, Optional<String> p_i231915_6_)
+    {
+        this.seed = seed;
+        this.generateFeatures = generateFeatures;
+        this.bonusChest = bonusChest;
+        this.field_236208_h_ = p_i231915_5_;
+        this.field_236209_i_ = p_i231915_6_;
+    }
 
-   public static NoiseChunkGenerator makeDefaultOverworld(Registry<Biome> p_242750_0_, Registry<DimensionSettings> p_242750_1_, long p_242750_2_) {
-      return new NoiseChunkGenerator(new OverworldBiomeProvider(p_242750_2_, false, false, p_242750_0_), p_242750_2_, () -> {
-         return p_242750_1_.getOrThrow(DimensionSettings.OVERWORLD);
-      });
-   }
+    public static DimensionGeneratorSettings func_242752_a(DynamicRegistries p_242752_0_)
+    {
+        Registry<Biome> registry = p_242752_0_.getRegistry(Registry.BIOME_KEY);
+        int i = "North Carolina".hashCode();
+        Registry<DimensionType> registry1 = p_242752_0_.getRegistry(Registry.DIMENSION_TYPE_KEY);
+        Registry<DimensionSettings> registry2 = p_242752_0_.getRegistry(Registry.NOISE_SETTINGS_KEY);
+        return new DimensionGeneratorSettings((long)i, true, true, func_242749_a(registry1, DimensionType.getDefaultSimpleRegistry(registry1, registry, registry2, (long)i), func_242750_a(registry, registry2, (long)i)));
+    }
 
-   public long seed() {
-      return this.seed;
-   }
+    public static DimensionGeneratorSettings func_242751_a(Registry<DimensionType> p_242751_0_, Registry<Biome> p_242751_1_, Registry<DimensionSettings> p_242751_2_)
+    {
+        long i = (new Random()).nextLong();
+        return new DimensionGeneratorSettings(i, true, false, func_242749_a(p_242751_0_, DimensionType.getDefaultSimpleRegistry(p_242751_0_, p_242751_1_, p_242751_2_, i), func_242750_a(p_242751_1_, p_242751_2_, i)));
+    }
 
-   public boolean generateFeatures() {
-      return this.generateFeatures;
-   }
+    public static NoiseChunkGenerator func_242750_a(Registry<Biome> p_242750_0_, Registry<DimensionSettings> p_242750_1_, long p_242750_2_)
+    {
+        return new NoiseChunkGenerator(new OverworldBiomeProvider(p_242750_2_, false, false, p_242750_0_), p_242750_2_, () ->
+        {
+            return p_242750_1_.getOrThrow(DimensionSettings.field_242734_c);
+        });
+    }
 
-   public boolean generateBonusChest() {
-      return this.generateBonusChest;
-   }
+    public long getSeed()
+    {
+        return this.seed;
+    }
 
-   public static SimpleRegistry<Dimension> withOverworld(Registry<DimensionType> p_242749_0_, SimpleRegistry<Dimension> p_242749_1_, ChunkGenerator p_242749_2_) {
-      Dimension dimension = p_242749_1_.get(Dimension.OVERWORLD);
-      Supplier<DimensionType> supplier = () -> {
-         return dimension == null ? p_242749_0_.getOrThrow(DimensionType.OVERWORLD_LOCATION) : dimension.type();
-      };
-      return withOverworld(p_242749_1_, supplier, p_242749_2_);
-   }
+    public boolean doesGenerateFeatures()
+    {
+        return this.generateFeatures;
+    }
 
-   public static SimpleRegistry<Dimension> withOverworld(SimpleRegistry<Dimension> p_241520_0_, Supplier<DimensionType> p_241520_1_, ChunkGenerator p_241520_2_) {
-      SimpleRegistry<Dimension> simpleregistry = new SimpleRegistry<>(Registry.LEVEL_STEM_REGISTRY, Lifecycle.experimental());
-      simpleregistry.register(Dimension.OVERWORLD, new Dimension(p_241520_1_, p_241520_2_), Lifecycle.stable());
+    public boolean hasBonusChest()
+    {
+        return this.bonusChest;
+    }
 
-      for(Entry<RegistryKey<Dimension>, Dimension> entry : p_241520_0_.entrySet()) {
-         RegistryKey<Dimension> registrykey = entry.getKey();
-         if (registrykey != Dimension.OVERWORLD) {
-            simpleregistry.register(registrykey, entry.getValue(), p_241520_0_.lifecycle(entry.getValue()));
-         }
-      }
+    public static SimpleRegistry<Dimension> func_242749_a(Registry<DimensionType> p_242749_0_, SimpleRegistry<Dimension> p_242749_1_, ChunkGenerator p_242749_2_)
+    {
+        Dimension dimension = p_242749_1_.getValueForKey(Dimension.OVERWORLD);
+        Supplier<DimensionType> supplier = () ->
+        {
+            return dimension == null ? p_242749_0_.getOrThrow(DimensionType.OVERWORLD) : dimension.getDimensionType();
+        };
+        return func_241520_a_(p_242749_1_, supplier, p_242749_2_);
+    }
 
-      return simpleregistry;
-   }
+    public static SimpleRegistry<Dimension> func_241520_a_(SimpleRegistry<Dimension> p_241520_0_, Supplier<DimensionType> p_241520_1_, ChunkGenerator p_241520_2_)
+    {
+        SimpleRegistry<Dimension> simpleregistry = new SimpleRegistry<>(Registry.DIMENSION_KEY, Lifecycle.experimental());
+        simpleregistry.register(Dimension.OVERWORLD, new Dimension(p_241520_1_, p_241520_2_), Lifecycle.stable());
 
-   public SimpleRegistry<Dimension> dimensions() {
-      return this.dimensions;
-   }
-
-   public ChunkGenerator overworld() {
-      Dimension dimension = this.dimensions.get(Dimension.OVERWORLD);
-      if (dimension == null) {
-         throw new IllegalStateException("Overworld settings missing");
-      } else {
-         return dimension.generator();
-      }
-   }
-
-   public ImmutableSet<RegistryKey<World>> levels() {
-      return this.dimensions().entrySet().stream().map((p_236218_0_) -> {
-         return RegistryKey.create(Registry.DIMENSION_REGISTRY, p_236218_0_.getKey().location());
-      }).collect(ImmutableSet.toImmutableSet());
-   }
-
-   public boolean isDebug() {
-      return this.overworld() instanceof DebugChunkGenerator;
-   }
-
-   public boolean isFlatWorld() {
-      return this.overworld() instanceof FlatChunkGenerator;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean isOldCustomizedWorld() {
-      return this.legacyCustomOptions.isPresent();
-   }
-
-   public DimensionGeneratorSettings withBonusChest() {
-      return new DimensionGeneratorSettings(this.seed, this.generateFeatures, true, this.dimensions, this.legacyCustomOptions);
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public DimensionGeneratorSettings withFeaturesToggled() {
-      return new DimensionGeneratorSettings(this.seed, !this.generateFeatures, this.generateBonusChest, this.dimensions);
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public DimensionGeneratorSettings withBonusChestToggled() {
-      return new DimensionGeneratorSettings(this.seed, this.generateFeatures, !this.generateBonusChest, this.dimensions);
-   }
-
-   public static DimensionGeneratorSettings create(DynamicRegistries p_242753_0_, Properties p_242753_1_) {
-      String s = MoreObjects.firstNonNull((String)p_242753_1_.get("generator-settings"), "");
-      p_242753_1_.put("generator-settings", s);
-      String s1 = MoreObjects.firstNonNull((String)p_242753_1_.get("level-seed"), "");
-      p_242753_1_.put("level-seed", s1);
-      String s2 = (String)p_242753_1_.get("generate-structures");
-      boolean flag = s2 == null || Boolean.parseBoolean(s2);
-      p_242753_1_.put("generate-structures", Objects.toString(flag));
-      String s3 = (String)p_242753_1_.get("level-type");
-      String s4 = Optional.ofNullable(s3).map((p_236217_0_) -> {
-         return p_236217_0_.toLowerCase(Locale.ROOT);
-      }).orElse("default");
-      p_242753_1_.put("level-type", s4);
-      long i = (new Random()).nextLong();
-      if (!s1.isEmpty()) {
-         try {
-            long j = Long.parseLong(s1);
-            if (j != 0L) {
-               i = j;
-            }
-         } catch (NumberFormatException numberformatexception) {
-            i = (long)s1.hashCode();
-         }
-      }
-
-      Registry<DimensionType> registry2 = p_242753_0_.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
-      Registry<Biome> registry = p_242753_0_.registryOrThrow(Registry.BIOME_REGISTRY);
-      Registry<DimensionSettings> registry1 = p_242753_0_.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
-      SimpleRegistry<Dimension> simpleregistry = DimensionType.defaultDimensions(registry2, registry, registry1, i);
-      switch(s4) {
-      case "flat":
-         JsonObject jsonobject = !s.isEmpty() ? JSONUtils.parse(s) : new JsonObject();
-         Dynamic<JsonElement> dynamic = new Dynamic<>(JsonOps.INSTANCE, jsonobject);
-         return new DimensionGeneratorSettings(i, flag, false, withOverworld(registry2, simpleregistry, new FlatChunkGenerator(FlatGenerationSettings.CODEC.parse(dynamic).resultOrPartial(LOGGER::error).orElseGet(() -> {
-            return FlatGenerationSettings.getDefault(registry);
-         }))));
-      case "debug_all_block_states":
-         return new DimensionGeneratorSettings(i, flag, false, withOverworld(registry2, simpleregistry, new DebugChunkGenerator(registry)));
-      case "amplified":
-         return new DimensionGeneratorSettings(i, flag, false, withOverworld(registry2, simpleregistry, new NoiseChunkGenerator(new OverworldBiomeProvider(i, false, false, registry), i, () -> {
-            return registry1.getOrThrow(DimensionSettings.AMPLIFIED);
-         })));
-      case "largebiomes":
-         return new DimensionGeneratorSettings(i, flag, false, withOverworld(registry2, simpleregistry, new NoiseChunkGenerator(new OverworldBiomeProvider(i, false, true, registry), i, () -> {
-            return registry1.getOrThrow(DimensionSettings.OVERWORLD);
-         })));
-      default:
-         return new DimensionGeneratorSettings(i, flag, false, withOverworld(registry2, simpleregistry, makeDefaultOverworld(registry, registry1, i)));
-      }
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public DimensionGeneratorSettings withSeed(boolean p_236220_1_, OptionalLong p_236220_2_) {
-      long i = p_236220_2_.orElse(this.seed);
-      SimpleRegistry<Dimension> simpleregistry;
-      if (p_236220_2_.isPresent()) {
-         simpleregistry = new SimpleRegistry<>(Registry.LEVEL_STEM_REGISTRY, Lifecycle.experimental());
-         long j = p_236220_2_.getAsLong();
-
-         for(Entry<RegistryKey<Dimension>, Dimension> entry : this.dimensions.entrySet()) {
+        for (Entry<RegistryKey<Dimension>, Dimension> entry : p_241520_0_.getEntries())
+        {
             RegistryKey<Dimension> registrykey = entry.getKey();
-            simpleregistry.register(registrykey, new Dimension(entry.getValue().typeSupplier(), entry.getValue().generator().withSeed(j)), this.dimensions.lifecycle(entry.getValue()));
-         }
-      } else {
-         simpleregistry = this.dimensions;
-      }
 
-      DimensionGeneratorSettings dimensiongeneratorsettings;
-      if (this.isDebug()) {
-         dimensiongeneratorsettings = new DimensionGeneratorSettings(i, false, false, simpleregistry);
-      } else {
-         dimensiongeneratorsettings = new DimensionGeneratorSettings(i, this.generateFeatures(), this.generateBonusChest() && !p_236220_1_, simpleregistry);
-      }
+            if (registrykey != Dimension.OVERWORLD)
+            {
+                simpleregistry.register(registrykey, entry.getValue(), p_241520_0_.getLifecycleByRegistry(entry.getValue()));
+            }
+        }
 
-      return dimensiongeneratorsettings;
-   }
+        return simpleregistry;
+    }
+
+    public SimpleRegistry<Dimension> func_236224_e_()
+    {
+        return this.field_236208_h_;
+    }
+
+    public ChunkGenerator func_236225_f_()
+    {
+        Dimension dimension = this.field_236208_h_.getValueForKey(Dimension.OVERWORLD);
+
+        if (dimension == null)
+        {
+            throw new IllegalStateException("Overworld settings missing");
+        }
+        else
+        {
+            return dimension.getChunkGenerator();
+        }
+    }
+
+    public ImmutableSet<RegistryKey<World>> func_236226_g_()
+    {
+        return this.func_236224_e_().getEntries().stream().map((p_236218_0_) ->
+        {
+            return RegistryKey.getOrCreateKey(Registry.WORLD_KEY, p_236218_0_.getKey().getLocation());
+        }).collect(ImmutableSet.toImmutableSet());
+    }
+
+    public boolean func_236227_h_()
+    {
+        return this.func_236225_f_() instanceof DebugChunkGenerator;
+    }
+
+    public boolean func_236228_i_()
+    {
+        return this.func_236225_f_() instanceof FlatChunkGenerator;
+    }
+
+    public boolean func_236229_j_()
+    {
+        return this.field_236209_i_.isPresent();
+    }
+
+    public DimensionGeneratorSettings func_236230_k_()
+    {
+        return new DimensionGeneratorSettings(this.seed, this.generateFeatures, true, this.field_236208_h_, this.field_236209_i_);
+    }
+
+    public DimensionGeneratorSettings func_236231_l_()
+    {
+        return new DimensionGeneratorSettings(this.seed, !this.generateFeatures, this.bonusChest, this.field_236208_h_);
+    }
+
+    public DimensionGeneratorSettings func_236232_m_()
+    {
+        return new DimensionGeneratorSettings(this.seed, this.generateFeatures, !this.bonusChest, this.field_236208_h_);
+    }
+
+    public static DimensionGeneratorSettings func_242753_a(DynamicRegistries p_242753_0_, Properties p_242753_1_)
+    {
+        String s = MoreObjects.firstNonNull((String)p_242753_1_.get("generator-settings"), "");
+        p_242753_1_.put("generator-settings", s);
+        String s1 = MoreObjects.firstNonNull((String)p_242753_1_.get("level-seed"), "");
+        p_242753_1_.put("level-seed", s1);
+        String s2 = (String)p_242753_1_.get("generate-structures");
+        boolean flag = s2 == null || Boolean.parseBoolean(s2);
+        p_242753_1_.put("generate-structures", Objects.toString(flag));
+        String s3 = (String)p_242753_1_.get("level-type");
+        String s4 = Optional.ofNullable(s3).map((p_236217_0_) ->
+        {
+            return p_236217_0_.toLowerCase(Locale.ROOT);
+        }).orElse("default");
+        p_242753_1_.put("level-type", s4);
+        long i = (new Random()).nextLong();
+
+        if (!s1.isEmpty())
+        {
+            try
+            {
+                long j = Long.parseLong(s1);
+
+                if (j != 0L)
+                {
+                    i = j;
+                }
+            }
+            catch (NumberFormatException numberformatexception)
+            {
+                i = (long)s1.hashCode();
+            }
+        }
+
+        Registry<DimensionType> registry2 = p_242753_0_.getRegistry(Registry.DIMENSION_TYPE_KEY);
+        Registry<Biome> registry = p_242753_0_.getRegistry(Registry.BIOME_KEY);
+        Registry<DimensionSettings> registry1 = p_242753_0_.getRegistry(Registry.NOISE_SETTINGS_KEY);
+        SimpleRegistry<Dimension> simpleregistry = DimensionType.getDefaultSimpleRegistry(registry2, registry, registry1, i);
+        byte b0 = -1;
+
+        switch (s4.hashCode())
+        {
+            case -1100099890:
+                if (s4.equals("largebiomes"))
+                {
+                    b0 = 3;
+                }
+
+                break;
+
+            case 3145593:
+                if (s4.equals("flat"))
+                {
+                    b0 = 0;
+                }
+
+                break;
+
+            case 1045526590:
+                if (s4.equals("debug_all_block_states"))
+                {
+                    b0 = 1;
+                }
+
+                break;
+
+            case 1271599715:
+                if (s4.equals("amplified"))
+                {
+                    b0 = 2;
+                }
+        }
+
+        switch (b0)
+        {
+            case 0:
+                JsonObject jsonobject = !s.isEmpty() ? JSONUtils.fromJson(s) : new JsonObject();
+                Dynamic<JsonElement> dynamic = new Dynamic<>(JsonOps.INSTANCE, jsonobject);
+                return new DimensionGeneratorSettings(i, flag, false, func_242749_a(registry2, simpleregistry, new FlatChunkGenerator(FlatGenerationSettings.field_236932_a_.parse(dynamic).resultOrPartial(LOGGER::error).orElseGet(() ->
+                {
+                    return FlatGenerationSettings.func_242869_a(registry);
+                }))));
+
+            case 1:
+                return new DimensionGeneratorSettings(i, flag, false, func_242749_a(registry2, simpleregistry, new DebugChunkGenerator(registry)));
+
+            case 2:
+                return new DimensionGeneratorSettings(i, flag, false, func_242749_a(registry2, simpleregistry, new NoiseChunkGenerator(new OverworldBiomeProvider(i, false, false, registry), i, () ->
+                {
+                    return registry1.getOrThrow(DimensionSettings.field_242735_d);
+                })));
+
+            case 3:
+                return new DimensionGeneratorSettings(i, flag, false, func_242749_a(registry2, simpleregistry, new NoiseChunkGenerator(new OverworldBiomeProvider(i, false, true, registry), i, () ->
+                {
+                    return registry1.getOrThrow(DimensionSettings.field_242734_c);
+                })));
+
+            default:
+                return new DimensionGeneratorSettings(i, flag, false, func_242749_a(registry2, simpleregistry, func_242750_a(registry, registry1, i)));
+        }
+    }
+
+    public DimensionGeneratorSettings create(boolean hardcore, OptionalLong worldSeed)
+    {
+        long i = worldSeed.orElse(this.seed);
+        SimpleRegistry<Dimension> simpleregistry;
+
+        if (worldSeed.isPresent())
+        {
+            simpleregistry = new SimpleRegistry<>(Registry.DIMENSION_KEY, Lifecycle.experimental());
+            long j = worldSeed.getAsLong();
+
+            for (Entry<RegistryKey<Dimension>, Dimension> entry : this.field_236208_h_.getEntries())
+            {
+                RegistryKey<Dimension> registrykey = entry.getKey();
+                simpleregistry.register(registrykey, new Dimension(entry.getValue().getDimensionTypeSupplier(), entry.getValue().getChunkGenerator().func_230349_a_(j)), this.field_236208_h_.getLifecycleByRegistry(entry.getValue()));
+            }
+        }
+        else
+        {
+            simpleregistry = this.field_236208_h_;
+        }
+
+        DimensionGeneratorSettings dimensiongeneratorsettings;
+
+        if (this.func_236227_h_())
+        {
+            dimensiongeneratorsettings = new DimensionGeneratorSettings(i, false, false, simpleregistry);
+        }
+        else
+        {
+            dimensiongeneratorsettings = new DimensionGeneratorSettings(i, this.doesGenerateFeatures(), this.hasBonusChest() && !hardcore, simpleregistry);
+        }
+
+        return dimensiongeneratorsettings;
+    }
 }

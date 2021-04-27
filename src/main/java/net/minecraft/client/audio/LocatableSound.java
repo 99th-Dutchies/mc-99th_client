@@ -3,94 +3,117 @@ package net.minecraft.client.audio;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class LocatableSound implements ISound {
-   protected Sound sound;
-   protected final SoundCategory source;
-   protected final ResourceLocation location;
-   protected float volume = 1.0F;
-   protected float pitch = 1.0F;
-   protected double x;
-   protected double y;
-   protected double z;
-   protected boolean looping;
-   protected int delay;
-   protected ISound.AttenuationType attenuation = ISound.AttenuationType.LINEAR;
-   protected boolean priority;
-   protected boolean relative;
+public abstract class LocatableSound implements ISound
+{
+    protected Sound sound;
+    protected final SoundCategory category;
+    protected final ResourceLocation positionedSoundLocation;
+    protected float volume = 1.0F;
+    protected float pitch = 1.0F;
+    protected double x;
+    protected double y;
+    protected double z;
+    protected boolean repeat;
 
-   protected LocatableSound(SoundEvent p_i46533_1_, SoundCategory p_i46533_2_) {
-      this(p_i46533_1_.getLocation(), p_i46533_2_);
-   }
+    /** The number of ticks between repeating the sound */
+    protected int repeatDelay;
+    protected ISound.AttenuationType attenuationType = ISound.AttenuationType.LINEAR;
+    protected boolean priority;
+    protected boolean global;
 
-   protected LocatableSound(ResourceLocation p_i46534_1_, SoundCategory p_i46534_2_) {
-      this.location = p_i46534_1_;
-      this.source = p_i46534_2_;
-   }
+    protected LocatableSound(SoundEvent soundIn, SoundCategory categoryIn)
+    {
+        this(soundIn.getName(), categoryIn);
+    }
 
-   public ResourceLocation getLocation() {
-      return this.location;
-   }
+    protected LocatableSound(ResourceLocation soundId, SoundCategory categoryIn)
+    {
+        this.positionedSoundLocation = soundId;
+        this.category = categoryIn;
+    }
 
-   public SoundEventAccessor resolve(SoundHandler p_184366_1_) {
-      SoundEventAccessor soundeventaccessor = p_184366_1_.getSoundEvent(this.location);
-      if (soundeventaccessor == null) {
-         this.sound = SoundHandler.EMPTY_SOUND;
-      } else {
-         this.sound = soundeventaccessor.getSound();
-      }
+    public ResourceLocation getSoundLocation()
+    {
+        return this.positionedSoundLocation;
+    }
 
-      return soundeventaccessor;
-   }
+    public SoundEventAccessor createAccessor(SoundHandler handler)
+    {
+        SoundEventAccessor soundeventaccessor = handler.getAccessor(this.positionedSoundLocation);
 
-   public Sound getSound() {
-      return this.sound;
-   }
+        if (soundeventaccessor == null)
+        {
+            this.sound = SoundHandler.MISSING_SOUND;
+        }
+        else
+        {
+            this.sound = soundeventaccessor.cloneEntry();
+        }
 
-   public SoundCategory getSource() {
-      return this.source;
-   }
+        return soundeventaccessor;
+    }
 
-   public boolean isLooping() {
-      return this.looping;
-   }
+    public Sound getSound()
+    {
+        return this.sound;
+    }
 
-   public int getDelay() {
-      return this.delay;
-   }
+    public SoundCategory getCategory()
+    {
+        return this.category;
+    }
 
-   public float getVolume() {
-      return this.volume * this.sound.getVolume();
-   }
+    public boolean canRepeat()
+    {
+        return this.repeat;
+    }
 
-   public float getPitch() {
-      return this.pitch * this.sound.getPitch();
-   }
+    public int getRepeatDelay()
+    {
+        return this.repeatDelay;
+    }
 
-   public double getX() {
-      return this.x;
-   }
+    public float getVolume()
+    {
+        return this.volume * this.sound.getVolume();
+    }
 
-   public double getY() {
-      return this.y;
-   }
+    public float getPitch()
+    {
+        return this.pitch * this.sound.getPitch();
+    }
 
-   public double getZ() {
-      return this.z;
-   }
+    public double getX()
+    {
+        return this.x;
+    }
 
-   public ISound.AttenuationType getAttenuation() {
-      return this.attenuation;
-   }
+    public double getY()
+    {
+        return this.y;
+    }
 
-   public boolean isRelative() {
-      return this.relative;
-   }
+    public double getZ()
+    {
+        return this.z;
+    }
 
-   public String toString() {
-      return "SoundInstance[" + this.location + "]";
-   }
+    public ISound.AttenuationType getAttenuationType()
+    {
+        return this.attenuationType;
+    }
+
+    /**
+     * True if the sound is not tied to a particular position in world (e.g. BGM)
+     */
+    public boolean isGlobal()
+    {
+        return this.global;
+    }
+
+    public String toString()
+    {
+        return "SoundInstance[" + this.positionedSoundLocation + "]";
+    }
 }

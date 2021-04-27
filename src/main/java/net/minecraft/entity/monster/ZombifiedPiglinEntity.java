@@ -37,186 +37,250 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class ZombifiedPiglinEntity extends ZombieEntity implements IAngerable {
-   private static final UUID SPEED_MODIFIER_ATTACKING_UUID = UUID.fromString("49455A49-7EC5-45BA-B886-3B90B23A1718");
-   private static final AttributeModifier SPEED_MODIFIER_ATTACKING = new AttributeModifier(SPEED_MODIFIER_ATTACKING_UUID, "Attacking speed boost", 0.05D, AttributeModifier.Operation.ADDITION);
-   private static final RangedInteger FIRST_ANGER_SOUND_DELAY = TickRangeConverter.rangeOfSeconds(0, 1);
-   private int playFirstAngerSoundIn;
-   private static final RangedInteger PERSISTENT_ANGER_TIME = TickRangeConverter.rangeOfSeconds(20, 39);
-   private int remainingPersistentAngerTime;
-   private UUID persistentAngerTarget;
-   private static final RangedInteger ALERT_INTERVAL = TickRangeConverter.rangeOfSeconds(4, 6);
-   private int ticksUntilNextAlert;
+public class ZombifiedPiglinEntity extends ZombieEntity implements IAngerable
+{
+    private static final UUID field_234344_b_ = UUID.fromString("49455A49-7EC5-45BA-B886-3B90B23A1718");
+    private static final AttributeModifier field_234349_c_ = new AttributeModifier(field_234344_b_, "Attacking speed boost", 0.05D, AttributeModifier.Operation.ADDITION);
+    private static final RangedInteger field_234350_d_ = TickRangeConverter.convertRange(0, 1);
+    private int field_234345_bu_;
+    private static final RangedInteger field_234346_bv_ = TickRangeConverter.convertRange(20, 39);
+    private int field_234347_bw_;
+    private UUID field_234348_bx_;
+    private static final RangedInteger field_241403_bz_ = TickRangeConverter.convertRange(4, 6);
+    private int field_241401_bA_;
 
-   public ZombifiedPiglinEntity(EntityType<? extends ZombifiedPiglinEntity> p_i231568_1_, World p_i231568_2_) {
-      super(p_i231568_1_, p_i231568_2_);
-      this.setPathfindingMalus(PathNodeType.LAVA, 8.0F);
-   }
+    public ZombifiedPiglinEntity(EntityType <? extends ZombifiedPiglinEntity > p_i231568_1_, World p_i231568_2_)
+    {
+        super(p_i231568_1_, p_i231568_2_);
+        this.setPathPriority(PathNodeType.LAVA, 8.0F);
+    }
 
-   public void setPersistentAngerTarget(@Nullable UUID p_230259_1_) {
-      this.persistentAngerTarget = p_230259_1_;
-   }
+    public void setAngerTarget(@Nullable UUID target)
+    {
+        this.field_234348_bx_ = target;
+    }
 
-   public double getMyRidingOffset() {
-      return this.isBaby() ? -0.05D : -0.45D;
-   }
+    /**
+     * Returns the Y Offset of this entity.
+     */
+    public double getYOffset()
+    {
+        return this.isChild() ? -0.05D : -0.45D;
+    }
 
-   protected void addBehaviourGoals() {
-      this.goalSelector.addGoal(2, new ZombieAttackGoal(this, 1.0D, false));
-      this.goalSelector.addGoal(7, new WaterAvoidingRandomWalkingGoal(this, 1.0D));
-      this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
-      this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, this::isAngryAt));
-      this.targetSelector.addGoal(3, new ResetAngerGoal<>(this, true));
-   }
+    protected void applyEntityAI()
+    {
+        this.goalSelector.addGoal(2, new ZombieAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(7, new WaterAvoidingRandomWalkingGoal(this, 1.0D));
+        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setCallsForHelp());
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, this::func_233680_b_));
+        this.targetSelector.addGoal(3, new ResetAngerGoal<>(this, true));
+    }
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return ZombieEntity.createAttributes().add(Attributes.SPAWN_REINFORCEMENTS_CHANCE, 0.0D).add(Attributes.MOVEMENT_SPEED, (double)0.23F).add(Attributes.ATTACK_DAMAGE, 5.0D);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234352_eU_()
+    {
+        return ZombieEntity.func_234342_eQ_().createMutableAttribute(Attributes.ZOMBIE_SPAWN_REINFORCEMENTS, 0.0D).createMutableAttribute(Attributes.MOVEMENT_SPEED, (double)0.23F).createMutableAttribute(Attributes.ATTACK_DAMAGE, 5.0D);
+    }
 
-   protected boolean convertsInWater() {
-      return false;
-   }
+    protected boolean shouldDrown()
+    {
+        return false;
+    }
 
-   protected void customServerAiStep() {
-      ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
-      if (this.isAngry()) {
-         if (!this.isBaby() && !modifiableattributeinstance.hasModifier(SPEED_MODIFIER_ATTACKING)) {
-            modifiableattributeinstance.addTransientModifier(SPEED_MODIFIER_ATTACKING);
-         }
+    protected void updateAITasks()
+    {
+        ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
 
-         this.maybePlayFirstAngerSound();
-      } else if (modifiableattributeinstance.hasModifier(SPEED_MODIFIER_ATTACKING)) {
-         modifiableattributeinstance.removeModifier(SPEED_MODIFIER_ATTACKING);
-      }
+        if (this.func_233678_J__())
+        {
+            if (!this.isChild() && !modifiableattributeinstance.hasModifier(field_234349_c_))
+            {
+                modifiableattributeinstance.applyNonPersistentModifier(field_234349_c_);
+            }
 
-      this.updatePersistentAnger((ServerWorld)this.level, true);
-      if (this.getTarget() != null) {
-         this.maybeAlertOthers();
-      }
+            this.func_241409_eY_();
+        }
+        else if (modifiableattributeinstance.hasModifier(field_234349_c_))
+        {
+            modifiableattributeinstance.removeModifier(field_234349_c_);
+        }
 
-      if (this.isAngry()) {
-         this.lastHurtByPlayerTime = this.tickCount;
-      }
+        this.func_241359_a_((ServerWorld)this.world, true);
 
-      super.customServerAiStep();
-   }
+        if (this.getAttackTarget() != null)
+        {
+            this.func_241410_eZ_();
+        }
 
-   private void maybePlayFirstAngerSound() {
-      if (this.playFirstAngerSoundIn > 0) {
-         --this.playFirstAngerSoundIn;
-         if (this.playFirstAngerSoundIn == 0) {
-            this.playAngerSound();
-         }
-      }
+        if (this.func_233678_J__())
+        {
+            this.recentlyHit = this.ticksExisted;
+        }
 
-   }
+        super.updateAITasks();
+    }
 
-   private void maybeAlertOthers() {
-      if (this.ticksUntilNextAlert > 0) {
-         --this.ticksUntilNextAlert;
-      } else {
-         if (this.getSensing().canSee(this.getTarget())) {
-            this.alertOthers();
-         }
+    private void func_241409_eY_()
+    {
+        if (this.field_234345_bu_ > 0)
+        {
+            --this.field_234345_bu_;
 
-         this.ticksUntilNextAlert = ALERT_INTERVAL.randomValue(this.random);
-      }
-   }
+            if (this.field_234345_bu_ == 0)
+            {
+                this.func_234353_eV_();
+            }
+        }
+    }
 
-   private void alertOthers() {
-      double d0 = this.getAttributeValue(Attributes.FOLLOW_RANGE);
-      AxisAlignedBB axisalignedbb = AxisAlignedBB.unitCubeFromLowerCorner(this.position()).inflate(d0, 10.0D, d0);
-      this.level.getLoadedEntitiesOfClass(ZombifiedPiglinEntity.class, axisalignedbb).stream().filter((p_241408_1_) -> {
-         return p_241408_1_ != this;
-      }).filter((p_241407_0_) -> {
-         return p_241407_0_.getTarget() == null;
-      }).filter((p_241406_1_) -> {
-         return !p_241406_1_.isAlliedTo(this.getTarget());
-      }).forEach((p_241405_1_) -> {
-         p_241405_1_.setTarget(this.getTarget());
-      });
-   }
+    private void func_241410_eZ_()
+    {
+        if (this.field_241401_bA_ > 0)
+        {
+            --this.field_241401_bA_;
+        }
+        else
+        {
+            if (this.getEntitySenses().canSee(this.getAttackTarget()))
+            {
+                this.func_241411_fa_();
+            }
 
-   private void playAngerSound() {
-      this.playSound(SoundEvents.ZOMBIFIED_PIGLIN_ANGRY, this.getSoundVolume() * 2.0F, this.getVoicePitch() * 1.8F);
-   }
+            this.field_241401_bA_ = field_241403_bz_.getRandomWithinRange(this.rand);
+        }
+    }
 
-   public void setTarget(@Nullable LivingEntity p_70624_1_) {
-      if (this.getTarget() == null && p_70624_1_ != null) {
-         this.playFirstAngerSoundIn = FIRST_ANGER_SOUND_DELAY.randomValue(this.random);
-         this.ticksUntilNextAlert = ALERT_INTERVAL.randomValue(this.random);
-      }
+    private void func_241411_fa_()
+    {
+        double d0 = this.getAttributeValue(Attributes.FOLLOW_RANGE);
+        AxisAlignedBB axisalignedbb = AxisAlignedBB.fromVector(this.getPositionVec()).grow(d0, 10.0D, d0);
+        this.world.getLoadedEntitiesWithinAABB(ZombifiedPiglinEntity.class, axisalignedbb).stream().filter((p_241408_1_) ->
+        {
+            return p_241408_1_ != this;
+        }).filter((p_241407_0_) ->
+        {
+            return p_241407_0_.getAttackTarget() == null;
+        }).filter((p_241406_1_) ->
+        {
+            return !p_241406_1_.isOnSameTeam(this.getAttackTarget());
+        }).forEach((p_241405_1_) ->
+        {
+            p_241405_1_.setAttackTarget(this.getAttackTarget());
+        });
+    }
 
-      if (p_70624_1_ instanceof PlayerEntity) {
-         this.setLastHurtByPlayer((PlayerEntity)p_70624_1_);
-      }
+    private void func_234353_eV_()
+    {
+        this.playSound(SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, this.getSoundVolume() * 2.0F, this.getSoundPitch() * 1.8F);
+    }
 
-      super.setTarget(p_70624_1_);
-   }
+    /**
+     * Sets the active target the Task system uses for tracking
+     */
+    public void setAttackTarget(@Nullable LivingEntity entitylivingbaseIn)
+    {
+        if (this.getAttackTarget() == null && entitylivingbaseIn != null)
+        {
+            this.field_234345_bu_ = field_234350_d_.getRandomWithinRange(this.rand);
+            this.field_241401_bA_ = field_241403_bz_.getRandomWithinRange(this.rand);
+        }
 
-   public void startPersistentAngerTimer() {
-      this.setRemainingPersistentAngerTime(PERSISTENT_ANGER_TIME.randomValue(this.random));
-   }
+        if (entitylivingbaseIn instanceof PlayerEntity)
+        {
+            this.func_230246_e_((PlayerEntity)entitylivingbaseIn);
+        }
 
-   public static boolean checkZombifiedPiglinSpawnRules(EntityType<ZombifiedPiglinEntity> p_234351_0_, IWorld p_234351_1_, SpawnReason p_234351_2_, BlockPos p_234351_3_, Random p_234351_4_) {
-      return p_234351_1_.getDifficulty() != Difficulty.PEACEFUL && p_234351_1_.getBlockState(p_234351_3_.below()).getBlock() != Blocks.NETHER_WART_BLOCK;
-   }
+        super.setAttackTarget(entitylivingbaseIn);
+    }
 
-   public boolean checkSpawnObstruction(IWorldReader p_205019_1_) {
-      return p_205019_1_.isUnobstructed(this) && !p_205019_1_.containsAnyLiquid(this.getBoundingBox());
-   }
+    public void func_230258_H__()
+    {
+        this.setAngerTime(field_234346_bv_.getRandomWithinRange(this.rand));
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      this.addPersistentAngerSaveData(p_213281_1_);
-   }
+    public static boolean func_234351_b_(EntityType<ZombifiedPiglinEntity> p_234351_0_, IWorld p_234351_1_, SpawnReason p_234351_2_, BlockPos p_234351_3_, Random p_234351_4_)
+    {
+        return p_234351_1_.getDifficulty() != Difficulty.PEACEFUL && p_234351_1_.getBlockState(p_234351_3_.down()).getBlock() != Blocks.NETHER_WART_BLOCK;
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.readPersistentAngerSaveData((ServerWorld)this.level, p_70037_1_);
-   }
+    public boolean isNotColliding(IWorldReader worldIn)
+    {
+        return worldIn.checkNoEntityCollision(this) && !worldIn.containsAnyLiquid(this.getBoundingBox());
+    }
 
-   public void setRemainingPersistentAngerTime(int p_230260_1_) {
-      this.remainingPersistentAngerTime = p_230260_1_;
-   }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        this.writeAngerNBT(compound);
+    }
 
-   public int getRemainingPersistentAngerTime() {
-      return this.remainingPersistentAngerTime;
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.readAngerNBT((ServerWorld)this.world, compound);
+    }
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      return this.isInvulnerableTo(p_70097_1_) ? false : super.hurt(p_70097_1_, p_70097_2_);
-   }
+    public void setAngerTime(int time)
+    {
+        this.field_234347_bw_ = time;
+    }
 
-   protected SoundEvent getAmbientSound() {
-      return this.isAngry() ? SoundEvents.ZOMBIFIED_PIGLIN_ANGRY : SoundEvents.ZOMBIFIED_PIGLIN_AMBIENT;
-   }
+    public int getAngerTime()
+    {
+        return this.field_234347_bw_;
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.ZOMBIFIED_PIGLIN_HURT;
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        return this.isInvulnerableTo(source) ? false : super.attackEntityFrom(source, amount);
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.ZOMBIFIED_PIGLIN_DEATH;
-   }
+    protected SoundEvent getAmbientSound()
+    {
+        return this.func_233678_J__() ? SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_ANGRY : SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_AMBIENT;
+    }
 
-   protected void populateDefaultEquipmentSlots(DifficultyInstance p_180481_1_) {
-      this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.GOLDEN_SWORD));
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_HURT;
+    }
 
-   protected ItemStack getSkull() {
-      return ItemStack.EMPTY;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_DEATH;
+    }
 
-   protected void randomizeReinforcementsChance() {
-      this.getAttribute(Attributes.SPAWN_REINFORCEMENTS_CHANCE).setBaseValue(0.0D);
-   }
+    /**
+     * Gives armor or weapon for entity based on given DifficultyInstance
+     */
+    protected void setEquipmentBasedOnDifficulty(DifficultyInstance difficulty)
+    {
+        this.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.GOLDEN_SWORD));
+    }
 
-   public UUID getPersistentAngerTarget() {
-      return this.persistentAngerTarget;
-   }
+    protected ItemStack getSkullDrop()
+    {
+        return ItemStack.EMPTY;
+    }
 
-   public boolean isPreventingPlayerRest(PlayerEntity p_230292_1_) {
-      return this.isAngryAt(p_230292_1_);
-   }
+    protected void func_230291_eT_()
+    {
+        this.getAttribute(Attributes.ZOMBIE_SPAWN_REINFORCEMENTS).setBaseValue(0.0D);
+    }
+
+    public UUID getAngerTarget()
+    {
+        return this.field_234348_bx_;
+    }
+
+    public boolean func_230292_f_(PlayerEntity p_230292_1_)
+    {
+        return this.func_233680_b_(p_230292_1_);
+    }
 }

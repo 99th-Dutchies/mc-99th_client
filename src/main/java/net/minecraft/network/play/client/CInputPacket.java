@@ -4,66 +4,86 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CInputPacket implements IPacket<IServerPlayNetHandler> {
-   private float xxa;
-   private float zza;
-   private boolean isJumping;
-   private boolean isShiftKeyDown;
+public class CInputPacket implements IPacket<IServerPlayNetHandler>
+{
+    /** Positive for left strafe, negative for right */
+    private float strafeSpeed;
+    private float forwardSpeed;
+    private boolean jumping;
+    private boolean sneaking;
 
-   public CInputPacket() {
-   }
+    public CInputPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CInputPacket(float p_i46868_1_, float p_i46868_2_, boolean p_i46868_3_, boolean p_i46868_4_) {
-      this.xxa = p_i46868_1_;
-      this.zza = p_i46868_2_;
-      this.isJumping = p_i46868_3_;
-      this.isShiftKeyDown = p_i46868_4_;
-   }
+    public CInputPacket(float strafeSpeedIn, float forwardSpeedIn, boolean jumpingIn, boolean sneakingIn)
+    {
+        this.strafeSpeed = strafeSpeedIn;
+        this.forwardSpeed = forwardSpeedIn;
+        this.jumping = jumpingIn;
+        this.sneaking = sneakingIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.xxa = p_148837_1_.readFloat();
-      this.zza = p_148837_1_.readFloat();
-      byte b0 = p_148837_1_.readByte();
-      this.isJumping = (b0 & 1) > 0;
-      this.isShiftKeyDown = (b0 & 2) > 0;
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.strafeSpeed = buf.readFloat();
+        this.forwardSpeed = buf.readFloat();
+        byte b0 = buf.readByte();
+        this.jumping = (b0 & 1) > 0;
+        this.sneaking = (b0 & 2) > 0;
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeFloat(this.xxa);
-      p_148840_1_.writeFloat(this.zza);
-      byte b0 = 0;
-      if (this.isJumping) {
-         b0 = (byte)(b0 | 1);
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeFloat(this.strafeSpeed);
+        buf.writeFloat(this.forwardSpeed);
+        byte b0 = 0;
 
-      if (this.isShiftKeyDown) {
-         b0 = (byte)(b0 | 2);
-      }
+        if (this.jumping)
+        {
+            b0 = (byte)(b0 | 1);
+        }
 
-      p_148840_1_.writeByte(b0);
-   }
+        if (this.sneaking)
+        {
+            b0 = (byte)(b0 | 2);
+        }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handlePlayerInput(this);
-   }
+        buf.writeByte(b0);
+    }
 
-   public float getXxa() {
-      return this.xxa;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processInput(this);
+    }
 
-   public float getZza() {
-      return this.zza;
-   }
+    public float getStrafeSpeed()
+    {
+        return this.strafeSpeed;
+    }
 
-   public boolean isJumping() {
-      return this.isJumping;
-   }
+    public float getForwardSpeed()
+    {
+        return this.forwardSpeed;
+    }
 
-   public boolean isShiftKeyDown() {
-      return this.isShiftKeyDown;
-   }
+    public boolean isJumping()
+    {
+        return this.jumping;
+    }
+
+    public boolean isSneaking()
+    {
+        return this.sneaking;
+    }
 }

@@ -1,13 +1,10 @@
 package net.minecraft.client.renderer;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public interface IWindowEventListener
+{
+    void setGameFocused(boolean focused);
 
-@OnlyIn(Dist.CLIENT)
-public interface IWindowEventListener {
-   void setWindowActive(boolean p_213228_1_);
+    void updateWindowSize();
 
-   void resizeDisplay();
-
-   void cursorEntered();
+    void ignoreFirstMove();
 }

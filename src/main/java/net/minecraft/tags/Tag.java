@@ -6,57 +6,73 @@ import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Set;
 
-public class Tag<T> implements ITag<T> {
-   private final ImmutableList<T> valuesList;
-   private final Set<T> values;
-   @VisibleForTesting
-   protected final Class<?> closestCommonSuperType;
+public class Tag<T> implements ITag<T>
+{
+    private final ImmutableList<T> immutableContents;
+    private final Set<T> contents;
+    @VisibleForTesting
+    protected final Class<?> contentsClassType;
 
-   protected Tag(Set<T> p_i241226_1_, Class<?> p_i241226_2_) {
-      this.closestCommonSuperType = p_i241226_2_;
-      this.values = p_i241226_1_;
-      this.valuesList = ImmutableList.copyOf(p_i241226_1_);
-   }
+    protected Tag(Set<T> contents, Class<?> contentsClassType)
+    {
+        this.contentsClassType = contentsClassType;
+        this.contents = contents;
+        this.immutableContents = ImmutableList.copyOf(contents);
+    }
 
-   public static <T> Tag<T> empty() {
-      return new Tag<>(ImmutableSet.of(), Void.class);
-   }
+    public static <T> Tag<T> getEmptyTag()
+    {
+        return new Tag<>(ImmutableSet.of(), Void.class);
+    }
 
-   public static <T> Tag<T> create(Set<T> p_241286_0_) {
-      return new Tag<>(p_241286_0_, findCommonSuperClass(p_241286_0_));
-   }
+    public static <T> Tag<T> getTagFromContents(Set<T> contents)
+    {
+        return new Tag<>(contents, getContentsClass(contents));
+    }
 
-   public boolean contains(T p_230235_1_) {
-      return this.closestCommonSuperType.isInstance(p_230235_1_) && this.values.contains(p_230235_1_);
-   }
+    public boolean contains(T element)
+    {
+        return this.contentsClassType.isInstance(element) && this.contents.contains(element);
+    }
 
-   public List<T> getValues() {
-      return this.valuesList;
-   }
+    public List<T> getAllElements()
+    {
+        return this.immutableContents;
+    }
 
-   private static <T> Class<?> findCommonSuperClass(Set<T> p_241287_0_) {
-      if (p_241287_0_.isEmpty()) {
-         return Void.class;
-      } else {
-         Class<?> oclass = null;
+    private static <T> Class<?> getContentsClass(Set<T> contents)
+    {
+        if (contents.isEmpty())
+        {
+            return Void.class;
+        }
+        else
+        {
+            Class<?> oclass = null;
 
-         for(T t : p_241287_0_) {
-            if (oclass == null) {
-               oclass = t.getClass();
-            } else {
-               oclass = findClosestAncestor(oclass, t.getClass());
+            for (T t : contents)
+            {
+                if (oclass == null)
+                {
+                    oclass = t.getClass();
+                }
+                else
+                {
+                    oclass = findCommonParentClass(oclass, t.getClass());
+                }
             }
-         }
 
-         return oclass;
-      }
-   }
+            return oclass;
+        }
+    }
 
-   private static Class<?> findClosestAncestor(Class<?> p_241285_0_, Class<?> p_241285_1_) {
-      while(!p_241285_0_.isAssignableFrom(p_241285_1_)) {
-         p_241285_0_ = p_241285_0_.getSuperclass();
-      }
+    private static Class<?> findCommonParentClass(Class<?> input, Class<?> comparison)
+    {
+        while (!input.isAssignableFrom(comparison))
+        {
+            input = input.getSuperclass();
+        }
 
-      return p_241285_0_;
-   }
+        return input;
+    }
 }

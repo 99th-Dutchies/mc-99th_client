@@ -9,46 +9,77 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class EntityDamageSource extends DamageSource {
-   @Nullable
-   protected final Entity entity;
-   private boolean isThorns;
+public class EntityDamageSource extends DamageSource
+{
+    @Nullable
+    protected final Entity damageSourceEntity;
 
-   public EntityDamageSource(String p_i1567_1_, @Nullable Entity p_i1567_2_) {
-      super(p_i1567_1_);
-      this.entity = p_i1567_2_;
-   }
+    /**
+     * Whether this EntityDamageSource is from an entity wearing Thorns-enchanted armor.
+     */
+    private boolean isThornsDamage;
 
-   public EntityDamageSource setThorns() {
-      this.isThorns = true;
-      return this;
-   }
+    public EntityDamageSource(String damageTypeIn, @Nullable Entity damageSourceEntityIn)
+    {
+        super(damageTypeIn);
+        this.damageSourceEntity = damageSourceEntityIn;
+    }
 
-   public boolean isThorns() {
-      return this.isThorns;
-   }
+    /**
+     * Sets this EntityDamageSource as originating from Thorns armor
+     */
+    public EntityDamageSource setIsThornsDamage()
+    {
+        this.isThornsDamage = true;
+        return this;
+    }
 
-   @Nullable
-   public Entity getEntity() {
-      return this.entity;
-   }
+    public boolean getIsThornsDamage()
+    {
+        return this.isThornsDamage;
+    }
 
-   public ITextComponent getLocalizedDeathMessage(LivingEntity p_151519_1_) {
-      ItemStack itemstack = this.entity instanceof LivingEntity ? ((LivingEntity)this.entity).getMainHandItem() : ItemStack.EMPTY;
-      String s = "death.attack." + this.msgId;
-      return !itemstack.isEmpty() && itemstack.hasCustomHoverName() ? new TranslationTextComponent(s + ".item", p_151519_1_.getDisplayName(), this.entity.getDisplayName(), itemstack.getDisplayName()) : new TranslationTextComponent(s, p_151519_1_.getDisplayName(), this.entity.getDisplayName());
-   }
+    @Nullable
 
-   public boolean scalesWithDifficulty() {
-      return this.entity != null && this.entity instanceof LivingEntity && !(this.entity instanceof PlayerEntity);
-   }
+    /**
+     * Retrieves the true causer of the damage, e.g. the player who fired an arrow, the shulker who fired the bullet,
+     * etc.
+     */
+    public Entity getTrueSource()
+    {
+        return this.damageSourceEntity;
+    }
 
-   @Nullable
-   public Vector3d getSourcePosition() {
-      return this.entity != null ? this.entity.position() : null;
-   }
+    /**
+     * Gets the death message that is displayed when the player dies
+     */
+    public ITextComponent getDeathMessage(LivingEntity entityLivingBaseIn)
+    {
+        ItemStack itemstack = this.damageSourceEntity instanceof LivingEntity ? ((LivingEntity)this.damageSourceEntity).getHeldItemMainhand() : ItemStack.EMPTY;
+        String s = "death.attack." + this.damageType;
+        return !itemstack.isEmpty() && itemstack.hasDisplayName() ? new TranslationTextComponent(s + ".item", entityLivingBaseIn.getDisplayName(), this.damageSourceEntity.getDisplayName(), itemstack.getTextComponent()) : new TranslationTextComponent(s, entityLivingBaseIn.getDisplayName(), this.damageSourceEntity.getDisplayName());
+    }
 
-   public String toString() {
-      return "EntityDamageSource (" + this.entity + ")";
-   }
+    /**
+     * Return whether this damage source will have its damage amount scaled based on the current difficulty.
+     */
+    public boolean isDifficultyScaled()
+    {
+        return this.damageSourceEntity != null && this.damageSourceEntity instanceof LivingEntity && !(this.damageSourceEntity instanceof PlayerEntity);
+    }
+
+    @Nullable
+
+    /**
+     * Gets the location from which the damage originates.
+     */
+    public Vector3d getDamageLocation()
+    {
+        return this.damageSourceEntity != null ? this.damageSourceEntity.getPositionVec() : null;
+    }
+
+    public String toString()
+    {
+        return "EntityDamageSource (" + this.damageSourceEntity + ")";
+    }
 }

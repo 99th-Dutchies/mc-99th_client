@@ -4,33 +4,46 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CHeldItemChangePacket implements IPacket<IServerPlayNetHandler> {
-   private int slot;
+public class CHeldItemChangePacket implements IPacket<IServerPlayNetHandler>
+{
+    private int slotId;
 
-   public CHeldItemChangePacket() {
-   }
+    public CHeldItemChangePacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CHeldItemChangePacket(int p_i46864_1_) {
-      this.slot = p_i46864_1_;
-   }
+    public CHeldItemChangePacket(int slotIdIn)
+    {
+        this.slotId = slotIdIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.slot = p_148837_1_.readShort();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.slotId = buf.readShort();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeShort(this.slot);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeShort(this.slotId);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetCarriedItem(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processHeldItemChange(this);
+    }
 
-   public int getSlot() {
-      return this.slot;
-   }
+    public int getSlotId()
+    {
+        return this.slotId;
+    }
 }

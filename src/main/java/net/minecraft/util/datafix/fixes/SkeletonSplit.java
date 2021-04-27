@@ -5,21 +5,29 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 import java.util.Objects;
 
-public class SkeletonSplit extends EntityRenameHelper {
-   public SkeletonSplit(Schema p_i49653_1_, boolean p_i49653_2_) {
-      super("EntitySkeletonSplitFix", p_i49653_1_, p_i49653_2_);
-   }
+public class SkeletonSplit extends EntityRenameHelper
+{
+    public SkeletonSplit(Schema outputSchema, boolean changesType)
+    {
+        super("EntitySkeletonSplitFix", outputSchema, changesType);
+    }
 
-   protected Pair<String, Dynamic<?>> getNewNameAndTag(String p_209758_1_, Dynamic<?> p_209758_2_) {
-      if (Objects.equals(p_209758_1_, "Skeleton")) {
-         int i = p_209758_2_.get("SkeletonType").asInt(0);
-         if (i == 1) {
-            p_209758_1_ = "WitherSkeleton";
-         } else if (i == 2) {
-            p_209758_1_ = "Stray";
-         }
-      }
+    protected Pair < String, Dynamic<? >> getNewNameAndTag(String name, Dynamic<?> tag)
+    {
+        if (Objects.equals(name, "Skeleton"))
+        {
+            int i = tag.get("SkeletonType").asInt(0);
 
-      return Pair.of(p_209758_1_, p_209758_2_);
-   }
+            if (i == 1)
+            {
+                name = "WitherSkeleton";
+            }
+            else if (i == 2)
+            {
+                name = "Stray";
+            }
+        }
+
+        return Pair.of(name, tag);
+    }
 }

@@ -14,47 +14,66 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.server.ServerWorld;
 
-public class DropperBlock extends DispenserBlock {
-   private static final IDispenseItemBehavior DISPENSE_BEHAVIOUR = new DefaultDispenseItemBehavior();
+public class DropperBlock extends DispenserBlock
+{
+    private static final IDispenseItemBehavior DISPENSE_BEHAVIOR = new DefaultDispenseItemBehavior();
 
-   public DropperBlock(AbstractBlock.Properties p_i48410_1_) {
-      super(p_i48410_1_);
-   }
+    public DropperBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   protected IDispenseItemBehavior getDispenseMethod(ItemStack p_149940_1_) {
-      return DISPENSE_BEHAVIOUR;
-   }
+    protected IDispenseItemBehavior getBehavior(ItemStack stack)
+    {
+        return DISPENSE_BEHAVIOR;
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new DropperTileEntity();
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new DropperTileEntity();
+    }
 
-   protected void dispenseFrom(ServerWorld p_176439_1_, BlockPos p_176439_2_) {
-      ProxyBlockSource proxyblocksource = new ProxyBlockSource(p_176439_1_, p_176439_2_);
-      DispenserTileEntity dispensertileentity = proxyblocksource.getEntity();
-      int i = dispensertileentity.getRandomSlot();
-      if (i < 0) {
-         p_176439_1_.levelEvent(1001, p_176439_2_, 0);
-      } else {
-         ItemStack itemstack = dispensertileentity.getItem(i);
-         if (!itemstack.isEmpty()) {
-            Direction direction = p_176439_1_.getBlockState(p_176439_2_).getValue(FACING);
-            IInventory iinventory = HopperTileEntity.getContainerAt(p_176439_1_, p_176439_2_.relative(direction));
-            ItemStack itemstack1;
-            if (iinventory == null) {
-               itemstack1 = DISPENSE_BEHAVIOUR.dispense(proxyblocksource, itemstack);
-            } else {
-               itemstack1 = HopperTileEntity.addItem(dispensertileentity, iinventory, itemstack.copy().split(1), direction.getOpposite());
-               if (itemstack1.isEmpty()) {
-                  itemstack1 = itemstack.copy();
-                  itemstack1.shrink(1);
-               } else {
-                  itemstack1 = itemstack.copy();
-               }
+    protected void dispense(ServerWorld worldIn, BlockPos pos)
+    {
+        ProxyBlockSource proxyblocksource = new ProxyBlockSource(worldIn, pos);
+        DispenserTileEntity dispensertileentity = proxyblocksource.getBlockTileEntity();
+        int i = dispensertileentity.getDispenseSlot();
+
+        if (i < 0)
+        {
+            worldIn.playEvent(1001, pos, 0);
+        }
+        else
+        {
+            ItemStack itemstack = dispensertileentity.getStackInSlot(i);
+
+            if (!itemstack.isEmpty())
+            {
+                Direction direction = worldIn.getBlockState(pos).get(FACING);
+                IInventory iinventory = HopperTileEntity.getInventoryAtPosition(worldIn, pos.offset(direction));
+                ItemStack itemstack1;
+
+                if (iinventory == null)
+                {
+                    itemstack1 = DISPENSE_BEHAVIOR.dispense(proxyblocksource, itemstack);
+                }
+                else
+                {
+                    itemstack1 = HopperTileEntity.putStackInInventoryAllSlots(dispensertileentity, iinventory, itemstack.copy().split(1), direction.getOpposite());
+
+                    if (itemstack1.isEmpty())
+                    {
+                        itemstack1 = itemstack.copy();
+                        itemstack1.shrink(1);
+                    }
+                    else
+                    {
+                        itemstack1 = itemstack.copy();
+                    }
+                }
+
+                dispensertileentity.setInventorySlotContents(i, itemstack1);
             }
-
-            dispensertileentity.setItem(i, itemstack1);
-         }
-      }
-   }
+        }
+    }
 }

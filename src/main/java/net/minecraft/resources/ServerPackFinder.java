@@ -2,16 +2,20 @@ package net.minecraft.resources;
 
 import java.util.function.Consumer;
 
-public class ServerPackFinder implements IPackFinder {
-   private final VanillaPack vanillaPack = new VanillaPack("minecraft");
+public class ServerPackFinder implements IPackFinder
+{
+    private final VanillaPack field_195738_a = new VanillaPack("minecraft");
 
-   public void loadPacks(Consumer<ResourcePackInfo> p_230230_1_, ResourcePackInfo.IFactory p_230230_2_) {
-      ResourcePackInfo resourcepackinfo = ResourcePackInfo.create("vanilla", false, () -> {
-         return this.vanillaPack;
-      }, p_230230_2_, ResourcePackInfo.Priority.BOTTOM, IPackNameDecorator.BUILT_IN);
-      if (resourcepackinfo != null) {
-         p_230230_1_.accept(resourcepackinfo);
-      }
+    public void findPacks(Consumer<ResourcePackInfo> infoConsumer, ResourcePackInfo.IFactory infoFactory)
+    {
+        ResourcePackInfo resourcepackinfo = ResourcePackInfo.createResourcePack("vanilla", false, () ->
+        {
+            return this.field_195738_a;
+        }, infoFactory, ResourcePackInfo.Priority.BOTTOM, IPackNameDecorator.BUILTIN);
 
-   }
+        if (resourcepackinfo != null)
+        {
+            infoConsumer.accept(resourcepackinfo);
+        }
+    }
 }

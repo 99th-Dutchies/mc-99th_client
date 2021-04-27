@@ -20,103 +20,131 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class FireworkRocketItem extends Item {
-   public FireworkRocketItem(Item.Properties p_i48498_1_) {
-      super(p_i48498_1_);
-   }
+public class FireworkRocketItem extends Item
+{
+    public FireworkRocketItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      World world = p_195939_1_.getLevel();
-      if (!world.isClientSide) {
-         ItemStack itemstack = p_195939_1_.getItemInHand();
-         Vector3d vector3d = p_195939_1_.getClickLocation();
-         Direction direction = p_195939_1_.getClickedFace();
-         FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(world, p_195939_1_.getPlayer(), vector3d.x + (double)direction.getStepX() * 0.15D, vector3d.y + (double)direction.getStepY() * 0.15D, vector3d.z + (double)direction.getStepZ() * 0.15D, itemstack);
-         world.addFreshEntity(fireworkrocketentity);
-         itemstack.shrink(1);
-      }
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        World world = context.getWorld();
 
-      return ActionResultType.sidedSuccess(world.isClientSide);
-   }
+        if (!world.isRemote)
+        {
+            ItemStack itemstack = context.getItem();
+            Vector3d vector3d = context.getHitVec();
+            Direction direction = context.getFace();
+            FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(world, context.getPlayer(), vector3d.x + (double)direction.getXOffset() * 0.15D, vector3d.y + (double)direction.getYOffset() * 0.15D, vector3d.z + (double)direction.getZOffset() * 0.15D, itemstack);
+            world.addEntity(fireworkrocketentity);
+            itemstack.shrink(1);
+        }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      if (p_77659_2_.isFallFlying()) {
-         ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-         if (!p_77659_1_.isClientSide) {
-            p_77659_1_.addFreshEntity(new FireworkRocketEntity(p_77659_1_, itemstack, p_77659_2_));
-            if (!p_77659_2_.abilities.instabuild) {
-               itemstack.shrink(1);
+        return ActionResultType.func_233537_a_(world.isRemote);
+    }
+
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        if (playerIn.isElytraFlying())
+        {
+            ItemStack itemstack = playerIn.getHeldItem(handIn);
+
+            if (!worldIn.isRemote)
+            {
+                worldIn.addEntity(new FireworkRocketEntity(worldIn, itemstack, playerIn));
+
+                if (!playerIn.abilities.isCreativeMode)
+                {
+                    itemstack.shrink(1);
+                }
             }
-         }
 
-         return ActionResult.sidedSuccess(p_77659_2_.getItemInHand(p_77659_3_), p_77659_1_.isClientSide());
-      } else {
-         return ActionResult.pass(p_77659_2_.getItemInHand(p_77659_3_));
-      }
-   }
+            return ActionResult.func_233538_a_(playerIn.getHeldItem(handIn), worldIn.isRemote());
+        }
+        else
+        {
+            return ActionResult.resultPass(playerIn.getHeldItem(handIn));
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(ItemStack p_77624_1_, @Nullable World p_77624_2_, List<ITextComponent> p_77624_3_, ITooltipFlag p_77624_4_) {
-      CompoundNBT compoundnbt = p_77624_1_.getTagElement("Fireworks");
-      if (compoundnbt != null) {
-         if (compoundnbt.contains("Flight", 99)) {
-            p_77624_3_.add((new TranslationTextComponent("item.minecraft.firework_rocket.flight")).append(" ").append(String.valueOf((int)compoundnbt.getByte("Flight"))).withStyle(TextFormatting.GRAY));
-         }
+    /**
+     * allows items to add custom lines of information to the mouseover description
+     */
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+    {
+        CompoundNBT compoundnbt = stack.getChildTag("Fireworks");
 
-         ListNBT listnbt = compoundnbt.getList("Explosions", 10);
-         if (!listnbt.isEmpty()) {
-            for(int i = 0; i < listnbt.size(); ++i) {
-               CompoundNBT compoundnbt1 = listnbt.getCompound(i);
-               List<ITextComponent> list = Lists.newArrayList();
-               FireworkStarItem.appendHoverText(compoundnbt1, list);
-               if (!list.isEmpty()) {
-                  for(int j = 1; j < list.size(); ++j) {
-                     list.set(j, (new StringTextComponent("  ")).append(list.get(j)).withStyle(TextFormatting.GRAY));
-                  }
-
-                  p_77624_3_.addAll(list);
-               }
+        if (compoundnbt != null)
+        {
+            if (compoundnbt.contains("Flight", 99))
+            {
+                tooltip.add((new TranslationTextComponent("item.minecraft.firework_rocket.flight")).appendString(" ").appendString(String.valueOf((int)compoundnbt.getByte("Flight"))).mergeStyle(TextFormatting.GRAY));
             }
-         }
 
-      }
-   }
+            ListNBT listnbt = compoundnbt.getList("Explosions", 10);
 
-   public static enum Shape {
-      SMALL_BALL(0, "small_ball"),
-      LARGE_BALL(1, "large_ball"),
-      STAR(2, "star"),
-      CREEPER(3, "creeper"),
-      BURST(4, "burst");
+            if (!listnbt.isEmpty())
+            {
+                for (int i = 0; i < listnbt.size(); ++i)
+                {
+                    CompoundNBT compoundnbt1 = listnbt.getCompound(i);
+                    List<ITextComponent> list = Lists.newArrayList();
+                    FireworkStarItem.func_195967_a(compoundnbt1, list);
 
-      private static final FireworkRocketItem.Shape[] BY_ID = Arrays.stream(values()).sorted(Comparator.comparingInt((p_199796_0_) -> {
-         return p_199796_0_.id;
-      })).toArray((p_199797_0_) -> {
-         return new FireworkRocketItem.Shape[p_199797_0_];
-      });
-      private final int id;
-      private final String name;
+                    if (!list.isEmpty())
+                    {
+                        for (int j = 1; j < list.size(); ++j)
+                        {
+                            list.set(j, (new StringTextComponent("  ")).append(list.get(j)).mergeStyle(TextFormatting.GRAY));
+                        }
 
-      private Shape(int p_i47931_3_, String p_i47931_4_) {
-         this.id = p_i47931_3_;
-         this.name = p_i47931_4_;
-      }
+                        tooltip.addAll(list);
+                    }
+                }
+            }
+        }
+    }
 
-      public int getId() {
-         return this.id;
-      }
+    public static enum Shape
+    {
+        SMALL_BALL(0, "small_ball"),
+        LARGE_BALL(1, "large_ball"),
+        STAR(2, "star"),
+        CREEPER(3, "creeper"),
+        BURST(4, "burst");
 
-      @OnlyIn(Dist.CLIENT)
-      public String getName() {
-         return this.name;
-      }
+        private static final FireworkRocketItem.Shape[] VALUES = Arrays.stream(values()).sorted(Comparator.comparingInt((p_199796_0_) -> {
+            return p_199796_0_.index;
+        })).toArray((p_199797_0_) -> {
+            return new FireworkRocketItem.Shape[p_199797_0_];
+        });
+        private final int index;
+        private final String shapeName;
 
-      @OnlyIn(Dist.CLIENT)
-      public static FireworkRocketItem.Shape byId(int p_196070_0_) {
-         return p_196070_0_ >= 0 && p_196070_0_ < BY_ID.length ? BY_ID[p_196070_0_] : SMALL_BALL;
-      }
-   }
+        private Shape(int indexIn, String nameIn)
+        {
+            this.index = indexIn;
+            this.shapeName = nameIn;
+        }
+
+        public int getIndex()
+        {
+            return this.index;
+        }
+
+        public String getShapeName()
+        {
+            return this.shapeName;
+        }
+
+        public static FireworkRocketItem.Shape get(int indexIn)
+        {
+            return indexIn >= 0 && indexIn < VALUES.length ? VALUES[indexIn] : SMALL_BALL;
+        }
+    }
 }

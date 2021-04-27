@@ -17,51 +17,70 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class GiveCommand {
-   public static void register(CommandDispatcher<CommandSource> p_198494_0_) {
-      p_198494_0_.register(Commands.literal("give").requires((p_198496_0_) -> {
-         return p_198496_0_.hasPermission(2);
-      }).then(Commands.argument("targets", EntityArgument.players()).then(Commands.argument("item", ItemArgument.item()).executes((p_198493_0_) -> {
-         return giveItem(p_198493_0_.getSource(), ItemArgument.getItem(p_198493_0_, "item"), EntityArgument.getPlayers(p_198493_0_, "targets"), 1);
-      }).then(Commands.argument("count", IntegerArgumentType.integer(1)).executes((p_198495_0_) -> {
-         return giveItem(p_198495_0_.getSource(), ItemArgument.getItem(p_198495_0_, "item"), EntityArgument.getPlayers(p_198495_0_, "targets"), IntegerArgumentType.getInteger(p_198495_0_, "count"));
-      })))));
-   }
+public class GiveCommand
+{
+    public static void register(CommandDispatcher<CommandSource> dispatcher)
+    {
+        dispatcher.register(Commands.literal("give").requires((p_198496_0_) ->
+        {
+            return p_198496_0_.hasPermissionLevel(2);
+        }).then(Commands.argument("targets", EntityArgument.players()).then(Commands.argument("item", ItemArgument.item()).executes((p_198493_0_) ->
+        {
+            return giveItem(p_198493_0_.getSource(), ItemArgument.getItem(p_198493_0_, "item"), EntityArgument.getPlayers(p_198493_0_, "targets"), 1);
+        }).then(Commands.argument("count", IntegerArgumentType.integer(1)).executes((p_198495_0_) ->
+        {
+            return giveItem(p_198495_0_.getSource(), ItemArgument.getItem(p_198495_0_, "item"), EntityArgument.getPlayers(p_198495_0_, "targets"), IntegerArgumentType.getInteger(p_198495_0_, "count"));
+        })))));
+    }
 
-   private static int giveItem(CommandSource p_198497_0_, ItemInput p_198497_1_, Collection<ServerPlayerEntity> p_198497_2_, int p_198497_3_) throws CommandSyntaxException {
-      for(ServerPlayerEntity serverplayerentity : p_198497_2_) {
-         int i = p_198497_3_;
+    private static int giveItem(CommandSource source, ItemInput itemIn, Collection<ServerPlayerEntity> targets, int count) throws CommandSyntaxException
+    {
+        for (ServerPlayerEntity serverplayerentity : targets)
+        {
+            int i = count;
 
-         while(i > 0) {
-            int j = Math.min(p_198497_1_.getItem().getMaxStackSize(), i);
-            i -= j;
-            ItemStack itemstack = p_198497_1_.createItemStack(j, false);
-            boolean flag = serverplayerentity.inventory.add(itemstack);
-            if (flag && itemstack.isEmpty()) {
-               itemstack.setCount(1);
-               ItemEntity itementity1 = serverplayerentity.drop(itemstack, false);
-               if (itementity1 != null) {
-                  itementity1.makeFakeItem();
-               }
+            while (i > 0)
+            {
+                int j = Math.min(itemIn.getItem().getMaxStackSize(), i);
+                i -= j;
+                ItemStack itemstack = itemIn.createStack(j, false);
+                boolean flag = serverplayerentity.inventory.addItemStackToInventory(itemstack);
 
-               serverplayerentity.level.playSound((PlayerEntity)null, serverplayerentity.getX(), serverplayerentity.getY(), serverplayerentity.getZ(), SoundEvents.ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((serverplayerentity.getRandom().nextFloat() - serverplayerentity.getRandom().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-               serverplayerentity.inventoryMenu.broadcastChanges();
-            } else {
-               ItemEntity itementity = serverplayerentity.drop(itemstack, false);
-               if (itementity != null) {
-                  itementity.setNoPickUpDelay();
-                  itementity.setOwner(serverplayerentity.getUUID());
-               }
+                if (flag && itemstack.isEmpty())
+                {
+                    itemstack.setCount(1);
+                    ItemEntity itementity1 = serverplayerentity.dropItem(itemstack, false);
+
+                    if (itementity1 != null)
+                    {
+                        itementity1.makeFakeItem();
+                    }
+
+                    serverplayerentity.world.playSound((PlayerEntity)null, serverplayerentity.getPosX(), serverplayerentity.getPosY(), serverplayerentity.getPosZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((serverplayerentity.getRNG().nextFloat() - serverplayerentity.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
+                    serverplayerentity.container.detectAndSendChanges();
+                }
+                else
+                {
+                    ItemEntity itementity = serverplayerentity.dropItem(itemstack, false);
+
+                    if (itementity != null)
+                    {
+                        itementity.setNoPickupDelay();
+                        itementity.setOwnerId(serverplayerentity.getUniqueID());
+                    }
+                }
             }
-         }
-      }
+        }
 
-      if (p_198497_2_.size() == 1) {
-         p_198497_0_.sendSuccess(new TranslationTextComponent("commands.give.success.single", p_198497_3_, p_198497_1_.createItemStack(p_198497_3_, false).getDisplayName(), p_198497_2_.iterator().next().getDisplayName()), true);
-      } else {
-         p_198497_0_.sendSuccess(new TranslationTextComponent("commands.give.success.single", p_198497_3_, p_198497_1_.createItemStack(p_198497_3_, false).getDisplayName(), p_198497_2_.size()), true);
-      }
+        if (targets.size() == 1)
+        {
+            source.sendFeedback(new TranslationTextComponent("commands.give.success.single", count, itemIn.createStack(count, false).getTextComponent(), targets.iterator().next().getDisplayName()), true);
+        }
+        else
+        {
+            source.sendFeedback(new TranslationTextComponent("commands.give.success.single", count, itemIn.createStack(count, false).getTextComponent(), targets.size()), true);
+        }
 
-      return p_198497_2_.size();
-   }
+        return targets.size();
+    }
 }

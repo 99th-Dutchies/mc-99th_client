@@ -10,61 +10,75 @@ import net.minecraft.item.MerchantOffers;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class NPCMerchant implements IMerchant {
-   private final MerchantInventory container;
-   private final PlayerEntity source;
-   private MerchantOffers offers = new MerchantOffers();
-   private int xp;
+public class NPCMerchant implements IMerchant
+{
+    private final MerchantInventory merchantInventory;
+    private final PlayerEntity customer;
+    private MerchantOffers offers = new MerchantOffers();
+    private int xp;
 
-   public NPCMerchant(PlayerEntity p_i50184_1_) {
-      this.source = p_i50184_1_;
-      this.container = new MerchantInventory(this);
-   }
+    public NPCMerchant(PlayerEntity player)
+    {
+        this.customer = player;
+        this.merchantInventory = new MerchantInventory(this);
+    }
 
-   @Nullable
-   public PlayerEntity getTradingPlayer() {
-      return this.source;
-   }
+    @Nullable
+    public PlayerEntity getCustomer()
+    {
+        return this.customer;
+    }
 
-   public void setTradingPlayer(@Nullable PlayerEntity p_70932_1_) {
-   }
+    public void setCustomer(@Nullable PlayerEntity player)
+    {
+    }
 
-   public MerchantOffers getOffers() {
-      return this.offers;
-   }
+    public MerchantOffers getOffers()
+    {
+        return this.offers;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void overrideOffers(@Nullable MerchantOffers p_213703_1_) {
-      this.offers = p_213703_1_;
-   }
+    public void setClientSideOffers(@Nullable MerchantOffers offers)
+    {
+        this.offers = offers;
+    }
 
-   public void notifyTrade(MerchantOffer p_213704_1_) {
-      p_213704_1_.increaseUses();
-   }
+    public void onTrade(MerchantOffer offer)
+    {
+        offer.increaseUses();
+    }
 
-   public void notifyTradeUpdated(ItemStack p_110297_1_) {
-   }
+    /**
+     * Notifies the merchant of a possible merchantrecipe being fulfilled or not. Usually, this is just a sound byte
+     * being played depending if the suggested itemstack is not null.
+     */
+    public void verifySellingItem(ItemStack stack)
+    {
+    }
 
-   public World getLevel() {
-      return this.source.level;
-   }
+    public World getWorld()
+    {
+        return this.customer.world;
+    }
 
-   public int getVillagerXp() {
-      return this.xp;
-   }
+    public int getXp()
+    {
+        return this.xp;
+    }
 
-   public void overrideXp(int p_213702_1_) {
-      this.xp = p_213702_1_;
-   }
+    public void setXP(int xpIn)
+    {
+        this.xp = xpIn;
+    }
 
-   public boolean showProgressBar() {
-      return true;
-   }
+    public boolean hasXPBar()
+    {
+        return true;
+    }
 
-   public SoundEvent getNotifyTradeSound() {
-      return SoundEvents.VILLAGER_YES;
-   }
+    public SoundEvent getYesSound()
+    {
+        return SoundEvents.ENTITY_VILLAGER_YES;
+    }
 }

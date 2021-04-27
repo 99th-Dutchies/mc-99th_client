@@ -6,26 +6,27 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SoundSlider extends GameSettingsSlider {
-   private final SoundCategory source;
+public class SoundSlider extends GameSettingsSlider
+{
+    private final SoundCategory category;
 
-   public SoundSlider(Minecraft p_i51127_1_, int p_i51127_2_, int p_i51127_3_, SoundCategory p_i51127_4_, int p_i51127_5_) {
-      super(p_i51127_1_.options, p_i51127_2_, p_i51127_3_, p_i51127_5_, 20, (double)p_i51127_1_.options.getSoundSourceVolume(p_i51127_4_));
-      this.source = p_i51127_4_;
-      this.updateMessage();
-   }
+    public SoundSlider(Minecraft settings, int x, int y, SoundCategory category, int width)
+    {
+        super(settings.gameSettings, x, y, width, 20, (double)settings.gameSettings.getSoundLevel(category));
+        this.category = category;
+        this.func_230979_b_();
+    }
 
-   protected void updateMessage() {
-      ITextComponent itextcomponent = (ITextComponent)((float)this.value == (float)this.getYImage(false) ? DialogTexts.OPTION_OFF : new StringTextComponent((int)(this.value * 100.0D) + "%"));
-      this.setMessage((new TranslationTextComponent("soundCategory." + this.source.getName())).append(": ").append(itextcomponent));
-   }
+    protected void func_230979_b_()
+    {
+        ITextComponent itextcomponent = (ITextComponent)((float)this.sliderValue == (float)this.getYImage(false) ? DialogTexts.OPTIONS_OFF : new StringTextComponent((int)(this.sliderValue * 100.0D) + "%"));
+        this.setMessage((new TranslationTextComponent("soundCategory." + this.category.getName())).appendString(": ").append(itextcomponent));
+    }
 
-   protected void applyValue() {
-      this.options.setSoundCategoryVolume(this.source, (float)this.value);
-      this.options.save();
-   }
+    protected void func_230972_a_()
+    {
+        this.settings.setSoundLevel(this.category, (float)this.sliderValue);
+        this.settings.saveOptions();
+    }
 }

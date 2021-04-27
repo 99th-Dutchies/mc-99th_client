@@ -5,34 +5,45 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SPlayerListHeaderFooterPacket implements IPacket<IClientPlayNetHandler> {
-   private ITextComponent header;
-   private ITextComponent footer;
+public class SPlayerListHeaderFooterPacket implements IPacket<IClientPlayNetHandler>
+{
+    private ITextComponent header;
+    private ITextComponent footer;
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.header = p_148837_1_.readComponent();
-      this.footer = p_148837_1_.readComponent();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.header = buf.readTextComponent();
+        this.footer = buf.readTextComponent();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeComponent(this.header);
-      p_148840_1_.writeComponent(this.footer);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeTextComponent(this.header);
+        buf.writeTextComponent(this.footer);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleTabListCustomisation(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handlePlayerListHeaderFooter(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getHeader() {
-      return this.header;
-   }
+    public ITextComponent getHeader()
+    {
+        return this.header;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getFooter() {
-      return this.footer;
-   }
+    public ITextComponent getFooter()
+    {
+        return this.footer;
+    }
 }

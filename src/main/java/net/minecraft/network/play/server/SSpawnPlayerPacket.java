@@ -6,87 +6,100 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SSpawnPlayerPacket implements IPacket<IClientPlayNetHandler> {
-   private int entityId;
-   private UUID playerId;
-   private double x;
-   private double y;
-   private double z;
-   private byte yRot;
-   private byte xRot;
+public class SSpawnPlayerPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private UUID uniqueId;
+    private double x;
+    private double y;
+    private double z;
+    private byte yaw;
+    private byte pitch;
 
-   public SSpawnPlayerPacket() {
-   }
+    public SSpawnPlayerPacket()
+    {
+    }
 
-   public SSpawnPlayerPacket(PlayerEntity p_i46971_1_) {
-      this.entityId = p_i46971_1_.getId();
-      this.playerId = p_i46971_1_.getGameProfile().getId();
-      this.x = p_i46971_1_.getX();
-      this.y = p_i46971_1_.getY();
-      this.z = p_i46971_1_.getZ();
-      this.yRot = (byte)((int)(p_i46971_1_.yRot * 256.0F / 360.0F));
-      this.xRot = (byte)((int)(p_i46971_1_.xRot * 256.0F / 360.0F));
-   }
+    public SSpawnPlayerPacket(PlayerEntity player)
+    {
+        this.entityId = player.getEntityId();
+        this.uniqueId = player.getGameProfile().getId();
+        this.x = player.getPosX();
+        this.y = player.getPosY();
+        this.z = player.getPosZ();
+        this.yaw = (byte)((int)(player.rotationYaw * 256.0F / 360.0F));
+        this.pitch = (byte)((int)(player.rotationPitch * 256.0F / 360.0F));
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.entityId = p_148837_1_.readVarInt();
-      this.playerId = p_148837_1_.readUUID();
-      this.x = p_148837_1_.readDouble();
-      this.y = p_148837_1_.readDouble();
-      this.z = p_148837_1_.readDouble();
-      this.yRot = p_148837_1_.readByte();
-      this.xRot = p_148837_1_.readByte();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.uniqueId = buf.readUniqueId();
+        this.x = buf.readDouble();
+        this.y = buf.readDouble();
+        this.z = buf.readDouble();
+        this.yaw = buf.readByte();
+        this.pitch = buf.readByte();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.entityId);
-      p_148840_1_.writeUUID(this.playerId);
-      p_148840_1_.writeDouble(this.x);
-      p_148840_1_.writeDouble(this.y);
-      p_148840_1_.writeDouble(this.z);
-      p_148840_1_.writeByte(this.yRot);
-      p_148840_1_.writeByte(this.xRot);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeUniqueId(this.uniqueId);
+        buf.writeDouble(this.x);
+        buf.writeDouble(this.y);
+        buf.writeDouble(this.z);
+        buf.writeByte(this.yaw);
+        buf.writeByte(this.pitch);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleAddPlayer(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleSpawnPlayer(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getEntityId() {
-      return this.entityId;
-   }
+    public int getEntityID()
+    {
+        return this.entityId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public UUID getPlayerId() {
-      return this.playerId;
-   }
+    public UUID getUniqueId()
+    {
+        return this.uniqueId;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getX() {
-      return this.x;
-   }
+    public double getX()
+    {
+        return this.x;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getY() {
-      return this.y;
-   }
+    public double getY()
+    {
+        return this.y;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ()
+    {
+        return this.z;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getyRot() {
-      return this.yRot;
-   }
+    public byte getYaw()
+    {
+        return this.yaw;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getxRot() {
-      return this.xRot;
-   }
+    public byte getPitch()
+    {
+        return this.pitch;
+    }
 }

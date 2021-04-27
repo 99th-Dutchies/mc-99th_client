@@ -6,11 +6,14 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.world.server.ServerWorld;
 
-public class DummySensor extends Sensor<LivingEntity> {
-   protected void doTick(ServerWorld p_212872_1_, LivingEntity p_212872_2_) {
-   }
+public class DummySensor extends Sensor<LivingEntity>
+{
+    protected void update(ServerWorld worldIn, LivingEntity entityIn)
+    {
+    }
 
-   public Set<MemoryModuleType<?>> requires() {
-      return ImmutableSet.of();
-   }
+    public Set < MemoryModuleType<? >> getUsedMemories()
+    {
+        return ImmutableSet.of();
+    }
 }

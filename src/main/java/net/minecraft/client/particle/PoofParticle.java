@@ -2,63 +2,71 @@ package net.minecraft.client.particle;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class PoofParticle extends SpriteTexturedParticle {
-   private final IAnimatedSprite sprites;
+public class PoofParticle extends SpriteTexturedParticle
+{
+    private final IAnimatedSprite spriteWithAge;
 
-   protected PoofParticle(ClientWorld p_i232384_1_, double p_i232384_2_, double p_i232384_4_, double p_i232384_6_, double p_i232384_8_, double p_i232384_10_, double p_i232384_12_, IAnimatedSprite p_i232384_14_) {
-      super(p_i232384_1_, p_i232384_2_, p_i232384_4_, p_i232384_6_);
-      this.sprites = p_i232384_14_;
-      this.xd = p_i232384_8_ + (Math.random() * 2.0D - 1.0D) * (double)0.05F;
-      this.yd = p_i232384_10_ + (Math.random() * 2.0D - 1.0D) * (double)0.05F;
-      this.zd = p_i232384_12_ + (Math.random() * 2.0D - 1.0D) * (double)0.05F;
-      float f = this.random.nextFloat() * 0.3F + 0.7F;
-      this.rCol = f;
-      this.gCol = f;
-      this.bCol = f;
-      this.quadSize = 0.1F * (this.random.nextFloat() * this.random.nextFloat() * 6.0F + 1.0F);
-      this.lifetime = (int)(16.0D / ((double)this.random.nextFloat() * 0.8D + 0.2D)) + 2;
-      this.setSpriteFromAge(p_i232384_14_);
-   }
+    protected PoofParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ, IAnimatedSprite spriteWithAge)
+    {
+        super(world, x, y, z);
+        this.spriteWithAge = spriteWithAge;
+        this.motionX = motionX + (Math.random() * 2.0D - 1.0D) * (double)0.05F;
+        this.motionY = motionY + (Math.random() * 2.0D - 1.0D) * (double)0.05F;
+        this.motionZ = motionZ + (Math.random() * 2.0D - 1.0D) * (double)0.05F;
+        float f = this.rand.nextFloat() * 0.3F + 0.7F;
+        this.particleRed = f;
+        this.particleGreen = f;
+        this.particleBlue = f;
+        this.particleScale = 0.1F * (this.rand.nextFloat() * this.rand.nextFloat() * 6.0F + 1.0F);
+        this.maxAge = (int)(16.0D / ((double)this.rand.nextFloat() * 0.8D + 0.2D)) + 2;
+        this.selectSpriteWithAge(spriteWithAge);
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.setSpriteFromAge(this.sprites);
-         this.yd += 0.004D;
-         this.move(this.xd, this.yd, this.zd);
-         this.xd *= (double)0.9F;
-         this.yd *= (double)0.9F;
-         this.zd *= (double)0.9F;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.selectSpriteWithAge(this.spriteWithAge);
+            this.motionY += 0.004D;
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionX *= (double)0.9F;
+            this.motionY *= (double)0.9F;
+            this.motionZ *= (double)0.9F;
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprites;
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 
-      public Factory(IAnimatedSprite p_i49913_1_) {
-         this.sprites = p_i49913_1_;
-      }
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         return new PoofParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, this.sprites);
-      }
-   }
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            return new PoofParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+        }
+    }
 }

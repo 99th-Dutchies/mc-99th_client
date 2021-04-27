@@ -6,20 +6,25 @@ import net.minecraft.entity.Entity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 
-public class EntityExplosionContext extends ExplosionContext {
-   private final Entity source;
+public class EntityExplosionContext extends ExplosionContext
+{
+    private final Entity entity;
 
-   public EntityExplosionContext(Entity p_i231609_1_) {
-      this.source = p_i231609_1_;
-   }
+    public EntityExplosionContext(Entity entity)
+    {
+        this.entity = entity;
+    }
 
-   public Optional<Float> getBlockExplosionResistance(Explosion p_230312_1_, IBlockReader p_230312_2_, BlockPos p_230312_3_, BlockState p_230312_4_, FluidState p_230312_5_) {
-      return super.getBlockExplosionResistance(p_230312_1_, p_230312_2_, p_230312_3_, p_230312_4_, p_230312_5_).map((p_234890_6_) -> {
-         return this.source.getBlockExplosionResistance(p_230312_1_, p_230312_2_, p_230312_3_, p_230312_4_, p_230312_5_, p_234890_6_);
-      });
-   }
+    public Optional<Float> getExplosionResistance(Explosion explosion, IBlockReader reader, BlockPos pos, BlockState state, FluidState fluid)
+    {
+        return super.getExplosionResistance(explosion, reader, pos, state, fluid).map((explosionPower) ->
+        {
+            return this.entity.getExplosionResistance(explosion, reader, pos, state, fluid, explosionPower);
+        });
+    }
 
-   public boolean shouldBlockExplode(Explosion p_230311_1_, IBlockReader p_230311_2_, BlockPos p_230311_3_, BlockState p_230311_4_, float p_230311_5_) {
-      return this.source.shouldBlockExplode(p_230311_1_, p_230311_2_, p_230311_3_, p_230311_4_, p_230311_5_);
-   }
+    public boolean canExplosionDestroyBlock(Explosion explosion, IBlockReader reader, BlockPos pos, BlockState state, float power)
+    {
+        return this.entity.canExplosionDestroyBlock(explosion, reader, pos, state, power);
+    }
 }

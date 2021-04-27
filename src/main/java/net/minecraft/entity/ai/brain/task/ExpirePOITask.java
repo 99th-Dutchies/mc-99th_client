@@ -15,44 +15,54 @@ import net.minecraft.util.math.GlobalPos;
 import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.server.ServerWorld;
 
-public class ExpirePOITask extends Task<LivingEntity> {
-   private final MemoryModuleType<GlobalPos> memoryType;
-   private final Predicate<PointOfInterestType> poiPredicate;
+public class ExpirePOITask extends Task<LivingEntity>
+{
+    private final MemoryModuleType<GlobalPos> field_220591_a;
+    private final Predicate<PointOfInterestType> poiType;
 
-   public ExpirePOITask(PointOfInterestType p_i50338_1_, MemoryModuleType<GlobalPos> p_i50338_2_) {
-      super(ImmutableMap.of(p_i50338_2_, MemoryModuleStatus.VALUE_PRESENT));
-      this.poiPredicate = p_i50338_1_.getPredicate();
-      this.memoryType = p_i50338_2_;
-   }
+    public ExpirePOITask(PointOfInterestType p_i50338_1_, MemoryModuleType<GlobalPos> p_i50338_2_)
+    {
+        super(ImmutableMap.of(p_i50338_2_, MemoryModuleStatus.VALUE_PRESENT));
+        this.poiType = p_i50338_1_.getPredicate();
+        this.field_220591_a = p_i50338_2_;
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, LivingEntity p_212832_2_) {
-      GlobalPos globalpos = p_212832_2_.getBrain().getMemory(this.memoryType).get();
-      return p_212832_1_.dimension() == globalpos.dimension() && globalpos.pos().closerThan(p_212832_2_.position(), 16.0D);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, LivingEntity owner)
+    {
+        GlobalPos globalpos = owner.getBrain().getMemory(this.field_220591_a).get();
+        return worldIn.getDimensionKey() == globalpos.getDimension() && globalpos.getPos().withinDistance(owner.getPositionVec(), 16.0D);
+    }
 
-   protected void start(ServerWorld p_212831_1_, LivingEntity p_212831_2_, long p_212831_3_) {
-      Brain<?> brain = p_212831_2_.getBrain();
-      GlobalPos globalpos = brain.getMemory(this.memoryType).get();
-      BlockPos blockpos = globalpos.pos();
-      ServerWorld serverworld = p_212831_1_.getServer().getLevel(globalpos.dimension());
-      if (serverworld != null && !this.poiDoesntExist(serverworld, blockpos)) {
-         if (this.bedIsOccupied(serverworld, blockpos, p_212831_2_)) {
-            brain.eraseMemory(this.memoryType);
-            p_212831_1_.getPoiManager().release(blockpos);
-            DebugPacketSender.sendPoiTicketCountPacket(p_212831_1_, blockpos);
-         }
-      } else {
-         brain.eraseMemory(this.memoryType);
-      }
+    protected void startExecuting(ServerWorld worldIn, LivingEntity entityIn, long gameTimeIn)
+    {
+        Brain<?> brain = entityIn.getBrain();
+        GlobalPos globalpos = brain.getMemory(this.field_220591_a).get();
+        BlockPos blockpos = globalpos.getPos();
+        ServerWorld serverworld = worldIn.getServer().getWorld(globalpos.getDimension());
 
-   }
+        if (serverworld != null && !this.func_223020_a(serverworld, blockpos))
+        {
+            if (this.func_223019_a(serverworld, blockpos, entityIn))
+            {
+                brain.removeMemory(this.field_220591_a);
+                worldIn.getPointOfInterestManager().release(blockpos);
+                DebugPacketSender.func_218801_c(worldIn, blockpos);
+            }
+        }
+        else
+        {
+            brain.removeMemory(this.field_220591_a);
+        }
+    }
 
-   private boolean bedIsOccupied(ServerWorld p_223019_1_, BlockPos p_223019_2_, LivingEntity p_223019_3_) {
-      BlockState blockstate = p_223019_1_.getBlockState(p_223019_2_);
-      return blockstate.getBlock().is(BlockTags.BEDS) && blockstate.getValue(BedBlock.OCCUPIED) && !p_223019_3_.isSleeping();
-   }
+    private boolean func_223019_a(ServerWorld world, BlockPos pos, LivingEntity p_223019_3_)
+    {
+        BlockState blockstate = world.getBlockState(pos);
+        return blockstate.getBlock().isIn(BlockTags.BEDS) && blockstate.get(BedBlock.OCCUPIED) && !p_223019_3_.isSleeping();
+    }
 
-   private boolean poiDoesntExist(ServerWorld p_223020_1_, BlockPos p_223020_2_) {
-      return !p_223020_1_.getPoiManager().exists(p_223020_2_, this.poiPredicate);
-   }
+    private boolean func_223020_a(ServerWorld world, BlockPos pos)
+    {
+        return !world.getPointOfInterestManager().exists(pos, this.poiType);
+    }
 }

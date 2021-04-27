@@ -5,37 +5,47 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap.Entry;
 import net.minecraft.nbt.CompoundNBT;
 
-public class MapIdTracker extends WorldSavedData {
-   private final Object2IntMap<String> usedAuxIds = new Object2IntOpenHashMap<>();
+public class MapIdTracker extends WorldSavedData
+{
+    private final Object2IntMap<String> usedIds = new Object2IntOpenHashMap<>();
 
-   public MapIdTracker() {
-      super("idcounts");
-      this.usedAuxIds.defaultReturnValue(-1);
-   }
+    public MapIdTracker()
+    {
+        super("idcounts");
+        this.usedIds.defaultReturnValue(-1);
+    }
 
-   public void load(CompoundNBT p_76184_1_) {
-      this.usedAuxIds.clear();
+    /**
+     * reads in data from the NBTTagCompound into this MapDataBase
+     */
+    public void read(CompoundNBT nbt)
+    {
+        this.usedIds.clear();
 
-      for(String s : p_76184_1_.getAllKeys()) {
-         if (p_76184_1_.contains(s, 99)) {
-            this.usedAuxIds.put(s, p_76184_1_.getInt(s));
-         }
-      }
+        for (String s : nbt.keySet())
+        {
+            if (nbt.contains(s, 99))
+            {
+                this.usedIds.put(s, nbt.getInt(s));
+            }
+        }
+    }
 
-   }
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        for (Entry<String> entry : this.usedIds.object2IntEntrySet())
+        {
+            compound.putInt(entry.getKey(), entry.getIntValue());
+        }
 
-   public CompoundNBT save(CompoundNBT p_189551_1_) {
-      for(Entry<String> entry : this.usedAuxIds.object2IntEntrySet()) {
-         p_189551_1_.putInt(entry.getKey(), entry.getIntValue());
-      }
+        return compound;
+    }
 
-      return p_189551_1_;
-   }
-
-   public int getFreeAuxValueForMap() {
-      int i = this.usedAuxIds.getInt("map") + 1;
-      this.usedAuxIds.put("map", i);
-      this.setDirty();
-      return i;
-   }
+    public int getNextId()
+    {
+        int i = this.usedIds.getInt("map") + 1;
+        this.usedIds.put("map", i);
+        this.markDirty();
+        return i;
+    }
 }

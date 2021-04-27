@@ -19,57 +19,76 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class ArmorStandItem extends Item {
-   public ArmorStandItem(Item.Properties p_i48532_1_) {
-      super(p_i48532_1_);
-   }
+public class ArmorStandItem extends Item
+{
+    public ArmorStandItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ActionResultType useOn(ItemUseContext p_195939_1_) {
-      Direction direction = p_195939_1_.getClickedFace();
-      if (direction == Direction.DOWN) {
-         return ActionResultType.FAIL;
-      } else {
-         World world = p_195939_1_.getLevel();
-         BlockItemUseContext blockitemusecontext = new BlockItemUseContext(p_195939_1_);
-         BlockPos blockpos = blockitemusecontext.getClickedPos();
-         ItemStack itemstack = p_195939_1_.getItemInHand();
-         Vector3d vector3d = Vector3d.atBottomCenterOf(blockpos);
-         AxisAlignedBB axisalignedbb = EntityType.ARMOR_STAND.getDimensions().makeBoundingBox(vector3d.x(), vector3d.y(), vector3d.z());
-         if (world.noCollision((Entity)null, axisalignedbb, (p_242390_0_) -> {
-            return true;
-         }) && world.getEntities((Entity)null, axisalignedbb).isEmpty()) {
-            if (world instanceof ServerWorld) {
-               ServerWorld serverworld = (ServerWorld)world;
-               ArmorStandEntity armorstandentity = EntityType.ARMOR_STAND.create(serverworld, itemstack.getTag(), (ITextComponent)null, p_195939_1_.getPlayer(), blockpos, SpawnReason.SPAWN_EGG, true, true);
-               if (armorstandentity == null) {
-                  return ActionResultType.FAIL;
-               }
+    /**
+     * Called when this item is used when targetting a Block
+     */
+    public ActionResultType onItemUse(ItemUseContext context)
+    {
+        Direction direction = context.getFace();
 
-               serverworld.addFreshEntityWithPassengers(armorstandentity);
-               float f = (float)MathHelper.floor((MathHelper.wrapDegrees(p_195939_1_.getRotation() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
-               armorstandentity.moveTo(armorstandentity.getX(), armorstandentity.getY(), armorstandentity.getZ(), f, 0.0F);
-               this.randomizePose(armorstandentity, world.random);
-               world.addFreshEntity(armorstandentity);
-               world.playSound((PlayerEntity)null, armorstandentity.getX(), armorstandentity.getY(), armorstandentity.getZ(), SoundEvents.ARMOR_STAND_PLACE, SoundCategory.BLOCKS, 0.75F, 0.8F);
-            }
-
-            itemstack.shrink(1);
-            return ActionResultType.sidedSuccess(world.isClientSide);
-         } else {
+        if (direction == Direction.DOWN)
+        {
             return ActionResultType.FAIL;
-         }
-      }
-   }
+        }
+        else
+        {
+            World world = context.getWorld();
+            BlockItemUseContext blockitemusecontext = new BlockItemUseContext(context);
+            BlockPos blockpos = blockitemusecontext.getPos();
+            ItemStack itemstack = context.getItem();
+            Vector3d vector3d = Vector3d.copyCenteredHorizontally(blockpos);
+            AxisAlignedBB axisalignedbb = EntityType.ARMOR_STAND.getSize().func_242285_a(vector3d.getX(), vector3d.getY(), vector3d.getZ());
 
-   private void randomizePose(ArmorStandEntity p_179221_1_, Random p_179221_2_) {
-      Rotations rotations = p_179221_1_.getHeadPose();
-      float f = p_179221_2_.nextFloat() * 5.0F;
-      float f1 = p_179221_2_.nextFloat() * 20.0F - 10.0F;
-      Rotations rotations1 = new Rotations(rotations.getX() + f, rotations.getY() + f1, rotations.getZ());
-      p_179221_1_.setHeadPose(rotations1);
-      rotations = p_179221_1_.getBodyPose();
-      f = p_179221_2_.nextFloat() * 10.0F - 5.0F;
-      rotations1 = new Rotations(rotations.getX(), rotations.getY() + f, rotations.getZ());
-      p_179221_1_.setBodyPose(rotations1);
-   }
+            if (world.hasNoCollisions((Entity)null, axisalignedbb, (p_242390_0_) ->
+        {
+            return true;
+        }) && world.getEntitiesWithinAABBExcludingEntity((Entity)null, axisalignedbb).isEmpty())
+            {
+                if (world instanceof ServerWorld)
+                {
+                    ServerWorld serverworld = (ServerWorld)world;
+                    ArmorStandEntity armorstandentity = EntityType.ARMOR_STAND.create(serverworld, itemstack.getTag(), (ITextComponent)null, context.getPlayer(), blockpos, SpawnReason.SPAWN_EGG, true, true);
+
+                    if (armorstandentity == null)
+                    {
+                        return ActionResultType.FAIL;
+                    }
+
+                    serverworld.func_242417_l(armorstandentity);
+                    float f = (float)MathHelper.floor((MathHelper.wrapDegrees(context.getPlacementYaw() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
+                    armorstandentity.setLocationAndAngles(armorstandentity.getPosX(), armorstandentity.getPosY(), armorstandentity.getPosZ(), f, 0.0F);
+                    this.applyRandomRotations(armorstandentity, world.rand);
+                    world.addEntity(armorstandentity);
+                    world.playSound((PlayerEntity)null, armorstandentity.getPosX(), armorstandentity.getPosY(), armorstandentity.getPosZ(), SoundEvents.ENTITY_ARMOR_STAND_PLACE, SoundCategory.BLOCKS, 0.75F, 0.8F);
+                }
+
+                itemstack.shrink(1);
+                return ActionResultType.func_233537_a_(world.isRemote);
+            }
+            else
+            {
+                return ActionResultType.FAIL;
+            }
+        }
+    }
+
+    private void applyRandomRotations(ArmorStandEntity armorStand, Random rand)
+    {
+        Rotations rotations = armorStand.getHeadRotation();
+        float f = rand.nextFloat() * 5.0F;
+        float f1 = rand.nextFloat() * 20.0F - 10.0F;
+        Rotations rotations1 = new Rotations(rotations.getX() + f, rotations.getY() + f1, rotations.getZ());
+        armorStand.setHeadRotation(rotations1);
+        rotations = armorStand.getBodyRotation();
+        f = rand.nextFloat() * 10.0F - 5.0F;
+        rotations1 = new Rotations(rotations.getX(), rotations.getY() + f, rotations.getZ());
+        armorStand.setBodyRotation(rotations1);
+    }
 }

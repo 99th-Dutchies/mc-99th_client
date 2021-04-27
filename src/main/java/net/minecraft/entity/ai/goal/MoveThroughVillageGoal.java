@@ -19,126 +19,185 @@ import net.minecraft.village.PointOfInterestManager;
 import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.server.ServerWorld;
 
-public class MoveThroughVillageGoal extends Goal {
-   protected final CreatureEntity mob;
-   private final double speedModifier;
-   private Path path;
-   private BlockPos poiPos;
-   private final boolean onlyAtNight;
-   private final List<BlockPos> visited = Lists.newArrayList();
-   private final int distanceToPoi;
-   private final BooleanSupplier canDealWithDoors;
+public class MoveThroughVillageGoal extends Goal
+{
+    protected final CreatureEntity entity;
+    private final double movementSpeed;
+    private Path path;
+    private BlockPos field_220735_d;
+    private final boolean isNocturnal;
+    private final List<BlockPos> doorList = Lists.newArrayList();
+    private final int maxDistance;
+    private final BooleanSupplier booleanSupplier;
 
-   public MoveThroughVillageGoal(CreatureEntity p_i50324_1_, double p_i50324_2_, boolean p_i50324_4_, int p_i50324_5_, BooleanSupplier p_i50324_6_) {
-      this.mob = p_i50324_1_;
-      this.speedModifier = p_i50324_2_;
-      this.onlyAtNight = p_i50324_4_;
-      this.distanceToPoi = p_i50324_5_;
-      this.canDealWithDoors = p_i50324_6_;
-      this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      if (!GroundPathHelper.hasGroundPathNavigation(p_i50324_1_)) {
-         throw new IllegalArgumentException("Unsupported mob for MoveThroughVillageGoal");
-      }
-   }
+    public MoveThroughVillageGoal(CreatureEntity entity, double speedIn, boolean nocturnal, int maxDistanceIn, BooleanSupplier booleanSupplierIn)
+    {
+        this.entity = entity;
+        this.movementSpeed = speedIn;
+        this.isNocturnal = nocturnal;
+        this.maxDistance = maxDistanceIn;
+        this.booleanSupplier = booleanSupplierIn;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
 
-   public boolean canUse() {
-      if (!GroundPathHelper.hasGroundPathNavigation(this.mob)) {
-         return false;
-      } else {
-         this.updateVisited();
-         if (this.onlyAtNight && this.mob.level.isDay()) {
+        if (!GroundPathHelper.isGroundNavigator(entity))
+        {
+            throw new IllegalArgumentException("Unsupported mob for MoveThroughVillageGoal");
+        }
+    }
+
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        if (!GroundPathHelper.isGroundNavigator(this.entity))
+        {
             return false;
-         } else {
-            ServerWorld serverworld = (ServerWorld)this.mob.level;
-            BlockPos blockpos = this.mob.blockPosition();
-            if (!serverworld.isCloseToVillage(blockpos, 6)) {
-               return false;
-            } else {
-               Vector3d vector3d = RandomPositionGenerator.getLandPos(this.mob, 15, 7, (p_220734_3_) -> {
-                  if (!serverworld.isVillage(p_220734_3_)) {
-                     return Double.NEGATIVE_INFINITY;
-                  } else {
-                     Optional<BlockPos> optional1 = serverworld.getPoiManager().find(PointOfInterestType.ALL, this::hasNotVisited, p_220734_3_, 10, PointOfInterestManager.Status.IS_OCCUPIED);
-                     return !optional1.isPresent() ? Double.NEGATIVE_INFINITY : -optional1.get().distSqr(blockpos);
-                  }
-               });
-               if (vector3d == null) {
-                  return false;
-               } else {
-                  Optional<BlockPos> optional = serverworld.getPoiManager().find(PointOfInterestType.ALL, this::hasNotVisited, new BlockPos(vector3d), 10, PointOfInterestManager.Status.IS_OCCUPIED);
-                  if (!optional.isPresent()) {
-                     return false;
-                  } else {
-                     this.poiPos = optional.get().immutable();
-                     GroundPathNavigator groundpathnavigator = (GroundPathNavigator)this.mob.getNavigation();
-                     boolean flag = groundpathnavigator.canOpenDoors();
-                     groundpathnavigator.setCanOpenDoors(this.canDealWithDoors.getAsBoolean());
-                     this.path = groundpathnavigator.createPath(this.poiPos, 0);
-                     groundpathnavigator.setCanOpenDoors(flag);
-                     if (this.path == null) {
-                        Vector3d vector3d1 = RandomPositionGenerator.getPosTowards(this.mob, 10, 7, Vector3d.atBottomCenterOf(this.poiPos));
-                        if (vector3d1 == null) {
-                           return false;
-                        }
+        }
+        else
+        {
+            this.resizeDoorList();
 
-                        groundpathnavigator.setCanOpenDoors(this.canDealWithDoors.getAsBoolean());
-                        this.path = this.mob.getNavigation().createPath(vector3d1.x, vector3d1.y, vector3d1.z, 0);
-                        groundpathnavigator.setCanOpenDoors(flag);
-                        if (this.path == null) {
-                           return false;
-                        }
-                     }
-
-                     for(int i = 0; i < this.path.getNodeCount(); ++i) {
-                        PathPoint pathpoint = this.path.getNode(i);
-                        BlockPos blockpos1 = new BlockPos(pathpoint.x, pathpoint.y + 1, pathpoint.z);
-                        if (DoorBlock.isWoodenDoor(this.mob.level, blockpos1)) {
-                           this.path = this.mob.getNavigation().createPath((double)pathpoint.x, (double)pathpoint.y, (double)pathpoint.z, 0);
-                           break;
-                        }
-                     }
-
-                     return this.path != null;
-                  }
-               }
+            if (this.isNocturnal && this.entity.world.isDaytime())
+            {
+                return false;
             }
-         }
-      }
-   }
+            else
+            {
+                ServerWorld serverworld = (ServerWorld)this.entity.world;
+                BlockPos blockpos = this.entity.getPosition();
 
-   public boolean canContinueToUse() {
-      if (this.mob.getNavigation().isDone()) {
-         return false;
-      } else {
-         return !this.poiPos.closerThan(this.mob.position(), (double)(this.mob.getBbWidth() + (float)this.distanceToPoi));
-      }
-   }
+                if (!serverworld.func_241119_a_(blockpos, 6))
+                {
+                    return false;
+                }
+                else
+                {
+                    Vector3d vector3d = RandomPositionGenerator.func_221024_a(this.entity, 15, 7, (p_220734_3_) ->
+                    {
+                        if (!serverworld.isVillage(p_220734_3_))
+                        {
+                            return Double.NEGATIVE_INFINITY;
+                        }
+                        else {
+                            Optional<BlockPos> optional1 = serverworld.getPointOfInterestManager().find(PointOfInterestType.MATCH_ANY, this::func_220733_a, p_220734_3_, 10, PointOfInterestManager.Status.IS_OCCUPIED);
+                            return !optional1.isPresent() ? Double.NEGATIVE_INFINITY : -optional1.get().distanceSq(blockpos);
+                        }
+                    });
 
-   public void start() {
-      this.mob.getNavigation().moveTo(this.path, this.speedModifier);
-   }
+                    if (vector3d == null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        Optional<BlockPos> optional = serverworld.getPointOfInterestManager().find(PointOfInterestType.MATCH_ANY, this::func_220733_a, new BlockPos(vector3d), 10, PointOfInterestManager.Status.IS_OCCUPIED);
 
-   public void stop() {
-      if (this.mob.getNavigation().isDone() || this.poiPos.closerThan(this.mob.position(), (double)this.distanceToPoi)) {
-         this.visited.add(this.poiPos);
-      }
+                        if (!optional.isPresent())
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            this.field_220735_d = optional.get().toImmutable();
+                            GroundPathNavigator groundpathnavigator = (GroundPathNavigator)this.entity.getNavigator();
+                            boolean flag = groundpathnavigator.getEnterDoors();
+                            groundpathnavigator.setBreakDoors(this.booleanSupplier.getAsBoolean());
+                            this.path = groundpathnavigator.getPathToPos(this.field_220735_d, 0);
+                            groundpathnavigator.setBreakDoors(flag);
 
-   }
+                            if (this.path == null)
+                            {
+                                Vector3d vector3d1 = RandomPositionGenerator.findRandomTargetBlockTowards(this.entity, 10, 7, Vector3d.copyCenteredHorizontally(this.field_220735_d));
 
-   private boolean hasNotVisited(BlockPos p_220733_1_) {
-      for(BlockPos blockpos : this.visited) {
-         if (Objects.equals(p_220733_1_, blockpos)) {
+                                if (vector3d1 == null)
+                                {
+                                    return false;
+                                }
+
+                                groundpathnavigator.setBreakDoors(this.booleanSupplier.getAsBoolean());
+                                this.path = this.entity.getNavigator().getPathToPos(vector3d1.x, vector3d1.y, vector3d1.z, 0);
+                                groundpathnavigator.setBreakDoors(flag);
+
+                                if (this.path == null)
+                                {
+                                    return false;
+                                }
+                            }
+
+                            for (int i = 0; i < this.path.getCurrentPathLength(); ++i)
+                            {
+                                PathPoint pathpoint = this.path.getPathPointFromIndex(i);
+                                BlockPos blockpos1 = new BlockPos(pathpoint.x, pathpoint.y + 1, pathpoint.z);
+
+                                if (DoorBlock.isWooden(this.entity.world, blockpos1))
+                                {
+                                    this.path = this.entity.getNavigator().getPathToPos((double)pathpoint.x, (double)pathpoint.y, (double)pathpoint.z, 0);
+                                    break;
+                                }
+                            }
+
+                            return this.path != null;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        if (this.entity.getNavigator().noPath())
+        {
             return false;
-         }
-      }
+        }
+        else
+        {
+            return !this.field_220735_d.withinDistance(this.entity.getPositionVec(), (double)(this.entity.getWidth() + (float)this.maxDistance));
+        }
+    }
 
-      return true;
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.entity.getNavigator().setPath(this.path, this.movementSpeed);
+    }
 
-   private void updateVisited() {
-      if (this.visited.size() > 15) {
-         this.visited.remove(0);
-      }
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        if (this.entity.getNavigator().noPath() || this.field_220735_d.withinDistance(this.entity.getPositionVec(), (double)this.maxDistance))
+        {
+            this.doorList.add(this.field_220735_d);
+        }
+    }
 
-   }
+    private boolean func_220733_a(BlockPos p_220733_1_)
+    {
+        for (BlockPos blockpos : this.doorList)
+        {
+            if (Objects.equals(p_220733_1_, blockpos))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void resizeDoorList()
+    {
+        if (this.doorList.size() > 15)
+        {
+            this.doorList.remove(0);
+        }
+    }
 }

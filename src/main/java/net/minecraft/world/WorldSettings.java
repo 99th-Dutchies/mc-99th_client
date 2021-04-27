@@ -3,73 +3,88 @@ package net.minecraft.world;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.util.datafix.codec.DatapackCodec;
 
-public final class WorldSettings {
-   private final String levelName;
-   private final GameType gameType;
-   private final boolean hardcore;
-   private final Difficulty difficulty;
-   private final boolean allowCommands;
-   private final GameRules gameRules;
-   private final DatapackCodec dataPackConfig;
+public final class WorldSettings
+{
+    private final String worldName;
+    private final GameType gameType;
+    private final boolean hardcoreEnabled;
+    private final Difficulty difficulty;
+    private final boolean commandsAllowed;
+    private final GameRules gameRules;
+    private final DatapackCodec datapackCodec;
 
-   public WorldSettings(String p_i231620_1_, GameType p_i231620_2_, boolean p_i231620_3_, Difficulty p_i231620_4_, boolean p_i231620_5_, GameRules p_i231620_6_, DatapackCodec p_i231620_7_) {
-      this.levelName = p_i231620_1_;
-      this.gameType = p_i231620_2_;
-      this.hardcore = p_i231620_3_;
-      this.difficulty = p_i231620_4_;
-      this.allowCommands = p_i231620_5_;
-      this.gameRules = p_i231620_6_;
-      this.dataPackConfig = p_i231620_7_;
-   }
+    public WorldSettings(String worldName, GameType gameType, boolean hardcoreEnabled, Difficulty difficulty, boolean commandsAllowed, GameRules gameRules, DatapackCodec datapackCodec)
+    {
+        this.worldName = worldName;
+        this.gameType = gameType;
+        this.hardcoreEnabled = hardcoreEnabled;
+        this.difficulty = difficulty;
+        this.commandsAllowed = commandsAllowed;
+        this.gameRules = gameRules;
+        this.datapackCodec = datapackCodec;
+    }
 
-   public static WorldSettings parse(Dynamic<?> p_234951_0_, DatapackCodec p_234951_1_) {
-      GameType gametype = GameType.byId(p_234951_0_.get("GameType").asInt(0));
-      return new WorldSettings(p_234951_0_.get("LevelName").asString(""), gametype, p_234951_0_.get("hardcore").asBoolean(false), p_234951_0_.get("Difficulty").asNumber().map((p_234952_0_) -> {
-         return Difficulty.byId(p_234952_0_.byteValue());
-      }).result().orElse(Difficulty.NORMAL), p_234951_0_.get("allowCommands").asBoolean(gametype == GameType.CREATIVE), new GameRules(p_234951_0_.get("GameRules")), p_234951_1_);
-   }
+    public static WorldSettings decodeWorldSettings(Dynamic<?> dynamic, DatapackCodec codec)
+    {
+        GameType gametype = GameType.getByID(dynamic.get("GameType").asInt(0));
+        return new WorldSettings(dynamic.get("LevelName").asString(""), gametype, dynamic.get("hardcore").asBoolean(false), dynamic.get("Difficulty").asNumber().map((dimensionTypeID) ->
+        {
+            return Difficulty.byId(dimensionTypeID.byteValue());
+        }).result().orElse(Difficulty.NORMAL), dynamic.get("allowCommands").asBoolean(gametype == GameType.CREATIVE), new GameRules(dynamic.get("GameRules")), codec);
+    }
 
-   public String levelName() {
-      return this.levelName;
-   }
+    public String getWorldName()
+    {
+        return this.worldName;
+    }
 
-   public GameType gameType() {
-      return this.gameType;
-   }
+    public GameType getGameType()
+    {
+        return this.gameType;
+    }
 
-   public boolean hardcore() {
-      return this.hardcore;
-   }
+    public boolean isHardcoreEnabled()
+    {
+        return this.hardcoreEnabled;
+    }
 
-   public Difficulty difficulty() {
-      return this.difficulty;
-   }
+    public Difficulty getDifficulty()
+    {
+        return this.difficulty;
+    }
 
-   public boolean allowCommands() {
-      return this.allowCommands;
-   }
+    public boolean isCommandsAllowed()
+    {
+        return this.commandsAllowed;
+    }
 
-   public GameRules gameRules() {
-      return this.gameRules;
-   }
+    public GameRules getGameRules()
+    {
+        return this.gameRules;
+    }
 
-   public DatapackCodec getDataPackConfig() {
-      return this.dataPackConfig;
-   }
+    public DatapackCodec getDatapackCodec()
+    {
+        return this.datapackCodec;
+    }
 
-   public WorldSettings withGameType(GameType p_234950_1_) {
-      return new WorldSettings(this.levelName, p_234950_1_, this.hardcore, this.difficulty, this.allowCommands, this.gameRules, this.dataPackConfig);
-   }
+    public WorldSettings setGameType(GameType gameType)
+    {
+        return new WorldSettings(this.worldName, gameType, this.hardcoreEnabled, this.difficulty, this.commandsAllowed, this.gameRules, this.datapackCodec);
+    }
 
-   public WorldSettings withDifficulty(Difficulty p_234948_1_) {
-      return new WorldSettings(this.levelName, this.gameType, this.hardcore, p_234948_1_, this.allowCommands, this.gameRules, this.dataPackConfig);
-   }
+    public WorldSettings setDifficulty(Difficulty difficulty)
+    {
+        return new WorldSettings(this.worldName, this.gameType, this.hardcoreEnabled, difficulty, this.commandsAllowed, this.gameRules, this.datapackCodec);
+    }
 
-   public WorldSettings withDataPackConfig(DatapackCodec p_234949_1_) {
-      return new WorldSettings(this.levelName, this.gameType, this.hardcore, this.difficulty, this.allowCommands, this.gameRules, p_234949_1_);
-   }
+    public WorldSettings setDatapackCodec(DatapackCodec datapackCodec)
+    {
+        return new WorldSettings(this.worldName, this.gameType, this.hardcoreEnabled, this.difficulty, this.commandsAllowed, this.gameRules, datapackCodec);
+    }
 
-   public WorldSettings copy() {
-      return new WorldSettings(this.levelName, this.gameType, this.hardcore, this.difficulty, this.allowCommands, this.gameRules.copy(), this.dataPackConfig);
-   }
+    public WorldSettings clone()
+    {
+        return new WorldSettings(this.worldName, this.gameType, this.hardcoreEnabled, this.difficulty, this.commandsAllowed, this.gameRules.clone(), this.datapackCodec);
+    }
 }

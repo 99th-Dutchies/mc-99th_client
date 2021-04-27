@@ -15,194 +15,246 @@ import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class ModifiableAttributeInstance {
-   private final Attribute attribute;
-   private final Map<AttributeModifier.Operation, Set<AttributeModifier>> modifiersByOperation = Maps.newEnumMap(AttributeModifier.Operation.class);
-   private final Map<UUID, AttributeModifier> modifierById = new Object2ObjectArrayMap<>();
-   private final Set<AttributeModifier> permanentModifiers = new ObjectArraySet<>();
-   private double baseValue;
-   private boolean dirty = true;
-   private double cachedValue;
-   private final Consumer<ModifiableAttributeInstance> onDirty;
+public class ModifiableAttributeInstance
+{
+    /** The Attribute this is an instance of */
+    private final Attribute genericAttribute;
+    private final Map<AttributeModifier.Operation, Set<AttributeModifier>> mapByOperation = Maps.newEnumMap(AttributeModifier.Operation.class);
+    private final Map<UUID, AttributeModifier> instanceMap = new Object2ObjectArrayMap<>();
+    private final Set<AttributeModifier> mapByUUID = new ObjectArraySet<>();
+    private double base;
+    private boolean requiresComputation = true;
+    private double modifiedValue;
+    private final Consumer<ModifiableAttributeInstance> modifiedValueConsumer;
 
-   public ModifiableAttributeInstance(Attribute p_i231501_1_, Consumer<ModifiableAttributeInstance> p_i231501_2_) {
-      this.attribute = p_i231501_1_;
-      this.onDirty = p_i231501_2_;
-      this.baseValue = p_i231501_1_.getDefaultValue();
-   }
+    public ModifiableAttributeInstance(Attribute attribute, Consumer<ModifiableAttributeInstance> modifiedValueConsumer)
+    {
+        this.genericAttribute = attribute;
+        this.modifiedValueConsumer = modifiedValueConsumer;
+        this.base = attribute.getDefaultValue();
+    }
 
-   public Attribute getAttribute() {
-      return this.attribute;
-   }
+    /**
+     * Get the Attribute this is an instance of
+     */
+    public Attribute getAttribute()
+    {
+        return this.genericAttribute;
+    }
 
-   public double getBaseValue() {
-      return this.baseValue;
-   }
+    public double getBaseValue()
+    {
+        return this.base;
+    }
 
-   public void setBaseValue(double p_111128_1_) {
-      if (p_111128_1_ != this.baseValue) {
-         this.baseValue = p_111128_1_;
-         this.setDirty();
-      }
-   }
+    public void setBaseValue(double baseValue)
+    {
+        if (baseValue != this.base)
+        {
+            this.base = baseValue;
+            this.compute();
+        }
+    }
 
-   public Set<AttributeModifier> getModifiers(AttributeModifier.Operation p_225504_1_) {
-      return this.modifiersByOperation.computeIfAbsent(p_225504_1_, (p_233768_0_) -> {
-         return Sets.newHashSet();
-      });
-   }
+    public Set<AttributeModifier> getOrCreateModifiersByOperation(AttributeModifier.Operation operation)
+    {
+        return this.mapByOperation.computeIfAbsent(operation, (operationIn) ->
+        {
+            return Sets.newHashSet();
+        });
+    }
 
-   public Set<AttributeModifier> getModifiers() {
-      return ImmutableSet.copyOf(this.modifierById.values());
-   }
+    public Set<AttributeModifier> getModifierListCopy()
+    {
+        return ImmutableSet.copyOf(this.instanceMap.values());
+    }
 
-   @Nullable
-   public AttributeModifier getModifier(UUID p_111127_1_) {
-      return this.modifierById.get(p_111127_1_);
-   }
+    @Nullable
 
-   public boolean hasModifier(AttributeModifier p_180374_1_) {
-      return this.modifierById.get(p_180374_1_.getId()) != null;
-   }
+    /**
+     * Returns attribute modifier, if any, by the given UUID
+     */
+    public AttributeModifier getModifier(UUID uuid)
+    {
+        return this.instanceMap.get(uuid);
+    }
 
-   private void addModifier(AttributeModifier p_111121_1_) {
-      AttributeModifier attributemodifier = this.modifierById.putIfAbsent(p_111121_1_.getId(), p_111121_1_);
-      if (attributemodifier != null) {
-         throw new IllegalArgumentException("Modifier is already applied on this attribute!");
-      } else {
-         this.getModifiers(p_111121_1_.getOperation()).add(p_111121_1_);
-         this.setDirty();
-      }
-   }
+    public boolean hasModifier(AttributeModifier modifier)
+    {
+        return this.instanceMap.get(modifier.getID()) != null;
+    }
 
-   public void addTransientModifier(AttributeModifier p_233767_1_) {
-      this.addModifier(p_233767_1_);
-   }
+    private void applyModifier(AttributeModifier modifier)
+    {
+        AttributeModifier attributemodifier = this.instanceMap.putIfAbsent(modifier.getID(), modifier);
 
-   public void addPermanentModifier(AttributeModifier p_233769_1_) {
-      this.addModifier(p_233769_1_);
-      this.permanentModifiers.add(p_233769_1_);
-   }
+        if (attributemodifier != null)
+        {
+            throw new IllegalArgumentException("Modifier is already applied on this attribute!");
+        }
+        else
+        {
+            this.getOrCreateModifiersByOperation(modifier.getOperation()).add(modifier);
+            this.compute();
+        }
+    }
 
-   protected void setDirty() {
-      this.dirty = true;
-      this.onDirty.accept(this);
-   }
+    public void applyNonPersistentModifier(AttributeModifier modifier)
+    {
+        this.applyModifier(modifier);
+    }
 
-   public void removeModifier(AttributeModifier p_111124_1_) {
-      this.getModifiers(p_111124_1_.getOperation()).remove(p_111124_1_);
-      this.modifierById.remove(p_111124_1_.getId());
-      this.permanentModifiers.remove(p_111124_1_);
-      this.setDirty();
-   }
+    public void applyPersistentModifier(AttributeModifier modifier)
+    {
+        this.applyModifier(modifier);
+        this.mapByUUID.add(modifier);
+    }
 
-   public void removeModifier(UUID p_188479_1_) {
-      AttributeModifier attributemodifier = this.getModifier(p_188479_1_);
-      if (attributemodifier != null) {
-         this.removeModifier(attributemodifier);
-      }
+    protected void compute()
+    {
+        this.requiresComputation = true;
+        this.modifiedValueConsumer.accept(this);
+    }
 
-   }
+    public void removeModifier(AttributeModifier modifier)
+    {
+        this.getOrCreateModifiersByOperation(modifier.getOperation()).remove(modifier);
+        this.instanceMap.remove(modifier.getID());
+        this.mapByUUID.remove(modifier);
+        this.compute();
+    }
 
-   public boolean removePermanentModifier(UUID p_233770_1_) {
-      AttributeModifier attributemodifier = this.getModifier(p_233770_1_);
-      if (attributemodifier != null && this.permanentModifiers.contains(attributemodifier)) {
-         this.removeModifier(attributemodifier);
-         return true;
-      } else {
-         return false;
-      }
-   }
+    public void removeModifier(UUID identifier)
+    {
+        AttributeModifier attributemodifier = this.getModifier(identifier);
 
-   @OnlyIn(Dist.CLIENT)
-   public void removeModifiers() {
-      for(AttributeModifier attributemodifier : this.getModifiers()) {
-         this.removeModifier(attributemodifier);
-      }
+        if (attributemodifier != null)
+        {
+            this.removeModifier(attributemodifier);
+        }
+    }
 
-   }
+    public boolean removePersistentModifier(UUID identifier)
+    {
+        AttributeModifier attributemodifier = this.getModifier(identifier);
 
-   public double getValue() {
-      if (this.dirty) {
-         this.cachedValue = this.calculateValue();
-         this.dirty = false;
-      }
+        if (attributemodifier != null && this.mapByUUID.contains(attributemodifier))
+        {
+            this.removeModifier(attributemodifier);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-      return this.cachedValue;
-   }
+    public void removeAllModifiers()
+    {
+        for (AttributeModifier attributemodifier : this.getModifierListCopy())
+        {
+            this.removeModifier(attributemodifier);
+        }
+    }
 
-   private double calculateValue() {
-      double d0 = this.getBaseValue();
+    public double getValue()
+    {
+        if (this.requiresComputation)
+        {
+            this.modifiedValue = this.computeValue();
+            this.requiresComputation = false;
+        }
 
-      for(AttributeModifier attributemodifier : this.getModifiersOrEmpty(AttributeModifier.Operation.ADDITION)) {
-         d0 += attributemodifier.getAmount();
-      }
+        return this.modifiedValue;
+    }
 
-      double d1 = d0;
+    private double computeValue()
+    {
+        double d0 = this.getBaseValue();
 
-      for(AttributeModifier attributemodifier1 : this.getModifiersOrEmpty(AttributeModifier.Operation.MULTIPLY_BASE)) {
-         d1 += d0 * attributemodifier1.getAmount();
-      }
+        for (AttributeModifier attributemodifier : this.getModifiersByOperation(AttributeModifier.Operation.ADDITION))
+        {
+            d0 += attributemodifier.getAmount();
+        }
 
-      for(AttributeModifier attributemodifier2 : this.getModifiersOrEmpty(AttributeModifier.Operation.MULTIPLY_TOTAL)) {
-         d1 *= 1.0D + attributemodifier2.getAmount();
-      }
+        double d1 = d0;
 
-      return this.attribute.sanitizeValue(d1);
-   }
+        for (AttributeModifier attributemodifier1 : this.getModifiersByOperation(AttributeModifier.Operation.MULTIPLY_BASE))
+        {
+            d1 += d0 * attributemodifier1.getAmount();
+        }
 
-   private Collection<AttributeModifier> getModifiersOrEmpty(AttributeModifier.Operation p_220370_1_) {
-      return this.modifiersByOperation.getOrDefault(p_220370_1_, Collections.emptySet());
-   }
+        for (AttributeModifier attributemodifier2 : this.getModifiersByOperation(AttributeModifier.Operation.MULTIPLY_TOTAL))
+        {
+            d1 *= 1.0D + attributemodifier2.getAmount();
+        }
 
-   public void replaceFrom(ModifiableAttributeInstance p_233763_1_) {
-      this.baseValue = p_233763_1_.baseValue;
-      this.modifierById.clear();
-      this.modifierById.putAll(p_233763_1_.modifierById);
-      this.permanentModifiers.clear();
-      this.permanentModifiers.addAll(p_233763_1_.permanentModifiers);
-      this.modifiersByOperation.clear();
-      p_233763_1_.modifiersByOperation.forEach((p_233764_1_, p_233764_2_) -> {
-         this.getModifiers(p_233764_1_).addAll(p_233764_2_);
-      });
-      this.setDirty();
-   }
+        return this.genericAttribute.clampValue(d1);
+    }
 
-   public CompoundNBT save() {
-      CompoundNBT compoundnbt = new CompoundNBT();
-      compoundnbt.putString("Name", Registry.ATTRIBUTE.getKey(this.attribute).toString());
-      compoundnbt.putDouble("Base", this.baseValue);
-      if (!this.permanentModifiers.isEmpty()) {
-         ListNBT listnbt = new ListNBT();
+    private Collection<AttributeModifier> getModifiersByOperation(AttributeModifier.Operation operation)
+    {
+        return this.mapByOperation.getOrDefault(operation, Collections.emptySet());
+    }
 
-         for(AttributeModifier attributemodifier : this.permanentModifiers) {
-            listnbt.add(attributemodifier.save());
-         }
+    public void copyValuesFromInstance(ModifiableAttributeInstance instance)
+    {
+        this.base = instance.base;
+        this.instanceMap.clear();
+        this.instanceMap.putAll(instance.instanceMap);
+        this.mapByUUID.clear();
+        this.mapByUUID.addAll(instance.mapByUUID);
+        this.mapByOperation.clear();
+        instance.mapByOperation.forEach((operation, modifierSet) ->
+        {
+            this.getOrCreateModifiersByOperation(operation).addAll(modifierSet);
+        });
+        this.compute();
+    }
 
-         compoundnbt.put("Modifiers", listnbt);
-      }
+    public CompoundNBT writeInstances()
+    {
+        CompoundNBT compoundnbt = new CompoundNBT();
+        compoundnbt.putString("Name", Registry.ATTRIBUTE.getKey(this.genericAttribute).toString());
+        compoundnbt.putDouble("Base", this.base);
 
-      return compoundnbt;
-   }
+        if (!this.mapByUUID.isEmpty())
+        {
+            ListNBT listnbt = new ListNBT();
 
-   public void load(CompoundNBT p_233765_1_) {
-      this.baseValue = p_233765_1_.getDouble("Base");
-      if (p_233765_1_.contains("Modifiers", 9)) {
-         ListNBT listnbt = p_233765_1_.getList("Modifiers", 10);
-
-         for(int i = 0; i < listnbt.size(); ++i) {
-            AttributeModifier attributemodifier = AttributeModifier.load(listnbt.getCompound(i));
-            if (attributemodifier != null) {
-               this.modifierById.put(attributemodifier.getId(), attributemodifier);
-               this.getModifiers(attributemodifier.getOperation()).add(attributemodifier);
-               this.permanentModifiers.add(attributemodifier);
+            for (AttributeModifier attributemodifier : this.mapByUUID)
+            {
+                listnbt.add(attributemodifier.write());
             }
-         }
-      }
 
-      this.setDirty();
-   }
+            compoundnbt.put("Modifiers", listnbt);
+        }
+
+        return compoundnbt;
+    }
+
+    public void readInstances(CompoundNBT nbt)
+    {
+        this.base = nbt.getDouble("Base");
+
+        if (nbt.contains("Modifiers", 9))
+        {
+            ListNBT listnbt = nbt.getList("Modifiers", 10);
+
+            for (int i = 0; i < listnbt.size(); ++i)
+            {
+                AttributeModifier attributemodifier = AttributeModifier.read(listnbt.getCompound(i));
+
+                if (attributemodifier != null)
+                {
+                    this.instanceMap.put(attributemodifier.getID(), attributemodifier);
+                    this.getOrCreateModifiersByOperation(attributemodifier.getOperation()).add(attributemodifier);
+                    this.mapByUUID.add(attributemodifier);
+                }
+            }
+        }
+
+        this.compute();
+    }
 }

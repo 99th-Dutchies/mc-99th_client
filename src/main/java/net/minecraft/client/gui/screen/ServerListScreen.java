@@ -9,89 +9,103 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class ServerListScreen extends Screen {
-   private static final ITextComponent ENTER_IP_LABEL = new TranslationTextComponent("addServer.enterIp");
-   private Button selectButton;
-   private final ServerData serverData;
-   private TextFieldWidget ipEdit;
-   private final BooleanConsumer callback;
-   private final Screen lastScreen;
+public class ServerListScreen extends Screen
+{
+    private static final ITextComponent field_243288_a = new TranslationTextComponent("addServer.enterIp");
+    private Button field_195170_a;
+    private final ServerData serverData;
+    private TextFieldWidget ipEdit;
+    private final BooleanConsumer field_213027_d;
+    private final Screen previousScreen;
 
-   public ServerListScreen(Screen p_i225926_1_, BooleanConsumer p_i225926_2_, ServerData p_i225926_3_) {
-      super(new TranslationTextComponent("selectServer.direct"));
-      this.lastScreen = p_i225926_1_;
-      this.serverData = p_i225926_3_;
-      this.callback = p_i225926_2_;
-   }
+    public ServerListScreen(Screen previousScreen, BooleanConsumer p_i225926_2_, ServerData serverData)
+    {
+        super(new TranslationTextComponent("selectServer.direct"));
+        this.previousScreen = previousScreen;
+        this.serverData = serverData;
+        this.field_213027_d = p_i225926_2_;
+    }
 
-   public void tick() {
-      this.ipEdit.tick();
-   }
+    public void tick()
+    {
+        this.ipEdit.tick();
+    }
 
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (this.getFocused() != this.ipEdit || p_231046_1_ != 257 && p_231046_1_ != 335) {
-         return super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-      } else {
-         this.onSelect();
-         return true;
-      }
-   }
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (this.getListener() != this.ipEdit || keyCode != 257 && keyCode != 335)
+        {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+        else
+        {
+            this.func_195167_h();
+            return true;
+        }
+    }
 
-   protected void init() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      this.selectButton = this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 96 + 12, 200, 20, new TranslationTextComponent("selectServer.select"), (p_213026_1_) -> {
-         this.onSelect();
-      }));
-      this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 120 + 12, 200, 20, DialogTexts.GUI_CANCEL, (p_213025_1_) -> {
-         this.callback.accept(false);
-      }));
-      this.ipEdit = new TextFieldWidget(this.font, this.width / 2 - 100, 116, 200, 20, new TranslationTextComponent("addServer.enterIp"));
-      this.ipEdit.setMaxLength(128);
-      this.ipEdit.setFocus(true);
-      this.ipEdit.setValue(this.minecraft.options.lastMpIp);
-      this.ipEdit.setResponder((p_213024_1_) -> {
-         this.updateSelectButtonStatus();
-      });
-      this.children.add(this.ipEdit);
-      this.setInitialFocus(this.ipEdit);
-      this.updateSelectButtonStatus();
-   }
+    protected void init()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
+        this.field_195170_a = this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 96 + 12, 200, 20, new TranslationTextComponent("selectServer.select"), (p_213026_1_) ->
+        {
+            this.func_195167_h();
+        }));
+        this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 120 + 12, 200, 20, DialogTexts.GUI_CANCEL, (p_213025_1_) ->
+        {
+            this.field_213027_d.accept(false);
+        }));
+        this.ipEdit = new TextFieldWidget(this.font, this.width / 2 - 100, 116, 200, 20, new TranslationTextComponent("addServer.enterIp"));
+        this.ipEdit.setMaxStringLength(128);
+        this.ipEdit.setFocused2(true);
+        this.ipEdit.setText(this.minecraft.gameSettings.lastServer);
+        this.ipEdit.setResponder((p_213024_1_) ->
+        {
+            this.func_195168_i();
+        });
+        this.children.add(this.ipEdit);
+        this.setFocusedDefault(this.ipEdit);
+        this.func_195168_i();
+    }
 
-   public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
-      String s = this.ipEdit.getValue();
-      this.init(p_231152_1_, p_231152_2_, p_231152_3_);
-      this.ipEdit.setValue(s);
-   }
+    public void resize(Minecraft minecraft, int width, int height)
+    {
+        String s = this.ipEdit.getText();
+        this.init(minecraft, width, height);
+        this.ipEdit.setText(s);
+    }
 
-   private void onSelect() {
-      this.serverData.ip = this.ipEdit.getValue();
-      this.callback.accept(true);
-   }
+    private void func_195167_h()
+    {
+        this.serverData.serverIP = this.ipEdit.getText();
+        this.field_213027_d.accept(true);
+    }
 
-   public void onClose() {
-      this.minecraft.setScreen(this.lastScreen);
-   }
+    public void closeScreen()
+    {
+        this.minecraft.displayGuiScreen(this.previousScreen);
+    }
 
-   public void removed() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-      this.minecraft.options.lastMpIp = this.ipEdit.getValue();
-      this.minecraft.options.save();
-   }
+    public void onClose()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+        this.minecraft.gameSettings.lastServer = this.ipEdit.getText();
+        this.minecraft.gameSettings.saveOptions();
+    }
 
-   private void updateSelectButtonStatus() {
-      String s = this.ipEdit.getValue();
-      this.selectButton.active = !s.isEmpty() && s.split(":").length > 0 && s.indexOf(32) == -1;
-   }
+    private void func_195168_i()
+    {
+        String s = this.ipEdit.getText();
+        this.field_195170_a.active = !s.isEmpty() && s.split(":").length > 0 && s.indexOf(32) == -1;
+    }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.renderBackground(p_230430_1_);
-      drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 20, 16777215);
-      drawString(p_230430_1_, this.font, ENTER_IP_LABEL, this.width / 2 - 100, 100, 10526880);
-      this.ipEdit.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-   }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.renderBackground(matrixStack);
+        drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 20, 16777215);
+        drawString(matrixStack, this.font, field_243288_a, this.width / 2 - 100, 100, 10526880);
+        this.ipEdit.render(matrixStack, mouseX, mouseY, partialTicks);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
 }

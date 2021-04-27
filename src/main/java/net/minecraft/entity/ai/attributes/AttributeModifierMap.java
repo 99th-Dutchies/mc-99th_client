@@ -8,92 +8,121 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.util.registry.Registry;
 
-public class AttributeModifierMap {
-   private final Map<Attribute, ModifiableAttributeInstance> instances;
+public class AttributeModifierMap
+{
+    private final Map<Attribute, ModifiableAttributeInstance> attributeMap;
 
-   public AttributeModifierMap(Map<Attribute, ModifiableAttributeInstance> p_i231503_1_) {
-      this.instances = ImmutableMap.copyOf(p_i231503_1_);
-   }
+    public AttributeModifierMap(Map<Attribute, ModifiableAttributeInstance> attributeMap)
+    {
+        this.attributeMap = ImmutableMap.copyOf(attributeMap);
+    }
 
-   private ModifiableAttributeInstance getAttributeInstance(Attribute p_233810_1_) {
-      ModifiableAttributeInstance modifiableattributeinstance = this.instances.get(p_233810_1_);
-      if (modifiableattributeinstance == null) {
-         throw new IllegalArgumentException("Can't find attribute " + Registry.ATTRIBUTE.getKey(p_233810_1_));
-      } else {
-         return modifiableattributeinstance;
-      }
-   }
+    private ModifiableAttributeInstance getModifier(Attribute attribute)
+    {
+        ModifiableAttributeInstance modifiableattributeinstance = this.attributeMap.get(attribute);
 
-   public double getValue(Attribute p_233804_1_) {
-      return this.getAttributeInstance(p_233804_1_).getValue();
-   }
+        if (modifiableattributeinstance == null)
+        {
+            throw new IllegalArgumentException("Can't find attribute " + Registry.ATTRIBUTE.getKey(attribute));
+        }
+        else
+        {
+            return modifiableattributeinstance;
+        }
+    }
 
-   public double getBaseValue(Attribute p_233807_1_) {
-      return this.getAttributeInstance(p_233807_1_).getBaseValue();
-   }
+    public double getAttributeValue(Attribute attribute)
+    {
+        return this.getModifier(attribute).getValue();
+    }
 
-   public double getModifierValue(Attribute p_233805_1_, UUID p_233805_2_) {
-      AttributeModifier attributemodifier = this.getAttributeInstance(p_233805_1_).getModifier(p_233805_2_);
-      if (attributemodifier == null) {
-         throw new IllegalArgumentException("Can't find modifier " + p_233805_2_ + " on attribute " + Registry.ATTRIBUTE.getKey(p_233805_1_));
-      } else {
-         return attributemodifier.getAmount();
-      }
-   }
+    public double getAttributeBaseValue(Attribute attribute)
+    {
+        return this.getModifier(attribute).getBaseValue();
+    }
 
-   @Nullable
-   public ModifiableAttributeInstance createInstance(Consumer<ModifiableAttributeInstance> p_233806_1_, Attribute p_233806_2_) {
-      ModifiableAttributeInstance modifiableattributeinstance = this.instances.get(p_233806_2_);
-      if (modifiableattributeinstance == null) {
-         return null;
-      } else {
-         ModifiableAttributeInstance modifiableattributeinstance1 = new ModifiableAttributeInstance(p_233806_2_, p_233806_1_);
-         modifiableattributeinstance1.replaceFrom(modifiableattributeinstance);
-         return modifiableattributeinstance1;
-      }
-   }
+    public double getAttributeModifierValue(Attribute attribute, UUID id)
+    {
+        AttributeModifier attributemodifier = this.getModifier(attribute).getModifier(id);
 
-   public static AttributeModifierMap.MutableAttribute builder() {
-      return new AttributeModifierMap.MutableAttribute();
-   }
+        if (attributemodifier == null)
+        {
+            throw new IllegalArgumentException("Can't find modifier " + id + " on attribute " + Registry.ATTRIBUTE.getKey(attribute));
+        }
+        else
+        {
+            return attributemodifier.getAmount();
+        }
+    }
 
-   public boolean hasAttribute(Attribute p_233809_1_) {
-      return this.instances.containsKey(p_233809_1_);
-   }
+    @Nullable
+    public ModifiableAttributeInstance createImmutableAttributeInstance(Consumer<ModifiableAttributeInstance> onChangedCallback, Attribute attribute)
+    {
+        ModifiableAttributeInstance modifiableattributeinstance = this.attributeMap.get(attribute);
 
-   public boolean hasModifier(Attribute p_233808_1_, UUID p_233808_2_) {
-      ModifiableAttributeInstance modifiableattributeinstance = this.instances.get(p_233808_1_);
-      return modifiableattributeinstance != null && modifiableattributeinstance.getModifier(p_233808_2_) != null;
-   }
+        if (modifiableattributeinstance == null)
+        {
+            return null;
+        }
+        else
+        {
+            ModifiableAttributeInstance modifiableattributeinstance1 = new ModifiableAttributeInstance(attribute, onChangedCallback);
+            modifiableattributeinstance1.copyValuesFromInstance(modifiableattributeinstance);
+            return modifiableattributeinstance1;
+        }
+    }
 
-   public static class MutableAttribute {
-      private final Map<Attribute, ModifiableAttributeInstance> builder = Maps.newHashMap();
-      private boolean instanceFrozen;
+    public static AttributeModifierMap.MutableAttribute createMutableAttribute()
+    {
+        return new AttributeModifierMap.MutableAttribute();
+    }
 
-      private ModifiableAttributeInstance create(Attribute p_233817_1_) {
-         ModifiableAttributeInstance modifiableattributeinstance = new ModifiableAttributeInstance(p_233817_1_, (p_233816_2_) -> {
-            if (this.instanceFrozen) {
-               throw new UnsupportedOperationException("Tried to change value for default attribute instance: " + Registry.ATTRIBUTE.getKey(p_233817_1_));
-            }
-         });
-         this.builder.put(p_233817_1_, modifiableattributeinstance);
-         return modifiableattributeinstance;
-      }
+    public boolean hasAttribute(Attribute attribute)
+    {
+        return this.attributeMap.containsKey(attribute);
+    }
 
-      public AttributeModifierMap.MutableAttribute add(Attribute p_233814_1_) {
-         this.create(p_233814_1_);
-         return this;
-      }
+    public boolean hasModifier(Attribute attribute, UUID id)
+    {
+        ModifiableAttributeInstance modifiableattributeinstance = this.attributeMap.get(attribute);
+        return modifiableattributeinstance != null && modifiableattributeinstance.getModifier(id) != null;
+    }
 
-      public AttributeModifierMap.MutableAttribute add(Attribute p_233815_1_, double p_233815_2_) {
-         ModifiableAttributeInstance modifiableattributeinstance = this.create(p_233815_1_);
-         modifiableattributeinstance.setBaseValue(p_233815_2_);
-         return this;
-      }
+    public static class MutableAttribute
+    {
+        private final Map<Attribute, ModifiableAttributeInstance> attributeMap = Maps.newHashMap();
+        private boolean edited;
 
-      public AttributeModifierMap build() {
-         this.instanceFrozen = true;
-         return new AttributeModifierMap(this.builder);
-      }
-   }
+        private ModifiableAttributeInstance createAttributeInstance(Attribute attribute)
+        {
+            ModifiableAttributeInstance modifiableattributeinstance = new ModifiableAttributeInstance(attribute, (modifiableInstance) ->
+            {
+                if (this.edited)
+                {
+                    throw new UnsupportedOperationException("Tried to change value for default attribute instance: " + Registry.ATTRIBUTE.getKey(attribute));
+                }
+            });
+            this.attributeMap.put(attribute, modifiableattributeinstance);
+            return modifiableattributeinstance;
+        }
+
+        public AttributeModifierMap.MutableAttribute createMutableAttribute(Attribute attribute)
+        {
+            this.createAttributeInstance(attribute);
+            return this;
+        }
+
+        public AttributeModifierMap.MutableAttribute createMutableAttribute(Attribute attribute, double value)
+        {
+            ModifiableAttributeInstance modifiableattributeinstance = this.createAttributeInstance(attribute);
+            modifiableattributeinstance.setBaseValue(value);
+            return this;
+        }
+
+        public AttributeModifierMap create()
+        {
+            this.edited = true;
+            return new AttributeModifierMap(this.attributeMap);
+        }
+    }
 }

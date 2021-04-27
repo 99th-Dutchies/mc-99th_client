@@ -4,33 +4,46 @@ import java.io.IOException;
 import net.minecraft.client.network.login.IClientLoginNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SEnableCompressionPacket implements IPacket<IClientLoginNetHandler> {
-   private int compressionThreshold;
+public class SEnableCompressionPacket implements IPacket<IClientLoginNetHandler>
+{
+    private int compressionThreshold;
 
-   public SEnableCompressionPacket() {
-   }
+    public SEnableCompressionPacket()
+    {
+    }
 
-   public SEnableCompressionPacket(int p_i46854_1_) {
-      this.compressionThreshold = p_i46854_1_;
-   }
+    public SEnableCompressionPacket(int thresholdIn)
+    {
+        this.compressionThreshold = thresholdIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.compressionThreshold = p_148837_1_.readVarInt();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.compressionThreshold = buf.readVarInt();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.compressionThreshold);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.compressionThreshold);
+    }
 
-   public void handle(IClientLoginNetHandler p_148833_1_) {
-      p_148833_1_.handleCompression(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientLoginNetHandler handler)
+    {
+        handler.handleEnableCompression(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getCompressionThreshold() {
-      return this.compressionThreshold;
-   }
+    public int getCompressionThreshold()
+    {
+        return this.compressionThreshold;
+    }
 }

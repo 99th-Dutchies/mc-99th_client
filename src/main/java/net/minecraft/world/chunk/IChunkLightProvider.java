@@ -5,12 +5,14 @@ import net.minecraft.util.math.SectionPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.LightType;
 
-public interface IChunkLightProvider {
-   @Nullable
-   IBlockReader getChunkForLighting(int p_217202_1_, int p_217202_2_);
+public interface IChunkLightProvider
+{
+    @Nullable
+    IBlockReader getChunkForLight(int chunkX, int chunkZ);
 
-   default void onLightUpdate(LightType p_217201_1_, SectionPos p_217201_2_) {
-   }
+default void markLightChanged(LightType type, SectionPos pos)
+    {
+    }
 
-   IBlockReader getLevel();
+    IBlockReader getWorld();
 }

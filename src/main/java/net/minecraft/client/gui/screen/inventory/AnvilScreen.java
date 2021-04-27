@@ -13,111 +13,137 @@ import net.minecraft.network.play.client.CRenameItemPacket;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class AnvilScreen extends AbstractRepairScreen<RepairContainer> {
-   private static final ResourceLocation ANVIL_LOCATION = new ResourceLocation("textures/gui/container/anvil.png");
-   private static final ITextComponent TOO_EXPENSIVE_TEXT = new TranslationTextComponent("container.repair.expensive");
-   private TextFieldWidget name;
+public class AnvilScreen extends AbstractRepairScreen<RepairContainer>
+{
+    private static final ResourceLocation ANVIL_RESOURCE = new ResourceLocation("textures/gui/container/anvil.png");
+    private static final ITextComponent field_243333_B = new TranslationTextComponent("container.repair.expensive");
+    private TextFieldWidget nameField;
 
-   public AnvilScreen(RepairContainer p_i51103_1_, PlayerInventory p_i51103_2_, ITextComponent p_i51103_3_) {
-      super(p_i51103_1_, p_i51103_2_, p_i51103_3_, ANVIL_LOCATION);
-      this.titleLabelX = 60;
-   }
+    public AnvilScreen(RepairContainer container, PlayerInventory playerInventory, ITextComponent title)
+    {
+        super(container, playerInventory, title, ANVIL_RESOURCE);
+        this.titleX = 60;
+    }
 
-   public void tick() {
-      super.tick();
-      this.name.tick();
-   }
+    public void tick()
+    {
+        super.tick();
+        this.nameField.tick();
+    }
 
-   protected void subInit() {
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-      int i = (this.width - this.imageWidth) / 2;
-      int j = (this.height - this.imageHeight) / 2;
-      this.name = new TextFieldWidget(this.font, i + 62, j + 24, 103, 12, new TranslationTextComponent("container.repair"));
-      this.name.setCanLoseFocus(false);
-      this.name.setTextColor(-1);
-      this.name.setTextColorUneditable(-1);
-      this.name.setBordered(false);
-      this.name.setMaxLength(35);
-      this.name.setResponder(this::onNameChanged);
-      this.children.add(this.name);
-      this.setInitialFocus(this.name);
-   }
+    protected void initFields()
+    {
+        this.minecraft.keyboardListener.enableRepeatEvents(true);
+        int i = (this.width - this.xSize) / 2;
+        int j = (this.height - this.ySize) / 2;
+        this.nameField = new TextFieldWidget(this.font, i + 62, j + 24, 103, 12, new TranslationTextComponent("container.repair"));
+        this.nameField.setCanLoseFocus(false);
+        this.nameField.setTextColor(-1);
+        this.nameField.setDisabledTextColour(-1);
+        this.nameField.setEnableBackgroundDrawing(false);
+        this.nameField.setMaxStringLength(35);
+        this.nameField.setResponder(this::renameItem);
+        this.children.add(this.nameField);
+        this.setFocusedDefault(this.nameField);
+    }
 
-   public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
-      String s = this.name.getValue();
-      this.init(p_231152_1_, p_231152_2_, p_231152_3_);
-      this.name.setValue(s);
-   }
+    public void resize(Minecraft minecraft, int width, int height)
+    {
+        String s = this.nameField.getText();
+        this.init(minecraft, width, height);
+        this.nameField.setText(s);
+    }
 
-   public void removed() {
-      super.removed();
-      this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-   }
+    public void onClose()
+    {
+        super.onClose();
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+    }
 
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (p_231046_1_ == 256) {
-         this.minecraft.player.closeContainer();
-      }
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (keyCode == 256)
+        {
+            this.minecraft.player.closeScreen();
+        }
 
-      return !this.name.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_) && !this.name.canConsumeInput() ? super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_) : true;
-   }
+        return !this.nameField.keyPressed(keyCode, scanCode, modifiers) && !this.nameField.canWrite() ? super.keyPressed(keyCode, scanCode, modifiers) : true;
+    }
 
-   private void onNameChanged(String p_214075_1_) {
-      if (!p_214075_1_.isEmpty()) {
-         String s = p_214075_1_;
-         Slot slot = this.menu.getSlot(0);
-         if (slot != null && slot.hasItem() && !slot.getItem().hasCustomHoverName() && p_214075_1_.equals(slot.getItem().getHoverName().getString())) {
-            s = "";
-         }
+    private void renameItem(String name)
+    {
+        if (!name.isEmpty())
+        {
+            String s = name;
+            Slot slot = this.container.getSlot(0);
 
-         this.menu.setItemName(s);
-         this.minecraft.player.connection.send(new CRenameItemPacket(s));
-      }
-   }
-
-   protected void renderLabels(MatrixStack p_230451_1_, int p_230451_2_, int p_230451_3_) {
-      RenderSystem.disableBlend();
-      super.renderLabels(p_230451_1_, p_230451_2_, p_230451_3_);
-      int i = this.menu.getCost();
-      if (i > 0) {
-         int j = 8453920;
-         ITextComponent itextcomponent;
-         if (i >= 40 && !this.minecraft.player.abilities.instabuild) {
-            itextcomponent = TOO_EXPENSIVE_TEXT;
-            j = 16736352;
-         } else if (!this.menu.getSlot(2).hasItem()) {
-            itextcomponent = null;
-         } else {
-            itextcomponent = new TranslationTextComponent("container.repair.cost", i);
-            if (!this.menu.getSlot(2).mayPickup(this.inventory.player)) {
-               j = 16736352;
+            if (slot != null && slot.getHasStack() && !slot.getStack().hasDisplayName() && name.equals(slot.getStack().getDisplayName().getString()))
+            {
+                s = "";
             }
-         }
 
-         if (itextcomponent != null) {
-            int k = this.imageWidth - 8 - this.font.width(itextcomponent) - 2;
-            int l = 69;
-            fill(p_230451_1_, k - 2, 67, this.imageWidth - 8, 79, 1325400064);
-            this.font.drawShadow(p_230451_1_, itextcomponent, (float)k, 69.0F, j);
-         }
-      }
+            this.container.updateItemName(s);
+            this.minecraft.player.connection.sendPacket(new CRenameItemPacket(s));
+        }
+    }
 
-   }
+    protected void drawGuiContainerForegroundLayer(MatrixStack matrixStack, int x, int y)
+    {
+        RenderSystem.disableBlend();
+        super.drawGuiContainerForegroundLayer(matrixStack, x, y);
+        int i = this.container.getMaximumCost();
 
-   public void renderFg(MatrixStack p_230452_1_, int p_230452_2_, int p_230452_3_, float p_230452_4_) {
-      this.name.render(p_230452_1_, p_230452_2_, p_230452_3_, p_230452_4_);
-   }
+        if (i > 0)
+        {
+            int j = 8453920;
+            ITextComponent itextcomponent;
 
-   public void slotChanged(Container p_71111_1_, int p_71111_2_, ItemStack p_71111_3_) {
-      if (p_71111_2_ == 0) {
-         this.name.setValue(p_71111_3_.isEmpty() ? "" : p_71111_3_.getHoverName().getString());
-         this.name.setEditable(!p_71111_3_.isEmpty());
-         this.setFocused(this.name);
-      }
+            if (i >= 40 && !this.minecraft.player.abilities.isCreativeMode)
+            {
+                itextcomponent = field_243333_B;
+                j = 16736352;
+            }
+            else if (!this.container.getSlot(2).getHasStack())
+            {
+                itextcomponent = null;
+            }
+            else
+            {
+                itextcomponent = new TranslationTextComponent("container.repair.cost", i);
 
-   }
+                if (!this.container.getSlot(2).canTakeStack(this.playerInventory.player))
+                {
+                    j = 16736352;
+                }
+            }
+
+            if (itextcomponent != null)
+            {
+                int k = this.xSize - 8 - this.font.getStringPropertyWidth(itextcomponent) - 2;
+                int l = 69;
+                fill(matrixStack, k - 2, 67, this.xSize - 8, 79, 1325400064);
+                this.font.func_243246_a(matrixStack, itextcomponent, (float)k, 69.0F, j);
+            }
+        }
+    }
+
+    public void renderNameField(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.nameField.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
+
+    /**
+     * Sends the contents of an inventory slot to the client-side Container. This doesn't have to match the actual
+     * contents of that slot.
+     */
+    public void sendSlotContents(Container containerToSend, int slotInd, ItemStack stack)
+    {
+        if (slotInd == 0)
+        {
+            this.nameField.setText(stack.isEmpty() ? "" : stack.getDisplayName().getString());
+            this.nameField.setEnabled(!stack.isEmpty());
+            this.setListener(this.nameField);
+        }
+    }
 }

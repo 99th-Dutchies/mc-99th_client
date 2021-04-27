@@ -4,23 +4,25 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IPalette<T> {
-   int idFor(T p_186041_1_);
+public interface IPalette<T>
+{
+    int idFor(T state);
 
-   boolean maybeHas(Predicate<T> p_230341_1_);
+    boolean func_230341_a_(Predicate<T> p_230341_1_);
 
-   @Nullable
-   T valueFor(int p_186039_1_);
+    @Nullable
 
-   @OnlyIn(Dist.CLIENT)
-   void read(PacketBuffer p_186038_1_);
+    /**
+     * Gets the block state by the palette id.
+     */
+    T get(int indexKey);
 
-   void write(PacketBuffer p_186037_1_);
+    void read(PacketBuffer buf);
 
-   int getSerializedSize();
+    void write(PacketBuffer buf);
 
-   void read(ListNBT p_196968_1_);
+    int getSerializedSize();
+
+    void read(ListNBT nbt);
 }

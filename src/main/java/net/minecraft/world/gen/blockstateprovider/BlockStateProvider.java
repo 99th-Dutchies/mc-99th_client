@@ -6,10 +6,11 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 
-public abstract class BlockStateProvider {
-   public static final Codec<BlockStateProvider> CODEC = Registry.BLOCKSTATE_PROVIDER_TYPES.dispatch(BlockStateProvider::type, BlockStateProviderType::codec);
+public abstract class BlockStateProvider
+{
+    public static final Codec<BlockStateProvider> CODEC = Registry.BLOCK_STATE_PROVIDER_TYPE.dispatch(BlockStateProvider::getProviderType, BlockStateProviderType::getCodec);
 
-   protected abstract BlockStateProviderType<?> type();
+    protected abstract BlockStateProviderType<?> getProviderType();
 
-   public abstract BlockState getState(Random p_225574_1_, BlockPos p_225574_2_);
+    public abstract BlockState getBlockState(Random randomIn, BlockPos blockPosIn);
 }

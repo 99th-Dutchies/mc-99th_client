@@ -15,47 +15,59 @@ import net.minecraft.loot.LootParameter;
 import net.minecraft.loot.LootParameters;
 import net.minecraft.util.JSONUtils;
 
-public class RandomChanceWithLooting implements ILootCondition {
-   private final float percent;
-   private final float lootingMultiplier;
+public class RandomChanceWithLooting implements ILootCondition
+{
+    private final float chance;
+    private final float lootingMultiplier;
 
-   private RandomChanceWithLooting(float p_i46614_1_, float p_i46614_2_) {
-      this.percent = p_i46614_1_;
-      this.lootingMultiplier = p_i46614_2_;
-   }
+    private RandomChanceWithLooting(float chanceIn, float lootingMultiplierIn)
+    {
+        this.chance = chanceIn;
+        this.lootingMultiplier = lootingMultiplierIn;
+    }
 
-   public LootConditionType getType() {
-      return LootConditionManager.RANDOM_CHANCE_WITH_LOOTING;
-   }
+    public LootConditionType func_230419_b_()
+    {
+        return LootConditionManager.RANDOM_CHANCE_WITH_LOOTING;
+    }
 
-   public Set<LootParameter<?>> getReferencedContextParams() {
-      return ImmutableSet.of(LootParameters.KILLER_ENTITY);
-   }
+    public Set < LootParameter<? >> getRequiredParameters()
+    {
+        return ImmutableSet.of(LootParameters.KILLER_ENTITY);
+    }
 
-   public boolean test(LootContext p_test_1_) {
-      Entity entity = p_test_1_.getParamOrNull(LootParameters.KILLER_ENTITY);
-      int i = 0;
-      if (entity instanceof LivingEntity) {
-         i = EnchantmentHelper.getMobLooting((LivingEntity)entity);
-      }
+    public boolean test(LootContext p_test_1_)
+    {
+        Entity entity = p_test_1_.get(LootParameters.KILLER_ENTITY);
+        int i = 0;
 
-      return p_test_1_.getRandom().nextFloat() < this.percent + (float)i * this.lootingMultiplier;
-   }
+        if (entity instanceof LivingEntity)
+        {
+            i = EnchantmentHelper.getLootingModifier((LivingEntity)entity);
+        }
 
-   public static ILootCondition.IBuilder randomChanceAndLootingBoost(float p_216003_0_, float p_216003_1_) {
-      return () -> {
-         return new RandomChanceWithLooting(p_216003_0_, p_216003_1_);
-      };
-   }
+        return p_test_1_.getRandom().nextFloat() < this.chance + (float)i * this.lootingMultiplier;
+    }
 
-   public static class Serializer implements ILootSerializer<RandomChanceWithLooting> {
-      public void serialize(JsonObject p_230424_1_, RandomChanceWithLooting p_230424_2_, JsonSerializationContext p_230424_3_) {
-         p_230424_1_.addProperty("chance", p_230424_2_.percent);
-         p_230424_1_.addProperty("looting_multiplier", p_230424_2_.lootingMultiplier);
-      }
+    public static ILootCondition.IBuilder builder(float chanceIn, float lootingMultiplierIn)
+    {
+        return () ->
+        {
+            return new RandomChanceWithLooting(chanceIn, lootingMultiplierIn);
+        };
+    }
 
-      public RandomChanceWithLooting deserialize(JsonObject p_230423_1_, JsonDeserializationContext p_230423_2_) {
-         return new RandomChanceWithLooting(JSONUtils.getAsFloat(p_230423_1_, "chance"), JSONUtils.getAsFloat(p_230423_1_, "looting_multiplier"));
-      }
-   }
+    public static class Serializer implements ILootSerializer<RandomChanceWithLooting>
+    {
+        public void serialize(JsonObject p_230424_1_, RandomChanceWithLooting p_230424_2_, JsonSerializationContext p_230424_3_)
+        {
+            p_230424_1_.addProperty("chance", p_230424_2_.chance);
+            p_230424_1_.addProperty("looting_multiplier", p_230424_2_.lootingMultiplier);
+        }
+
+        public RandomChanceWithLooting deserialize(JsonObject p_230423_1_, JsonDeserializationContext p_230423_2_)
+        {
+            return new RandomChanceWithLooting(JSONUtils.getFloat(p_230423_1_, "chance"), JSONUtils.getFloat(p_230423_1_, "looting_multiplier"));
+        }
+    }
 }

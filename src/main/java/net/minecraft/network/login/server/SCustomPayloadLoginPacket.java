@@ -5,37 +5,52 @@ import net.minecraft.client.network.login.IClientLoginNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SCustomPayloadLoginPacket implements IPacket<IClientLoginNetHandler> {
-   private int transactionId;
-   private ResourceLocation identifier;
-   private PacketBuffer data;
+public class SCustomPayloadLoginPacket implements IPacket<IClientLoginNetHandler>
+{
+    private int transaction;
+    private ResourceLocation channel;
+    private PacketBuffer payload;
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.transactionId = p_148837_1_.readVarInt();
-      this.identifier = p_148837_1_.readResourceLocation();
-      int i = p_148837_1_.readableBytes();
-      if (i >= 0 && i <= 1048576) {
-         this.data = new PacketBuffer(p_148837_1_.readBytes(i));
-      } else {
-         throw new IOException("Payload may not be larger than 1048576 bytes");
-      }
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.transaction = buf.readVarInt();
+        this.channel = buf.readResourceLocation();
+        int i = buf.readableBytes();
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.transactionId);
-      p_148840_1_.writeResourceLocation(this.identifier);
-      p_148840_1_.writeBytes(this.data.copy());
-   }
+        if (i >= 0 && i <= 1048576)
+        {
+            this.payload = new PacketBuffer(buf.readBytes(i));
+        }
+        else
+        {
+            throw new IOException("Payload may not be larger than 1048576 bytes");
+        }
+    }
 
-   public void handle(IClientLoginNetHandler p_148833_1_) {
-      p_148833_1_.handleCustomQuery(this);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.transaction);
+        buf.writeResourceLocation(this.channel);
+        buf.writeBytes(this.payload.copy());
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getTransactionId() {
-      return this.transactionId;
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientLoginNetHandler handler)
+    {
+        handler.handleCustomPayloadLogin(this);
+    }
+
+    public int getTransaction()
+    {
+        return this.transaction;
+    }
 }

@@ -12,40 +12,53 @@ import net.minecraft.util.Direction;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 
-public class ChestMinecartEntity extends ContainerMinecartEntity {
-   public ChestMinecartEntity(EntityType<? extends ChestMinecartEntity> p_i50124_1_, World p_i50124_2_) {
-      super(p_i50124_1_, p_i50124_2_);
-   }
+public class ChestMinecartEntity extends ContainerMinecartEntity
+{
+    public ChestMinecartEntity(EntityType <? extends ChestMinecartEntity > type, World world)
+    {
+        super(type, world);
+    }
 
-   public ChestMinecartEntity(World p_i1715_1_, double p_i1715_2_, double p_i1715_4_, double p_i1715_6_) {
-      super(EntityType.CHEST_MINECART, p_i1715_2_, p_i1715_4_, p_i1715_6_, p_i1715_1_);
-   }
+    public ChestMinecartEntity(World worldIn, double x, double y, double z)
+    {
+        super(EntityType.CHEST_MINECART, x, y, z, worldIn);
+    }
 
-   public void destroy(DamageSource p_94095_1_) {
-      super.destroy(p_94095_1_);
-      if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-         this.spawnAtLocation(Blocks.CHEST);
-      }
+    public void killMinecart(DamageSource source)
+    {
+        super.killMinecart(source);
 
-   }
+        if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS))
+        {
+            this.entityDropItem(Blocks.CHEST);
+        }
+    }
 
-   public int getContainerSize() {
-      return 27;
-   }
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    public int getSizeInventory()
+    {
+        return 27;
+    }
 
-   public AbstractMinecartEntity.Type getMinecartType() {
-      return AbstractMinecartEntity.Type.CHEST;
-   }
+    public AbstractMinecartEntity.Type getMinecartType()
+    {
+        return AbstractMinecartEntity.Type.CHEST;
+    }
 
-   public BlockState getDefaultDisplayBlockState() {
-      return Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.NORTH);
-   }
+    public BlockState getDefaultDisplayTile()
+    {
+        return Blocks.CHEST.getDefaultState().with(ChestBlock.FACING, Direction.NORTH);
+    }
 
-   public int getDefaultDisplayOffset() {
-      return 8;
-   }
+    public int getDefaultDisplayTileOffset()
+    {
+        return 8;
+    }
 
-   public Container createMenu(int p_213968_1_, PlayerInventory p_213968_2_) {
-      return ChestContainer.threeRows(p_213968_1_, p_213968_2_, this);
-   }
+    public Container createContainer(int id, PlayerInventory playerInventoryIn)
+    {
+        return ChestContainer.createGeneric9X3(id, playerInventoryIn, this);
+    }
 }

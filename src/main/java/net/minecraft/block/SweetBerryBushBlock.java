@@ -23,88 +23,121 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SweetBerryBushBlock extends BushBlock implements IGrowable {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
-   private static final VoxelShape SAPLING_SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 8.0D, 13.0D);
-   private static final VoxelShape MID_GROWTH_SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 16.0D, 15.0D);
+public class SweetBerryBushBlock extends BushBlock implements IGrowable
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_3;
+    private static final VoxelShape BUSHLING_SHAPE = Block.makeCuboidShape(3.0D, 0.0D, 3.0D, 13.0D, 8.0D, 13.0D);
+    private static final VoxelShape GROWING_SHAPE = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 16.0D, 15.0D);
 
-   public SweetBerryBushBlock(AbstractBlock.Properties p_i49971_1_) {
-      super(p_i49971_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
-   }
+    public SweetBerryBushBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(AGE, Integer.valueOf(0)));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ItemStack getCloneItemStack(IBlockReader p_185473_1_, BlockPos p_185473_2_, BlockState p_185473_3_) {
-      return new ItemStack(Items.SWEET_BERRIES);
-   }
+    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state)
+    {
+        return new ItemStack(Items.SWEET_BERRIES);
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      if (p_220053_1_.getValue(AGE) == 0) {
-         return SAPLING_SHAPE;
-      } else {
-         return p_220053_1_.getValue(AGE) < 3 ? MID_GROWTH_SHAPE : super.getShape(p_220053_1_, p_220053_2_, p_220053_3_, p_220053_4_);
-      }
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        if (state.get(AGE) == 0)
+        {
+            return BUSHLING_SHAPE;
+        }
+        else
+        {
+            return state.get(AGE) < 3 ? GROWING_SHAPE : super.getShape(state, worldIn, pos, context);
+        }
+    }
 
-   public boolean isRandomlyTicking(BlockState p_149653_1_) {
-      return p_149653_1_.getValue(AGE) < 3;
-   }
+    /**
+     * Returns whether or not this block is of a type that needs random ticking. Called for ref-counting purposes by
+     * ExtendedBlockStorage in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
+    public boolean ticksRandomly(BlockState state)
+    {
+        return state.get(AGE) < 3;
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      int i = p_225542_1_.getValue(AGE);
-      if (i < 3 && p_225542_4_.nextInt(5) == 0 && p_225542_2_.getRawBrightness(p_225542_3_.above(), 0) >= 9) {
-         p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(AGE, Integer.valueOf(i + 1)), 2);
-      }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        int i = state.get(AGE);
 
-   }
+        if (i < 3 && random.nextInt(5) == 0 && worldIn.getLightSubtracted(pos.up(), 0) >= 9)
+        {
+            worldIn.setBlockState(pos, state.with(AGE, Integer.valueOf(i + 1)), 2);
+        }
+    }
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      if (p_196262_4_ instanceof LivingEntity && p_196262_4_.getType() != EntityType.FOX && p_196262_4_.getType() != EntityType.BEE) {
-         p_196262_4_.makeStuckInBlock(p_196262_1_, new Vector3d((double)0.8F, 0.75D, (double)0.8F));
-         if (!p_196262_2_.isClientSide && p_196262_1_.getValue(AGE) > 0 && (p_196262_4_.xOld != p_196262_4_.getX() || p_196262_4_.zOld != p_196262_4_.getZ())) {
-            double d0 = Math.abs(p_196262_4_.getX() - p_196262_4_.xOld);
-            double d1 = Math.abs(p_196262_4_.getZ() - p_196262_4_.zOld);
-            if (d0 >= (double)0.003F || d1 >= (double)0.003F) {
-               p_196262_4_.hurt(DamageSource.SWEET_BERRY_BUSH, 1.0F);
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        if (entityIn instanceof LivingEntity && entityIn.getType() != EntityType.FOX && entityIn.getType() != EntityType.BEE)
+        {
+            entityIn.setMotionMultiplier(state, new Vector3d((double)0.8F, 0.75D, (double)0.8F));
+
+            if (!worldIn.isRemote && state.get(AGE) > 0 && (entityIn.lastTickPosX != entityIn.getPosX() || entityIn.lastTickPosZ != entityIn.getPosZ()))
+            {
+                double d0 = Math.abs(entityIn.getPosX() - entityIn.lastTickPosX);
+                double d1 = Math.abs(entityIn.getPosZ() - entityIn.lastTickPosZ);
+
+                if (d0 >= (double)0.003F || d1 >= (double)0.003F)
+                {
+                    entityIn.attackEntityFrom(DamageSource.SWEET_BERRY_BUSH, 1.0F);
+                }
             }
-         }
+        }
+    }
 
-      }
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        int i = state.get(AGE);
+        boolean flag = i == 3;
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      int i = p_225533_1_.getValue(AGE);
-      boolean flag = i == 3;
-      if (!flag && p_225533_4_.getItemInHand(p_225533_5_).getItem() == Items.BONE_MEAL) {
-         return ActionResultType.PASS;
-      } else if (i > 1) {
-         int j = 1 + p_225533_2_.random.nextInt(2);
-         popResource(p_225533_2_, p_225533_3_, new ItemStack(Items.SWEET_BERRIES, j + (flag ? 1 : 0)));
-         p_225533_2_.playSound((PlayerEntity)null, p_225533_3_, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundCategory.BLOCKS, 1.0F, 0.8F + p_225533_2_.random.nextFloat() * 0.4F);
-         p_225533_2_.setBlock(p_225533_3_, p_225533_1_.setValue(AGE, Integer.valueOf(1)), 2);
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      } else {
-         return super.use(p_225533_1_, p_225533_2_, p_225533_3_, p_225533_4_, p_225533_5_, p_225533_6_);
-      }
-   }
+        if (!flag && player.getHeldItem(handIn).getItem() == Items.BONE_MEAL)
+        {
+            return ActionResultType.PASS;
+        }
+        else if (i > 1)
+        {
+            int j = 1 + worldIn.rand.nextInt(2);
+            spawnAsEntity(worldIn, pos, new ItemStack(Items.SWEET_BERRIES, j + (flag ? 1 : 0)));
+            worldIn.playSound((PlayerEntity)null, pos, SoundEvents.ITEM_SWEET_BERRIES_PICK_FROM_BUSH, SoundCategory.BLOCKS, 1.0F, 0.8F + worldIn.rand.nextFloat() * 0.4F);
+            worldIn.setBlockState(pos, state.with(AGE, Integer.valueOf(1)), 2);
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+        else
+        {
+            return super.onBlockActivated(state, worldIn, pos, player, handIn, hit);
+        }
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return p_176473_3_.getValue(AGE) < 3;
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return state.get(AGE) < 3;
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      int i = Math.min(3, p_225535_4_.getValue(AGE) + 1);
-      p_225535_1_.setBlock(p_225535_3_, p_225535_4_.setValue(AGE, Integer.valueOf(i)), 2);
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        int i = Math.min(3, state.get(AGE) + 1);
+        worldIn.setBlockState(pos, state.with(AGE, Integer.valueOf(i)), 2);
+    }
 }

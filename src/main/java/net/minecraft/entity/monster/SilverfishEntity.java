@@ -30,194 +30,263 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-public class SilverfishEntity extends MonsterEntity {
-   private SilverfishEntity.SummonSilverfishGoal friendsGoal;
+public class SilverfishEntity extends MonsterEntity
+{
+    private SilverfishEntity.SummonSilverfishGoal summonSilverfish;
 
-   public SilverfishEntity(EntityType<? extends SilverfishEntity> p_i50195_1_, World p_i50195_2_) {
-      super(p_i50195_1_, p_i50195_2_);
-   }
+    public SilverfishEntity(EntityType <? extends SilverfishEntity > typeIn, World worldIn)
+    {
+        super(typeIn, worldIn);
+    }
 
-   protected void registerGoals() {
-      this.friendsGoal = new SilverfishEntity.SummonSilverfishGoal(this);
-      this.goalSelector.addGoal(1, new SwimGoal(this));
-      this.goalSelector.addGoal(3, this.friendsGoal);
-      this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
-      this.goalSelector.addGoal(5, new SilverfishEntity.HideInStoneGoal(this));
-      this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
-      this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));
-   }
+    protected void registerGoals()
+    {
+        this.summonSilverfish = new SilverfishEntity.SummonSilverfishGoal(this);
+        this.goalSelector.addGoal(1, new SwimGoal(this));
+        this.goalSelector.addGoal(3, this.summonSilverfish);
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(5, new SilverfishEntity.HideInStoneGoal(this));
+        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setCallsForHelp());
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));
+    }
 
-   public double getMyRidingOffset() {
-      return 0.1D;
-   }
+    /**
+     * Returns the Y Offset of this entity.
+     */
+    public double getYOffset()
+    {
+        return 0.1D;
+    }
 
-   protected float getStandingEyeHeight(Pose p_213348_1_, EntitySize p_213348_2_) {
-      return 0.13F;
-   }
+    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return 0.13F;
+    }
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MonsterEntity.createMonsterAttributes().add(Attributes.MAX_HEALTH, 8.0D).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_DAMAGE, 1.0D);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234301_m_()
+    {
+        return MonsterEntity.func_234295_eP_().createMutableAttribute(Attributes.MAX_HEALTH, 8.0D).createMutableAttribute(Attributes.MOVEMENT_SPEED, 0.25D).createMutableAttribute(Attributes.ATTACK_DAMAGE, 1.0D);
+    }
 
-   protected boolean isMovementNoisy() {
-      return false;
-   }
+    protected boolean canTriggerWalking()
+    {
+        return false;
+    }
 
-   protected SoundEvent getAmbientSound() {
-      return SoundEvents.SILVERFISH_AMBIENT;
-   }
+    protected SoundEvent getAmbientSound()
+    {
+        return SoundEvents.ENTITY_SILVERFISH_AMBIENT;
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.SILVERFISH_HURT;
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_SILVERFISH_HURT;
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.SILVERFISH_DEATH;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_SILVERFISH_DEATH;
+    }
 
-   protected void playStepSound(BlockPos p_180429_1_, BlockState p_180429_2_) {
-      this.playSound(SoundEvents.SILVERFISH_STEP, 0.15F, 1.0F);
-   }
+    protected void playStepSound(BlockPos pos, BlockState blockIn)
+    {
+        this.playSound(SoundEvents.ENTITY_SILVERFISH_STEP, 0.15F, 1.0F);
+    }
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      if (this.isInvulnerableTo(p_70097_1_)) {
-         return false;
-      } else {
-         if ((p_70097_1_ instanceof EntityDamageSource || p_70097_1_ == DamageSource.MAGIC) && this.friendsGoal != null) {
-            this.friendsGoal.notifyHurt();
-         }
-
-         return super.hurt(p_70097_1_, p_70097_2_);
-      }
-   }
-
-   public void tick() {
-      this.yBodyRot = this.yRot;
-      super.tick();
-   }
-
-   public void setYBodyRot(float p_181013_1_) {
-      this.yRot = p_181013_1_;
-      super.setYBodyRot(p_181013_1_);
-   }
-
-   public float getWalkTargetValue(BlockPos p_205022_1_, IWorldReader p_205022_2_) {
-      return SilverfishBlock.isCompatibleHostBlock(p_205022_2_.getBlockState(p_205022_1_.below())) ? 10.0F : super.getWalkTargetValue(p_205022_1_, p_205022_2_);
-   }
-
-   public static boolean checkSliverfishSpawnRules(EntityType<SilverfishEntity> p_223331_0_, IWorld p_223331_1_, SpawnReason p_223331_2_, BlockPos p_223331_3_, Random p_223331_4_) {
-      if (checkAnyLightMonsterSpawnRules(p_223331_0_, p_223331_1_, p_223331_2_, p_223331_3_, p_223331_4_)) {
-         PlayerEntity playerentity = p_223331_1_.getNearestPlayer((double)p_223331_3_.getX() + 0.5D, (double)p_223331_3_.getY() + 0.5D, (double)p_223331_3_.getZ() + 0.5D, 5.0D, true);
-         return playerentity == null;
-      } else {
-         return false;
-      }
-   }
-
-   public CreatureAttribute getMobType() {
-      return CreatureAttribute.ARTHROPOD;
-   }
-
-   static class HideInStoneGoal extends RandomWalkingGoal {
-      private Direction selectedDirection;
-      private boolean doMerge;
-
-      public HideInStoneGoal(SilverfishEntity p_i45827_1_) {
-         super(p_i45827_1_, 1.0D, 10);
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      }
-
-      public boolean canUse() {
-         if (this.mob.getTarget() != null) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        if (this.isInvulnerableTo(source))
+        {
             return false;
-         } else if (!this.mob.getNavigation().isDone()) {
+        }
+        else
+        {
+            if ((source instanceof EntityDamageSource || source == DamageSource.MAGIC) && this.summonSilverfish != null)
+            {
+                this.summonSilverfish.notifyHurt();
+            }
+
+            return super.attackEntityFrom(source, amount);
+        }
+    }
+
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void tick()
+    {
+        this.renderYawOffset = this.rotationYaw;
+        super.tick();
+    }
+
+    /**
+     * Set the render yaw offset
+     */
+    public void setRenderYawOffset(float offset)
+    {
+        this.rotationYaw = offset;
+        super.setRenderYawOffset(offset);
+    }
+
+    public float getBlockPathWeight(BlockPos pos, IWorldReader worldIn)
+    {
+        return SilverfishBlock.canContainSilverfish(worldIn.getBlockState(pos.down())) ? 10.0F : super.getBlockPathWeight(pos, worldIn);
+    }
+
+    public static boolean func_223331_b(EntityType<SilverfishEntity> p_223331_0_, IWorld p_223331_1_, SpawnReason reason, BlockPos p_223331_3_, Random p_223331_4_)
+    {
+        if (canMonsterSpawn(p_223331_0_, p_223331_1_, reason, p_223331_3_, p_223331_4_))
+        {
+            PlayerEntity playerentity = p_223331_1_.getClosestPlayer((double)p_223331_3_.getX() + 0.5D, (double)p_223331_3_.getY() + 0.5D, (double)p_223331_3_.getZ() + 0.5D, 5.0D, true);
+            return playerentity == null;
+        }
+        else
+        {
             return false;
-         } else {
-            Random random = this.mob.getRandom();
-            if (this.mob.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && random.nextInt(10) == 0) {
-               this.selectedDirection = Direction.getRandom(random);
-               BlockPos blockpos = (new BlockPos(this.mob.getX(), this.mob.getY() + 0.5D, this.mob.getZ())).relative(this.selectedDirection);
-               BlockState blockstate = this.mob.level.getBlockState(blockpos);
-               if (SilverfishBlock.isCompatibleHostBlock(blockstate)) {
-                  this.doMerge = true;
-                  return true;
-               }
+        }
+    }
+
+    public CreatureAttribute getCreatureAttribute()
+    {
+        return CreatureAttribute.ARTHROPOD;
+    }
+
+    static class HideInStoneGoal extends RandomWalkingGoal
+    {
+        private Direction facing;
+        private boolean doMerge;
+
+        public HideInStoneGoal(SilverfishEntity silverfishIn)
+        {
+            super(silverfishIn, 1.0D, 10);
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        public boolean shouldExecute()
+        {
+            if (this.creature.getAttackTarget() != null)
+            {
+                return false;
             }
-
-            this.doMerge = false;
-            return super.canUse();
-         }
-      }
-
-      public boolean canContinueToUse() {
-         return this.doMerge ? false : super.canContinueToUse();
-      }
-
-      public void start() {
-         if (!this.doMerge) {
-            super.start();
-         } else {
-            IWorld iworld = this.mob.level;
-            BlockPos blockpos = (new BlockPos(this.mob.getX(), this.mob.getY() + 0.5D, this.mob.getZ())).relative(this.selectedDirection);
-            BlockState blockstate = iworld.getBlockState(blockpos);
-            if (SilverfishBlock.isCompatibleHostBlock(blockstate)) {
-               iworld.setBlock(blockpos, SilverfishBlock.stateByHostBlock(blockstate.getBlock()), 3);
-               this.mob.spawnAnim();
-               this.mob.remove();
+            else if (!this.creature.getNavigator().noPath())
+            {
+                return false;
             }
+            else
+            {
+                Random random = this.creature.getRNG();
 
-         }
-      }
-   }
+                if (this.creature.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING) && random.nextInt(10) == 0)
+                {
+                    this.facing = Direction.getRandomDirection(random);
+                    BlockPos blockpos = (new BlockPos(this.creature.getPosX(), this.creature.getPosY() + 0.5D, this.creature.getPosZ())).offset(this.facing);
+                    BlockState blockstate = this.creature.world.getBlockState(blockpos);
 
-   static class SummonSilverfishGoal extends Goal {
-      private final SilverfishEntity silverfish;
-      private int lookForFriends;
+                    if (SilverfishBlock.canContainSilverfish(blockstate))
+                    {
+                        this.doMerge = true;
+                        return true;
+                    }
+                }
 
-      public SummonSilverfishGoal(SilverfishEntity p_i45826_1_) {
-         this.silverfish = p_i45826_1_;
-      }
+                this.doMerge = false;
+                return super.shouldExecute();
+            }
+        }
 
-      public void notifyHurt() {
-         if (this.lookForFriends == 0) {
-            this.lookForFriends = 20;
-         }
+        public boolean shouldContinueExecuting()
+        {
+            return this.doMerge ? false : super.shouldContinueExecuting();
+        }
 
-      }
+        public void startExecuting()
+        {
+            if (!this.doMerge)
+            {
+                super.startExecuting();
+            }
+            else
+            {
+                IWorld iworld = this.creature.world;
+                BlockPos blockpos = (new BlockPos(this.creature.getPosX(), this.creature.getPosY() + 0.5D, this.creature.getPosZ())).offset(this.facing);
+                BlockState blockstate = iworld.getBlockState(blockpos);
 
-      public boolean canUse() {
-         return this.lookForFriends > 0;
-      }
+                if (SilverfishBlock.canContainSilverfish(blockstate))
+                {
+                    iworld.setBlockState(blockpos, SilverfishBlock.infest(blockstate.getBlock()), 3);
+                    this.creature.spawnExplosionParticle();
+                    this.creature.remove();
+                }
+            }
+        }
+    }
 
-      public void tick() {
-         --this.lookForFriends;
-         if (this.lookForFriends <= 0) {
-            World world = this.silverfish.level;
-            Random random = this.silverfish.getRandom();
-            BlockPos blockpos = this.silverfish.blockPosition();
+    static class SummonSilverfishGoal extends Goal
+    {
+        private final SilverfishEntity silverfish;
+        private int lookForFriends;
 
-            for(int i = 0; i <= 5 && i >= -5; i = (i <= 0 ? 1 : 0) - i) {
-               for(int j = 0; j <= 10 && j >= -10; j = (j <= 0 ? 1 : 0) - j) {
-                  for(int k = 0; k <= 10 && k >= -10; k = (k <= 0 ? 1 : 0) - k) {
-                     BlockPos blockpos1 = blockpos.offset(j, i, k);
-                     BlockState blockstate = world.getBlockState(blockpos1);
-                     Block block = blockstate.getBlock();
-                     if (block instanceof SilverfishBlock) {
-                        if (world.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-                           world.destroyBlock(blockpos1, true, this.silverfish);
-                        } else {
-                           world.setBlock(blockpos1, ((SilverfishBlock)block).getHostBlock().defaultBlockState(), 3);
+        public SummonSilverfishGoal(SilverfishEntity silverfishIn)
+        {
+            this.silverfish = silverfishIn;
+        }
+
+        public void notifyHurt()
+        {
+            if (this.lookForFriends == 0)
+            {
+                this.lookForFriends = 20;
+            }
+        }
+
+        public boolean shouldExecute()
+        {
+            return this.lookForFriends > 0;
+        }
+
+        public void tick()
+        {
+            --this.lookForFriends;
+
+            if (this.lookForFriends <= 0)
+            {
+                World world = this.silverfish.world;
+                Random random = this.silverfish.getRNG();
+                BlockPos blockpos = this.silverfish.getPosition();
+
+                for (int i = 0; i <= 5 && i >= -5; i = (i <= 0 ? 1 : 0) - i)
+                {
+                    for (int j = 0; j <= 10 && j >= -10; j = (j <= 0 ? 1 : 0) - j)
+                    {
+                        for (int k = 0; k <= 10 && k >= -10; k = (k <= 0 ? 1 : 0) - k)
+                        {
+                            BlockPos blockpos1 = blockpos.add(j, i, k);
+                            BlockState blockstate = world.getBlockState(blockpos1);
+                            Block block = blockstate.getBlock();
+
+                            if (block instanceof SilverfishBlock)
+                            {
+                                if (world.getGameRules().getBoolean(GameRules.MOB_GRIEFING))
+                                {
+                                    world.destroyBlock(blockpos1, true, this.silverfish);
+                                }
+                                else
+                                {
+                                    world.setBlockState(blockpos1, ((SilverfishBlock)block).getMimickedBlock().getDefaultState(), 3);
+                                }
+
+                                if (random.nextBoolean())
+                                {
+                                    return;
+                                }
+                            }
                         }
-
-                        if (random.nextBoolean()) {
-                           return;
-                        }
-                     }
-                  }
-               }
+                    }
+                }
             }
-         }
-
-      }
-   }
+        }
+    }
 }

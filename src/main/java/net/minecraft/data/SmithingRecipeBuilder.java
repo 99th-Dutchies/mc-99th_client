@@ -14,88 +14,103 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
 
-public class SmithingRecipeBuilder {
-   private final Ingredient base;
-   private final Ingredient addition;
-   private final Item result;
-   private final Advancement.Builder advancement = Advancement.Builder.advancement();
-   private final IRecipeSerializer<?> type;
+public class SmithingRecipeBuilder
+{
+    private final Ingredient base;
+    private final Ingredient addition;
+    private final Item output;
+    private final Advancement.Builder advancementBuilder = Advancement.Builder.builder();
+    private final IRecipeSerializer<?> serializer;
 
-   public SmithingRecipeBuilder(IRecipeSerializer<?> p_i232549_1_, Ingredient p_i232549_2_, Ingredient p_i232549_3_, Item p_i232549_4_) {
-      this.type = p_i232549_1_;
-      this.base = p_i232549_2_;
-      this.addition = p_i232549_3_;
-      this.result = p_i232549_4_;
-   }
+    public SmithingRecipeBuilder(IRecipeSerializer<?> serializer, Ingredient base, Ingredient addition, Item output)
+    {
+        this.serializer = serializer;
+        this.base = base;
+        this.addition = addition;
+        this.output = output;
+    }
 
-   public static SmithingRecipeBuilder smithing(Ingredient p_240502_0_, Ingredient p_240502_1_, Item p_240502_2_) {
-      return new SmithingRecipeBuilder(IRecipeSerializer.SMITHING, p_240502_0_, p_240502_1_, p_240502_2_);
-   }
+    public static SmithingRecipeBuilder smithingRecipe(Ingredient base, Ingredient addition, Item output)
+    {
+        return new SmithingRecipeBuilder(IRecipeSerializer.SMITHING, base, addition, output);
+    }
 
-   public SmithingRecipeBuilder unlocks(String p_240503_1_, ICriterionInstance p_240503_2_) {
-      this.advancement.addCriterion(p_240503_1_, p_240503_2_);
-      return this;
-   }
+    public SmithingRecipeBuilder addCriterion(String name, ICriterionInstance criterion)
+    {
+        this.advancementBuilder.withCriterion(name, criterion);
+        return this;
+    }
 
-   public void save(Consumer<IFinishedRecipe> p_240504_1_, String p_240504_2_) {
-      this.save(p_240504_1_, new ResourceLocation(p_240504_2_));
-   }
+    public void build(Consumer<IFinishedRecipe> consumer, String id)
+    {
+        this.build(consumer, new ResourceLocation(id));
+    }
 
-   public void save(Consumer<IFinishedRecipe> p_240505_1_, ResourceLocation p_240505_2_) {
-      this.ensureValid(p_240505_2_);
-      this.advancement.parent(new ResourceLocation("recipes/root")).addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(p_240505_2_)).rewards(AdvancementRewards.Builder.recipe(p_240505_2_)).requirements(IRequirementsStrategy.OR);
-      p_240505_1_.accept(new SmithingRecipeBuilder.Result(p_240505_2_, this.type, this.base, this.addition, this.result, this.advancement, new ResourceLocation(p_240505_2_.getNamespace(), "recipes/" + this.result.getItemCategory().getRecipeFolderName() + "/" + p_240505_2_.getPath())));
-   }
+    public void build(Consumer<IFinishedRecipe> recipe, ResourceLocation id)
+    {
+        this.validate(id);
+        this.advancementBuilder.withParentId(new ResourceLocation("recipes/root")).withCriterion("has_the_recipe", RecipeUnlockedTrigger.create(id)).withRewards(AdvancementRewards.Builder.recipe(id)).withRequirementsStrategy(IRequirementsStrategy.OR);
+        recipe.accept(new SmithingRecipeBuilder.Result(id, this.serializer, this.base, this.addition, this.output, this.advancementBuilder, new ResourceLocation(id.getNamespace(), "recipes/" + this.output.getGroup().getPath() + "/" + id.getPath())));
+    }
 
-   private void ensureValid(ResourceLocation p_240506_1_) {
-      if (this.advancement.getCriteria().isEmpty()) {
-         throw new IllegalStateException("No way of obtaining recipe " + p_240506_1_);
-      }
-   }
+    private void validate(ResourceLocation id)
+    {
+        if (this.advancementBuilder.getCriteria().isEmpty())
+        {
+            throw new IllegalStateException("No way of obtaining recipe " + id);
+        }
+    }
 
-   public static class Result implements IFinishedRecipe {
-      private final ResourceLocation id;
-      private final Ingredient base;
-      private final Ingredient addition;
-      private final Item result;
-      private final Advancement.Builder advancement;
-      private final ResourceLocation advancementId;
-      private final IRecipeSerializer<?> type;
+    public static class Result implements IFinishedRecipe
+    {
+        private final ResourceLocation id;
+        private final Ingredient base;
+        private final Ingredient addition;
+        private final Item output;
+        private final Advancement.Builder advancementBuilder;
+        private final ResourceLocation advancementId;
+        private final IRecipeSerializer<?> serializer;
 
-      public Result(ResourceLocation p_i232550_1_, IRecipeSerializer<?> p_i232550_2_, Ingredient p_i232550_3_, Ingredient p_i232550_4_, Item p_i232550_5_, Advancement.Builder p_i232550_6_, ResourceLocation p_i232550_7_) {
-         this.id = p_i232550_1_;
-         this.type = p_i232550_2_;
-         this.base = p_i232550_3_;
-         this.addition = p_i232550_4_;
-         this.result = p_i232550_5_;
-         this.advancement = p_i232550_6_;
-         this.advancementId = p_i232550_7_;
-      }
+        public Result(ResourceLocation id, IRecipeSerializer<?> serializer, Ingredient base, Ingredient addition, Item output, Advancement.Builder advancementBuilder, ResourceLocation advancementId)
+        {
+            this.id = id;
+            this.serializer = serializer;
+            this.base = base;
+            this.addition = addition;
+            this.output = output;
+            this.advancementBuilder = advancementBuilder;
+            this.advancementId = advancementId;
+        }
 
-      public void serializeRecipeData(JsonObject p_218610_1_) {
-         p_218610_1_.add("base", this.base.toJson());
-         p_218610_1_.add("addition", this.addition.toJson());
-         JsonObject jsonobject = new JsonObject();
-         jsonobject.addProperty("item", Registry.ITEM.getKey(this.result).toString());
-         p_218610_1_.add("result", jsonobject);
-      }
+        public void serialize(JsonObject json)
+        {
+            json.add("base", this.base.serialize());
+            json.add("addition", this.addition.serialize());
+            JsonObject jsonobject = new JsonObject();
+            jsonobject.addProperty("item", Registry.ITEM.getKey(this.output).toString());
+            json.add("result", jsonobject);
+        }
 
-      public ResourceLocation getId() {
-         return this.id;
-      }
+        public ResourceLocation getID()
+        {
+            return this.id;
+        }
 
-      public IRecipeSerializer<?> getType() {
-         return this.type;
-      }
+        public IRecipeSerializer<?> getSerializer()
+        {
+            return this.serializer;
+        }
 
-      @Nullable
-      public JsonObject serializeAdvancement() {
-         return this.advancement.serializeToJson();
-      }
+        @Nullable
+        public JsonObject getAdvancementJson()
+        {
+            return this.advancementBuilder.serialize();
+        }
 
-      @Nullable
-      public ResourceLocation getAdvancementId() {
-         return this.advancementId;
-      }
-   }
+        @Nullable
+        public ResourceLocation getAdvancementID()
+        {
+            return this.advancementId;
+        }
+    }
 }

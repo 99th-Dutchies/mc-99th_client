@@ -2,8 +2,15 @@ package net.minecraft.network;
 
 import net.minecraft.util.text.ITextComponent;
 
-public interface INetHandler {
-   void onDisconnect(ITextComponent p_147231_1_);
+public interface INetHandler
+{
+    /**
+     * Invoked when disconnecting, the parameter is a ChatComponent describing the reason for termination
+     */
+    void onDisconnect(ITextComponent reason);
 
-   NetworkManager getConnection();
+    /**
+     * Returns this the NetworkManager instance registered with this NetworkHandlerPlayClient
+     */
+    NetworkManager getNetworkManager();
 }

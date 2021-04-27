@@ -7,142 +7,186 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 import net.minecraft.util.math.MathHelper;
 
-public class IntIdentityHashBiMap<K> implements IObjectIntIterable<K> {
-   private static final Object EMPTY_SLOT = null;
-   private K[] keys;
-   private int[] values;
-   private K[] byId;
-   private int nextId;
-   private int size;
+public class IntIdentityHashBiMap<K> implements IObjectIntIterable<K>
+{
+    private static final Object EMPTY = null;
+    private K[] values;
+    private int[] intKeys;
+    private K[] byId;
+    private int nextFreeIndex;
+    private int mapSize;
 
-   public IntIdentityHashBiMap(int p_i46830_1_) {
-      p_i46830_1_ = (int)((float)p_i46830_1_ / 0.8F);
-      this.keys = (K[])(new Object[p_i46830_1_]);
-      this.values = new int[p_i46830_1_];
-      this.byId = (K[])(new Object[p_i46830_1_]);
-   }
+    public IntIdentityHashBiMap(int initialCapacity)
+    {
+        initialCapacity = (int)((float)initialCapacity / 0.8F);
+        this.values = (K[])(new Object[initialCapacity]);
+        this.intKeys = new int[initialCapacity];
+        this.byId = (K[])(new Object[initialCapacity]);
+    }
 
-   public int getId(@Nullable K p_148757_1_) {
-      return this.getValue(this.indexOf(p_148757_1_, this.hash(p_148757_1_)));
-   }
+    /**
+     * Gets the integer ID we use to identify the given object.
+     */
+    public int getId(@Nullable K value)
+    {
+        return this.getValue(this.getIndex(value, this.hashObject(value)));
+    }
 
-   @Nullable
-   public K byId(int p_148745_1_) {
-      return (K)(p_148745_1_ >= 0 && p_148745_1_ < this.byId.length ? this.byId[p_148745_1_] : null);
-   }
+    @Nullable
+    public K getByValue(int value)
+    {
+        return (K)(value >= 0 && value < this.byId.length ? this.byId[value] : null);
+    }
 
-   private int getValue(int p_186805_1_) {
-      return p_186805_1_ == -1 ? -1 : this.values[p_186805_1_];
-   }
+    private int getValue(int key)
+    {
+        return key == -1 ? -1 : this.intKeys[key];
+    }
 
-   public int add(K p_186808_1_) {
-      int i = this.nextId();
-      this.addMapping(p_186808_1_, i);
-      return i;
-   }
+    /**
+     * Adds the given object while expanding this map
+     */
+    public int add(K objectIn)
+    {
+        int i = this.nextId();
+        this.put(objectIn, i);
+        return i;
+    }
 
-   private int nextId() {
-      while(this.nextId < this.byId.length && this.byId[this.nextId] != null) {
-         ++this.nextId;
-      }
+    private int nextId()
+    {
+        while (this.nextFreeIndex < this.byId.length && this.byId[this.nextFreeIndex] != null)
+        {
+            ++this.nextFreeIndex;
+        }
 
-      return this.nextId;
-   }
+        return this.nextFreeIndex;
+    }
 
-   private void grow(int p_186807_1_) {
-      K[] ak = this.keys;
-      int[] aint = this.values;
-      this.keys = (K[])(new Object[p_186807_1_]);
-      this.values = new int[p_186807_1_];
-      this.byId = (K[])(new Object[p_186807_1_]);
-      this.nextId = 0;
-      this.size = 0;
+    /**
+     * Rehashes the map to the new capacity
+     */
+    private void grow(int capacity)
+    {
+        K[] ak = this.values;
+        int[] aint = this.intKeys;
+        this.values = (K[])(new Object[capacity]);
+        this.intKeys = new int[capacity];
+        this.byId = (K[])(new Object[capacity]);
+        this.nextFreeIndex = 0;
+        this.mapSize = 0;
 
-      for(int i = 0; i < ak.length; ++i) {
-         if (ak[i] != null) {
-            this.addMapping(ak[i], aint[i]);
-         }
-      }
+        for (int i = 0; i < ak.length; ++i)
+        {
+            if (ak[i] != null)
+            {
+                this.put(ak[i], aint[i]);
+            }
+        }
+    }
 
-   }
+    /**
+     * Puts the provided object value with the integer key.
+     */
+    public void put(K objectIn, int intKey)
+    {
+        int i = Math.max(intKey, this.mapSize + 1);
 
-   public void addMapping(K p_186814_1_, int p_186814_2_) {
-      int i = Math.max(p_186814_2_, this.size + 1);
-      if ((float)i >= (float)this.keys.length * 0.8F) {
-         int j;
-         for(j = this.keys.length << 1; j < p_186814_2_; j <<= 1) {
-         }
+        if ((float)i >= (float)this.values.length * 0.8F)
+        {
+            int j;
 
-         this.grow(j);
-      }
+            for (j = this.values.length << 1; j < intKey; j <<= 1)
+            {
+            }
 
-      int k = this.findEmpty(this.hash(p_186814_1_));
-      this.keys[k] = p_186814_1_;
-      this.values[k] = p_186814_2_;
-      this.byId[p_186814_2_] = p_186814_1_;
-      ++this.size;
-      if (p_186814_2_ == this.nextId) {
-         ++this.nextId;
-      }
+            this.grow(j);
+        }
 
-   }
+        int k = this.findEmpty(this.hashObject(objectIn));
+        this.values[k] = objectIn;
+        this.intKeys[k] = intKey;
+        this.byId[intKey] = objectIn;
+        ++this.mapSize;
 
-   private int hash(@Nullable K p_186811_1_) {
-      return (MathHelper.murmurHash3Mixer(System.identityHashCode(p_186811_1_)) & Integer.MAX_VALUE) % this.keys.length;
-   }
+        if (intKey == this.nextFreeIndex)
+        {
+            ++this.nextFreeIndex;
+        }
+    }
 
-   private int indexOf(@Nullable K p_186816_1_, int p_186816_2_) {
-      for(int i = p_186816_2_; i < this.keys.length; ++i) {
-         if (this.keys[i] == p_186816_1_) {
-            return i;
-         }
+    private int hashObject(@Nullable K obectIn)
+    {
+        return (MathHelper.hash(System.identityHashCode(obectIn)) & Integer.MAX_VALUE) % this.values.length;
+    }
 
-         if (this.keys[i] == EMPTY_SLOT) {
-            return -1;
-         }
-      }
+    private int getIndex(@Nullable K objectIn, int startIndex)
+    {
+        for (int i = startIndex; i < this.values.length; ++i)
+        {
+            if (this.values[i] == objectIn)
+            {
+                return i;
+            }
 
-      for(int j = 0; j < p_186816_2_; ++j) {
-         if (this.keys[j] == p_186816_1_) {
-            return j;
-         }
+            if (this.values[i] == EMPTY)
+            {
+                return -1;
+            }
+        }
 
-         if (this.keys[j] == EMPTY_SLOT) {
-            return -1;
-         }
-      }
+        for (int j = 0; j < startIndex; ++j)
+        {
+            if (this.values[j] == objectIn)
+            {
+                return j;
+            }
 
-      return -1;
-   }
+            if (this.values[j] == EMPTY)
+            {
+                return -1;
+            }
+        }
 
-   private int findEmpty(int p_186806_1_) {
-      for(int i = p_186806_1_; i < this.keys.length; ++i) {
-         if (this.keys[i] == EMPTY_SLOT) {
-            return i;
-         }
-      }
+        return -1;
+    }
 
-      for(int j = 0; j < p_186806_1_; ++j) {
-         if (this.keys[j] == EMPTY_SLOT) {
-            return j;
-         }
-      }
+    private int findEmpty(int startIndex)
+    {
+        for (int i = startIndex; i < this.values.length; ++i)
+        {
+            if (this.values[i] == EMPTY)
+            {
+                return i;
+            }
+        }
 
-      throw new RuntimeException("Overflowed :(");
-   }
+        for (int j = 0; j < startIndex; ++j)
+        {
+            if (this.values[j] == EMPTY)
+            {
+                return j;
+            }
+        }
 
-   public Iterator<K> iterator() {
-      return Iterators.filter(Iterators.forArray(this.byId), Predicates.notNull());
-   }
+        throw new RuntimeException("Overflowed :(");
+    }
 
-   public void clear() {
-      Arrays.fill(this.keys, (Object)null);
-      Arrays.fill(this.byId, (Object)null);
-      this.nextId = 0;
-      this.size = 0;
-   }
+    public Iterator<K> iterator()
+    {
+        return Iterators.filter(Iterators.forArray(this.byId), Predicates.notNull());
+    }
 
-   public int size() {
-      return this.size;
-   }
+    public void clear()
+    {
+        Arrays.fill(this.values, (Object)null);
+        Arrays.fill(this.byId, (Object)null);
+        this.nextFreeIndex = 0;
+        this.mapSize = 0;
+    }
+
+    public int size()
+    {
+        return this.mapSize;
+    }
 }

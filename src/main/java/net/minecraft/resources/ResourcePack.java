@@ -12,85 +12,108 @@ import javax.annotation.Nullable;
 import net.minecraft.resources.data.IMetadataSectionSerializer;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class ResourcePack implements IResourcePack {
-   private static final Logger LOGGER = LogManager.getLogger();
-   protected final File file;
+public abstract class ResourcePack implements IResourcePack
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    public final File file;
 
-   public ResourcePack(File p_i1287_1_) {
-      this.file = p_i1287_1_;
-   }
+    public ResourcePack(File resourcePackFileIn)
+    {
+        this.file = resourcePackFileIn;
+    }
 
-   private static String getPathFromLocation(ResourcePackType p_195765_0_, ResourceLocation p_195765_1_) {
-      return String.format("%s/%s/%s", p_195765_0_.getDirectory(), p_195765_1_.getNamespace(), p_195765_1_.getPath());
-   }
+    private static String getFullPath(ResourcePackType type, ResourceLocation location)
+    {
+        return String.format("%s/%s/%s", type.getDirectoryName(), location.getNamespace(), location.getPath());
+    }
 
-   protected static String getRelativePath(File p_195767_0_, File p_195767_1_) {
-      return p_195767_0_.toURI().relativize(p_195767_1_.toURI()).getPath();
-   }
+    protected static String getRelativeString(File file1, File file2)
+    {
+        return file1.toURI().relativize(file2.toURI()).getPath();
+    }
 
-   public InputStream getResource(ResourcePackType p_195761_1_, ResourceLocation p_195761_2_) throws IOException {
-      return this.getResource(getPathFromLocation(p_195761_1_, p_195761_2_));
-   }
+    public InputStream getResourceStream(ResourcePackType type, ResourceLocation location) throws IOException
+    {
+        return this.getInputStream(getFullPath(type, location));
+    }
 
-   public boolean hasResource(ResourcePackType p_195764_1_, ResourceLocation p_195764_2_) {
-      return this.hasResource(getPathFromLocation(p_195764_1_, p_195764_2_));
-   }
+    public boolean resourceExists(ResourcePackType type, ResourceLocation location)
+    {
+        return this.resourceExists(getFullPath(type, location));
+    }
 
-   protected abstract InputStream getResource(String p_195766_1_) throws IOException;
+    protected abstract InputStream getInputStream(String resourcePath) throws IOException;
 
-   @OnlyIn(Dist.CLIENT)
-   public InputStream getRootResource(String p_195763_1_) throws IOException {
-      if (!p_195763_1_.contains("/") && !p_195763_1_.contains("\\")) {
-         return this.getResource(p_195763_1_);
-      } else {
-         throw new IllegalArgumentException("Root resources can only be filenames, not paths (no / allowed!)");
-      }
-   }
+    public InputStream getRootResourceStream(String fileName) throws IOException
+    {
+        if (!fileName.contains("/") && !fileName.contains("\\"))
+        {
+            return this.getInputStream(fileName);
+        }
+        else
+        {
+            throw new IllegalArgumentException("Root resources can only be filenames, not paths (no / allowed!)");
+        }
+    }
 
-   protected abstract boolean hasResource(String p_195768_1_);
+    protected abstract boolean resourceExists(String resourcePath);
 
-   protected void logWarning(String p_195769_1_) {
-      LOGGER.warn("ResourcePack: ignored non-lowercase namespace: {} in {}", p_195769_1_, this.file);
-   }
+    protected void onIgnoreNonLowercaseNamespace(String namespace)
+    {
+        LOGGER.warn("ResourcePack: ignored non-lowercase namespace: {} in {}", namespace, this.file);
+    }
 
-   @Nullable
-   public <T> T getMetadataSection(IMetadataSectionSerializer<T> p_195760_1_) throws IOException {
-      Object object;
-      try (InputStream inputstream = this.getResource("pack.mcmeta")) {
-         object = getMetadataFromStream(p_195760_1_, inputstream);
-      }
+    @Nullable
+    public <T> T getMetadata(IMetadataSectionSerializer<T> deserializer) throws IOException
+    {
+        Object object;
 
-      return (T)object;
-   }
+        try (InputStream inputstream = this.getInputStream("pack.mcmeta"))
+        {
+            object = getResourceMetadata(deserializer, inputstream);
+        }
 
-   @Nullable
-   public static <T> T getMetadataFromStream(IMetadataSectionSerializer<T> p_195770_0_, InputStream p_195770_1_) {
-      JsonObject jsonobject;
-      try (BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(p_195770_1_, StandardCharsets.UTF_8))) {
-         jsonobject = JSONUtils.parse(bufferedreader);
-      } catch (JsonParseException | IOException ioexception) {
-         LOGGER.error("Couldn't load {} metadata", p_195770_0_.getMetadataSectionName(), ioexception);
-         return (T)null;
-      }
+        return (T)object;
+    }
 
-      if (!jsonobject.has(p_195770_0_.getMetadataSectionName())) {
-         return (T)null;
-      } else {
-         try {
-            return p_195770_0_.fromJson(JSONUtils.getAsJsonObject(jsonobject, p_195770_0_.getMetadataSectionName()));
-         } catch (JsonParseException jsonparseexception) {
-            LOGGER.error("Couldn't load {} metadata", p_195770_0_.getMetadataSectionName(), jsonparseexception);
+    @Nullable
+    public static <T> T getResourceMetadata(IMetadataSectionSerializer<T> deserializer, InputStream inputStream)
+    {
+        JsonObject jsonobject;
+
+        try (BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)))
+        {
+            jsonobject = JSONUtils.fromJson(bufferedreader);
+        }
+        catch (IOException | JsonParseException jsonparseexception1)
+        {
+            LOGGER.error("Couldn't load {} metadata", deserializer.getSectionName(), jsonparseexception1);
             return (T)null;
-         }
-      }
-   }
+        }
 
-   public String getName() {
-      return this.file.getName();
-   }
+        if (!jsonobject.has(deserializer.getSectionName()))
+        {
+            return (T)null;
+        }
+        else
+        {
+            try
+            {
+                return deserializer.deserialize(JSONUtils.getJsonObject(jsonobject, deserializer.getSectionName()));
+            }
+            catch (JsonParseException jsonparseexception1)
+            {
+                LOGGER.error("Couldn't load {} metadata", deserializer.getSectionName(), jsonparseexception1);
+                return (T)null;
+            }
+        }
+    }
+
+    public String getName()
+    {
+        return this.file.getName();
+    }
 }

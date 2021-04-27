@@ -7,36 +7,52 @@ import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Rotation;
 
-public class RotatedPillarBlock extends Block {
-   public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
+public class RotatedPillarBlock extends Block
+{
+    public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
 
-   public RotatedPillarBlock(AbstractBlock.Properties p_i48339_1_) {
-      super(p_i48339_1_);
-      this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
-   }
+    public RotatedPillarBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.getDefaultState().with(AXIS, Direction.Axis.Y));
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      switch(p_185499_2_) {
-      case COUNTERCLOCKWISE_90:
-      case CLOCKWISE_90:
-         switch((Direction.Axis)p_185499_1_.getValue(AXIS)) {
-         case X:
-            return p_185499_1_.setValue(AXIS, Direction.Axis.Z);
-         case Z:
-            return p_185499_1_.setValue(AXIS, Direction.Axis.X);
-         default:
-            return p_185499_1_;
-         }
-      default:
-         return p_185499_1_;
-      }
-   }
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        switch (rot)
+        {
+            case COUNTERCLOCKWISE_90:
+            case CLOCKWISE_90:
+                switch ((Direction.Axis)state.get(AXIS))
+                {
+                    case X:
+                        return state.with(AXIS, Direction.Axis.Z);
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AXIS);
-   }
+                    case Z:
+                        return state.with(AXIS, Direction.Axis.X);
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      return this.defaultBlockState().setValue(AXIS, p_196258_1_.getClickedFace().getAxis());
-   }
+                    default:
+                        return state;
+                }
+
+            default:
+                return state;
+        }
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AXIS);
+    }
+
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        return this.getDefaultState().with(AXIS, context.getFace().getAxis());
+    }
 }

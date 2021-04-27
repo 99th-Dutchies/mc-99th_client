@@ -7,16 +7,20 @@ import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class FurnaceTileEntity extends AbstractFurnaceTileEntity {
-   public FurnaceTileEntity() {
-      super(TileEntityType.FURNACE, IRecipeType.SMELTING);
-   }
+public class FurnaceTileEntity extends AbstractFurnaceTileEntity
+{
+    public FurnaceTileEntity()
+    {
+        super(TileEntityType.FURNACE, IRecipeType.SMELTING);
+    }
 
-   protected ITextComponent getDefaultName() {
-      return new TranslationTextComponent("container.furnace");
-   }
+    protected ITextComponent getDefaultName()
+    {
+        return new TranslationTextComponent("container.furnace");
+    }
 
-   protected Container createMenu(int p_213906_1_, PlayerInventory p_213906_2_) {
-      return new FurnaceContainer(p_213906_1_, p_213906_2_, this, this.dataAccess);
-   }
+    protected Container createMenu(int id, PlayerInventory player)
+    {
+        return new FurnaceContainer(id, player, this, this.furnaceData);
+    }
 }

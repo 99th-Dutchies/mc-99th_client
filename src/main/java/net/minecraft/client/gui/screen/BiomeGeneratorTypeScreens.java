@@ -23,147 +23,191 @@ import net.minecraft.world.gen.FlatChunkGenerator;
 import net.minecraft.world.gen.FlatGenerationSettings;
 import net.minecraft.world.gen.NoiseChunkGenerator;
 import net.minecraft.world.gen.settings.DimensionGeneratorSettings;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class BiomeGeneratorTypeScreens {
-   public static final BiomeGeneratorTypeScreens NORMAL = new BiomeGeneratorTypeScreens("default") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new NoiseChunkGenerator(new OverworldBiomeProvider(p_241869_3_, false, false, p_241869_1_), p_241869_3_, () -> {
-            return p_241869_2_.getOrThrow(DimensionSettings.OVERWORLD);
-         });
-      }
-   };
-   private static final BiomeGeneratorTypeScreens FLAT = new BiomeGeneratorTypeScreens("flat") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new FlatChunkGenerator(FlatGenerationSettings.getDefault(p_241869_1_));
-      }
-   };
-   private static final BiomeGeneratorTypeScreens LARGE_BIOMES = new BiomeGeneratorTypeScreens("large_biomes") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new NoiseChunkGenerator(new OverworldBiomeProvider(p_241869_3_, false, true, p_241869_1_), p_241869_3_, () -> {
-            return p_241869_2_.getOrThrow(DimensionSettings.OVERWORLD);
-         });
-      }
-   };
-   public static final BiomeGeneratorTypeScreens AMPLIFIED = new BiomeGeneratorTypeScreens("amplified") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new NoiseChunkGenerator(new OverworldBiomeProvider(p_241869_3_, false, false, p_241869_1_), p_241869_3_, () -> {
-            return p_241869_2_.getOrThrow(DimensionSettings.AMPLIFIED);
-         });
-      }
-   };
-   private static final BiomeGeneratorTypeScreens SINGLE_BIOME_SURFACE = new BiomeGeneratorTypeScreens("single_biome_surface") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new NoiseChunkGenerator(new SingleBiomeProvider(p_241869_1_.getOrThrow(Biomes.PLAINS)), p_241869_3_, () -> {
-            return p_241869_2_.getOrThrow(DimensionSettings.OVERWORLD);
-         });
-      }
-   };
-   private static final BiomeGeneratorTypeScreens SINGLE_BIOME_CAVES = new BiomeGeneratorTypeScreens("single_biome_caves") {
-      public DimensionGeneratorSettings create(DynamicRegistries.Impl p_241220_1_, long p_241220_2_, boolean p_241220_4_, boolean p_241220_5_) {
-         Registry<Biome> registry = p_241220_1_.registryOrThrow(Registry.BIOME_REGISTRY);
-         Registry<DimensionType> registry1 = p_241220_1_.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
-         Registry<DimensionSettings> registry2 = p_241220_1_.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
-         return new DimensionGeneratorSettings(p_241220_2_, p_241220_4_, p_241220_5_, DimensionGeneratorSettings.withOverworld(DimensionType.defaultDimensions(registry1, registry, registry2, p_241220_2_), () -> {
-            return registry1.getOrThrow(DimensionType.OVERWORLD_CAVES_LOCATION);
-         }, this.generator(registry, registry2, p_241220_2_)));
-      }
+public abstract class BiomeGeneratorTypeScreens
+{
+    public static final BiomeGeneratorTypeScreens field_239066_a_ = new BiomeGeneratorTypeScreens("default")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new NoiseChunkGenerator(new OverworldBiomeProvider(p_241869_3_, false, false, p_241869_1_), p_241869_3_, () ->
+            {
+                return p_241869_2_.getOrThrow(DimensionSettings.field_242734_c);
+            });
+        }
+    };
+    private static final BiomeGeneratorTypeScreens field_239070_e_ = new BiomeGeneratorTypeScreens("flat")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new FlatChunkGenerator(FlatGenerationSettings.func_242869_a(p_241869_1_));
+        }
+    };
+    private static final BiomeGeneratorTypeScreens field_239071_f_ = new BiomeGeneratorTypeScreens("large_biomes")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new NoiseChunkGenerator(new OverworldBiomeProvider(p_241869_3_, false, true, p_241869_1_), p_241869_3_, () ->
+            {
+                return p_241869_2_.getOrThrow(DimensionSettings.field_242734_c);
+            });
+        }
+    };
+    public static final BiomeGeneratorTypeScreens field_239067_b_ = new BiomeGeneratorTypeScreens("amplified")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new NoiseChunkGenerator(new OverworldBiomeProvider(p_241869_3_, false, false, p_241869_1_), p_241869_3_, () ->
+            {
+                return p_241869_2_.getOrThrow(DimensionSettings.field_242735_d);
+            });
+        }
+    };
+    private static final BiomeGeneratorTypeScreens field_239072_g_ = new BiomeGeneratorTypeScreens("single_biome_surface")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new NoiseChunkGenerator(new SingleBiomeProvider(p_241869_1_.getOrThrow(Biomes.PLAINS)), p_241869_3_, () ->
+            {
+                return p_241869_2_.getOrThrow(DimensionSettings.field_242734_c);
+            });
+        }
+    };
+    private static final BiomeGeneratorTypeScreens field_239073_h_ = new BiomeGeneratorTypeScreens("single_biome_caves")
+    {
+        public DimensionGeneratorSettings func_241220_a_(DynamicRegistries.Impl p_241220_1_, long p_241220_2_, boolean p_241220_4_, boolean p_241220_5_)
+        {
+            Registry<Biome> registry = p_241220_1_.getRegistry(Registry.BIOME_KEY);
+            Registry<DimensionType> registry1 = p_241220_1_.getRegistry(Registry.DIMENSION_TYPE_KEY);
+            Registry<DimensionSettings> registry2 = p_241220_1_.getRegistry(Registry.NOISE_SETTINGS_KEY);
+            return new DimensionGeneratorSettings(p_241220_2_, p_241220_4_, p_241220_5_, DimensionGeneratorSettings.func_241520_a_(DimensionType.getDefaultSimpleRegistry(registry1, registry, registry2, p_241220_2_), () ->
+            {
+                return registry1.getOrThrow(DimensionType.OVERWORLD_CAVES);
+            }, this.func_241869_a(registry, registry2, p_241220_2_)));
+        }
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new NoiseChunkGenerator(new SingleBiomeProvider(p_241869_1_.getOrThrow(Biomes.PLAINS)), p_241869_3_, () ->
+            {
+                return p_241869_2_.getOrThrow(DimensionSettings.field_242738_g);
+            });
+        }
+    };
+    private static final BiomeGeneratorTypeScreens field_239074_i_ = new BiomeGeneratorTypeScreens("single_biome_floating_islands")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new NoiseChunkGenerator(new SingleBiomeProvider(p_241869_1_.getOrThrow(Biomes.PLAINS)), p_241869_3_, () ->
+            {
+                return p_241869_2_.getOrThrow(DimensionSettings.field_242739_h);
+            });
+        }
+    };
+    private static final BiomeGeneratorTypeScreens field_239075_j_ = new BiomeGeneratorTypeScreens("debug_all_block_states")
+    {
+        protected ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        {
+            return new DebugChunkGenerator(p_241869_1_);
+        }
+    };
+    protected static final List<BiomeGeneratorTypeScreens> field_239068_c_ = Lists.newArrayList(field_239066_a_, field_239070_e_, field_239071_f_, field_239067_b_, field_239072_g_, field_239073_h_, field_239074_i_, field_239075_j_);
+    protected static final Map<Optional<BiomeGeneratorTypeScreens>, BiomeGeneratorTypeScreens.IFactory> field_239069_d_ = ImmutableMap.of(Optional.of(field_239070_e_), (p_239089_0_, p_239089_1_) ->
+    {
+        ChunkGenerator chunkgenerator = p_239089_1_.func_236225_f_();
+        return new CreateFlatWorldScreen(p_239089_0_, (p_239083_2_) -> {
+            p_239089_0_.field_238934_c_.func_239043_a_(new DimensionGeneratorSettings(p_239089_1_.getSeed(), p_239089_1_.doesGenerateFeatures(), p_239089_1_.hasBonusChest(), DimensionGeneratorSettings.func_242749_a(p_239089_0_.field_238934_c_.func_239055_b_().getRegistry(Registry.DIMENSION_TYPE_KEY), p_239089_1_.func_236224_e_(), new FlatChunkGenerator(p_239083_2_))));
+        }, chunkgenerator instanceof FlatChunkGenerator ? ((FlatChunkGenerator)chunkgenerator).func_236073_g_() : FlatGenerationSettings.func_242869_a(p_239089_0_.field_238934_c_.func_239055_b_().getRegistry(Registry.BIOME_KEY)));
+    }, Optional.of(field_239072_g_), (p_239087_0_, p_239087_1_) ->
+    {
+        return new CreateBuffetWorldScreen(p_239087_0_, p_239087_0_.field_238934_c_.func_239055_b_(), (p_239088_2_) -> {
+            p_239087_0_.field_238934_c_.func_239043_a_(func_243452_a(p_239087_0_.field_238934_c_.func_239055_b_(), p_239087_1_, field_239072_g_, p_239088_2_));
+        }, func_243451_a(p_239087_0_.field_238934_c_.func_239055_b_(), p_239087_1_));
+    }, Optional.of(field_239073_h_), (p_239085_0_, p_239085_1_) ->
+    {
+        return new CreateBuffetWorldScreen(p_239085_0_, p_239085_0_.field_238934_c_.func_239055_b_(), (p_239086_2_) -> {
+            p_239085_0_.field_238934_c_.func_239043_a_(func_243452_a(p_239085_0_.field_238934_c_.func_239055_b_(), p_239085_1_, field_239073_h_, p_239086_2_));
+        }, func_243451_a(p_239085_0_.field_238934_c_.func_239055_b_(), p_239085_1_));
+    }, Optional.of(field_239074_i_), (p_239081_0_, p_239081_1_) ->
+    {
+        return new CreateBuffetWorldScreen(p_239081_0_, p_239081_0_.field_238934_c_.func_239055_b_(), (p_239082_2_) -> {
+            p_239081_0_.field_238934_c_.func_239043_a_(func_243452_a(p_239081_0_.field_238934_c_.func_239055_b_(), p_239081_1_, field_239074_i_, p_239082_2_));
+        }, func_243451_a(p_239081_0_.field_238934_c_.func_239055_b_(), p_239081_1_));
+    });
+    private final ITextComponent field_239076_k_;
 
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new NoiseChunkGenerator(new SingleBiomeProvider(p_241869_1_.getOrThrow(Biomes.PLAINS)), p_241869_3_, () -> {
-            return p_241869_2_.getOrThrow(DimensionSettings.CAVES);
-         });
-      }
-   };
-   private static final BiomeGeneratorTypeScreens SINGLE_BIOME_FLOATING_ISLANDS = new BiomeGeneratorTypeScreens("single_biome_floating_islands") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new NoiseChunkGenerator(new SingleBiomeProvider(p_241869_1_.getOrThrow(Biomes.PLAINS)), p_241869_3_, () -> {
-            return p_241869_2_.getOrThrow(DimensionSettings.FLOATING_ISLANDS);
-         });
-      }
-   };
-   private static final BiomeGeneratorTypeScreens DEBUG = new BiomeGeneratorTypeScreens("debug_all_block_states") {
-      protected ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_) {
-         return new DebugChunkGenerator(p_241869_1_);
-      }
-   };
-   protected static final List<BiomeGeneratorTypeScreens> PRESETS = Lists.newArrayList(NORMAL, FLAT, LARGE_BIOMES, AMPLIFIED, SINGLE_BIOME_SURFACE, SINGLE_BIOME_CAVES, SINGLE_BIOME_FLOATING_ISLANDS, DEBUG);
-   protected static final Map<Optional<BiomeGeneratorTypeScreens>, BiomeGeneratorTypeScreens.IFactory> EDITORS = ImmutableMap.of(Optional.of(FLAT), (p_239089_0_, p_239089_1_) -> {
-      ChunkGenerator chunkgenerator = p_239089_1_.overworld();
-      return new CreateFlatWorldScreen(p_239089_0_, (p_239083_2_) -> {
-         p_239089_0_.worldGenSettingsComponent.updateSettings(new DimensionGeneratorSettings(p_239089_1_.seed(), p_239089_1_.generateFeatures(), p_239089_1_.generateBonusChest(), DimensionGeneratorSettings.withOverworld(p_239089_0_.worldGenSettingsComponent.registryHolder().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY), p_239089_1_.dimensions(), new FlatChunkGenerator(p_239083_2_))));
-      }, chunkgenerator instanceof FlatChunkGenerator ? ((FlatChunkGenerator)chunkgenerator).settings() : FlatGenerationSettings.getDefault(p_239089_0_.worldGenSettingsComponent.registryHolder().registryOrThrow(Registry.BIOME_REGISTRY)));
-   }, Optional.of(SINGLE_BIOME_SURFACE), (p_239087_0_, p_239087_1_) -> {
-      return new CreateBuffetWorldScreen(p_239087_0_, p_239087_0_.worldGenSettingsComponent.registryHolder(), (p_239088_2_) -> {
-         p_239087_0_.worldGenSettingsComponent.updateSettings(fromBuffetSettings(p_239087_0_.worldGenSettingsComponent.registryHolder(), p_239087_1_, SINGLE_BIOME_SURFACE, p_239088_2_));
-      }, parseBuffetSettings(p_239087_0_.worldGenSettingsComponent.registryHolder(), p_239087_1_));
-   }, Optional.of(SINGLE_BIOME_CAVES), (p_239085_0_, p_239085_1_) -> {
-      return new CreateBuffetWorldScreen(p_239085_0_, p_239085_0_.worldGenSettingsComponent.registryHolder(), (p_239086_2_) -> {
-         p_239085_0_.worldGenSettingsComponent.updateSettings(fromBuffetSettings(p_239085_0_.worldGenSettingsComponent.registryHolder(), p_239085_1_, SINGLE_BIOME_CAVES, p_239086_2_));
-      }, parseBuffetSettings(p_239085_0_.worldGenSettingsComponent.registryHolder(), p_239085_1_));
-   }, Optional.of(SINGLE_BIOME_FLOATING_ISLANDS), (p_239081_0_, p_239081_1_) -> {
-      return new CreateBuffetWorldScreen(p_239081_0_, p_239081_0_.worldGenSettingsComponent.registryHolder(), (p_239082_2_) -> {
-         p_239081_0_.worldGenSettingsComponent.updateSettings(fromBuffetSettings(p_239081_0_.worldGenSettingsComponent.registryHolder(), p_239081_1_, SINGLE_BIOME_FLOATING_ISLANDS, p_239082_2_));
-      }, parseBuffetSettings(p_239081_0_.worldGenSettingsComponent.registryHolder(), p_239081_1_));
-   });
-   private final ITextComponent description;
+    private BiomeGeneratorTypeScreens(String p_i232324_1_)
+    {
+        this.field_239076_k_ = new TranslationTextComponent("generator." + p_i232324_1_);
+    }
 
-   private BiomeGeneratorTypeScreens(String p_i232324_1_) {
-      this.description = new TranslationTextComponent("generator." + p_i232324_1_);
-   }
+    private static DimensionGeneratorSettings func_243452_a(DynamicRegistries p_243452_0_, DimensionGeneratorSettings p_243452_1_, BiomeGeneratorTypeScreens p_243452_2_, Biome p_243452_3_)
+    {
+        BiomeProvider biomeprovider = new SingleBiomeProvider(p_243452_3_);
+        Registry<DimensionType> registry = p_243452_0_.getRegistry(Registry.DIMENSION_TYPE_KEY);
+        Registry<DimensionSettings> registry1 = p_243452_0_.getRegistry(Registry.NOISE_SETTINGS_KEY);
+        Supplier<DimensionSettings> supplier;
 
-   private static DimensionGeneratorSettings fromBuffetSettings(DynamicRegistries p_243452_0_, DimensionGeneratorSettings p_243452_1_, BiomeGeneratorTypeScreens p_243452_2_, Biome p_243452_3_) {
-      BiomeProvider biomeprovider = new SingleBiomeProvider(p_243452_3_);
-      Registry<DimensionType> registry = p_243452_0_.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
-      Registry<DimensionSettings> registry1 = p_243452_0_.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
-      Supplier<DimensionSettings> supplier;
-      if (p_243452_2_ == SINGLE_BIOME_CAVES) {
-         supplier = () -> {
-            return registry1.getOrThrow(DimensionSettings.CAVES);
-         };
-      } else if (p_243452_2_ == SINGLE_BIOME_FLOATING_ISLANDS) {
-         supplier = () -> {
-            return registry1.getOrThrow(DimensionSettings.FLOATING_ISLANDS);
-         };
-      } else {
-         supplier = () -> {
-            return registry1.getOrThrow(DimensionSettings.OVERWORLD);
-         };
-      }
+        if (p_243452_2_ == field_239073_h_)
+        {
+            supplier = () ->
+            {
+                return registry1.getOrThrow(DimensionSettings.field_242738_g);
+            };
+        }
+        else if (p_243452_2_ == field_239074_i_)
+        {
+            supplier = () ->
+            {
+                return registry1.getOrThrow(DimensionSettings.field_242739_h);
+            };
+        }
+        else
+        {
+            supplier = () ->
+            {
+                return registry1.getOrThrow(DimensionSettings.field_242734_c);
+            };
+        }
 
-      return new DimensionGeneratorSettings(p_243452_1_.seed(), p_243452_1_.generateFeatures(), p_243452_1_.generateBonusChest(), DimensionGeneratorSettings.withOverworld(registry, p_243452_1_.dimensions(), new NoiseChunkGenerator(biomeprovider, p_243452_1_.seed(), supplier)));
-   }
+        return new DimensionGeneratorSettings(p_243452_1_.getSeed(), p_243452_1_.doesGenerateFeatures(), p_243452_1_.hasBonusChest(), DimensionGeneratorSettings.func_242749_a(registry, p_243452_1_.func_236224_e_(), new NoiseChunkGenerator(biomeprovider, p_243452_1_.getSeed(), supplier)));
+    }
 
-   private static Biome parseBuffetSettings(DynamicRegistries p_243451_0_, DimensionGeneratorSettings p_243451_1_) {
-      return p_243451_1_.overworld().getBiomeSource().possibleBiomes().stream().findFirst().orElse(p_243451_0_.registryOrThrow(Registry.BIOME_REGISTRY).getOrThrow(Biomes.PLAINS));
-   }
+    private static Biome func_243451_a(DynamicRegistries p_243451_0_, DimensionGeneratorSettings p_243451_1_)
+    {
+        return p_243451_1_.func_236225_f_().getBiomeProvider().getBiomes().stream().findFirst().orElse(p_243451_0_.getRegistry(Registry.BIOME_KEY).getOrThrow(Biomes.PLAINS));
+    }
 
-   public static Optional<BiomeGeneratorTypeScreens> of(DimensionGeneratorSettings p_239079_0_) {
-      ChunkGenerator chunkgenerator = p_239079_0_.overworld();
-      if (chunkgenerator instanceof FlatChunkGenerator) {
-         return Optional.of(FLAT);
-      } else {
-         return chunkgenerator instanceof DebugChunkGenerator ? Optional.of(DEBUG) : Optional.empty();
-      }
-   }
+    public static Optional<BiomeGeneratorTypeScreens> func_239079_a_(DimensionGeneratorSettings p_239079_0_)
+    {
+        ChunkGenerator chunkgenerator = p_239079_0_.func_236225_f_();
 
-   public ITextComponent description() {
-      return this.description;
-   }
+        if (chunkgenerator instanceof FlatChunkGenerator)
+        {
+            return Optional.of(field_239070_e_);
+        }
+        else
+        {
+            return chunkgenerator instanceof DebugChunkGenerator ? Optional.of(field_239075_j_) : Optional.empty();
+        }
+    }
 
-   public DimensionGeneratorSettings create(DynamicRegistries.Impl p_241220_1_, long p_241220_2_, boolean p_241220_4_, boolean p_241220_5_) {
-      Registry<Biome> registry = p_241220_1_.registryOrThrow(Registry.BIOME_REGISTRY);
-      Registry<DimensionType> registry1 = p_241220_1_.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY);
-      Registry<DimensionSettings> registry2 = p_241220_1_.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);
-      return new DimensionGeneratorSettings(p_241220_2_, p_241220_4_, p_241220_5_, DimensionGeneratorSettings.withOverworld(registry1, DimensionType.defaultDimensions(registry1, registry, registry2, p_241220_2_), this.generator(registry, registry2, p_241220_2_)));
-   }
+    public ITextComponent func_239077_a_()
+    {
+        return this.field_239076_k_;
+    }
 
-   protected abstract ChunkGenerator generator(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_);
+    public DimensionGeneratorSettings func_241220_a_(DynamicRegistries.Impl p_241220_1_, long p_241220_2_, boolean p_241220_4_, boolean p_241220_5_)
+    {
+        Registry<Biome> registry = p_241220_1_.getRegistry(Registry.BIOME_KEY);
+        Registry<DimensionType> registry1 = p_241220_1_.getRegistry(Registry.DIMENSION_TYPE_KEY);
+        Registry<DimensionSettings> registry2 = p_241220_1_.getRegistry(Registry.NOISE_SETTINGS_KEY);
+        return new DimensionGeneratorSettings(p_241220_2_, p_241220_4_, p_241220_5_, DimensionGeneratorSettings.func_242749_a(registry1, DimensionType.getDefaultSimpleRegistry(registry1, registry, registry2, p_241220_2_), this.func_241869_a(registry, registry2, p_241220_2_)));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public interface IFactory {
-      Screen createEditScreen(CreateWorldScreen p_createEditScreen_1_, DimensionGeneratorSettings p_createEditScreen_2_);
-   }
+    protected abstract ChunkGenerator func_241869_a(Registry<Biome> p_241869_1_, Registry<DimensionSettings> p_241869_2_, long p_241869_3_);
+
+    public interface IFactory
+    {
+        Screen createEditScreen(CreateWorldScreen p_createEditScreen_1_, DimensionGeneratorSettings p_createEditScreen_2_);
+    }
 }

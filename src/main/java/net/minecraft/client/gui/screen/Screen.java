@@ -38,398 +38,514 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class Screen extends FocusableGui implements IScreen, IRenderable {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private static final Set<String> ALLOWED_PROTOCOLS = Sets.newHashSet("http", "https");
-   protected final ITextComponent title;
-   protected final List<IGuiEventListener> children = Lists.newArrayList();
-   @Nullable
-   protected Minecraft minecraft;
-   protected ItemRenderer itemRenderer;
-   public int width;
-   public int height;
-   protected final List<Widget> buttons = Lists.newArrayList();
-   public boolean passEvents;
-   protected FontRenderer font;
-   private URI clickedLink;
+public abstract class Screen extends FocusableGui implements IScreen, IRenderable
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Set<String> ALLOWED_PROTOCOLS = Sets.newHashSet("http", "https");
+    protected final ITextComponent title;
+    protected final List<IGuiEventListener> children = Lists.newArrayList();
+    @Nullable
+    protected Minecraft minecraft;
+    protected ItemRenderer itemRenderer;
+    public int width;
+    public int height;
+    protected final List<Widget> buttons = Lists.newArrayList();
+    public boolean passEvents;
+    protected FontRenderer font;
+    private URI clickedLink;
 
-   protected Screen(ITextComponent p_i51108_1_) {
-      this.title = p_i51108_1_;
-   }
+    protected Screen(ITextComponent titleIn)
+    {
+        this.title = titleIn;
+    }
 
-   public ITextComponent getTitle() {
-      return this.title;
-   }
+    public ITextComponent getTitle()
+    {
+        return this.title;
+    }
 
-   public String getNarrationMessage() {
-      return this.getTitle().getString();
-   }
+    public String getNarrationMessage()
+    {
+        return this.getTitle().getString();
+    }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      for(int i = 0; i < this.buttons.size(); ++i) {
-         this.buttons.get(i).render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        for (int i = 0; i < this.buttons.size(); ++i)
+        {
+            this.buttons.get(i).render(matrixStack, mouseX, mouseY, partialTicks);
+        }
+    }
 
-   }
-
-   public boolean keyPressed(int p_231046_1_, int p_231046_2_, int p_231046_3_) {
-      if (p_231046_1_ == 256 && this.shouldCloseOnEsc()) {
-         this.onClose();
-         return true;
-      } else if (p_231046_1_ == 258) {
-         boolean flag = !hasShiftDown();
-         if (!this.changeFocus(flag)) {
-            this.changeFocus(flag);
-         }
-
-         return false;
-      } else {
-         return super.keyPressed(p_231046_1_, p_231046_2_, p_231046_3_);
-      }
-   }
-
-   public boolean shouldCloseOnEsc() {
-      return true;
-   }
-
-   public void onClose() {
-      this.minecraft.setScreen((Screen)null);
-   }
-
-   protected <T extends Widget> T addButton(T p_230480_1_) {
-      this.buttons.add(p_230480_1_);
-      return this.addWidget(p_230480_1_);
-   }
-
-   protected <T extends IGuiEventListener> T addWidget(T p_230481_1_) {
-      this.children.add(p_230481_1_);
-      return p_230481_1_;
-   }
-
-   protected void renderTooltip(MatrixStack p_230457_1_, ItemStack p_230457_2_, int p_230457_3_, int p_230457_4_) {
-      this.renderComponentTooltip(p_230457_1_, this.getTooltipFromItem(p_230457_2_), p_230457_3_, p_230457_4_);
-   }
-
-   public List<ITextComponent> getTooltipFromItem(ItemStack p_231151_1_) {
-      return p_231151_1_.getTooltipLines(this.minecraft.player, this.minecraft.options.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL);
-   }
-
-   public void renderTooltip(MatrixStack p_238652_1_, ITextComponent p_238652_2_, int p_238652_3_, int p_238652_4_) {
-      this.renderTooltip(p_238652_1_, Arrays.asList(p_238652_2_.getVisualOrderText()), p_238652_3_, p_238652_4_);
-   }
-
-   public void renderComponentTooltip(MatrixStack p_243308_1_, List<ITextComponent> p_243308_2_, int p_243308_3_, int p_243308_4_) {
-      this.renderTooltip(p_243308_1_, Lists.transform(p_243308_2_, ITextComponent::getVisualOrderText), p_243308_3_, p_243308_4_);
-   }
-
-   public void renderTooltip(MatrixStack p_238654_1_, List<? extends IReorderingProcessor> p_238654_2_, int p_238654_3_, int p_238654_4_) {
-      if (!p_238654_2_.isEmpty()) {
-         int i = 0;
-
-         for(IReorderingProcessor ireorderingprocessor : p_238654_2_) {
-            int j = this.font.width(ireorderingprocessor);
-            if (j > i) {
-               i = j;
-            }
-         }
-
-         int i2 = p_238654_3_ + 12;
-         int j2 = p_238654_4_ - 12;
-         int k = 8;
-         if (p_238654_2_.size() > 1) {
-            k += 2 + (p_238654_2_.size() - 1) * 10;
-         }
-
-         if (i2 + i > this.width) {
-            i2 -= 28 + i;
-         }
-
-         if (j2 + k + 6 > this.height) {
-            j2 = this.height - k - 6;
-         }
-
-         p_238654_1_.pushPose();
-         int l = -267386864;
-         int i1 = 1347420415;
-         int j1 = 1344798847;
-         int k1 = 400;
-         Tessellator tessellator = Tessellator.getInstance();
-         BufferBuilder bufferbuilder = tessellator.getBuilder();
-         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-         Matrix4f matrix4f = p_238654_1_.last().pose();
-         fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 4, i2 + i + 3, j2 - 3, 400, -267386864, -267386864);
-         fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 + k + 3, i2 + i + 3, j2 + k + 4, 400, -267386864, -267386864);
-         fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 3, i2 + i + 3, j2 + k + 3, 400, -267386864, -267386864);
-         fillGradient(matrix4f, bufferbuilder, i2 - 4, j2 - 3, i2 - 3, j2 + k + 3, 400, -267386864, -267386864);
-         fillGradient(matrix4f, bufferbuilder, i2 + i + 3, j2 - 3, i2 + i + 4, j2 + k + 3, 400, -267386864, -267386864);
-         fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 3 + 1, i2 - 3 + 1, j2 + k + 3 - 1, 400, 1347420415, 1344798847);
-         fillGradient(matrix4f, bufferbuilder, i2 + i + 2, j2 - 3 + 1, i2 + i + 3, j2 + k + 3 - 1, 400, 1347420415, 1344798847);
-         fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 3, i2 + i + 3, j2 - 3 + 1, 400, 1347420415, 1347420415);
-         fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 + k + 2, i2 + i + 3, j2 + k + 3, 400, 1344798847, 1344798847);
-         RenderSystem.enableDepthTest();
-         RenderSystem.disableTexture();
-         RenderSystem.enableBlend();
-         RenderSystem.defaultBlendFunc();
-         RenderSystem.shadeModel(7425);
-         bufferbuilder.end();
-         WorldVertexBufferUploader.end(bufferbuilder);
-         RenderSystem.shadeModel(7424);
-         RenderSystem.disableBlend();
-         RenderSystem.enableTexture();
-         IRenderTypeBuffer.Impl irendertypebuffer$impl = IRenderTypeBuffer.immediate(Tessellator.getInstance().getBuilder());
-         p_238654_1_.translate(0.0D, 0.0D, 400.0D);
-
-         for(int l1 = 0; l1 < p_238654_2_.size(); ++l1) {
-            IReorderingProcessor ireorderingprocessor1 = p_238654_2_.get(l1);
-            if (ireorderingprocessor1 != null) {
-               this.font.drawInBatch(ireorderingprocessor1, (float)i2, (float)j2, -1, true, matrix4f, irendertypebuffer$impl, false, 0, 15728880);
-            }
-
-            if (l1 == 0) {
-               j2 += 2;
-            }
-
-            j2 += 10;
-         }
-
-         irendertypebuffer$impl.endBatch();
-         p_238654_1_.popPose();
-      }
-   }
-
-   protected void renderComponentHoverEffect(MatrixStack p_238653_1_, @Nullable Style p_238653_2_, int p_238653_3_, int p_238653_4_) {
-      if (p_238653_2_ != null && p_238653_2_.getHoverEvent() != null) {
-         HoverEvent hoverevent = p_238653_2_.getHoverEvent();
-         HoverEvent.ItemHover hoverevent$itemhover = hoverevent.getValue(HoverEvent.Action.SHOW_ITEM);
-         if (hoverevent$itemhover != null) {
-            this.renderTooltip(p_238653_1_, hoverevent$itemhover.getItemStack(), p_238653_3_, p_238653_4_);
-         } else {
-            HoverEvent.EntityHover hoverevent$entityhover = hoverevent.getValue(HoverEvent.Action.SHOW_ENTITY);
-            if (hoverevent$entityhover != null) {
-               if (this.minecraft.options.advancedItemTooltips) {
-                  this.renderComponentTooltip(p_238653_1_, hoverevent$entityhover.getTooltipLines(), p_238653_3_, p_238653_4_);
-               }
-            } else {
-               ITextComponent itextcomponent = hoverevent.getValue(HoverEvent.Action.SHOW_TEXT);
-               if (itextcomponent != null) {
-                  this.renderTooltip(p_238653_1_, this.minecraft.font.split(itextcomponent, Math.max(this.width / 2, 200)), p_238653_3_, p_238653_4_);
-               }
-            }
-         }
-
-      }
-   }
-
-   protected void insertText(String p_231155_1_, boolean p_231155_2_) {
-   }
-
-   public boolean handleComponentClicked(@Nullable Style p_230455_1_) {
-      if (p_230455_1_ == null) {
-         return false;
-      } else {
-         ClickEvent clickevent = p_230455_1_.getClickEvent();
-         if (hasShiftDown()) {
-            if (p_230455_1_.getInsertion() != null) {
-               this.insertText(p_230455_1_.getInsertion(), false);
-            }
-         } else if (clickevent != null) {
-            if (clickevent.getAction() == ClickEvent.Action.OPEN_URL) {
-               if (!this.minecraft.options.chatLinks) {
-                  return false;
-               }
-
-               try {
-                  URI uri = new URI(clickevent.getValue());
-                  String s = uri.getScheme();
-                  if (s == null) {
-                     throw new URISyntaxException(clickevent.getValue(), "Missing protocol");
-                  }
-
-                  if (!ALLOWED_PROTOCOLS.contains(s.toLowerCase(Locale.ROOT))) {
-                     throw new URISyntaxException(clickevent.getValue(), "Unsupported protocol: " + s.toLowerCase(Locale.ROOT));
-                  }
-
-                  if (this.minecraft.options.chatLinksPrompt) {
-                     this.clickedLink = uri;
-                     this.minecraft.setScreen(new ConfirmOpenLinkScreen(this::confirmLink, clickevent.getValue(), false));
-                  } else {
-                     this.openLink(uri);
-                  }
-               } catch (URISyntaxException urisyntaxexception) {
-                  LOGGER.error("Can't open url for {}", clickevent, urisyntaxexception);
-               }
-            } else if (clickevent.getAction() == ClickEvent.Action.OPEN_FILE) {
-               URI uri1 = (new File(clickevent.getValue())).toURI();
-               this.openLink(uri1);
-            } else if (clickevent.getAction() == ClickEvent.Action.SUGGEST_COMMAND) {
-               this.insertText(clickevent.getValue(), true);
-            } else if (clickevent.getAction() == ClickEvent.Action.RUN_COMMAND) {
-               this.sendMessage(clickevent.getValue(), false);
-            } else if (clickevent.getAction() == ClickEvent.Action.COPY_TO_CLIPBOARD) {
-               this.minecraft.keyboardHandler.setClipboard(clickevent.getValue());
-            } else {
-               LOGGER.error("Don't know how to handle {}", (Object)clickevent);
-            }
-
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    {
+        if (keyCode == 256 && this.shouldCloseOnEsc())
+        {
+            this.closeScreen();
             return true;
-         }
+        }
+        else if (keyCode == 258)
+        {
+            boolean flag = !hasShiftDown();
 
-         return false;
-      }
-   }
+            if (!this.changeFocus(flag))
+            {
+                this.changeFocus(flag);
+            }
 
-   public void sendMessage(String p_231161_1_) {
-      this.sendMessage(p_231161_1_, true);
-   }
+            return false;
+        }
+        else
+        {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+    }
 
-   public void sendMessage(String p_231159_1_, boolean p_231159_2_) {
-      if (p_231159_2_) {
-         this.minecraft.gui.getChat().addRecentChat(p_231159_1_);
-      }
+    public boolean shouldCloseOnEsc()
+    {
+        return true;
+    }
 
-      this.minecraft.player.chat(p_231159_1_);
-   }
+    public void closeScreen()
+    {
+        this.minecraft.displayGuiScreen((Screen)null);
+    }
 
-   public void init(Minecraft p_231158_1_, int p_231158_2_, int p_231158_3_) {
-      this.minecraft = p_231158_1_;
-      this.itemRenderer = p_231158_1_.getItemRenderer();
-      this.font = p_231158_1_.font;
-      this.width = p_231158_2_;
-      this.height = p_231158_3_;
-      this.buttons.clear();
-      this.children.clear();
-      this.setFocused((IGuiEventListener)null);
-      this.init();
-   }
+    protected <T extends Widget> T addButton(T button)
+    {
+        this.buttons.add(button);
+        return this.addListener(button);
+    }
 
-   public List<? extends IGuiEventListener> children() {
-      return this.children;
-   }
+    protected <T extends IGuiEventListener> T addListener(T listener)
+    {
+        this.children.add(listener);
+        return listener;
+    }
 
-   protected void init() {
-   }
+    protected void renderTooltip(MatrixStack matrixStack, ItemStack itemStack, int mouseX, int mouseY)
+    {
+        this.func_243308_b(matrixStack, this.getTooltipFromItem(itemStack), mouseX, mouseY);
+    }
 
-   public void tick() {
-   }
+    public List<ITextComponent> getTooltipFromItem(ItemStack itemStack)
+    {
+        return itemStack.getTooltip(this.minecraft.player, this.minecraft.gameSettings.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL);
+    }
 
-   public void removed() {
-   }
+    public void renderTooltip(MatrixStack matrixStack, ITextComponent text, int mouseX, int mouseY)
+    {
+        this.renderTooltip(matrixStack, Arrays.asList(text.func_241878_f()), mouseX, mouseY);
+    }
 
-   public void renderBackground(MatrixStack p_230446_1_) {
-      this.renderBackground(p_230446_1_, 0);
-   }
+    public void func_243308_b(MatrixStack p_243308_1_, List<ITextComponent> p_243308_2_, int p_243308_3_, int p_243308_4_)
+    {
+        this.renderTooltip(p_243308_1_, Lists.transform(p_243308_2_, ITextComponent::func_241878_f), p_243308_3_, p_243308_4_);
+    }
 
-   public void renderBackground(MatrixStack p_238651_1_, int p_238651_2_) {
-      if (this.minecraft.level != null) {
-         this.fillGradient(p_238651_1_, 0, 0, this.width, this.height, -1072689136, -804253680);
-      } else {
-         this.renderDirtBackground(p_238651_2_);
-      }
+    public void renderTooltip(MatrixStack matrixStack, List <? extends IReorderingProcessor > tooltips, int mouseX, int mouseY)
+    {
+        if (!tooltips.isEmpty())
+        {
+            int i = 0;
 
-   }
+            for (IReorderingProcessor ireorderingprocessor : tooltips)
+            {
+                int j = this.font.func_243245_a(ireorderingprocessor);
 
-   public void renderDirtBackground(int p_231165_1_) {
-      Tessellator tessellator = Tessellator.getInstance();
-      BufferBuilder bufferbuilder = tessellator.getBuilder();
-      this.minecraft.getTextureManager().bind(BACKGROUND_LOCATION);
-      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-      float f = 32.0F;
-      bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-      bufferbuilder.vertex(0.0D, (double)this.height, 0.0D).uv(0.0F, (float)this.height / 32.0F + (float)p_231165_1_).color(64, 64, 64, 255).endVertex();
-      bufferbuilder.vertex((double)this.width, (double)this.height, 0.0D).uv((float)this.width / 32.0F, (float)this.height / 32.0F + (float)p_231165_1_).color(64, 64, 64, 255).endVertex();
-      bufferbuilder.vertex((double)this.width, 0.0D, 0.0D).uv((float)this.width / 32.0F, (float)p_231165_1_).color(64, 64, 64, 255).endVertex();
-      bufferbuilder.vertex(0.0D, 0.0D, 0.0D).uv(0.0F, (float)p_231165_1_).color(64, 64, 64, 255).endVertex();
-      tessellator.end();
-   }
+                if (j > i)
+                {
+                    i = j;
+                }
+            }
 
-   public boolean isPauseScreen() {
-      return true;
-   }
+            int i2 = mouseX + 12;
+            int j2 = mouseY - 12;
+            int k = 8;
 
-   private void confirmLink(boolean p_231162_1_) {
-      if (p_231162_1_) {
-         this.openLink(this.clickedLink);
-      }
+            if (tooltips.size() > 1)
+            {
+                k += 2 + (tooltips.size() - 1) * 10;
+            }
 
-      this.clickedLink = null;
-      this.minecraft.setScreen(this);
-   }
+            if (i2 + i > this.width)
+            {
+                i2 -= 28 + i;
+            }
 
-   private void openLink(URI p_231156_1_) {
-      Util.getPlatform().openUri(p_231156_1_);
-   }
+            if (j2 + k + 6 > this.height)
+            {
+                j2 = this.height - k - 6;
+            }
 
-   public static boolean hasControlDown() {
-      if (Minecraft.ON_OSX) {
-         return InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 343) || InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 347);
-      } else {
-         return InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 341) || InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 345);
-      }
-   }
+            matrixStack.push();
+            int l = -267386864;
+            int i1 = 1347420415;
+            int j1 = 1344798847;
+            int k1 = 400;
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder bufferbuilder = tessellator.getBuffer();
+            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+            Matrix4f matrix4f = matrixStack.getLast().getMatrix();
+            fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 4, i2 + i + 3, j2 - 3, 400, -267386864, -267386864);
+            fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 + k + 3, i2 + i + 3, j2 + k + 4, 400, -267386864, -267386864);
+            fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 3, i2 + i + 3, j2 + k + 3, 400, -267386864, -267386864);
+            fillGradient(matrix4f, bufferbuilder, i2 - 4, j2 - 3, i2 - 3, j2 + k + 3, 400, -267386864, -267386864);
+            fillGradient(matrix4f, bufferbuilder, i2 + i + 3, j2 - 3, i2 + i + 4, j2 + k + 3, 400, -267386864, -267386864);
+            fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 3 + 1, i2 - 3 + 1, j2 + k + 3 - 1, 400, 1347420415, 1344798847);
+            fillGradient(matrix4f, bufferbuilder, i2 + i + 2, j2 - 3 + 1, i2 + i + 3, j2 + k + 3 - 1, 400, 1347420415, 1344798847);
+            fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 - 3, i2 + i + 3, j2 - 3 + 1, 400, 1347420415, 1347420415);
+            fillGradient(matrix4f, bufferbuilder, i2 - 3, j2 + k + 2, i2 + i + 3, j2 + k + 3, 400, 1344798847, 1344798847);
+            RenderSystem.enableDepthTest();
+            RenderSystem.disableTexture();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.shadeModel(7425);
+            bufferbuilder.finishDrawing();
+            WorldVertexBufferUploader.draw(bufferbuilder);
+            RenderSystem.shadeModel(7424);
+            RenderSystem.disableBlend();
+            RenderSystem.enableTexture();
+            IRenderTypeBuffer.Impl irendertypebuffer$impl = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
+            matrixStack.translate(0.0D, 0.0D, 400.0D);
 
-   public static boolean hasShiftDown() {
-      return InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 340) || InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 344);
-   }
+            for (int l1 = 0; l1 < tooltips.size(); ++l1)
+            {
+                IReorderingProcessor ireorderingprocessor1 = tooltips.get(l1);
 
-   public static boolean hasAltDown() {
-      return InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 342) || InputMappings.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 346);
-   }
+                if (ireorderingprocessor1 != null)
+                {
+                    this.font.func_238416_a_(ireorderingprocessor1, (float)i2, (float)j2, -1, true, matrix4f, irendertypebuffer$impl, false, 0, 15728880);
+                }
 
-   public static boolean isCut(int p_231166_0_) {
-      return p_231166_0_ == 88 && hasControlDown() && !hasShiftDown() && !hasAltDown();
-   }
+                if (l1 == 0)
+                {
+                    j2 += 2;
+                }
 
-   public static boolean isPaste(int p_231168_0_) {
-      return p_231168_0_ == 86 && hasControlDown() && !hasShiftDown() && !hasAltDown();
-   }
+                j2 += 10;
+            }
 
-   public static boolean isCopy(int p_231169_0_) {
-      return p_231169_0_ == 67 && hasControlDown() && !hasShiftDown() && !hasAltDown();
-   }
+            irendertypebuffer$impl.finish();
+            matrixStack.pop();
+        }
+    }
 
-   public static boolean isSelectAll(int p_231170_0_) {
-      return p_231170_0_ == 65 && hasControlDown() && !hasShiftDown() && !hasAltDown();
-   }
+    protected void renderComponentHoverEffect(MatrixStack matrixStack, @Nullable Style style, int mouseX, int mouseY)
+    {
+        if (style != null && style.getHoverEvent() != null)
+        {
+            HoverEvent hoverevent = style.getHoverEvent();
+            HoverEvent.ItemHover hoverevent$itemhover = hoverevent.getParameter(HoverEvent.Action.SHOW_ITEM);
 
-   public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
-      this.init(p_231152_1_, p_231152_2_, p_231152_3_);
-   }
+            if (hoverevent$itemhover != null)
+            {
+                this.renderTooltip(matrixStack, hoverevent$itemhover.createStack(), mouseX, mouseY);
+            }
+            else
+            {
+                HoverEvent.EntityHover hoverevent$entityhover = hoverevent.getParameter(HoverEvent.Action.SHOW_ENTITY);
 
-   public static void wrapScreenError(Runnable p_231153_0_, String p_231153_1_, String p_231153_2_) {
-      try {
-         p_231153_0_.run();
-      } catch (Throwable throwable) {
-         CrashReport crashreport = CrashReport.forThrowable(throwable, p_231153_1_);
-         CrashReportCategory crashreportcategory = crashreport.addCategory("Affected screen");
-         crashreportcategory.setDetail("Screen name", () -> {
-            return p_231153_2_;
-         });
-         throw new ReportedException(crashreport);
-      }
-   }
+                if (hoverevent$entityhover != null)
+                {
+                    if (this.minecraft.gameSettings.advancedItemTooltips)
+                    {
+                        this.func_243308_b(matrixStack, hoverevent$entityhover.getTooltip(), mouseX, mouseY);
+                    }
+                }
+                else
+                {
+                    ITextComponent itextcomponent = hoverevent.getParameter(HoverEvent.Action.SHOW_TEXT);
 
-   protected boolean isValidCharacterForName(String p_231154_1_, char p_231154_2_, int p_231154_3_) {
-      int i = p_231154_1_.indexOf(58);
-      int j = p_231154_1_.indexOf(47);
-      if (p_231154_2_ == ':') {
-         return (j == -1 || p_231154_3_ <= j) && i == -1;
-      } else if (p_231154_2_ == '/') {
-         return p_231154_3_ > i;
-      } else {
-         return p_231154_2_ == '_' || p_231154_2_ == '-' || p_231154_2_ >= 'a' && p_231154_2_ <= 'z' || p_231154_2_ >= '0' && p_231154_2_ <= '9' || p_231154_2_ == '.';
-      }
-   }
+                    if (itextcomponent != null)
+                    {
+                        this.renderTooltip(matrixStack, this.minecraft.fontRenderer.trimStringToWidth(itextcomponent, Math.max(this.width / 2, 200)), mouseX, mouseY);
+                    }
+                }
+            }
+        }
+    }
 
-   public boolean isMouseOver(double p_231047_1_, double p_231047_3_) {
-      return true;
-   }
+    protected void insertText(String text, boolean overwrite)
+    {
+    }
 
-   public void onFilesDrop(List<Path> p_230476_1_) {
-   }
+    public boolean handleComponentClicked(@Nullable Style style)
+    {
+        if (style == null)
+        {
+            return false;
+        }
+        else
+        {
+            ClickEvent clickevent = style.getClickEvent();
+
+            if (hasShiftDown())
+            {
+                if (style.getInsertion() != null)
+                {
+                    this.insertText(style.getInsertion(), false);
+                }
+            }
+            else if (clickevent != null)
+            {
+                if (clickevent.getAction() == ClickEvent.Action.OPEN_URL)
+                {
+                    if (!this.minecraft.gameSettings.chatLinks)
+                    {
+                        return false;
+                    }
+
+                    try
+                    {
+                        URI uri = new URI(clickevent.getValue());
+                        String s = uri.getScheme();
+
+                        if (s == null)
+                        {
+                            throw new URISyntaxException(clickevent.getValue(), "Missing protocol");
+                        }
+
+                        if (!ALLOWED_PROTOCOLS.contains(s.toLowerCase(Locale.ROOT)))
+                        {
+                            throw new URISyntaxException(clickevent.getValue(), "Unsupported protocol: " + s.toLowerCase(Locale.ROOT));
+                        }
+
+                        if (this.minecraft.gameSettings.chatLinksPrompt)
+                        {
+                            this.clickedLink = uri;
+                            this.minecraft.displayGuiScreen(new ConfirmOpenLinkScreen(this::confirmLink, clickevent.getValue(), false));
+                        }
+                        else
+                        {
+                            this.openLink(uri);
+                        }
+                    }
+                    catch (URISyntaxException urisyntaxexception)
+                    {
+                        LOGGER.error("Can't open url for {}", clickevent, urisyntaxexception);
+                    }
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.OPEN_FILE)
+                {
+                    URI uri1 = (new File(clickevent.getValue())).toURI();
+                    this.openLink(uri1);
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.SUGGEST_COMMAND)
+                {
+                    this.insertText(clickevent.getValue(), true);
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.RUN_COMMAND)
+                {
+                    this.sendMessage(clickevent.getValue(), false);
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.COPY_TO_CLIPBOARD)
+                {
+                    this.minecraft.keyboardListener.setClipboardString(clickevent.getValue());
+                }
+                else
+                {
+                    LOGGER.error("Don't know how to handle {}", (Object)clickevent);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    public void sendMessage(String text)
+    {
+        this.sendMessage(text, true);
+    }
+
+    public void sendMessage(String text, boolean addToChat)
+    {
+        if (addToChat)
+        {
+            this.minecraft.ingameGUI.getChatGUI().addToSentMessages(text);
+        }
+
+        this.minecraft.player.sendChatMessage(text);
+    }
+
+    public void init(Minecraft minecraft, int width, int height)
+    {
+        this.minecraft = minecraft;
+        this.itemRenderer = minecraft.getItemRenderer();
+        this.font = minecraft.fontRenderer;
+        this.width = width;
+        this.height = height;
+        this.buttons.clear();
+        this.children.clear();
+        this.setListener((IGuiEventListener)null);
+        this.init();
+    }
+
+    public List <? extends IGuiEventListener > getEventListeners()
+    {
+        return this.children;
+    }
+
+    protected void init()
+    {
+    }
+
+    public void tick()
+    {
+    }
+
+    public void onClose()
+    {
+    }
+
+    public void renderBackground(MatrixStack matrixStack)
+    {
+        this.renderBackground(matrixStack, 0);
+    }
+
+    public void renderBackground(MatrixStack matrixStack, int vOffset)
+    {
+        if (this.minecraft.world != null)
+        {
+            this.fillGradient(matrixStack, 0, 0, this.width, this.height, -1072689136, -804253680);
+        }
+        else
+        {
+            this.renderDirtBackground(vOffset);
+        }
+    }
+
+    public void renderDirtBackground(int vOffset)
+    {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        this.minecraft.getTextureManager().bindTexture(BACKGROUND_LOCATION);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        float f = 32.0F;
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
+        bufferbuilder.pos(0.0D, (double)this.height, 0.0D).tex(0.0F, (float)this.height / 32.0F + (float)vOffset).color(64, 64, 64, 255).endVertex();
+        bufferbuilder.pos((double)this.width, (double)this.height, 0.0D).tex((float)this.width / 32.0F, (float)this.height / 32.0F + (float)vOffset).color(64, 64, 64, 255).endVertex();
+        bufferbuilder.pos((double)this.width, 0.0D, 0.0D).tex((float)this.width / 32.0F, (float)vOffset).color(64, 64, 64, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0F, (float)vOffset).color(64, 64, 64, 255).endVertex();
+        tessellator.draw();
+    }
+
+    public boolean isPauseScreen()
+    {
+        return true;
+    }
+
+    private void confirmLink(boolean doOpen)
+    {
+        if (doOpen)
+        {
+            this.openLink(this.clickedLink);
+        }
+
+        this.clickedLink = null;
+        this.minecraft.displayGuiScreen(this);
+    }
+
+    private void openLink(URI uri)
+    {
+        Util.getOSType().openURI(uri);
+    }
+
+    public static boolean hasControlDown()
+    {
+        if (Minecraft.IS_RUNNING_ON_MAC)
+        {
+            return InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 343) || InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 347);
+        }
+        else
+        {
+            return InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 341) || InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 345);
+        }
+    }
+
+    public static boolean hasShiftDown()
+    {
+        return InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 340) || InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 344);
+    }
+
+    public static boolean hasAltDown()
+    {
+        return InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 342) || InputMappings.isKeyDown(Minecraft.getInstance().getMainWindow().getHandle(), 346);
+    }
+
+    public static boolean isCut(int keyCode)
+    {
+        return keyCode == 88 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    }
+
+    public static boolean isPaste(int keyCode)
+    {
+        return keyCode == 86 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    }
+
+    public static boolean isCopy(int keyCode)
+    {
+        return keyCode == 67 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    }
+
+    public static boolean isSelectAll(int keyCode)
+    {
+        return keyCode == 65 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    }
+
+    public void resize(Minecraft minecraft, int width, int height)
+    {
+        this.init(minecraft, width, height);
+    }
+
+    public static void wrapScreenError(Runnable action, String errorDesc, String screenName)
+    {
+        try
+        {
+            action.run();
+        }
+        catch (Throwable throwable)
+        {
+            CrashReport crashreport = CrashReport.makeCrashReport(throwable, errorDesc);
+            CrashReportCategory crashreportcategory = crashreport.makeCategory("Affected screen");
+            crashreportcategory.addDetail("Screen name", () ->
+            {
+                return screenName;
+            });
+            throw new ReportedException(crashreport);
+        }
+    }
+
+    protected boolean isValidCharacterForName(String text, char charTyped, int cursorPos)
+    {
+        int i = text.indexOf(58);
+        int j = text.indexOf(47);
+
+        if (charTyped == ':')
+        {
+            return (j == -1 || cursorPos <= j) && i == -1;
+        }
+        else if (charTyped == '/')
+        {
+            return cursorPos > i;
+        }
+        else
+        {
+            return charTyped == '_' || charTyped == '-' || charTyped >= 'a' && charTyped <= 'z' || charTyped >= '0' && charTyped <= '9' || charTyped == '.';
+        }
+    }
+
+    public boolean isMouseOver(double mouseX, double mouseY)
+    {
+        return true;
+    }
+
+    public void addPacks(List<Path> packs)
+    {
+    }
 }

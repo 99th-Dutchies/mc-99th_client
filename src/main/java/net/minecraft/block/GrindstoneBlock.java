@@ -25,155 +25,201 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
-public class GrindstoneBlock extends HorizontalFaceBlock {
-   public static final VoxelShape FLOOR_NORTH_SOUTH_LEFT_POST = Block.box(2.0D, 0.0D, 6.0D, 4.0D, 7.0D, 10.0D);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_RIGHT_POST = Block.box(12.0D, 0.0D, 6.0D, 14.0D, 7.0D, 10.0D);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_LEFT_PIVOT = Block.box(2.0D, 7.0D, 5.0D, 4.0D, 13.0D, 11.0D);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_RIGHT_PIVOT = Block.box(12.0D, 7.0D, 5.0D, 14.0D, 13.0D, 11.0D);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_LEFT_LEG = VoxelShapes.or(FLOOR_NORTH_SOUTH_LEFT_POST, FLOOR_NORTH_SOUTH_LEFT_PIVOT);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_RIGHT_LEG = VoxelShapes.or(FLOOR_NORTH_SOUTH_RIGHT_POST, FLOOR_NORTH_SOUTH_RIGHT_PIVOT);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_ALL_LEGS = VoxelShapes.or(FLOOR_NORTH_SOUTH_LEFT_LEG, FLOOR_NORTH_SOUTH_RIGHT_LEG);
-   public static final VoxelShape FLOOR_NORTH_SOUTH_GRINDSTONE = VoxelShapes.or(FLOOR_NORTH_SOUTH_ALL_LEGS, Block.box(4.0D, 4.0D, 2.0D, 12.0D, 16.0D, 14.0D));
-   public static final VoxelShape FLOOR_EAST_WEST_LEFT_POST = Block.box(6.0D, 0.0D, 2.0D, 10.0D, 7.0D, 4.0D);
-   public static final VoxelShape FLOOR_EAST_WEST_RIGHT_POST = Block.box(6.0D, 0.0D, 12.0D, 10.0D, 7.0D, 14.0D);
-   public static final VoxelShape FLOOR_EAST_WEST_LEFT_PIVOT = Block.box(5.0D, 7.0D, 2.0D, 11.0D, 13.0D, 4.0D);
-   public static final VoxelShape FLOOR_EAST_WEST_RIGHT_PIVOT = Block.box(5.0D, 7.0D, 12.0D, 11.0D, 13.0D, 14.0D);
-   public static final VoxelShape FLOOR_EAST_WEST_LEFT_LEG = VoxelShapes.or(FLOOR_EAST_WEST_LEFT_POST, FLOOR_EAST_WEST_LEFT_PIVOT);
-   public static final VoxelShape FLOOR_EAST_WEST_RIGHT_LEG = VoxelShapes.or(FLOOR_EAST_WEST_RIGHT_POST, FLOOR_EAST_WEST_RIGHT_PIVOT);
-   public static final VoxelShape FLOOR_EAST_WEST_ALL_LEGS = VoxelShapes.or(FLOOR_EAST_WEST_LEFT_LEG, FLOOR_EAST_WEST_RIGHT_LEG);
-   public static final VoxelShape FLOOR_EAST_WEST_GRINDSTONE = VoxelShapes.or(FLOOR_EAST_WEST_ALL_LEGS, Block.box(2.0D, 4.0D, 4.0D, 14.0D, 16.0D, 12.0D));
-   public static final VoxelShape WALL_SOUTH_LEFT_POST = Block.box(2.0D, 6.0D, 0.0D, 4.0D, 10.0D, 7.0D);
-   public static final VoxelShape WALL_SOUTH_RIGHT_POST = Block.box(12.0D, 6.0D, 0.0D, 14.0D, 10.0D, 7.0D);
-   public static final VoxelShape WALL_SOUTH_LEFT_PIVOT = Block.box(2.0D, 5.0D, 7.0D, 4.0D, 11.0D, 13.0D);
-   public static final VoxelShape WALL_SOUTH_RIGHT_PIVOT = Block.box(12.0D, 5.0D, 7.0D, 14.0D, 11.0D, 13.0D);
-   public static final VoxelShape WALL_SOUTH_LEFT_LEG = VoxelShapes.or(WALL_SOUTH_LEFT_POST, WALL_SOUTH_LEFT_PIVOT);
-   public static final VoxelShape WALL_SOUTH_RIGHT_LEG = VoxelShapes.or(WALL_SOUTH_RIGHT_POST, WALL_SOUTH_RIGHT_PIVOT);
-   public static final VoxelShape WALL_SOUTH_ALL_LEGS = VoxelShapes.or(WALL_SOUTH_LEFT_LEG, WALL_SOUTH_RIGHT_LEG);
-   public static final VoxelShape WALL_SOUTH_GRINDSTONE = VoxelShapes.or(WALL_SOUTH_ALL_LEGS, Block.box(4.0D, 2.0D, 4.0D, 12.0D, 14.0D, 16.0D));
-   public static final VoxelShape WALL_NORTH_LEFT_POST = Block.box(2.0D, 6.0D, 7.0D, 4.0D, 10.0D, 16.0D);
-   public static final VoxelShape WALL_NORTH_RIGHT_POST = Block.box(12.0D, 6.0D, 7.0D, 14.0D, 10.0D, 16.0D);
-   public static final VoxelShape WALL_NORTH_LEFT_PIVOT = Block.box(2.0D, 5.0D, 3.0D, 4.0D, 11.0D, 9.0D);
-   public static final VoxelShape WALL_NORTH_RIGHT_PIVOT = Block.box(12.0D, 5.0D, 3.0D, 14.0D, 11.0D, 9.0D);
-   public static final VoxelShape WALL_NORTH_LEFT_LEG = VoxelShapes.or(WALL_NORTH_LEFT_POST, WALL_NORTH_LEFT_PIVOT);
-   public static final VoxelShape WALL_NORTH_RIGHT_LEG = VoxelShapes.or(WALL_NORTH_RIGHT_POST, WALL_NORTH_RIGHT_PIVOT);
-   public static final VoxelShape WALL_NORTH_ALL_LEGS = VoxelShapes.or(WALL_NORTH_LEFT_LEG, WALL_NORTH_RIGHT_LEG);
-   public static final VoxelShape WALL_NORTH_GRINDSTONE = VoxelShapes.or(WALL_NORTH_ALL_LEGS, Block.box(4.0D, 2.0D, 0.0D, 12.0D, 14.0D, 12.0D));
-   public static final VoxelShape WALL_WEST_LEFT_POST = Block.box(7.0D, 6.0D, 2.0D, 16.0D, 10.0D, 4.0D);
-   public static final VoxelShape WALL_WEST_RIGHT_POST = Block.box(7.0D, 6.0D, 12.0D, 16.0D, 10.0D, 14.0D);
-   public static final VoxelShape WALL_WEST_LEFT_PIVOT = Block.box(3.0D, 5.0D, 2.0D, 9.0D, 11.0D, 4.0D);
-   public static final VoxelShape WALL_WEST_RIGHT_PIVOT = Block.box(3.0D, 5.0D, 12.0D, 9.0D, 11.0D, 14.0D);
-   public static final VoxelShape WALL_WEST_LEFT_LEG = VoxelShapes.or(WALL_WEST_LEFT_POST, WALL_WEST_LEFT_PIVOT);
-   public static final VoxelShape WALL_WEST_RIGHT_LEG = VoxelShapes.or(WALL_WEST_RIGHT_POST, WALL_WEST_RIGHT_PIVOT);
-   public static final VoxelShape WALL_WEST_ALL_LEGS = VoxelShapes.or(WALL_WEST_LEFT_LEG, WALL_WEST_RIGHT_LEG);
-   public static final VoxelShape WALL_WEST_GRINDSTONE = VoxelShapes.or(WALL_WEST_ALL_LEGS, Block.box(0.0D, 2.0D, 4.0D, 12.0D, 14.0D, 12.0D));
-   public static final VoxelShape WALL_EAST_LEFT_POST = Block.box(0.0D, 6.0D, 2.0D, 9.0D, 10.0D, 4.0D);
-   public static final VoxelShape WALL_EAST_RIGHT_POST = Block.box(0.0D, 6.0D, 12.0D, 9.0D, 10.0D, 14.0D);
-   public static final VoxelShape WALL_EAST_LEFT_PIVOT = Block.box(7.0D, 5.0D, 2.0D, 13.0D, 11.0D, 4.0D);
-   public static final VoxelShape WALL_EAST_RIGHT_PIVOT = Block.box(7.0D, 5.0D, 12.0D, 13.0D, 11.0D, 14.0D);
-   public static final VoxelShape WALL_EAST_LEFT_LEG = VoxelShapes.or(WALL_EAST_LEFT_POST, WALL_EAST_LEFT_PIVOT);
-   public static final VoxelShape WALL_EAST_RIGHT_LEG = VoxelShapes.or(WALL_EAST_RIGHT_POST, WALL_EAST_RIGHT_PIVOT);
-   public static final VoxelShape WALL_EAST_ALL_LEGS = VoxelShapes.or(WALL_EAST_LEFT_LEG, WALL_EAST_RIGHT_LEG);
-   public static final VoxelShape WALL_EAST_GRINDSTONE = VoxelShapes.or(WALL_EAST_ALL_LEGS, Block.box(4.0D, 2.0D, 4.0D, 16.0D, 14.0D, 12.0D));
-   public static final VoxelShape CEILING_NORTH_SOUTH_LEFT_POST = Block.box(2.0D, 9.0D, 6.0D, 4.0D, 16.0D, 10.0D);
-   public static final VoxelShape CEILING_NORTH_SOUTH_RIGHT_POST = Block.box(12.0D, 9.0D, 6.0D, 14.0D, 16.0D, 10.0D);
-   public static final VoxelShape CEILING_NORTH_SOUTH_LEFT_PIVOT = Block.box(2.0D, 3.0D, 5.0D, 4.0D, 9.0D, 11.0D);
-   public static final VoxelShape CEILING_NORTH_SOUTH_RIGHT_PIVOT = Block.box(12.0D, 3.0D, 5.0D, 14.0D, 9.0D, 11.0D);
-   public static final VoxelShape CEILING_NORTH_SOUTH_LEFT_LEG = VoxelShapes.or(CEILING_NORTH_SOUTH_LEFT_POST, CEILING_NORTH_SOUTH_LEFT_PIVOT);
-   public static final VoxelShape CEILING_NORTH_SOUTH_RIGHT_LEG = VoxelShapes.or(CEILING_NORTH_SOUTH_RIGHT_POST, CEILING_NORTH_SOUTH_RIGHT_PIVOT);
-   public static final VoxelShape CEILING_NORTH_SOUTH_ALL_LEGS = VoxelShapes.or(CEILING_NORTH_SOUTH_LEFT_LEG, CEILING_NORTH_SOUTH_RIGHT_LEG);
-   public static final VoxelShape CEILING_NORTH_SOUTH_GRINDSTONE = VoxelShapes.or(CEILING_NORTH_SOUTH_ALL_LEGS, Block.box(4.0D, 0.0D, 2.0D, 12.0D, 12.0D, 14.0D));
-   public static final VoxelShape CEILING_EAST_WEST_LEFT_POST = Block.box(6.0D, 9.0D, 2.0D, 10.0D, 16.0D, 4.0D);
-   public static final VoxelShape CEILING_EAST_WEST_RIGHT_POST = Block.box(6.0D, 9.0D, 12.0D, 10.0D, 16.0D, 14.0D);
-   public static final VoxelShape CEILING_EAST_WEST_LEFT_PIVOT = Block.box(5.0D, 3.0D, 2.0D, 11.0D, 9.0D, 4.0D);
-   public static final VoxelShape CEILING_EAST_WEST_RIGHT_PIVOT = Block.box(5.0D, 3.0D, 12.0D, 11.0D, 9.0D, 14.0D);
-   public static final VoxelShape CEILING_EAST_WEST_LEFT_LEG = VoxelShapes.or(CEILING_EAST_WEST_LEFT_POST, CEILING_EAST_WEST_LEFT_PIVOT);
-   public static final VoxelShape CEILING_EAST_WEST_RIGHT_LEG = VoxelShapes.or(CEILING_EAST_WEST_RIGHT_POST, CEILING_EAST_WEST_RIGHT_PIVOT);
-   public static final VoxelShape CEILING_EAST_WEST_ALL_LEGS = VoxelShapes.or(CEILING_EAST_WEST_LEFT_LEG, CEILING_EAST_WEST_RIGHT_LEG);
-   public static final VoxelShape CEILING_EAST_WEST_GRINDSTONE = VoxelShapes.or(CEILING_EAST_WEST_ALL_LEGS, Block.box(2.0D, 0.0D, 4.0D, 14.0D, 12.0D, 12.0D));
-   private static final ITextComponent CONTAINER_TITLE = new TranslationTextComponent("container.grindstone_title");
+public class GrindstoneBlock extends HorizontalFaceBlock
+{
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_LEG_1 = Block.makeCuboidShape(2.0D, 0.0D, 6.0D, 4.0D, 7.0D, 10.0D);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_LEG_2 = Block.makeCuboidShape(12.0D, 0.0D, 6.0D, 14.0D, 7.0D, 10.0D);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_HOLDER_1 = Block.makeCuboidShape(2.0D, 7.0D, 5.0D, 4.0D, 13.0D, 11.0D);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_HOLDER_2 = Block.makeCuboidShape(12.0D, 7.0D, 5.0D, 14.0D, 13.0D, 11.0D);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_FLOOR_NORTH_SOUTH_LEG_1, SHAPE_FLOOR_NORTH_SOUTH_HOLDER_1);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_FLOOR_NORTH_SOUTH_LEG_2, SHAPE_FLOOR_NORTH_SOUTH_HOLDER_2);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH_COMBINED = VoxelShapes.or(SHAPE_FLOOR_NORTH_SOUTH_LEG_HOLDER_COMBINED_1, SHAPE_FLOOR_NORTH_SOUTH_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_FLOOR_NORTH_SOUTH = VoxelShapes.or(SHAPE_FLOOR_NORTH_SOUTH_COMBINED, Block.makeCuboidShape(4.0D, 4.0D, 2.0D, 12.0D, 16.0D, 14.0D));
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_LEG_1 = Block.makeCuboidShape(6.0D, 0.0D, 2.0D, 10.0D, 7.0D, 4.0D);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_LEG_2 = Block.makeCuboidShape(6.0D, 0.0D, 12.0D, 10.0D, 7.0D, 14.0D);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_HOLDER_1 = Block.makeCuboidShape(5.0D, 7.0D, 2.0D, 11.0D, 13.0D, 4.0D);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_HOLDER_2 = Block.makeCuboidShape(5.0D, 7.0D, 12.0D, 11.0D, 13.0D, 14.0D);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_FLOOR_EAST_WEST_LEG_1, SHAPE_FLOOR_EAST_WEST_HOLDER_1);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_FLOOR_EAST_WEST_LEG_2, SHAPE_FLOOR_EAST_WEST_HOLDER_2);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST_COMBINED = VoxelShapes.or(SHAPE_FLOOR_EAST_WEST_LEG_HOLDER_COMBINED_1, SHAPE_FLOOR_EAST_WEST_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_FLOOR_EAST_WEST = VoxelShapes.or(SHAPE_FLOOR_EAST_WEST_COMBINED, Block.makeCuboidShape(2.0D, 4.0D, 4.0D, 14.0D, 16.0D, 12.0D));
+    public static final VoxelShape SHAPE_WALL_SOUTH_LEG_1 = Block.makeCuboidShape(2.0D, 6.0D, 0.0D, 4.0D, 10.0D, 7.0D);
+    public static final VoxelShape SHAPE_WALL_SOUTH_LEG_2 = Block.makeCuboidShape(12.0D, 6.0D, 0.0D, 14.0D, 10.0D, 7.0D);
+    public static final VoxelShape SHAPE_WALL_SOUTH_HOLDER_1 = Block.makeCuboidShape(2.0D, 5.0D, 7.0D, 4.0D, 11.0D, 13.0D);
+    public static final VoxelShape SHAPE_WALL_SOUTH_HOLDER_2 = Block.makeCuboidShape(12.0D, 5.0D, 7.0D, 14.0D, 11.0D, 13.0D);
+    public static final VoxelShape SHAPE_WALL_SOUTH_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_WALL_SOUTH_LEG_1, SHAPE_WALL_SOUTH_HOLDER_1);
+    public static final VoxelShape SHAPE_WALL_SOUTH_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_WALL_SOUTH_LEG_2, SHAPE_WALL_SOUTH_HOLDER_2);
+    public static final VoxelShape SHAPE_WALL_SOUTH_COMBINED = VoxelShapes.or(SHAPE_WALL_SOUTH_LEG_HOLDER_COMBINED_1, SHAPE_WALL_SOUTH_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_WALL_SOUTH = VoxelShapes.or(SHAPE_WALL_SOUTH_COMBINED, Block.makeCuboidShape(4.0D, 2.0D, 4.0D, 12.0D, 14.0D, 16.0D));
+    public static final VoxelShape SHAPE_WALL_NORTH_LEG_1 = Block.makeCuboidShape(2.0D, 6.0D, 7.0D, 4.0D, 10.0D, 16.0D);
+    public static final VoxelShape SHAPE_WALL_NORTH_LEG_2 = Block.makeCuboidShape(12.0D, 6.0D, 7.0D, 14.0D, 10.0D, 16.0D);
+    public static final VoxelShape SHAPE_WALL_NORTH_HOLDER_1 = Block.makeCuboidShape(2.0D, 5.0D, 3.0D, 4.0D, 11.0D, 9.0D);
+    public static final VoxelShape SHAPE_WALL_NORTH_HOLDER_2 = Block.makeCuboidShape(12.0D, 5.0D, 3.0D, 14.0D, 11.0D, 9.0D);
+    public static final VoxelShape SHAPE_WALL_NORTH_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_WALL_NORTH_LEG_1, SHAPE_WALL_NORTH_HOLDER_1);
+    public static final VoxelShape SHAPE_WALL_NORTH_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_WALL_NORTH_LEG_2, SHAPE_WALL_NORTH_HOLDER_2);
+    public static final VoxelShape SHAPE_WALL_NORTH_COMBINED = VoxelShapes.or(SHAPE_WALL_NORTH_LEG_HOLDER_COMBINED_1, SHAPE_WALL_NORTH_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_WALL_NORTH = VoxelShapes.or(SHAPE_WALL_NORTH_COMBINED, Block.makeCuboidShape(4.0D, 2.0D, 0.0D, 12.0D, 14.0D, 12.0D));
+    public static final VoxelShape SHAPE_WALL_WEST_LEG_1 = Block.makeCuboidShape(7.0D, 6.0D, 2.0D, 16.0D, 10.0D, 4.0D);
+    public static final VoxelShape SHAPE_WALL_WEST_LEG_2 = Block.makeCuboidShape(7.0D, 6.0D, 12.0D, 16.0D, 10.0D, 14.0D);
+    public static final VoxelShape SHAPE_WALL_WEST_HOLDER_1 = Block.makeCuboidShape(3.0D, 5.0D, 2.0D, 9.0D, 11.0D, 4.0D);
+    public static final VoxelShape SHAPE_WALL_WEST_HOLDER_2 = Block.makeCuboidShape(3.0D, 5.0D, 12.0D, 9.0D, 11.0D, 14.0D);
+    public static final VoxelShape SHAPE_WALL_WEST_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_WALL_WEST_LEG_1, SHAPE_WALL_WEST_HOLDER_1);
+    public static final VoxelShape SHAPE_WALL_WEST_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_WALL_WEST_LEG_2, SHAPE_WALL_WEST_HOLDER_2);
+    public static final VoxelShape SHAPE_WALL_WEST_COMBINED = VoxelShapes.or(SHAPE_WALL_WEST_LEG_HOLDER_COMBINED_1, SHAPE_WALL_WEST_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_WALL_WEST = VoxelShapes.or(SHAPE_WALL_WEST_COMBINED, Block.makeCuboidShape(0.0D, 2.0D, 4.0D, 12.0D, 14.0D, 12.0D));
+    public static final VoxelShape SHAPE_WALL_EAST_LEG_1 = Block.makeCuboidShape(0.0D, 6.0D, 2.0D, 9.0D, 10.0D, 4.0D);
+    public static final VoxelShape SHAPE_WALL_EAST_LEG_2 = Block.makeCuboidShape(0.0D, 6.0D, 12.0D, 9.0D, 10.0D, 14.0D);
+    public static final VoxelShape SHAPE_WALL_EAST_HOLDER_1 = Block.makeCuboidShape(7.0D, 5.0D, 2.0D, 13.0D, 11.0D, 4.0D);
+    public static final VoxelShape SHAPE_WALL_EAST_HOLDER_2 = Block.makeCuboidShape(7.0D, 5.0D, 12.0D, 13.0D, 11.0D, 14.0D);
+    public static final VoxelShape SHAPE_WALL_EAST_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_WALL_EAST_LEG_1, SHAPE_WALL_EAST_HOLDER_1);
+    public static final VoxelShape SHAPE_WALL_EAST_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_WALL_EAST_LEG_2, SHAPE_WALL_EAST_HOLDER_2);
+    public static final VoxelShape SHAPE_WALL_EAST_COMBINED = VoxelShapes.or(SHAPE_WALL_EAST_LEG_HOLDER_COMBINED_1, SHAPE_WALL_EAST_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_WALL_EAST = VoxelShapes.or(SHAPE_WALL_EAST_COMBINED, Block.makeCuboidShape(4.0D, 2.0D, 4.0D, 16.0D, 14.0D, 12.0D));
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_LEG_1 = Block.makeCuboidShape(2.0D, 9.0D, 6.0D, 4.0D, 16.0D, 10.0D);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_LEG_2 = Block.makeCuboidShape(12.0D, 9.0D, 6.0D, 14.0D, 16.0D, 10.0D);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_HOLDER_1 = Block.makeCuboidShape(2.0D, 3.0D, 5.0D, 4.0D, 9.0D, 11.0D);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_HOLDER_2 = Block.makeCuboidShape(12.0D, 3.0D, 5.0D, 14.0D, 9.0D, 11.0D);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_CEILING_NORTH_OR_SOUTH_LEG_1, SHAPE_CEILING_NORTH_OR_SOUTH_HOLDER_1);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_CEILING_NORTH_OR_SOUTH_LEG_2, SHAPE_CEILING_NORTH_OR_SOUTH_HOLDER_2);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH_COMBINED = VoxelShapes.or(SHAPE_CEILING_NORTH_OR_SOUTH_LEG_HOLDER_COMBINED_1, SHAPE_CEILING_NORTH_OR_SOUTH_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_CEILING_NORTH_OR_SOUTH = VoxelShapes.or(SHAPE_CEILING_NORTH_OR_SOUTH_COMBINED, Block.makeCuboidShape(4.0D, 0.0D, 2.0D, 12.0D, 12.0D, 14.0D));
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_LEG_1 = Block.makeCuboidShape(6.0D, 9.0D, 2.0D, 10.0D, 16.0D, 4.0D);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_LEG_2 = Block.makeCuboidShape(6.0D, 9.0D, 12.0D, 10.0D, 16.0D, 14.0D);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_HOLDER_1 = Block.makeCuboidShape(5.0D, 3.0D, 2.0D, 11.0D, 9.0D, 4.0D);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_HOLDER_2 = Block.makeCuboidShape(5.0D, 3.0D, 12.0D, 11.0D, 9.0D, 14.0D);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_LEG_HOLDER_COMBINED_1 = VoxelShapes.or(SHAPE_CEILING_EAST_OR_WEST_LEG_1, SHAPE_CEILING_EAST_OR_WEST_HOLDER_1);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_LEG_HOLDER_COMBINED_2 = VoxelShapes.or(SHAPE_CEILING_EAST_OR_WEST_LEG_2, SHAPE_CEILING_EAST_OR_WEST_HOLDER_2);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST_COMBINED = VoxelShapes.or(SHAPE_CEILING_EAST_OR_WEST_LEG_HOLDER_COMBINED_1, SHAPE_CEILING_EAST_OR_WEST_LEG_HOLDER_COMBINED_2);
+    public static final VoxelShape SHAPE_CEILING_EAST_OR_WEST = VoxelShapes.or(SHAPE_CEILING_EAST_OR_WEST_COMBINED, Block.makeCuboidShape(2.0D, 0.0D, 4.0D, 14.0D, 12.0D, 12.0D));
+    private static final ITextComponent CONTAINER_NAME = new TranslationTextComponent("container.grindstone_title");
 
-   protected GrindstoneBlock(AbstractBlock.Properties p_i49983_1_) {
-      super(p_i49983_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FACE, AttachFace.WALL));
-   }
+    protected GrindstoneBlock(AbstractBlock.Properties propertiesIn)
+    {
+        super(propertiesIn);
+        this.setDefaultState(this.stateContainer.getBaseState().with(HORIZONTAL_FACING, Direction.NORTH).with(FACE, AttachFace.WALL));
+    }
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.MODEL;
-   }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.MODEL;
+    }
 
-   private VoxelShape getVoxelShape(BlockState p_220186_1_) {
-      Direction direction = p_220186_1_.getValue(FACING);
-      switch((AttachFace)p_220186_1_.getValue(FACE)) {
-      case FLOOR:
-         if (direction != Direction.NORTH && direction != Direction.SOUTH) {
-            return FLOOR_EAST_WEST_GRINDSTONE;
-         }
+    private VoxelShape getShapeFromState(BlockState state)
+    {
+        Direction direction = state.get(HORIZONTAL_FACING);
 
-         return FLOOR_NORTH_SOUTH_GRINDSTONE;
-      case WALL:
-         if (direction == Direction.NORTH) {
-            return WALL_NORTH_GRINDSTONE;
-         } else if (direction == Direction.SOUTH) {
-            return WALL_SOUTH_GRINDSTONE;
-         } else {
-            if (direction == Direction.EAST) {
-               return WALL_EAST_GRINDSTONE;
-            }
+        switch ((AttachFace)state.get(FACE))
+        {
+            case FLOOR:
+                if (direction != Direction.NORTH && direction != Direction.SOUTH)
+                {
+                    return SHAPE_FLOOR_EAST_WEST;
+                }
 
-            return WALL_WEST_GRINDSTONE;
-         }
-      case CEILING:
-         if (direction != Direction.NORTH && direction != Direction.SOUTH) {
-            return CEILING_EAST_WEST_GRINDSTONE;
-         }
+                return SHAPE_FLOOR_NORTH_SOUTH;
 
-         return CEILING_NORTH_SOUTH_GRINDSTONE;
-      default:
-         return FLOOR_EAST_WEST_GRINDSTONE;
-      }
-   }
+            case WALL:
+                if (direction == Direction.NORTH)
+                {
+                    return SHAPE_WALL_NORTH;
+                }
+                else if (direction == Direction.SOUTH)
+                {
+                    return SHAPE_WALL_SOUTH;
+                }
+                else
+                {
+                    if (direction == Direction.EAST)
+                    {
+                        return SHAPE_WALL_EAST;
+                    }
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      return this.getVoxelShape(p_220071_1_);
-   }
+                    return SHAPE_WALL_WEST;
+                }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return this.getVoxelShape(p_220053_1_);
-   }
+            case CEILING:
+                if (direction != Direction.NORTH && direction != Direction.SOUTH)
+                {
+                    return SHAPE_CEILING_EAST_OR_WEST;
+                }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      return true;
-   }
+                return SHAPE_CEILING_NORTH_OR_SOUTH;
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         return ActionResultType.SUCCESS;
-      } else {
-         p_225533_4_.openMenu(p_225533_1_.getMenuProvider(p_225533_2_, p_225533_3_));
-         p_225533_4_.awardStat(Stats.INTERACT_WITH_GRINDSTONE);
-         return ActionResultType.CONSUME;
-      }
-   }
+            default:
+                return SHAPE_FLOOR_EAST_WEST;
+        }
+    }
 
-   public INamedContainerProvider getMenuProvider(BlockState p_220052_1_, World p_220052_2_, BlockPos p_220052_3_) {
-      return new SimpleNamedContainerProvider((p_220187_2_, p_220187_3_, p_220187_4_) -> {
-         return new GrindstoneContainer(p_220187_2_, p_220187_3_, IWorldPosCallable.create(p_220052_2_, p_220052_3_));
-      }, CONTAINER_TITLE);
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return this.getShapeFromState(state);
+    }
 
-   public BlockState rotate(BlockState p_185499_1_, Rotation p_185499_2_) {
-      return p_185499_1_.setValue(FACING, p_185499_2_.rotate(p_185499_1_.getValue(FACING)));
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return this.getShapeFromState(state);
+    }
 
-   public BlockState mirror(BlockState p_185471_1_, Mirror p_185471_2_) {
-      return p_185471_1_.rotate(p_185471_2_.getRotation(p_185471_1_.getValue(FACING)));
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        return true;
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(FACING, FACE);
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            player.openContainer(state.getContainer(worldIn, pos));
+            player.addStat(Stats.INTERACT_WITH_GRINDSTONE);
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      return false;
-   }
+    public INamedContainerProvider getContainer(BlockState state, World worldIn, BlockPos pos)
+    {
+        return new SimpleNamedContainerProvider((id, inventory, player) ->
+        {
+            return new GrindstoneContainer(id, inventory, IWorldPosCallable.of(worldIn, pos));
+        }, CONTAINER_NAME);
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever possible. Implementing/overriding is
+     * fine.
+     */
+    public BlockState rotate(BlockState state, Rotation rot)
+    {
+        return state.with(HORIZONTAL_FACING, rot.rotate(state.get(HORIZONTAL_FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed
+     * blockstate.
+     * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockState mirror(BlockState state, Mirror mirrorIn)
+    {
+        return state.rotate(mirrorIn.toRotation(state.get(HORIZONTAL_FACING)));
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(HORIZONTAL_FACING, FACE);
+    }
+
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        return false;
+    }
 }

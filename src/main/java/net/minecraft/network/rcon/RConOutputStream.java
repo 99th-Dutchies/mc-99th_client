@@ -4,37 +4,63 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class RConOutputStream {
-   private final ByteArrayOutputStream outputStream;
-   private final DataOutputStream dataOutputStream;
+public class RConOutputStream
+{
+    private final ByteArrayOutputStream byteArrayOutput;
+    private final DataOutputStream output;
 
-   public RConOutputStream(int p_i1533_1_) {
-      this.outputStream = new ByteArrayOutputStream(p_i1533_1_);
-      this.dataOutputStream = new DataOutputStream(this.outputStream);
-   }
+    public RConOutputStream(int size)
+    {
+        this.byteArrayOutput = new ByteArrayOutputStream(size);
+        this.output = new DataOutputStream(this.byteArrayOutput);
+    }
 
-   public void writeBytes(byte[] p_72670_1_) throws IOException {
-      this.dataOutputStream.write(p_72670_1_, 0, p_72670_1_.length);
-   }
+    /**
+     * Writes the given byte array to the output stream
+     */
+    public void writeByteArray(byte[] data) throws IOException
+    {
+        this.output.write(data, 0, data.length);
+    }
 
-   public void writeString(String p_72671_1_) throws IOException {
-      this.dataOutputStream.writeBytes(p_72671_1_);
-      this.dataOutputStream.write(0);
-   }
+    /**
+     * Writes the given String to the output stream
+     */
+    public void writeString(String data) throws IOException
+    {
+        this.output.writeBytes(data);
+        this.output.write(0);
+    }
 
-   public void write(int p_72667_1_) throws IOException {
-      this.dataOutputStream.write(p_72667_1_);
-   }
+    /**
+     * Writes the given int to the output stream
+     */
+    public void writeInt(int data) throws IOException
+    {
+        this.output.write(data);
+    }
 
-   public void writeShort(short p_72668_1_) throws IOException {
-      this.dataOutputStream.writeShort(Short.reverseBytes(p_72668_1_));
-   }
+    /**
+     * Writes the given short to the output stream
+     */
+    public void writeShort(short data) throws IOException
+    {
+        this.output.writeShort(Short.reverseBytes(data));
+    }
 
-   public byte[] toByteArray() {
-      return this.outputStream.toByteArray();
-   }
+    /**
+     * Returns the contents of the output stream as a byte array
+     */
+    public byte[] toByteArray()
+    {
+        return this.byteArrayOutput.toByteArray();
+    }
 
-   public void reset() {
-      this.outputStream.reset();
-   }
+    /**
+     * Resets the byte array output.
+     */
+    public void reset()
+    {
+        this.byteArrayOutput.reset();
+    }
 }

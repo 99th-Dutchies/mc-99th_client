@@ -7,33 +7,42 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class EntityPosWrapper implements IPosWrapper {
-   private final Entity entity;
-   private final boolean trackEyeHeight;
+public class EntityPosWrapper implements IPosWrapper
+{
+    private final Entity entity;
+    private final boolean eyePos;
 
-   public EntityPosWrapper(Entity p_i231516_1_, boolean p_i231516_2_) {
-      this.entity = p_i231516_1_;
-      this.trackEyeHeight = p_i231516_2_;
-   }
+    public EntityPosWrapper(Entity entity, boolean eyePos)
+    {
+        this.entity = entity;
+        this.eyePos = eyePos;
+    }
 
-   public Vector3d currentPosition() {
-      return this.trackEyeHeight ? this.entity.position().add(0.0D, (double)this.entity.getEyeHeight(), 0.0D) : this.entity.position();
-   }
+    public Vector3d getPos()
+    {
+        return this.eyePos ? this.entity.getPositionVec().add(0.0D, (double)this.entity.getEyeHeight(), 0.0D) : this.entity.getPositionVec();
+    }
 
-   public BlockPos currentBlockPosition() {
-      return this.entity.blockPosition();
-   }
+    public BlockPos getBlockPos()
+    {
+        return this.entity.getPosition();
+    }
 
-   public boolean isVisibleBy(LivingEntity p_220610_1_) {
-      if (!(this.entity instanceof LivingEntity)) {
-         return true;
-      } else {
-         Optional<List<LivingEntity>> optional = p_220610_1_.getBrain().getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES);
-         return this.entity.isAlive() && optional.isPresent() && optional.get().contains(this.entity);
-      }
-   }
+    public boolean isVisibleTo(LivingEntity entity)
+    {
+        if (!(this.entity instanceof LivingEntity))
+        {
+            return true;
+        }
+        else
+        {
+            Optional<List<LivingEntity>> optional = entity.getBrain().getMemory(MemoryModuleType.VISIBLE_MOBS);
+            return this.entity.isAlive() && optional.isPresent() && optional.get().contains(this.entity);
+        }
+    }
 
-   public String toString() {
-      return "EntityTracker for " + this.entity;
-   }
+    public String toString()
+    {
+        return "EntityTracker for " + this.entity;
+    }
 }

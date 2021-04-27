@@ -7,61 +7,88 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.spawner.AbstractSpawner;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SpawnerMinecartEntity extends AbstractMinecartEntity {
-   private final AbstractSpawner spawner = new AbstractSpawner() {
-      public void broadcastEvent(int p_98267_1_) {
-         SpawnerMinecartEntity.this.level.broadcastEntityEvent(SpawnerMinecartEntity.this, (byte)p_98267_1_);
-      }
+public class SpawnerMinecartEntity extends AbstractMinecartEntity
+{
+    private final AbstractSpawner mobSpawnerLogic = new AbstractSpawner()
+    {
+        public void broadcastEvent(int id)
+        {
+            SpawnerMinecartEntity.this.world.setEntityState(SpawnerMinecartEntity.this, (byte)id);
+        }
+        public World getWorld()
+        {
+            return SpawnerMinecartEntity.this.world;
+        }
+        public BlockPos getSpawnerPosition()
+        {
+            return SpawnerMinecartEntity.this.getPosition();
+        }
+    };
 
-      public World getLevel() {
-         return SpawnerMinecartEntity.this.level;
-      }
+    public SpawnerMinecartEntity(EntityType <? extends SpawnerMinecartEntity > type, World world)
+    {
+        super(type, world);
+    }
 
-      public BlockPos getPos() {
-         return SpawnerMinecartEntity.this.blockPosition();
-      }
-   };
+    public SpawnerMinecartEntity(World worldIn, double x, double y, double z)
+    {
+        super(EntityType.SPAWNER_MINECART, worldIn, x, y, z);
+    }
 
-   public SpawnerMinecartEntity(EntityType<? extends SpawnerMinecartEntity> p_i50114_1_, World p_i50114_2_) {
-      super(p_i50114_1_, p_i50114_2_);
-   }
+    public AbstractMinecartEntity.Type getMinecartType()
+    {
+        return AbstractMinecartEntity.Type.SPAWNER;
+    }
 
-   public SpawnerMinecartEntity(World p_i46753_1_, double p_i46753_2_, double p_i46753_4_, double p_i46753_6_) {
-      super(EntityType.SPAWNER_MINECART, p_i46753_1_, p_i46753_2_, p_i46753_4_, p_i46753_6_);
-   }
+    public BlockState getDefaultDisplayTile()
+    {
+        return Blocks.SPAWNER.getDefaultState();
+    }
 
-   public AbstractMinecartEntity.Type getMinecartType() {
-      return AbstractMinecartEntity.Type.SPAWNER;
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    protected void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.mobSpawnerLogic.read(compound);
+    }
 
-   public BlockState getDefaultDisplayBlockState() {
-      return Blocks.SPAWNER.defaultBlockState();
-   }
+    protected void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        this.mobSpawnerLogic.write(compound);
+    }
 
-   protected void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.spawner.load(p_70037_1_);
-   }
+    /**
+     * Handler for {@link World#setEntityState}
+     */
+    public void handleStatusUpdate(byte id)
+    {
+        this.mobSpawnerLogic.setDelayToMin(id);
+    }
 
-   protected void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      this.spawner.save(p_213281_1_);
-   }
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void tick()
+    {
+        super.tick();
+        this.mobSpawnerLogic.tick();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void handleEntityEvent(byte p_70103_1_) {
-      this.spawner.onEventTriggered(p_70103_1_);
-   }
-
-   public void tick() {
-      super.tick();
-      this.spawner.tick();
-   }
-
-   public boolean onlyOpCanSetNbt() {
-      return true;
-   }
+    /**
+     * Checks if players can use this entity to access operator (permission level 2) commands either directly or
+     * indirectly, such as give or setblock. A similar method exists for entities at {@link
+     * net.minecraft.tileentity.TileEntity#onlyOpsCanSetNbt()}.<p>For example, {@link
+     * net.minecraft.entity.item.EntityMinecartCommandBlock#ignoreItemEntityData() command block minecarts} and {@link
+     * net.minecraft.entity.item.EntityMinecartMobSpawner#ignoreItemEntityData() mob spawner minecarts} (spawning
+     * command block minecarts or drops) are considered accessible.</p>@return true if this entity offers ways for
+     * unauthorized players to use restricted commands
+     */
+    public boolean ignoreItemEntityData()
+    {
+        return true;
+    }
 }

@@ -15,75 +15,108 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.server.ServerWorld;
 
-public class SugarCaneBlock extends Block {
-   public static final IntegerProperty AGE = BlockStateProperties.AGE_15;
-   protected static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
+public class SugarCaneBlock extends Block
+{
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_15;
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
 
-   protected SugarCaneBlock(AbstractBlock.Properties p_i48312_1_) {
-      super(p_i48312_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
-   }
+    protected SugarCaneBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(AGE, Integer.valueOf(0)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!p_225534_1_.canSurvive(p_225534_2_, p_225534_3_)) {
-         p_225534_2_.destroyBlock(p_225534_3_, true);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!state.isValidPosition(worldIn, pos))
+        {
+            worldIn.destroyBlock(pos, true);
+        }
+    }
 
-   }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (worldIn.isAirBlock(pos.up()))
+        {
+            int i;
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_2_.isEmptyBlock(p_225542_3_.above())) {
-         int i;
-         for(i = 1; p_225542_2_.getBlockState(p_225542_3_.below(i)).is(this); ++i) {
-         }
-
-         if (i < 3) {
-            int j = p_225542_1_.getValue(AGE);
-            if (j == 15) {
-               p_225542_2_.setBlockAndUpdate(p_225542_3_.above(), this.defaultBlockState());
-               p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(AGE, Integer.valueOf(0)), 4);
-            } else {
-               p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(AGE, Integer.valueOf(j + 1)), 4);
+            for (i = 1; worldIn.getBlockState(pos.down(i)).isIn(this); ++i)
+            {
             }
-         }
-      }
 
-   }
+            if (i < 3)
+            {
+                int j = state.get(AGE);
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (!p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         p_196271_4_.getBlockTicks().scheduleTick(p_196271_5_, this, 1);
-      }
-
-      return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
-
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockState blockstate = p_196260_2_.getBlockState(p_196260_3_.below());
-      if (blockstate.getBlock() == this) {
-         return true;
-      } else {
-         if (blockstate.is(Blocks.GRASS_BLOCK) || blockstate.is(Blocks.DIRT) || blockstate.is(Blocks.COARSE_DIRT) || blockstate.is(Blocks.PODZOL) || blockstate.is(Blocks.SAND) || blockstate.is(Blocks.RED_SAND)) {
-            BlockPos blockpos = p_196260_3_.below();
-
-            for(Direction direction : Direction.Plane.HORIZONTAL) {
-               BlockState blockstate1 = p_196260_2_.getBlockState(blockpos.relative(direction));
-               FluidState fluidstate = p_196260_2_.getFluidState(blockpos.relative(direction));
-               if (fluidstate.is(FluidTags.WATER) || blockstate1.is(Blocks.FROSTED_ICE)) {
-                  return true;
-               }
+                if (j == 15)
+                {
+                    worldIn.setBlockState(pos.up(), this.getDefaultState());
+                    worldIn.setBlockState(pos, state.with(AGE, Integer.valueOf(0)), 4);
+                }
+                else
+                {
+                    worldIn.setBlockState(pos, state.with(AGE, Integer.valueOf(j + 1)), 4);
+                }
             }
-         }
+        }
+    }
 
-         return false;
-      }
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (!stateIn.isValidPosition(worldIn, currentPos))
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+        }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(AGE);
-   }
+        return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
+
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockState blockstate = worldIn.getBlockState(pos.down());
+
+        if (blockstate.getBlock() == this)
+        {
+            return true;
+        }
+        else
+        {
+            if (blockstate.isIn(Blocks.GRASS_BLOCK) || blockstate.isIn(Blocks.DIRT) || blockstate.isIn(Blocks.COARSE_DIRT) || blockstate.isIn(Blocks.PODZOL) || blockstate.isIn(Blocks.SAND) || blockstate.isIn(Blocks.RED_SAND))
+            {
+                BlockPos blockpos = pos.down();
+
+                for (Direction direction : Direction.Plane.HORIZONTAL)
+                {
+                    BlockState blockstate1 = worldIn.getBlockState(blockpos.offset(direction));
+                    FluidState fluidstate = worldIn.getFluidState(blockpos.offset(direction));
+
+                    if (fluidstate.isTagged(FluidTags.WATER) || blockstate1.isIn(Blocks.FROSTED_ICE))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(AGE);
+    }
 }

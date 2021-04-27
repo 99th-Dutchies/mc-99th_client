@@ -8,27 +8,34 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 
-public interface IRecipeHolder {
-   void setRecipeUsed(@Nullable IRecipe<?> p_193056_1_);
+public interface IRecipeHolder
+{
+    void setRecipeUsed(@Nullable IRecipe<?> recipe);
 
-   @Nullable
-   IRecipe<?> getRecipeUsed();
+    @Nullable
+    IRecipe<?> getRecipeUsed();
 
-   default void awardUsedRecipes(PlayerEntity p_201560_1_) {
-      IRecipe<?> irecipe = this.getRecipeUsed();
-      if (irecipe != null && !irecipe.isSpecial()) {
-         p_201560_1_.awardRecipes(Collections.singleton(irecipe));
-         this.setRecipeUsed((IRecipe<?>)null);
-      }
+default void onCrafting(PlayerEntity player)
+    {
+        IRecipe<?> irecipe = this.getRecipeUsed();
 
-   }
+        if (irecipe != null && !irecipe.isDynamic())
+        {
+            player.unlockRecipes(Collections.singleton(irecipe));
+            this.setRecipeUsed((IRecipe<?>)null);
+        }
+    }
 
-   default boolean setRecipeUsed(World p_201561_1_, ServerPlayerEntity p_201561_2_, IRecipe<?> p_201561_3_) {
-      if (!p_201561_3_.isSpecial() && p_201561_1_.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING) && !p_201561_2_.getRecipeBook().contains(p_201561_3_)) {
-         return false;
-      } else {
-         this.setRecipeUsed(p_201561_3_);
-         return true;
-      }
-   }
+default boolean canUseRecipe(World worldIn, ServerPlayerEntity player, IRecipe<?> recipe)
+    {
+        if (!recipe.isDynamic() && worldIn.getGameRules().getBoolean(GameRules.DO_LIMITED_CRAFTING) && !player.getRecipeBook().isUnlocked(recipe))
+        {
+            return false;
+        }
+        else
+        {
+            this.setRecipeUsed(recipe);
+            return true;
+        }
+    }
 }

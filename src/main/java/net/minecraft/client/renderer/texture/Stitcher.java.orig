@@ -1,0 +1,234 @@
+package net.minecraft.client.renderer.texture;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import net.minecraft.client.renderer.StitcherException;
+import net.minecraft.util.math.MathHelper;
+import net.optifine.util.MathUtils;
+
+public class Stitcher {
+   private static final Comparator<Stitcher.Holder> field_217797_a = Comparator.comparing((p_lambda$static$0_0_) -> {
+      return -p_lambda$static$0_0_.field_94201_d;
+   }).thenComparing((p_lambda$static$1_0_) -> {
+      return -p_lambda$static$1_0_.field_94204_c;
+   }).thenComparing((p_lambda$static$2_0_) -> {
+      return p_lambda$static$2_0_.field_229213_a_.func_229248_a_();
+   });
+   private final int field_147971_a;
+   private final Set<Stitcher.Holder> field_94319_a = Sets.newHashSetWithExpectedSize(256);
+   private final List<Stitcher.Slot> field_94317_b = Lists.newArrayListWithCapacity(256);
+   private int field_94318_c;
+   private int field_94315_d;
+   private final int field_94316_e;
+   private final int field_94313_f;
+
+   public Stitcher(int p_i50910_1_, int p_i50910_2_, int p_i50910_3_) {
+      this.field_147971_a = p_i50910_3_;
+      this.field_94316_e = p_i50910_1_;
+      this.field_94313_f = p_i50910_2_;
+   }
+
+   public int func_110935_a() {
+      return this.field_94318_c;
+   }
+
+   public int func_110936_b() {
+      return this.field_94315_d;
+   }
+
+   public void func_229211_a_(TextureAtlasSprite.Info p_229211_1_) {
+      Stitcher.Holder stitcher$holder = new Stitcher.Holder(p_229211_1_, this.field_147971_a);
+      this.field_94319_a.add(stitcher$holder);
+   }
+
+   public void func_94305_f() {
+      List<Stitcher.Holder> list = Lists.newArrayList(this.field_94319_a);
+      list.sort(field_217797_a);
+
+      for(Stitcher.Holder stitcher$holder : list) {
+         if (!this.func_94310_b(stitcher$holder)) {
+            throw new StitcherException(stitcher$holder.field_229213_a_, list.stream().map((p_lambda$doStitch$3_0_) -> {
+               return p_lambda$doStitch$3_0_.field_229213_a_;
+            }).collect(ImmutableList.toImmutableList()), this.field_94318_c, this.field_94315_d, this.field_94316_e, this.field_94313_f);
+         }
+      }
+
+      this.field_94318_c = MathHelper.func_151236_b(this.field_94318_c);
+      this.field_94315_d = MathHelper.func_151236_b(this.field_94315_d);
+   }
+
+   public void func_229209_a_(Stitcher.ISpriteLoader p_229209_1_) {
+      for(Stitcher.Slot stitcher$slot : this.field_94317_b) {
+         stitcher$slot.func_217792_a((p_lambda$getStitchSlots$4_2_) -> {
+            Stitcher.Holder stitcher$holder = p_lambda$getStitchSlots$4_2_.func_94183_a();
+            TextureAtlasSprite.Info textureatlassprite$info = stitcher$holder.field_229213_a_;
+            p_229209_1_.load(textureatlassprite$info, this.field_94318_c, this.field_94315_d, p_lambda$getStitchSlots$4_2_.func_94186_b(), p_lambda$getStitchSlots$4_2_.func_94185_c());
+         });
+      }
+
+   }
+
+   private static int func_147969_b(int p_147969_0_, int p_147969_1_) {
+      return (p_147969_0_ >> p_147969_1_) + ((p_147969_0_ & (1 << p_147969_1_) - 1) == 0 ? 0 : 1) << p_147969_1_;
+   }
+
+   private boolean func_94310_b(Stitcher.Holder p_94310_1_) {
+      for(Stitcher.Slot stitcher$slot : this.field_94317_b) {
+         if (stitcher$slot.func_94182_a(p_94310_1_)) {
+            return true;
+         }
+      }
+
+      return this.func_94311_c(p_94310_1_);
+   }
+
+   private boolean func_94311_c(Stitcher.Holder p_94311_1_) {
+      int i = MathHelper.func_151236_b(this.field_94318_c);
+      int j = MathHelper.func_151236_b(this.field_94315_d);
+      int k = MathHelper.func_151236_b(this.field_94318_c + p_94311_1_.field_94204_c);
+      int l = MathHelper.func_151236_b(this.field_94315_d + p_94311_1_.field_94201_d);
+      boolean flag = k <= this.field_94316_e;
+      boolean flag1 = l <= this.field_94313_f;
+      if (!flag && !flag1) {
+         return false;
+      } else {
+         int i1 = MathUtils.roundDownToPowerOfTwo(this.field_94315_d);
+         boolean flag2 = flag && k <= 2 * i1;
+         if (this.field_94318_c == 0 && this.field_94315_d == 0) {
+            flag2 = true;
+         }
+
+         Stitcher.Slot stitcher$slot;
+         if (flag2) {
+            if (this.field_94315_d == 0) {
+               this.field_94315_d = p_94311_1_.field_94201_d;
+            }
+
+            stitcher$slot = new Stitcher.Slot(this.field_94318_c, 0, p_94311_1_.field_94204_c, this.field_94315_d);
+            this.field_94318_c += p_94311_1_.field_94204_c;
+         } else {
+            stitcher$slot = new Stitcher.Slot(0, this.field_94315_d, this.field_94318_c, p_94311_1_.field_94201_d);
+            this.field_94315_d += p_94311_1_.field_94201_d;
+         }
+
+         stitcher$slot.func_94182_a(p_94311_1_);
+         this.field_94317_b.add(stitcher$slot);
+         return true;
+      }
+   }
+
+   static class Holder {
+      public final TextureAtlasSprite.Info field_229213_a_;
+      public final int field_94204_c;
+      public final int field_94201_d;
+
+      public Holder(TextureAtlasSprite.Info p_i226045_1_, int p_i226045_2_) {
+         this.field_229213_a_ = p_i226045_1_;
+         this.field_94204_c = Stitcher.func_147969_b(p_i226045_1_.func_229250_b_(), p_i226045_2_);
+         this.field_94201_d = Stitcher.func_147969_b(p_i226045_1_.func_229252_c_(), p_i226045_2_);
+      }
+
+      public String toString() {
+         return "Holder{width=" + this.field_94204_c + ", height=" + this.field_94201_d + ", name=" + this.field_229213_a_.func_229248_a_() + '}';
+      }
+   }
+
+   public interface ISpriteLoader {
+      void load(TextureAtlasSprite.Info p_load_1_, int p_load_2_, int p_load_3_, int p_load_4_, int p_load_5_);
+   }
+
+   public static class Slot {
+      private final int field_94192_a;
+      private final int field_94190_b;
+      private final int field_94191_c;
+      private final int field_94188_d;
+      private List<Stitcher.Slot> field_94189_e;
+      private Stitcher.Holder field_94187_f;
+
+      public Slot(int p_i1277_1_, int p_i1277_2_, int p_i1277_3_, int p_i1277_4_) {
+         this.field_94192_a = p_i1277_1_;
+         this.field_94190_b = p_i1277_2_;
+         this.field_94191_c = p_i1277_3_;
+         this.field_94188_d = p_i1277_4_;
+      }
+
+      public Stitcher.Holder func_94183_a() {
+         return this.field_94187_f;
+      }
+
+      public int func_94186_b() {
+         return this.field_94192_a;
+      }
+
+      public int func_94185_c() {
+         return this.field_94190_b;
+      }
+
+      public boolean func_94182_a(Stitcher.Holder p_94182_1_) {
+         if (this.field_94187_f != null) {
+            return false;
+         } else {
+            int i = p_94182_1_.field_94204_c;
+            int j = p_94182_1_.field_94201_d;
+            if (i <= this.field_94191_c && j <= this.field_94188_d) {
+               if (i == this.field_94191_c && j == this.field_94188_d) {
+                  this.field_94187_f = p_94182_1_;
+                  return true;
+               } else {
+                  if (this.field_94189_e == null) {
+                     this.field_94189_e = Lists.newArrayListWithCapacity(1);
+                     this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a, this.field_94190_b, i, j));
+                     int k = this.field_94191_c - i;
+                     int l = this.field_94188_d - j;
+                     if (l > 0 && k > 0) {
+                        int i1 = Math.max(this.field_94188_d, k);
+                        int j1 = Math.max(this.field_94191_c, l);
+                        if (i1 >= j1) {
+                           this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a, this.field_94190_b + j, i, l));
+                           this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a + i, this.field_94190_b, k, this.field_94188_d));
+                        } else {
+                           this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a + i, this.field_94190_b, k, j));
+                           this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a, this.field_94190_b + j, this.field_94191_c, l));
+                        }
+                     } else if (k == 0) {
+                        this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a, this.field_94190_b + j, i, l));
+                     } else if (l == 0) {
+                        this.field_94189_e.add(new Stitcher.Slot(this.field_94192_a + i, this.field_94190_b, k, j));
+                     }
+                  }
+
+                  for(Stitcher.Slot stitcher$slot : this.field_94189_e) {
+                     if (stitcher$slot.func_94182_a(p_94182_1_)) {
+                        return true;
+                     }
+                  }
+
+                  return false;
+               }
+            } else {
+               return false;
+            }
+         }
+      }
+
+      public void func_217792_a(Consumer<Stitcher.Slot> p_217792_1_) {
+         if (this.field_94187_f != null) {
+            p_217792_1_.accept(this);
+         } else if (this.field_94189_e != null) {
+            for(Stitcher.Slot stitcher$slot : this.field_94189_e) {
+               stitcher$slot.func_217792_a(p_217792_1_);
+            }
+         }
+
+      }
+
+      public String toString() {
+         return "Slot{originX=" + this.field_94192_a + ", originY=" + this.field_94190_b + ", width=" + this.field_94191_c + ", height=" + this.field_94188_d + ", texture=" + this.field_94187_f + ", subSlots=" + this.field_94189_e + '}';
+      }
+   }
+}

@@ -11,69 +11,97 @@ import net.minecraft.potion.Effect;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SuspiciousStewRecipe extends SpecialRecipe {
-   public SuspiciousStewRecipe(ResourceLocation p_i50020_1_) {
-      super(p_i50020_1_);
-   }
+public class SuspiciousStewRecipe extends SpecialRecipe
+{
+    public SuspiciousStewRecipe(ResourceLocation idIn)
+    {
+        super(idIn);
+    }
 
-   public boolean matches(CraftingInventory p_77569_1_, World p_77569_2_) {
-      boolean flag = false;
-      boolean flag1 = false;
-      boolean flag2 = false;
-      boolean flag3 = false;
+    /**
+     * Used to check if a recipe matches current crafting inventory
+     */
+    public boolean matches(CraftingInventory inv, World worldIn)
+    {
+        boolean flag = false;
+        boolean flag1 = false;
+        boolean flag2 = false;
+        boolean flag3 = false;
 
-      for(int i = 0; i < p_77569_1_.getContainerSize(); ++i) {
-         ItemStack itemstack = p_77569_1_.getItem(i);
-         if (!itemstack.isEmpty()) {
-            if (itemstack.getItem() == Blocks.BROWN_MUSHROOM.asItem() && !flag2) {
-               flag2 = true;
-            } else if (itemstack.getItem() == Blocks.RED_MUSHROOM.asItem() && !flag1) {
-               flag1 = true;
-            } else if (itemstack.getItem().is(ItemTags.SMALL_FLOWERS) && !flag) {
-               flag = true;
-            } else {
-               if (itemstack.getItem() != Items.BOWL || flag3) {
-                  return false;
-               }
+        for (int i = 0; i < inv.getSizeInventory(); ++i)
+        {
+            ItemStack itemstack = inv.getStackInSlot(i);
 
-               flag3 = true;
+            if (!itemstack.isEmpty())
+            {
+                if (itemstack.getItem() == Blocks.BROWN_MUSHROOM.asItem() && !flag2)
+                {
+                    flag2 = true;
+                }
+                else if (itemstack.getItem() == Blocks.RED_MUSHROOM.asItem() && !flag1)
+                {
+                    flag1 = true;
+                }
+                else if (itemstack.getItem().isIn(ItemTags.SMALL_FLOWERS) && !flag)
+                {
+                    flag = true;
+                }
+                else
+                {
+                    if (itemstack.getItem() != Items.BOWL || flag3)
+                    {
+                        return false;
+                    }
+
+                    flag3 = true;
+                }
             }
-         }
-      }
+        }
 
-      return flag && flag2 && flag1 && flag3;
-   }
+        return flag && flag2 && flag1 && flag3;
+    }
 
-   public ItemStack assemble(CraftingInventory p_77572_1_) {
-      ItemStack itemstack = ItemStack.EMPTY;
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    public ItemStack getCraftingResult(CraftingInventory inv)
+    {
+        ItemStack itemstack = ItemStack.EMPTY;
 
-      for(int i = 0; i < p_77572_1_.getContainerSize(); ++i) {
-         ItemStack itemstack1 = p_77572_1_.getItem(i);
-         if (!itemstack1.isEmpty() && itemstack1.getItem().is(ItemTags.SMALL_FLOWERS)) {
-            itemstack = itemstack1;
-            break;
-         }
-      }
+        for (int i = 0; i < inv.getSizeInventory(); ++i)
+        {
+            ItemStack itemstack1 = inv.getStackInSlot(i);
 
-      ItemStack itemstack2 = new ItemStack(Items.SUSPICIOUS_STEW, 1);
-      if (itemstack.getItem() instanceof BlockItem && ((BlockItem)itemstack.getItem()).getBlock() instanceof FlowerBlock) {
-         FlowerBlock flowerblock = (FlowerBlock)((BlockItem)itemstack.getItem()).getBlock();
-         Effect effect = flowerblock.getSuspiciousStewEffect();
-         SuspiciousStewItem.saveMobEffect(itemstack2, effect, flowerblock.getEffectDuration());
-      }
+            if (!itemstack1.isEmpty() && itemstack1.getItem().isIn(ItemTags.SMALL_FLOWERS))
+            {
+                itemstack = itemstack1;
+                break;
+            }
+        }
 
-      return itemstack2;
-   }
+        ItemStack itemstack2 = new ItemStack(Items.SUSPICIOUS_STEW, 1);
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean canCraftInDimensions(int p_194133_1_, int p_194133_2_) {
-      return p_194133_1_ >= 2 && p_194133_2_ >= 2;
-   }
+        if (itemstack.getItem() instanceof BlockItem && ((BlockItem)itemstack.getItem()).getBlock() instanceof FlowerBlock)
+        {
+            FlowerBlock flowerblock = (FlowerBlock)((BlockItem)itemstack.getItem()).getBlock();
+            Effect effect = flowerblock.getStewEffect();
+            SuspiciousStewItem.addEffect(itemstack2, effect, flowerblock.getStewEffectDuration());
+        }
 
-   public IRecipeSerializer<?> getSerializer() {
-      return IRecipeSerializer.SUSPICIOUS_STEW;
-   }
+        return itemstack2;
+    }
+
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
+    public boolean canFit(int width, int height)
+    {
+        return width >= 2 && height >= 2;
+    }
+
+    public IRecipeSerializer<?> getSerializer()
+    {
+        return IRecipeSerializer.CRAFTING_SPECIAL_SUSPICIOUSSTEW;
+    }
 }

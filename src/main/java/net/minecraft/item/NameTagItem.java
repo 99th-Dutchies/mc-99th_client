@@ -6,25 +6,37 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 
-public class NameTagItem extends Item {
-   public NameTagItem(Item.Properties p_i48479_1_) {
-      super(p_i48479_1_);
-   }
+public class NameTagItem extends Item
+{
+    public NameTagItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ActionResultType interactLivingEntity(ItemStack p_111207_1_, PlayerEntity p_111207_2_, LivingEntity p_111207_3_, Hand p_111207_4_) {
-      if (p_111207_1_.hasCustomHoverName() && !(p_111207_3_ instanceof PlayerEntity)) {
-         if (!p_111207_2_.level.isClientSide && p_111207_3_.isAlive()) {
-            p_111207_3_.setCustomName(p_111207_1_.getHoverName());
-            if (p_111207_3_ instanceof MobEntity) {
-               ((MobEntity)p_111207_3_).setPersistenceRequired();
+    /**
+     * Returns true if the item can be used on the given entity, e.g. shears on sheep.
+     */
+    public ActionResultType itemInteractionForEntity(ItemStack stack, PlayerEntity playerIn, LivingEntity target, Hand hand)
+    {
+        if (stack.hasDisplayName() && !(target instanceof PlayerEntity))
+        {
+            if (!playerIn.world.isRemote && target.isAlive())
+            {
+                target.setCustomName(stack.getDisplayName());
+
+                if (target instanceof MobEntity)
+                {
+                    ((MobEntity)target).enablePersistence();
+                }
+
+                stack.shrink(1);
             }
 
-            p_111207_1_.shrink(1);
-         }
-
-         return ActionResultType.sidedSuccess(p_111207_2_.level.isClientSide);
-      } else {
-         return ActionResultType.PASS;
-      }
-   }
+            return ActionResultType.func_233537_a_(playerIn.world.isRemote);
+        }
+        else
+        {
+            return ActionResultType.PASS;
+        }
+    }
 }

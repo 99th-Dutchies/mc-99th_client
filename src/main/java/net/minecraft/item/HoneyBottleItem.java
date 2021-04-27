@@ -13,55 +13,82 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.world.World;
 
-public class HoneyBottleItem extends Item {
-   public HoneyBottleItem(Item.Properties p_i225737_1_) {
-      super(p_i225737_1_);
-   }
+public class HoneyBottleItem extends Item
+{
+    public HoneyBottleItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ItemStack finishUsingItem(ItemStack p_77654_1_, World p_77654_2_, LivingEntity p_77654_3_) {
-      super.finishUsingItem(p_77654_1_, p_77654_2_, p_77654_3_);
-      if (p_77654_3_ instanceof ServerPlayerEntity) {
-         ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)p_77654_3_;
-         CriteriaTriggers.CONSUME_ITEM.trigger(serverplayerentity, p_77654_1_);
-         serverplayerentity.awardStat(Stats.ITEM_USED.get(this));
-      }
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
+     * the Item before the action is complete.
+     */
+    public ItemStack onItemUseFinish(ItemStack stack, World worldIn, LivingEntity entityLiving)
+    {
+        super.onItemUseFinish(stack, worldIn, entityLiving);
 
-      if (!p_77654_2_.isClientSide) {
-         p_77654_3_.removeEffect(Effects.POISON);
-      }
+        if (entityLiving instanceof ServerPlayerEntity)
+        {
+            ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entityLiving;
+            CriteriaTriggers.CONSUME_ITEM.trigger(serverplayerentity, stack);
+            serverplayerentity.addStat(Stats.ITEM_USED.get(this));
+        }
 
-      if (p_77654_1_.isEmpty()) {
-         return new ItemStack(Items.GLASS_BOTTLE);
-      } else {
-         if (p_77654_3_ instanceof PlayerEntity && !((PlayerEntity)p_77654_3_).abilities.instabuild) {
-            ItemStack itemstack = new ItemStack(Items.GLASS_BOTTLE);
-            PlayerEntity playerentity = (PlayerEntity)p_77654_3_;
-            if (!playerentity.inventory.add(itemstack)) {
-               playerentity.drop(itemstack, false);
+        if (!worldIn.isRemote)
+        {
+            entityLiving.removePotionEffect(Effects.POISON);
+        }
+
+        if (stack.isEmpty())
+        {
+            return new ItemStack(Items.GLASS_BOTTLE);
+        }
+        else
+        {
+            if (entityLiving instanceof PlayerEntity && !((PlayerEntity)entityLiving).abilities.isCreativeMode)
+            {
+                ItemStack itemstack = new ItemStack(Items.GLASS_BOTTLE);
+                PlayerEntity playerentity = (PlayerEntity)entityLiving;
+
+                if (!playerentity.inventory.addItemStackToInventory(itemstack))
+                {
+                    playerentity.dropItem(itemstack, false);
+                }
             }
-         }
 
-         return p_77654_1_;
-      }
-   }
+            return stack;
+        }
+    }
 
-   public int getUseDuration(ItemStack p_77626_1_) {
-      return 40;
-   }
+    /**
+     * How long it takes to use or consume an item
+     */
+    public int getUseDuration(ItemStack stack)
+    {
+        return 40;
+    }
 
-   public UseAction getUseAnimation(ItemStack p_77661_1_) {
-      return UseAction.DRINK;
-   }
+    /**
+     * returns the action that specifies what animation to play when the items is being used
+     */
+    public UseAction getUseAction(ItemStack stack)
+    {
+        return UseAction.DRINK;
+    }
 
-   public SoundEvent getDrinkingSound() {
-      return SoundEvents.HONEY_DRINK;
-   }
+    public SoundEvent getDrinkSound()
+    {
+        return SoundEvents.ITEM_HONEY_BOTTLE_DRINK;
+    }
 
-   public SoundEvent getEatingSound() {
-      return SoundEvents.HONEY_DRINK;
-   }
+    public SoundEvent getEatSound()
+    {
+        return SoundEvents.ITEM_HONEY_BOTTLE_DRINK;
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      return DrinkHelper.useDrink(p_77659_1_, p_77659_2_, p_77659_3_);
-   }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        return DrinkHelper.startDrinking(worldIn, playerIn, handIn);
+    }
 }

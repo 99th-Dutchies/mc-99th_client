@@ -1,5 +1,6 @@
 package net.minecraft.profiler;
 
-public interface ISnooperInfo {
-   void populateSnooper(Snooper p_70000_1_);
+public interface ISnooperInfo
+{
+    void fillSnooper(Snooper snooper);
 }

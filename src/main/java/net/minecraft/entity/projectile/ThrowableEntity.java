@@ -14,91 +14,123 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class ThrowableEntity extends ProjectileEntity {
-   protected ThrowableEntity(EntityType<? extends ThrowableEntity> p_i48540_1_, World p_i48540_2_) {
-      super(p_i48540_1_, p_i48540_2_);
-   }
+public abstract class ThrowableEntity extends ProjectileEntity
+{
+    protected ThrowableEntity(EntityType <? extends ThrowableEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   protected ThrowableEntity(EntityType<? extends ThrowableEntity> p_i48541_1_, double p_i48541_2_, double p_i48541_4_, double p_i48541_6_, World p_i48541_8_) {
-      this(p_i48541_1_, p_i48541_8_);
-      this.setPos(p_i48541_2_, p_i48541_4_, p_i48541_6_);
-   }
+    protected ThrowableEntity(EntityType <? extends ThrowableEntity > type, double x, double y, double z, World worldIn)
+    {
+        this(type, worldIn);
+        this.setPosition(x, y, z);
+    }
 
-   protected ThrowableEntity(EntityType<? extends ThrowableEntity> p_i48542_1_, LivingEntity p_i48542_2_, World p_i48542_3_) {
-      this(p_i48542_1_, p_i48542_2_.getX(), p_i48542_2_.getEyeY() - (double)0.1F, p_i48542_2_.getZ(), p_i48542_3_);
-      this.setOwner(p_i48542_2_);
-   }
+    protected ThrowableEntity(EntityType <? extends ThrowableEntity > type, LivingEntity livingEntityIn, World worldIn)
+    {
+        this(type, livingEntityIn.getPosX(), livingEntityIn.getPosYEye() - (double)0.1F, livingEntityIn.getPosZ(), worldIn);
+        this.setShooter(livingEntityIn);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean shouldRenderAtSqrDistance(double p_70112_1_) {
-      double d0 = this.getBoundingBox().getSize() * 4.0D;
-      if (Double.isNaN(d0)) {
-         d0 = 4.0D;
-      }
+    /**
+     * Checks if the entity is in range to render.
+     */
+    public boolean isInRangeToRenderDist(double distance)
+    {
+        double d0 = this.getBoundingBox().getAverageEdgeLength() * 4.0D;
 
-      d0 = d0 * 64.0D;
-      return p_70112_1_ < d0 * d0;
-   }
+        if (Double.isNaN(d0))
+        {
+            d0 = 4.0D;
+        }
 
-   public void tick() {
-      super.tick();
-      RayTraceResult raytraceresult = ProjectileHelper.getHitResult(this, this::canHitEntity);
-      boolean flag = false;
-      if (raytraceresult.getType() == RayTraceResult.Type.BLOCK) {
-         BlockPos blockpos = ((BlockRayTraceResult)raytraceresult).getBlockPos();
-         BlockState blockstate = this.level.getBlockState(blockpos);
-         if (blockstate.is(Blocks.NETHER_PORTAL)) {
-            this.handleInsidePortal(blockpos);
-            flag = true;
-         } else if (blockstate.is(Blocks.END_GATEWAY)) {
-            TileEntity tileentity = this.level.getBlockEntity(blockpos);
-            if (tileentity instanceof EndGatewayTileEntity && EndGatewayTileEntity.canEntityTeleport(this)) {
-               ((EndGatewayTileEntity)tileentity).teleportEntity(this);
+        d0 = d0 * 64.0D;
+        return distance < d0 * d0;
+    }
+
+    /**
+     * Called to update the entity's position/logic.
+     */
+    public void tick()
+    {
+        super.tick();
+        RayTraceResult raytraceresult = ProjectileHelper.func_234618_a_(this, this::func_230298_a_);
+        boolean flag = false;
+
+        if (raytraceresult.getType() == RayTraceResult.Type.BLOCK)
+        {
+            BlockPos blockpos = ((BlockRayTraceResult)raytraceresult).getPos();
+            BlockState blockstate = this.world.getBlockState(blockpos);
+
+            if (blockstate.isIn(Blocks.NETHER_PORTAL))
+            {
+                this.setPortal(blockpos);
+                flag = true;
+            }
+            else if (blockstate.isIn(Blocks.END_GATEWAY))
+            {
+                TileEntity tileentity = this.world.getTileEntity(blockpos);
+
+                if (tileentity instanceof EndGatewayTileEntity && EndGatewayTileEntity.func_242690_a(this))
+                {
+                    ((EndGatewayTileEntity)tileentity).teleportEntity(this);
+                }
+
+                flag = true;
+            }
+        }
+
+        if (raytraceresult.getType() != RayTraceResult.Type.MISS && !flag)
+        {
+            this.onImpact(raytraceresult);
+        }
+
+        this.doBlockCollisions();
+        Vector3d vector3d = this.getMotion();
+        double d2 = this.getPosX() + vector3d.x;
+        double d0 = this.getPosY() + vector3d.y;
+        double d1 = this.getPosZ() + vector3d.z;
+        this.func_234617_x_();
+        float f;
+
+        if (this.isInWater())
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                float f1 = 0.25F;
+                this.world.addParticle(ParticleTypes.BUBBLE, d2 - vector3d.x * 0.25D, d0 - vector3d.y * 0.25D, d1 - vector3d.z * 0.25D, vector3d.x, vector3d.y, vector3d.z);
             }
 
-            flag = true;
-         }
-      }
+            f = 0.8F;
+        }
+        else
+        {
+            f = 0.99F;
+        }
 
-      if (raytraceresult.getType() != RayTraceResult.Type.MISS && !flag) {
-         this.onHit(raytraceresult);
-      }
+        this.setMotion(vector3d.scale((double)f));
 
-      this.checkInsideBlocks();
-      Vector3d vector3d = this.getDeltaMovement();
-      double d2 = this.getX() + vector3d.x;
-      double d0 = this.getY() + vector3d.y;
-      double d1 = this.getZ() + vector3d.z;
-      this.updateRotation();
-      float f;
-      if (this.isInWater()) {
-         for(int i = 0; i < 4; ++i) {
-            float f1 = 0.25F;
-            this.level.addParticle(ParticleTypes.BUBBLE, d2 - vector3d.x * 0.25D, d0 - vector3d.y * 0.25D, d1 - vector3d.z * 0.25D, vector3d.x, vector3d.y, vector3d.z);
-         }
+        if (!this.hasNoGravity())
+        {
+            Vector3d vector3d1 = this.getMotion();
+            this.setMotion(vector3d1.x, vector3d1.y - (double)this.getGravityVelocity(), vector3d1.z);
+        }
 
-         f = 0.8F;
-      } else {
-         f = 0.99F;
-      }
+        this.setPosition(d2, d0, d1);
+    }
 
-      this.setDeltaMovement(vector3d.scale((double)f));
-      if (!this.isNoGravity()) {
-         Vector3d vector3d1 = this.getDeltaMovement();
-         this.setDeltaMovement(vector3d1.x, vector3d1.y - (double)this.getGravity(), vector3d1.z);
-      }
+    /**
+     * Gets the amount of gravity to apply to the thrown entity with each tick.
+     */
+    protected float getGravityVelocity()
+    {
+        return 0.03F;
+    }
 
-      this.setPos(d2, d0, d1);
-   }
-
-   protected float getGravity() {
-      return 0.03F;
-   }
-
-   public IPacket<?> getAddEntityPacket() {
-      return new SSpawnObjectPacket(this);
-   }
+    public IPacket<?> createSpawnPacket()
+    {
+        return new SSpawnObjectPacket(this);
+    }
 }

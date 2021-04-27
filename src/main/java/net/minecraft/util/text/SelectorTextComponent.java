@@ -10,54 +10,82 @@ import net.minecraft.entity.Entity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class SelectorTextComponent extends TextComponent implements ITargetedTextComponent {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final String pattern;
-   @Nullable
-   private final EntitySelector selector;
+public class SelectorTextComponent extends TextComponent implements ITargetedTextComponent
+{
+    private static final Logger LOGGER = LogManager.getLogger();
 
-   public SelectorTextComponent(String p_i45996_1_) {
-      this.pattern = p_i45996_1_;
-      EntitySelector entityselector = null;
+    /**
+     * The selector used to find the matching entities of this text component
+     */
+    private final String selector;
+    @Nullable
+    private final EntitySelector field_197670_d;
 
-      try {
-         EntitySelectorParser entityselectorparser = new EntitySelectorParser(new StringReader(p_i45996_1_));
-         entityselector = entityselectorparser.parse();
-      } catch (CommandSyntaxException commandsyntaxexception) {
-         LOGGER.warn("Invalid selector component: {}", p_i45996_1_, commandsyntaxexception.getMessage());
-      }
+    public SelectorTextComponent(String selectorIn)
+    {
+        this.selector = selectorIn;
+        EntitySelector entityselector = null;
 
-      this.selector = entityselector;
-   }
+        try
+        {
+            EntitySelectorParser entityselectorparser = new EntitySelectorParser(new StringReader(selectorIn));
+            entityselector = entityselectorparser.parse();
+        }
+        catch (CommandSyntaxException commandsyntaxexception)
+        {
+            LOGGER.warn("Invalid selector component: {}", selectorIn, commandsyntaxexception.getMessage());
+        }
 
-   public String getPattern() {
-      return this.pattern;
-   }
+        this.field_197670_d = entityselector;
+    }
 
-   public IFormattableTextComponent resolve(@Nullable CommandSource p_230535_1_, @Nullable Entity p_230535_2_, int p_230535_3_) throws CommandSyntaxException {
-      return (IFormattableTextComponent)(p_230535_1_ != null && this.selector != null ? EntitySelector.joinNames(this.selector.findEntities(p_230535_1_)) : new StringTextComponent(""));
-   }
+    /**
+     * Gets the selector of this component, in plain text.
+     */
+    public String getSelector()
+    {
+        return this.selector;
+    }
 
-   public String getContents() {
-      return this.pattern;
-   }
+    public IFormattableTextComponent func_230535_a_(@Nullable CommandSource p_230535_1_, @Nullable Entity p_230535_2_, int p_230535_3_) throws CommandSyntaxException
+    {
+        return (IFormattableTextComponent)(p_230535_1_ != null && this.field_197670_d != null ? EntitySelector.joinNames(this.field_197670_d.select(p_230535_1_)) : new StringTextComponent(""));
+    }
 
-   public SelectorTextComponent plainCopy() {
-      return new SelectorTextComponent(this.pattern);
-   }
+    /**
+     * Gets the raw content of this component (but not its sibling components), without any formatting codes. For
+     * example, this is the raw text in a {@link TextComponentString}, but it's the translated text for a {@link
+     * TextComponentTranslation} and it's the score value for a {@link TextComponentScore}.
+     */
+    public String getUnformattedComponentText()
+    {
+        return this.selector;
+    }
 
-   public boolean equals(Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else if (!(p_equals_1_ instanceof SelectorTextComponent)) {
-         return false;
-      } else {
-         SelectorTextComponent selectortextcomponent = (SelectorTextComponent)p_equals_1_;
-         return this.pattern.equals(selectortextcomponent.pattern) && super.equals(p_equals_1_);
-      }
-   }
+    public SelectorTextComponent copyRaw()
+    {
+        return new SelectorTextComponent(this.selector);
+    }
 
-   public String toString() {
-      return "SelectorComponent{pattern='" + this.pattern + '\'' + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
-   }
+    public boolean equals(Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else if (!(p_equals_1_ instanceof SelectorTextComponent))
+        {
+            return false;
+        }
+        else
+        {
+            SelectorTextComponent selectortextcomponent = (SelectorTextComponent)p_equals_1_;
+            return this.selector.equals(selectortextcomponent.selector) && super.equals(p_equals_1_);
+        }
+    }
+
+    public String toString()
+    {
+        return "SelectorComponent{pattern='" + this.selector + '\'' + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
+    }
 }

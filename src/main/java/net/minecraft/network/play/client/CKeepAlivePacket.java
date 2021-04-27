@@ -4,33 +4,46 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CKeepAlivePacket implements IPacket<IServerPlayNetHandler> {
-   private long id;
+public class CKeepAlivePacket implements IPacket<IServerPlayNetHandler>
+{
+    private long key;
 
-   public CKeepAlivePacket() {
-   }
+    public CKeepAlivePacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CKeepAlivePacket(long p_i46876_1_) {
-      this.id = p_i46876_1_;
-   }
+    public CKeepAlivePacket(long idIn)
+    {
+        this.key = idIn;
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleKeepAlive(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processKeepAlive(this);
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readLong();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.key = buf.readLong();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeLong(this.id);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeLong(this.key);
+    }
 
-   public long getId() {
-      return this.id;
-   }
+    public long getKey()
+    {
+        return this.key;
+    }
 }

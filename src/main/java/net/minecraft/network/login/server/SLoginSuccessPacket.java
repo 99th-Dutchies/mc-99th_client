@@ -7,45 +7,60 @@ import net.minecraft.client.network.login.IClientLoginNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.UUIDCodec;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SLoginSuccessPacket implements IPacket<IClientLoginNetHandler> {
-   private GameProfile gameProfile;
+public class SLoginSuccessPacket implements IPacket<IClientLoginNetHandler>
+{
+    private GameProfile profile;
 
-   public SLoginSuccessPacket() {
-   }
+    public SLoginSuccessPacket()
+    {
+    }
 
-   public SLoginSuccessPacket(GameProfile p_i46856_1_) {
-      this.gameProfile = p_i46856_1_;
-   }
+    public SLoginSuccessPacket(GameProfile profileIn)
+    {
+        this.profile = profileIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      int[] aint = new int[4];
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        int[] aint = new int[4];
 
-      for(int i = 0; i < aint.length; ++i) {
-         aint[i] = p_148837_1_.readInt();
-      }
+        for (int i = 0; i < aint.length; ++i)
+        {
+            aint[i] = buf.readInt();
+        }
 
-      UUID uuid = UUIDCodec.uuidFromIntArray(aint);
-      String s = p_148837_1_.readUtf(16);
-      this.gameProfile = new GameProfile(uuid, s);
-   }
+        UUID uuid = UUIDCodec.decodeUUID(aint);
+        String s = buf.readString(16);
+        this.profile = new GameProfile(uuid, s);
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      for(int i : UUIDCodec.uuidToIntArray(this.gameProfile.getId())) {
-         p_148840_1_.writeInt(i);
-      }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        for (int i : UUIDCodec.encodeUUID(this.profile.getId()))
+        {
+            buf.writeInt(i);
+        }
 
-      p_148840_1_.writeUtf(this.gameProfile.getName());
-   }
+        buf.writeString(this.profile.getName());
+    }
 
-   public void handle(IClientLoginNetHandler p_148833_1_) {
-      p_148833_1_.handleGameProfile(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientLoginNetHandler handler)
+    {
+        handler.handleLoginSuccess(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public GameProfile getGameProfile() {
-      return this.gameProfile;
-   }
+    public GameProfile getProfile()
+    {
+        return this.profile;
+    }
 }

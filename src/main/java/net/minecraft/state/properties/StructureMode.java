@@ -3,29 +3,30 @@ package net.minecraft.state.properties;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public enum StructureMode implements IStringSerializable {
-   SAVE("save"),
-   LOAD("load"),
-   CORNER("corner"),
-   DATA("data");
+public enum StructureMode implements IStringSerializable
+{
+    SAVE("save"),
+    LOAD("load"),
+    CORNER("corner"),
+    DATA("data");
 
-   private final String name;
-   private final ITextComponent displayName;
+    private final String name;
+    private final ITextComponent field_242702_f;
 
-   private StructureMode(String p_i49330_3_) {
-      this.name = p_i49330_3_;
-      this.displayName = new TranslationTextComponent("structure_block.mode_info." + p_i49330_3_);
-   }
+    private StructureMode(String name)
+    {
+        this.name = name;
+        this.field_242702_f = new TranslationTextComponent("structure_block.mode_info." + name);
+    }
 
-   public String getSerializedName() {
-      return this.name;
-   }
+    public String getString()
+    {
+        return this.name;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ITextComponent getDisplayName() {
-      return this.displayName;
-   }
+    public ITextComponent func_242703_b()
+    {
+        return this.field_242702_f;
+    }
 }

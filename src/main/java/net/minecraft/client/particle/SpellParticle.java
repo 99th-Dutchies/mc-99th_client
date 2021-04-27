@@ -3,129 +3,149 @@ package net.minecraft.client.particle;
 import java.util.Random;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SpellParticle extends SpriteTexturedParticle {
-   private static final Random RANDOM = new Random();
-   private final IAnimatedSprite sprites;
+public class SpellParticle extends SpriteTexturedParticle
+{
+    private static final Random RANDOM = new Random();
+    private final IAnimatedSprite spriteWithAge;
 
-   private SpellParticle(ClientWorld p_i232429_1_, double p_i232429_2_, double p_i232429_4_, double p_i232429_6_, double p_i232429_8_, double p_i232429_10_, double p_i232429_12_, IAnimatedSprite p_i232429_14_) {
-      super(p_i232429_1_, p_i232429_2_, p_i232429_4_, p_i232429_6_, 0.5D - RANDOM.nextDouble(), p_i232429_10_, 0.5D - RANDOM.nextDouble());
-      this.sprites = p_i232429_14_;
-      this.yd *= (double)0.2F;
-      if (p_i232429_8_ == 0.0D && p_i232429_12_ == 0.0D) {
-         this.xd *= (double)0.1F;
-         this.zd *= (double)0.1F;
-      }
+    private SpellParticle(ClientWorld p_i232429_1_, double x, double y, double z, double p_i232429_8_, double motionY, double p_i232429_12_, IAnimatedSprite spriteWithAge)
+    {
+        super(p_i232429_1_, x, y, z, 0.5D - RANDOM.nextDouble(), motionY, 0.5D - RANDOM.nextDouble());
+        this.spriteWithAge = spriteWithAge;
+        this.motionY *= (double)0.2F;
 
-      this.quadSize *= 0.75F;
-      this.lifetime = (int)(8.0D / (Math.random() * 0.8D + 0.2D));
-      this.hasPhysics = false;
-      this.setSpriteFromAge(p_i232429_14_);
-   }
+        if (p_i232429_8_ == 0.0D && p_i232429_12_ == 0.0D)
+        {
+            this.motionX *= (double)0.1F;
+            this.motionZ *= (double)0.1F;
+        }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
-   }
+        this.particleScale *= 0.75F;
+        this.maxAge = (int)(8.0D / (Math.random() * 0.8D + 0.2D));
+        this.canCollide = false;
+        this.selectSpriteWithAge(spriteWithAge);
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.setSpriteFromAge(this.sprites);
-         this.yd += 0.004D;
-         this.move(this.xd, this.yd, this.zd);
-         if (this.y == this.yo) {
-            this.xd *= 1.1D;
-            this.zd *= 1.1D;
-         }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    }
 
-         this.xd *= (double)0.96F;
-         this.yd *= (double)0.96F;
-         this.zd *= (double)0.96F;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.selectSpriteWithAge(this.spriteWithAge);
+            this.motionY += 0.004D;
+            this.move(this.motionX, this.motionY, this.motionZ);
 
-   @OnlyIn(Dist.CLIENT)
-   public static class AmbientMobFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+            if (this.posY == this.prevPosY)
+            {
+                this.motionX *= 1.1D;
+                this.motionZ *= 1.1D;
+            }
 
-      public AmbientMobFactory(IAnimatedSprite p_i50846_1_) {
-         this.sprite = p_i50846_1_;
-      }
+            this.motionX *= (double)0.96F;
+            this.motionY *= (double)0.96F;
+            this.motionZ *= (double)0.96F;
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         Particle particle = new SpellParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, this.sprite);
-         particle.setAlpha(0.15F);
-         particle.setColor((float)p_199234_9_, (float)p_199234_11_, (float)p_199234_13_);
-         return particle;
-      }
-   }
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+    public static class AmbientMobFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public Factory(IAnimatedSprite p_i50843_1_) {
-         this.sprite = p_i50843_1_;
-      }
+        public AmbientMobFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         return new SpellParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, this.sprite);
-      }
-   }
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            Particle particle = new SpellParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+            particle.setAlphaF(0.15F);
+            particle.setColor((float)xSpeed, (float)ySpeed, (float)zSpeed);
+            return particle;
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class InstantFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+    public static class Factory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public InstantFactory(IAnimatedSprite p_i50845_1_) {
-         this.sprite = p_i50845_1_;
-      }
+        public Factory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         return new SpellParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, this.sprite);
-      }
-   }
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            return new SpellParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class MobFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+    public static class InstantFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public MobFactory(IAnimatedSprite p_i50844_1_) {
-         this.sprite = p_i50844_1_;
-      }
+        public InstantFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         Particle particle = new SpellParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, this.sprite);
-         particle.setColor((float)p_199234_9_, (float)p_199234_11_, (float)p_199234_13_);
-         return particle;
-      }
-   }
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            return new SpellParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class WitchFactory implements IParticleFactory<BasicParticleType> {
-      private final IAnimatedSprite sprite;
+    public static class MobFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
 
-      public WitchFactory(IAnimatedSprite p_i50842_1_) {
-         this.sprite = p_i50842_1_;
-      }
+        public MobFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
 
-      public Particle createParticle(BasicParticleType p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         SpellParticle spellparticle = new SpellParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, this.sprite);
-         float f = p_199234_2_.random.nextFloat() * 0.5F + 0.35F;
-         spellparticle.setColor(1.0F * f, 0.0F * f, 1.0F * f);
-         return spellparticle;
-      }
-   }
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            Particle particle = new SpellParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+            particle.setColor((float)xSpeed, (float)ySpeed, (float)zSpeed);
+            return particle;
+        }
+    }
+
+    public static class WitchFactory implements IParticleFactory<BasicParticleType>
+    {
+        private final IAnimatedSprite spriteSet;
+
+        public WitchFactory(IAnimatedSprite spriteSet)
+        {
+            this.spriteSet = spriteSet;
+        }
+
+        public Particle makeParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            SpellParticle spellparticle = new SpellParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+            float f = worldIn.rand.nextFloat() * 0.5F + 0.35F;
+            spellparticle.setColor(1.0F * f, 0.0F * f, 1.0F * f);
+            return spellparticle;
+        }
+    }
 }

@@ -41,465 +41,609 @@ import net.minecraft.world.World;
 import net.minecraft.world.raid.Raid;
 import net.minecraft.world.raid.RaidManager;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public abstract class AbstractRaiderEntity extends PatrollerEntity {
-   protected static final DataParameter<Boolean> IS_CELEBRATING = EntityDataManager.defineId(AbstractRaiderEntity.class, DataSerializers.BOOLEAN);
-   private static final Predicate<ItemEntity> ALLOWED_ITEMS = (p_213647_0_) -> {
-      return !p_213647_0_.hasPickUpDelay() && p_213647_0_.isAlive() && ItemStack.matches(p_213647_0_.getItem(), Raid.getLeaderBannerInstance());
-   };
-   @Nullable
-   protected Raid raid;
-   private int wave;
-   private boolean canJoinRaid;
-   private int ticksOutsideRaid;
+public abstract class AbstractRaiderEntity extends PatrollerEntity
+{
+    protected static final DataParameter<Boolean> CELEBRATING = EntityDataManager.createKey(AbstractRaiderEntity.class, DataSerializers.BOOLEAN);
+    private static final Predicate<ItemEntity> bannerPredicate = (banner) ->
+    {
+        return !banner.cannotPickup() && banner.isAlive() && ItemStack.areItemStacksEqual(banner.getItem(), Raid.createIllagerBanner());
+    };
+    @Nullable
+    protected Raid raid;
+    private int wave;
+    private boolean canJoinRaid;
+    private int joinDelay;
 
-   protected AbstractRaiderEntity(EntityType<? extends AbstractRaiderEntity> p_i50143_1_, World p_i50143_2_) {
-      super(p_i50143_1_, p_i50143_2_);
-   }
+    protected AbstractRaiderEntity(EntityType <? extends AbstractRaiderEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+    }
 
-   protected void registerGoals() {
-      super.registerGoals();
-      this.goalSelector.addGoal(1, new AbstractRaiderEntity.PromoteLeaderGoal<>(this));
-      this.goalSelector.addGoal(3, new MoveTowardsRaidGoal<>(this));
-      this.goalSelector.addGoal(4, new AbstractRaiderEntity.InvadeHomeGoal(this, (double)1.05F, 1));
-      this.goalSelector.addGoal(5, new AbstractRaiderEntity.CelebrateRaidLossGoal(this));
-   }
+    protected void registerGoals()
+    {
+        super.registerGoals();
+        this.goalSelector.addGoal(1, new AbstractRaiderEntity.PromoteLeaderGoal<>(this));
+        this.goalSelector.addGoal(3, new MoveTowardsRaidGoal<>(this));
+        this.goalSelector.addGoal(4, new AbstractRaiderEntity.InvadeHomeGoal(this, (double)1.05F, 1));
+        this.goalSelector.addGoal(5, new AbstractRaiderEntity.CelebrateRaidLossGoal(this));
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(IS_CELEBRATING, false);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(CELEBRATING, false);
+    }
 
-   public abstract void applyRaidBuffs(int p_213660_1_, boolean p_213660_2_);
+    public abstract void applyWaveBonus(int wave, boolean p_213660_2_);
 
-   public boolean canJoinRaid() {
-      return this.canJoinRaid;
-   }
+    public boolean canJoinRaid()
+    {
+        return this.canJoinRaid;
+    }
 
-   public void setCanJoinRaid(boolean p_213644_1_) {
-      this.canJoinRaid = p_213644_1_;
-   }
+    public void setCanJoinRaid(boolean canJoin)
+    {
+        this.canJoinRaid = canJoin;
+    }
 
-   public void aiStep() {
-      if (this.level instanceof ServerWorld && this.isAlive()) {
-         Raid raid = this.getCurrentRaid();
-         if (this.canJoinRaid()) {
-            if (raid == null) {
-               if (this.level.getGameTime() % 20L == 0L) {
-                  Raid raid1 = ((ServerWorld)this.level).getRaidAt(this.blockPosition());
-                  if (raid1 != null && RaidManager.canJoinRaid(this, raid1)) {
-                     raid1.joinRaid(raid1.getGroupsSpawned(), this, (BlockPos)null, true);
-                  }
-               }
-            } else {
-               LivingEntity livingentity = this.getTarget();
-               if (livingentity != null && (livingentity.getType() == EntityType.PLAYER || livingentity.getType() == EntityType.IRON_GOLEM)) {
-                  this.noActionTime = 0;
-               }
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void livingTick()
+    {
+        if (this.world instanceof ServerWorld && this.isAlive())
+        {
+            Raid raid = this.getRaid();
+
+            if (this.canJoinRaid())
+            {
+                if (raid == null)
+                {
+                    if (this.world.getGameTime() % 20L == 0L)
+                    {
+                        Raid raid1 = ((ServerWorld)this.world).findRaid(this.getPosition());
+
+                        if (raid1 != null && RaidManager.canJoinRaid(this, raid1))
+                        {
+                            raid1.joinRaid(raid1.getGroupsSpawned(), this, (BlockPos)null, true);
+                        }
+                    }
+                }
+                else
+                {
+                    LivingEntity livingentity = this.getAttackTarget();
+
+                    if (livingentity != null && (livingentity.getType() == EntityType.PLAYER || livingentity.getType() == EntityType.IRON_GOLEM))
+                    {
+                        this.idleTime = 0;
+                    }
+                }
             }
-         }
-      }
+        }
 
-      super.aiStep();
-   }
+        super.livingTick();
+    }
 
-   protected void updateNoActionTime() {
-      this.noActionTime += 2;
-   }
+    protected void idle()
+    {
+        this.idleTime += 2;
+    }
 
-   public void die(DamageSource p_70645_1_) {
-      if (this.level instanceof ServerWorld) {
-         Entity entity = p_70645_1_.getEntity();
-         Raid raid = this.getCurrentRaid();
-         if (raid != null) {
-            if (this.isPatrolLeader()) {
-               raid.removeLeader(this.getWave());
-            }
+    /**
+     * Called when the mob's health reaches 0.
+     */
+    public void onDeath(DamageSource cause)
+    {
+        if (this.world instanceof ServerWorld)
+        {
+            Entity entity = cause.getTrueSource();
+            Raid raid = this.getRaid();
 
-            if (entity != null && entity.getType() == EntityType.PLAYER) {
-               raid.addHeroOfTheVillage(entity);
-            }
+            if (raid != null)
+            {
+                if (this.isLeader())
+                {
+                    raid.removeLeader(this.getWave());
+                }
 
-            raid.removeFromRaid(this, false);
-         }
+                if (entity != null && entity.getType() == EntityType.PLAYER)
+                {
+                    raid.addHero(entity);
+                }
 
-         if (this.isPatrolLeader() && raid == null && ((ServerWorld)this.level).getRaidAt(this.blockPosition()) == null) {
-            ItemStack itemstack = this.getItemBySlot(EquipmentSlotType.HEAD);
-            PlayerEntity playerentity = null;
-            if (entity instanceof PlayerEntity) {
-               playerentity = (PlayerEntity)entity;
-            } else if (entity instanceof WolfEntity) {
-               WolfEntity wolfentity = (WolfEntity)entity;
-               LivingEntity livingentity = wolfentity.getOwner();
-               if (wolfentity.isTame() && livingentity instanceof PlayerEntity) {
-                  playerentity = (PlayerEntity)livingentity;
-               }
-            }
-
-            if (!itemstack.isEmpty() && ItemStack.matches(itemstack, Raid.getLeaderBannerInstance()) && playerentity != null) {
-               EffectInstance effectinstance1 = playerentity.getEffect(Effects.BAD_OMEN);
-               int i = 1;
-               if (effectinstance1 != null) {
-                  i += effectinstance1.getAmplifier();
-                  playerentity.removeEffectNoUpdate(Effects.BAD_OMEN);
-               } else {
-                  --i;
-               }
-
-               i = MathHelper.clamp(i, 0, 4);
-               EffectInstance effectinstance = new EffectInstance(Effects.BAD_OMEN, 120000, i, false, false, true);
-               if (!this.level.getGameRules().getBoolean(GameRules.RULE_DISABLE_RAIDS)) {
-                  playerentity.addEffect(effectinstance);
-               }
-            }
-         }
-      }
-
-      super.die(p_70645_1_);
-   }
-
-   public boolean canJoinPatrol() {
-      return !this.hasActiveRaid();
-   }
-
-   public void setCurrentRaid(@Nullable Raid p_213652_1_) {
-      this.raid = p_213652_1_;
-   }
-
-   @Nullable
-   public Raid getCurrentRaid() {
-      return this.raid;
-   }
-
-   public boolean hasActiveRaid() {
-      return this.getCurrentRaid() != null && this.getCurrentRaid().isActive();
-   }
-
-   public void setWave(int p_213651_1_) {
-      this.wave = p_213651_1_;
-   }
-
-   public int getWave() {
-      return this.wave;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public boolean isCelebrating() {
-      return this.entityData.get(IS_CELEBRATING);
-   }
-
-   public void setCelebrating(boolean p_213655_1_) {
-      this.entityData.set(IS_CELEBRATING, p_213655_1_);
-   }
-
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putInt("Wave", this.wave);
-      p_213281_1_.putBoolean("CanJoinRaid", this.canJoinRaid);
-      if (this.raid != null) {
-         p_213281_1_.putInt("RaidId", this.raid.getId());
-      }
-
-   }
-
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.wave = p_70037_1_.getInt("Wave");
-      this.canJoinRaid = p_70037_1_.getBoolean("CanJoinRaid");
-      if (p_70037_1_.contains("RaidId", 3)) {
-         if (this.level instanceof ServerWorld) {
-            this.raid = ((ServerWorld)this.level).getRaids().get(p_70037_1_.getInt("RaidId"));
-         }
-
-         if (this.raid != null) {
-            this.raid.addWaveMob(this.wave, this, false);
-            if (this.isPatrolLeader()) {
-               this.raid.setLeader(this.wave, this);
-            }
-         }
-      }
-
-   }
-
-   protected void pickUpItem(ItemEntity p_175445_1_) {
-      ItemStack itemstack = p_175445_1_.getItem();
-      boolean flag = this.hasActiveRaid() && this.getCurrentRaid().getLeader(this.getWave()) != null;
-      if (this.hasActiveRaid() && !flag && ItemStack.matches(itemstack, Raid.getLeaderBannerInstance())) {
-         EquipmentSlotType equipmentslottype = EquipmentSlotType.HEAD;
-         ItemStack itemstack1 = this.getItemBySlot(equipmentslottype);
-         double d0 = (double)this.getEquipmentDropChance(equipmentslottype);
-         if (!itemstack1.isEmpty() && (double)Math.max(this.random.nextFloat() - 0.1F, 0.0F) < d0) {
-            this.spawnAtLocation(itemstack1);
-         }
-
-         this.onItemPickup(p_175445_1_);
-         this.setItemSlot(equipmentslottype, itemstack);
-         this.take(p_175445_1_, itemstack.getCount());
-         p_175445_1_.remove();
-         this.getCurrentRaid().setLeader(this.getWave(), this);
-         this.setPatrolLeader(true);
-      } else {
-         super.pickUpItem(p_175445_1_);
-      }
-
-   }
-
-   public boolean removeWhenFarAway(double p_213397_1_) {
-      return this.getCurrentRaid() == null ? super.removeWhenFarAway(p_213397_1_) : false;
-   }
-
-   public boolean requiresCustomPersistence() {
-      return super.requiresCustomPersistence() || this.getCurrentRaid() != null;
-   }
-
-   public int getTicksOutsideRaid() {
-      return this.ticksOutsideRaid;
-   }
-
-   public void setTicksOutsideRaid(int p_213653_1_) {
-      this.ticksOutsideRaid = p_213653_1_;
-   }
-
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      if (this.hasActiveRaid()) {
-         this.getCurrentRaid().updateBossbar();
-      }
-
-      return super.hurt(p_70097_1_, p_70097_2_);
-   }
-
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      this.setCanJoinRaid(this.getType() != EntityType.WITCH || p_213386_3_ != SpawnReason.NATURAL);
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
-
-   public abstract SoundEvent getCelebrateSound();
-
-   public class CelebrateRaidLossGoal extends Goal {
-      private final AbstractRaiderEntity mob;
-
-      CelebrateRaidLossGoal(AbstractRaiderEntity p_i50571_2_) {
-         this.mob = p_i50571_2_;
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      }
-
-      public boolean canUse() {
-         Raid raid = this.mob.getCurrentRaid();
-         return this.mob.isAlive() && this.mob.getTarget() == null && raid != null && raid.isLoss();
-      }
-
-      public void start() {
-         this.mob.setCelebrating(true);
-         super.start();
-      }
-
-      public void stop() {
-         this.mob.setCelebrating(false);
-         super.stop();
-      }
-
-      public void tick() {
-         if (!this.mob.isSilent() && this.mob.random.nextInt(100) == 0) {
-            AbstractRaiderEntity.this.playSound(AbstractRaiderEntity.this.getCelebrateSound(), AbstractRaiderEntity.this.getSoundVolume(), AbstractRaiderEntity.this.getVoicePitch());
-         }
-
-         if (!this.mob.isPassenger() && this.mob.random.nextInt(50) == 0) {
-            this.mob.getJumpControl().jump();
-         }
-
-         super.tick();
-      }
-   }
-
-   public class FindTargetGoal extends Goal {
-      private final AbstractRaiderEntity mob;
-      private final float hostileRadiusSqr;
-      public final EntityPredicate shoutTargeting = (new EntityPredicate()).range(8.0D).allowNonAttackable().allowInvulnerable().allowSameTeam().allowUnseeable().ignoreInvisibilityTesting();
-
-      public FindTargetGoal(AbstractIllagerEntity p_i50573_2_, float p_i50573_3_) {
-         this.mob = p_i50573_2_;
-         this.hostileRadiusSqr = p_i50573_3_ * p_i50573_3_;
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-      }
-
-      public boolean canUse() {
-         LivingEntity livingentity = this.mob.getLastHurtByMob();
-         return this.mob.getCurrentRaid() == null && this.mob.isPatrolling() && this.mob.getTarget() != null && !this.mob.isAggressive() && (livingentity == null || livingentity.getType() != EntityType.PLAYER);
-      }
-
-      public void start() {
-         super.start();
-         this.mob.getNavigation().stop();
-
-         for(AbstractRaiderEntity abstractraiderentity : this.mob.level.getNearbyEntities(AbstractRaiderEntity.class, this.shoutTargeting, this.mob, this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D))) {
-            abstractraiderentity.setTarget(this.mob.getTarget());
-         }
-
-      }
-
-      public void stop() {
-         super.stop();
-         LivingEntity livingentity = this.mob.getTarget();
-         if (livingentity != null) {
-            for(AbstractRaiderEntity abstractraiderentity : this.mob.level.getNearbyEntities(AbstractRaiderEntity.class, this.shoutTargeting, this.mob, this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D))) {
-               abstractraiderentity.setTarget(livingentity);
-               abstractraiderentity.setAggressive(true);
+                raid.leaveRaid(this, false);
             }
 
-            this.mob.setAggressive(true);
-         }
+            if (this.isLeader() && raid == null && ((ServerWorld)this.world).findRaid(this.getPosition()) == null)
+            {
+                ItemStack itemstack = this.getItemStackFromSlot(EquipmentSlotType.HEAD);
+                PlayerEntity playerentity = null;
 
-      }
+                if (entity instanceof PlayerEntity)
+                {
+                    playerentity = (PlayerEntity)entity;
+                }
+                else if (entity instanceof WolfEntity)
+                {
+                    WolfEntity wolfentity = (WolfEntity)entity;
+                    LivingEntity livingentity = wolfentity.getOwner();
 
-      public void tick() {
-         LivingEntity livingentity = this.mob.getTarget();
-         if (livingentity != null) {
-            if (this.mob.distanceToSqr(livingentity) > (double)this.hostileRadiusSqr) {
-               this.mob.getLookControl().setLookAt(livingentity, 30.0F, 30.0F);
-               if (this.mob.random.nextInt(50) == 0) {
-                  this.mob.playAmbientSound();
-               }
-            } else {
-               this.mob.setAggressive(true);
+                    if (wolfentity.isTamed() && livingentity instanceof PlayerEntity)
+                    {
+                        playerentity = (PlayerEntity)livingentity;
+                    }
+                }
+
+                if (!itemstack.isEmpty() && ItemStack.areItemStacksEqual(itemstack, Raid.createIllagerBanner()) && playerentity != null)
+                {
+                    EffectInstance effectinstance1 = playerentity.getActivePotionEffect(Effects.BAD_OMEN);
+                    int i = 1;
+
+                    if (effectinstance1 != null)
+                    {
+                        i += effectinstance1.getAmplifier();
+                        playerentity.removeActivePotionEffect(Effects.BAD_OMEN);
+                    }
+                    else
+                    {
+                        --i;
+                    }
+
+                    i = MathHelper.clamp(i, 0, 4);
+                    EffectInstance effectinstance = new EffectInstance(Effects.BAD_OMEN, 120000, i, false, false, true);
+
+                    if (!this.world.getGameRules().getBoolean(GameRules.DISABLE_RAIDS))
+                    {
+                        playerentity.addPotionEffect(effectinstance);
+                    }
+                }
+            }
+        }
+
+        super.onDeath(cause);
+    }
+
+    public boolean notInRaid()
+    {
+        return !this.isRaidActive();
+    }
+
+    public void setRaid(@Nullable Raid raid)
+    {
+        this.raid = raid;
+    }
+
+    @Nullable
+    public Raid getRaid()
+    {
+        return this.raid;
+    }
+
+    public boolean isRaidActive()
+    {
+        return this.getRaid() != null && this.getRaid().isActive();
+    }
+
+    public void setWave(int wave)
+    {
+        this.wave = wave;
+    }
+
+    public int getWave()
+    {
+        return this.wave;
+    }
+
+    public boolean getCelebrating()
+    {
+        return this.dataManager.get(CELEBRATING);
+    }
+
+    public void setCelebrating(boolean celebrate)
+    {
+        this.dataManager.set(CELEBRATING, celebrate);
+    }
+
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putInt("Wave", this.wave);
+        compound.putBoolean("CanJoinRaid", this.canJoinRaid);
+
+        if (this.raid != null)
+        {
+            compound.putInt("RaidId", this.raid.getId());
+        }
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.wave = compound.getInt("Wave");
+        this.canJoinRaid = compound.getBoolean("CanJoinRaid");
+
+        if (compound.contains("RaidId", 3))
+        {
+            if (this.world instanceof ServerWorld)
+            {
+                this.raid = ((ServerWorld)this.world).getRaids().get(compound.getInt("RaidId"));
+            }
+
+            if (this.raid != null)
+            {
+                this.raid.joinRaid(this.wave, this, false);
+
+                if (this.isLeader())
+                {
+                    this.raid.setLeader(this.wave, this);
+                }
+            }
+        }
+    }
+
+    /**
+     * Tests if this entity should pickup a weapon or an armor. Entity drops current weapon or armor if the new one is
+     * better.
+     */
+    protected void updateEquipmentIfNeeded(ItemEntity itemEntity)
+    {
+        ItemStack itemstack = itemEntity.getItem();
+        boolean flag = this.isRaidActive() && this.getRaid().getLeader(this.getWave()) != null;
+
+        if (this.isRaidActive() && !flag && ItemStack.areItemStacksEqual(itemstack, Raid.createIllagerBanner()))
+        {
+            EquipmentSlotType equipmentslottype = EquipmentSlotType.HEAD;
+            ItemStack itemstack1 = this.getItemStackFromSlot(equipmentslottype);
+            double d0 = (double)this.getDropChance(equipmentslottype);
+
+            if (!itemstack1.isEmpty() && (double)Math.max(this.rand.nextFloat() - 0.1F, 0.0F) < d0)
+            {
+                this.entityDropItem(itemstack1);
+            }
+
+            this.triggerItemPickupTrigger(itemEntity);
+            this.setItemStackToSlot(equipmentslottype, itemstack);
+            this.onItemPickup(itemEntity, itemstack.getCount());
+            itemEntity.remove();
+            this.getRaid().setLeader(this.getWave(), this);
+            this.setLeader(true);
+        }
+        else
+        {
+            super.updateEquipmentIfNeeded(itemEntity);
+        }
+    }
+
+    public boolean canDespawn(double distanceToClosestPlayer)
+    {
+        return this.getRaid() == null ? super.canDespawn(distanceToClosestPlayer) : false;
+    }
+
+    public boolean preventDespawn()
+    {
+        return super.preventDespawn() || this.getRaid() != null;
+    }
+
+    public int getJoinDelay()
+    {
+        return this.joinDelay;
+    }
+
+    public void setJoinDelay(int delay)
+    {
+        this.joinDelay = delay;
+    }
+
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        if (this.isRaidActive())
+        {
+            this.getRaid().updateBarPercentage();
+        }
+
+        return super.attackEntityFrom(source, amount);
+    }
+
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        this.setCanJoinRaid(this.getType() != EntityType.WITCH || reason != SpawnReason.NATURAL);
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
+
+    public abstract SoundEvent getRaidLossSound();
+
+    public class CelebrateRaidLossGoal extends Goal
+    {
+        private final AbstractRaiderEntity raiderEntity;
+
+        CelebrateRaidLossGoal(AbstractRaiderEntity raiderEntity)
+        {
+            this.raiderEntity = raiderEntity;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        public boolean shouldExecute()
+        {
+            Raid raid = this.raiderEntity.getRaid();
+            return this.raiderEntity.isAlive() && this.raiderEntity.getAttackTarget() == null && raid != null && raid.isLoss();
+        }
+
+        public void startExecuting()
+        {
+            this.raiderEntity.setCelebrating(true);
+            super.startExecuting();
+        }
+
+        public void resetTask()
+        {
+            this.raiderEntity.setCelebrating(false);
+            super.resetTask();
+        }
+
+        public void tick()
+        {
+            if (!this.raiderEntity.isSilent() && this.raiderEntity.rand.nextInt(100) == 0)
+            {
+                AbstractRaiderEntity.this.playSound(AbstractRaiderEntity.this.getRaidLossSound(), AbstractRaiderEntity.this.getSoundVolume(), AbstractRaiderEntity.this.getSoundPitch());
+            }
+
+            if (!this.raiderEntity.isPassenger() && this.raiderEntity.rand.nextInt(50) == 0)
+            {
+                this.raiderEntity.getJumpController().setJumping();
             }
 
             super.tick();
-         }
-      }
-   }
+        }
+    }
 
-   static class InvadeHomeGoal extends Goal {
-      private final AbstractRaiderEntity raider;
-      private final double speedModifier;
-      private BlockPos poiPos;
-      private final List<BlockPos> visited = Lists.newArrayList();
-      private final int distanceToPoi;
-      private boolean stuck;
+    public class FindTargetGoal extends Goal
+    {
+        private final AbstractRaiderEntity raiderEntity;
+        private final float findTargetRange;
+        public final EntityPredicate findTargetPredicate = (new EntityPredicate()).setDistance(8.0D).setSkipAttackChecks().allowInvulnerable().allowFriendlyFire().setLineOfSiteRequired().setUseInvisibilityCheck();
 
-      public InvadeHomeGoal(AbstractRaiderEntity p_i50570_1_, double p_i50570_2_, int p_i50570_4_) {
-         this.raider = p_i50570_1_;
-         this.speedModifier = p_i50570_2_;
-         this.distanceToPoi = p_i50570_4_;
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      }
+        public FindTargetGoal(AbstractIllagerEntity raiderEntity, float range)
+        {
+            this.raiderEntity = raiderEntity;
+            this.findTargetRange = range * range;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
 
-      public boolean canUse() {
-         this.updateVisited();
-         return this.isValidRaid() && this.hasSuitablePoi() && this.raider.getTarget() == null;
-      }
+        public boolean shouldExecute()
+        {
+            LivingEntity livingentity = this.raiderEntity.getRevengeTarget();
+            return this.raiderEntity.getRaid() == null && this.raiderEntity.isPatrolling() && this.raiderEntity.getAttackTarget() != null && !this.raiderEntity.isAggressive() && (livingentity == null || livingentity.getType() != EntityType.PLAYER);
+        }
 
-      private boolean isValidRaid() {
-         return this.raider.hasActiveRaid() && !this.raider.getCurrentRaid().isOver();
-      }
+        public void startExecuting()
+        {
+            super.startExecuting();
+            this.raiderEntity.getNavigator().clearPath();
 
-      private boolean hasSuitablePoi() {
-         ServerWorld serverworld = (ServerWorld)this.raider.level;
-         BlockPos blockpos = this.raider.blockPosition();
-         Optional<BlockPos> optional = serverworld.getPoiManager().getRandom((p_220859_0_) -> {
-            return p_220859_0_ == PointOfInterestType.HOME;
-         }, this::hasNotVisited, PointOfInterestManager.Status.ANY, blockpos, 48, this.raider.random);
-         if (!optional.isPresent()) {
-            return false;
-         } else {
-            this.poiPos = optional.get().immutable();
+            for (AbstractRaiderEntity abstractraiderentity : this.raiderEntity.world.getTargettableEntitiesWithinAABB(AbstractRaiderEntity.class, this.findTargetPredicate, this.raiderEntity, this.raiderEntity.getBoundingBox().grow(8.0D, 8.0D, 8.0D)))
+            {
+                abstractraiderentity.setAttackTarget(this.raiderEntity.getAttackTarget());
+            }
+        }
+
+        public void resetTask()
+        {
+            super.resetTask();
+            LivingEntity livingentity = this.raiderEntity.getAttackTarget();
+
+            if (livingentity != null)
+            {
+                for (AbstractRaiderEntity abstractraiderentity : this.raiderEntity.world.getTargettableEntitiesWithinAABB(AbstractRaiderEntity.class, this.findTargetPredicate, this.raiderEntity, this.raiderEntity.getBoundingBox().grow(8.0D, 8.0D, 8.0D)))
+                {
+                    abstractraiderentity.setAttackTarget(livingentity);
+                    abstractraiderentity.setAggroed(true);
+                }
+
+                this.raiderEntity.setAggroed(true);
+            }
+        }
+
+        public void tick()
+        {
+            LivingEntity livingentity = this.raiderEntity.getAttackTarget();
+
+            if (livingentity != null)
+            {
+                if (this.raiderEntity.getDistanceSq(livingentity) > (double)this.findTargetRange)
+                {
+                    this.raiderEntity.getLookController().setLookPositionWithEntity(livingentity, 30.0F, 30.0F);
+
+                    if (this.raiderEntity.rand.nextInt(50) == 0)
+                    {
+                        this.raiderEntity.playAmbientSound();
+                    }
+                }
+                else
+                {
+                    this.raiderEntity.setAggroed(true);
+                }
+
+                super.tick();
+            }
+        }
+    }
+
+    static class InvadeHomeGoal extends Goal
+    {
+        private final AbstractRaiderEntity raiderEntity;
+        private final double speed;
+        private BlockPos blockPosPOI;
+        private final List<BlockPos> cachedPointOfIntresste = Lists.newArrayList();
+        private final int distance;
+        private boolean idling;
+
+        public InvadeHomeGoal(AbstractRaiderEntity raiderEntity, double speed, int distance)
+        {
+            this.raiderEntity = raiderEntity;
+            this.speed = speed;
+            this.distance = distance;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        public boolean shouldExecute()
+        {
+            this.clearLastCachedPoint();
+            return this.isActive() && this.findValidHome() && this.raiderEntity.getAttackTarget() == null;
+        }
+
+        private boolean isActive()
+        {
+            return this.raiderEntity.isRaidActive() && !this.raiderEntity.getRaid().isOver();
+        }
+
+        private boolean findValidHome()
+        {
+            ServerWorld serverworld = (ServerWorld)this.raiderEntity.world;
+            BlockPos blockpos = this.raiderEntity.getPosition();
+            Optional<BlockPos> optional = serverworld.getPointOfInterestManager().getRandom((poiType) ->
+            {
+                return poiType == PointOfInterestType.HOME;
+            }, this::isValidDoorPosition, PointOfInterestManager.Status.ANY, blockpos, 48, this.raiderEntity.rand);
+
+            if (!optional.isPresent())
+            {
+                return false;
+            }
+            else
+            {
+                this.blockPosPOI = optional.get().toImmutable();
+                return true;
+            }
+        }
+
+        public boolean shouldContinueExecuting()
+        {
+            if (this.raiderEntity.getNavigator().noPath())
+            {
+                return false;
+            }
+            else
+            {
+                return this.raiderEntity.getAttackTarget() == null && !this.blockPosPOI.withinDistance(this.raiderEntity.getPositionVec(), (double)(this.raiderEntity.getWidth() + (float)this.distance)) && !this.idling;
+            }
+        }
+
+        public void resetTask()
+        {
+            if (this.blockPosPOI.withinDistance(this.raiderEntity.getPositionVec(), (double)this.distance))
+            {
+                this.cachedPointOfIntresste.add(this.blockPosPOI);
+            }
+        }
+
+        public void startExecuting()
+        {
+            super.startExecuting();
+            this.raiderEntity.setIdleTime(0);
+            this.raiderEntity.getNavigator().tryMoveToXYZ((double)this.blockPosPOI.getX(), (double)this.blockPosPOI.getY(), (double)this.blockPosPOI.getZ(), this.speed);
+            this.idling = false;
+        }
+
+        public void tick()
+        {
+            if (this.raiderEntity.getNavigator().noPath())
+            {
+                Vector3d vector3d = Vector3d.copyCenteredHorizontally(this.blockPosPOI);
+                Vector3d vector3d1 = RandomPositionGenerator.findRandomTargetTowardsScaled(this.raiderEntity, 16, 7, vector3d, (double)((float)Math.PI / 10F));
+
+                if (vector3d1 == null)
+                {
+                    vector3d1 = RandomPositionGenerator.findRandomTargetBlockTowards(this.raiderEntity, 8, 7, vector3d);
+                }
+
+                if (vector3d1 == null)
+                {
+                    this.idling = true;
+                    return;
+                }
+
+                this.raiderEntity.getNavigator().tryMoveToXYZ(vector3d1.x, vector3d1.y, vector3d1.z, this.speed);
+            }
+        }
+
+        private boolean isValidDoorPosition(BlockPos pos)
+        {
+            for (BlockPos blockpos : this.cachedPointOfIntresste)
+            {
+                if (Objects.equals(pos, blockpos))
+                {
+                    return false;
+                }
+            }
+
             return true;
-         }
-      }
+        }
 
-      public boolean canContinueToUse() {
-         if (this.raider.getNavigation().isDone()) {
-            return false;
-         } else {
-            return this.raider.getTarget() == null && !this.poiPos.closerThan(this.raider.position(), (double)(this.raider.getBbWidth() + (float)this.distanceToPoi)) && !this.stuck;
-         }
-      }
-
-      public void stop() {
-         if (this.poiPos.closerThan(this.raider.position(), (double)this.distanceToPoi)) {
-            this.visited.add(this.poiPos);
-         }
-
-      }
-
-      public void start() {
-         super.start();
-         this.raider.setNoActionTime(0);
-         this.raider.getNavigation().moveTo((double)this.poiPos.getX(), (double)this.poiPos.getY(), (double)this.poiPos.getZ(), this.speedModifier);
-         this.stuck = false;
-      }
-
-      public void tick() {
-         if (this.raider.getNavigation().isDone()) {
-            Vector3d vector3d = Vector3d.atBottomCenterOf(this.poiPos);
-            Vector3d vector3d1 = RandomPositionGenerator.getPosTowards(this.raider, 16, 7, vector3d, (double)((float)Math.PI / 10F));
-            if (vector3d1 == null) {
-               vector3d1 = RandomPositionGenerator.getPosTowards(this.raider, 8, 7, vector3d);
+        private void clearLastCachedPoint()
+        {
+            if (this.cachedPointOfIntresste.size() > 2)
+            {
+                this.cachedPointOfIntresste.remove(0);
             }
+        }
+    }
 
-            if (vector3d1 == null) {
-               this.stuck = true;
-               return;
+    public class PromoteLeaderGoal<T extends AbstractRaiderEntity> extends Goal
+    {
+        private final T raiderEntity;
+
+        public PromoteLeaderGoal(T raiderEntity)
+        {
+            this.raiderEntity = raiderEntity;
+            this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        public boolean shouldExecute()
+        {
+            Raid raid = this.raiderEntity.getRaid();
+
+            if (this.raiderEntity.isRaidActive() && !this.raiderEntity.getRaid().isOver() && this.raiderEntity.canBeLeader() && !ItemStack.areItemStacksEqual(this.raiderEntity.getItemStackFromSlot(EquipmentSlotType.HEAD), Raid.createIllagerBanner()))
+            {
+                AbstractRaiderEntity abstractraiderentity = raid.getLeader(this.raiderEntity.getWave());
+
+                if (abstractraiderentity == null || !abstractraiderentity.isAlive())
+                {
+                    List<ItemEntity> list = this.raiderEntity.world.getEntitiesWithinAABB(ItemEntity.class, this.raiderEntity.getBoundingBox().grow(16.0D, 8.0D, 16.0D), AbstractRaiderEntity.bannerPredicate);
+
+                    if (!list.isEmpty())
+                    {
+                        return this.raiderEntity.getNavigator().tryMoveToEntityLiving(list.get(0), (double)1.15F);
+                    }
+                }
+
+                return false;
             }
-
-            this.raider.getNavigation().moveTo(vector3d1.x, vector3d1.y, vector3d1.z, this.speedModifier);
-         }
-
-      }
-
-      private boolean hasNotVisited(BlockPos p_220860_1_) {
-         for(BlockPos blockpos : this.visited) {
-            if (Objects.equals(p_220860_1_, blockpos)) {
-               return false;
+            else
+            {
+                return false;
             }
-         }
+        }
 
-         return true;
-      }
+        public void tick()
+        {
+            if (this.raiderEntity.getNavigator().getTargetPos().withinDistance(this.raiderEntity.getPositionVec(), 1.414D))
+            {
+                List<ItemEntity> list = this.raiderEntity.world.getEntitiesWithinAABB(ItemEntity.class, this.raiderEntity.getBoundingBox().grow(4.0D, 4.0D, 4.0D), AbstractRaiderEntity.bannerPredicate);
 
-      private void updateVisited() {
-         if (this.visited.size() > 2) {
-            this.visited.remove(0);
-         }
-
-      }
-   }
-
-   public class PromoteLeaderGoal<T extends AbstractRaiderEntity> extends Goal {
-      private final T mob;
-
-      public PromoteLeaderGoal(T p_i50572_2_) {
-         this.mob = p_i50572_2_;
-         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-      }
-
-      public boolean canUse() {
-         Raid raid = this.mob.getCurrentRaid();
-         if (this.mob.hasActiveRaid() && !this.mob.getCurrentRaid().isOver() && this.mob.canBeLeader() && !ItemStack.matches(this.mob.getItemBySlot(EquipmentSlotType.HEAD), Raid.getLeaderBannerInstance())) {
-            AbstractRaiderEntity abstractraiderentity = raid.getLeader(this.mob.getWave());
-            if (abstractraiderentity == null || !abstractraiderentity.isAlive()) {
-               List<ItemEntity> list = this.mob.level.getEntitiesOfClass(ItemEntity.class, this.mob.getBoundingBox().inflate(16.0D, 8.0D, 16.0D), AbstractRaiderEntity.ALLOWED_ITEMS);
-               if (!list.isEmpty()) {
-                  return this.mob.getNavigation().moveTo(list.get(0), (double)1.15F);
-               }
+                if (!list.isEmpty())
+                {
+                    this.raiderEntity.updateEquipmentIfNeeded(list.get(0));
+                }
             }
-
-            return false;
-         } else {
-            return false;
-         }
-      }
-
-      public void tick() {
-         if (this.mob.getNavigation().getTargetPos().closerThan(this.mob.position(), 1.414D)) {
-            List<ItemEntity> list = this.mob.level.getEntitiesOfClass(ItemEntity.class, this.mob.getBoundingBox().inflate(4.0D, 4.0D, 4.0D), AbstractRaiderEntity.ALLOWED_ITEMS);
-            if (!list.isEmpty()) {
-               this.mob.pickUpItem(list.get(0));
-            }
-         }
-
-      }
-   }
+        }
+    }
 }

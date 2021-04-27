@@ -6,91 +6,113 @@ import java.util.stream.Stream;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 
-public class CommandStorage {
-   private final Map<String, CommandStorage.Container> namespaces = Maps.newHashMap();
-   private final DimensionSavedDataManager storage;
+public class CommandStorage
+{
+    private final Map<String, CommandStorage.Container> loadedContainers = Maps.newHashMap();
+    private final DimensionSavedDataManager manager;
 
-   public CommandStorage(DimensionSavedDataManager p_i225883_1_) {
-      this.storage = p_i225883_1_;
-   }
+    public CommandStorage(DimensionSavedDataManager manager)
+    {
+        this.manager = manager;
+    }
 
-   private CommandStorage.Container newStorage(String p_227486_1_, String p_227486_2_) {
-      CommandStorage.Container commandstorage$container = new CommandStorage.Container(p_227486_2_);
-      this.namespaces.put(p_227486_1_, commandstorage$container);
-      return commandstorage$container;
-   }
+    private CommandStorage.Container createContainer(String namespace, String name)
+    {
+        CommandStorage.Container commandstorage$container = new CommandStorage.Container(name);
+        this.loadedContainers.put(namespace, commandstorage$container);
+        return commandstorage$container;
+    }
 
-   public CompoundNBT get(ResourceLocation p_227488_1_) {
-      String s = p_227488_1_.getNamespace();
-      String s1 = createId(s);
-      CommandStorage.Container commandstorage$container = this.storage.get(() -> {
-         return this.newStorage(s, s1);
-      }, s1);
-      return commandstorage$container != null ? commandstorage$container.get(p_227488_1_.getPath()) : new CompoundNBT();
-   }
+    public CompoundNBT getData(ResourceLocation id)
+    {
+        String s = id.getNamespace();
+        String s1 = prefixStorageNamespace(s);
+        CommandStorage.Container commandstorage$container = this.manager.get(() ->
+        {
+            return this.createContainer(s, s1);
+        }, s1);
+        return commandstorage$container != null ? commandstorage$container.getData(id.getPath()) : new CompoundNBT();
+    }
 
-   public void set(ResourceLocation p_227489_1_, CompoundNBT p_227489_2_) {
-      String s = p_227489_1_.getNamespace();
-      String s1 = createId(s);
-      this.storage.computeIfAbsent(() -> {
-         return this.newStorage(s, s1);
-      }, s1).put(p_227489_1_.getPath(), p_227489_2_);
-   }
+    public void setData(ResourceLocation id, CompoundNBT nbt)
+    {
+        String s = id.getNamespace();
+        String s1 = prefixStorageNamespace(s);
+        this.manager.getOrCreate(() ->
+        {
+            return this.createContainer(s, s1);
+        }, s1).setData(id.getPath(), nbt);
+    }
 
-   public Stream<ResourceLocation> keys() {
-      return this.namespaces.entrySet().stream().flatMap((p_227487_0_) -> {
-         return p_227487_0_.getValue().getKeys(p_227487_0_.getKey());
-      });
-   }
+    public Stream<ResourceLocation> getSavedDataKeys()
+    {
+        return this.loadedContainers.entrySet().stream().flatMap((entry) ->
+        {
+            return entry.getValue().getSavedKeys(entry.getKey());
+        });
+    }
 
-   private static String createId(String p_227485_0_) {
-      return "command_storage_" + p_227485_0_;
-   }
+    private static String prefixStorageNamespace(String namespace)
+    {
+        return "command_storage_" + namespace;
+    }
 
-   static class Container extends WorldSavedData {
-      private final Map<String, CompoundNBT> storage = Maps.newHashMap();
+    static class Container extends WorldSavedData
+    {
+        private final Map<String, CompoundNBT> contents = Maps.newHashMap();
 
-      public Container(String p_i225884_1_) {
-         super(p_i225884_1_);
-      }
+        public Container(String name)
+        {
+            super(name);
+        }
 
-      public void load(CompoundNBT p_76184_1_) {
-         CompoundNBT compoundnbt = p_76184_1_.getCompound("contents");
+        public void read(CompoundNBT nbt)
+        {
+            CompoundNBT compoundnbt = nbt.getCompound("contents");
 
-         for(String s : compoundnbt.getAllKeys()) {
-            this.storage.put(s, compoundnbt.getCompound(s));
-         }
+            for (String s : compoundnbt.keySet())
+            {
+                this.contents.put(s, compoundnbt.getCompound(s));
+            }
+        }
 
-      }
+        public CompoundNBT write(CompoundNBT compound)
+        {
+            CompoundNBT compoundnbt = new CompoundNBT();
+            this.contents.forEach((id, nbt) ->
+            {
+                compoundnbt.put(id, nbt.copy());
+            });
+            compound.put("contents", compoundnbt);
+            return compound;
+        }
 
-      public CompoundNBT save(CompoundNBT p_189551_1_) {
-         CompoundNBT compoundnbt = new CompoundNBT();
-         this.storage.forEach((p_227496_1_, p_227496_2_) -> {
-            compoundnbt.put(p_227496_1_, p_227496_2_.copy());
-         });
-         p_189551_1_.put("contents", compoundnbt);
-         return p_189551_1_;
-      }
+        public CompoundNBT getData(String id)
+        {
+            CompoundNBT compoundnbt = this.contents.get(id);
+            return compoundnbt != null ? compoundnbt : new CompoundNBT();
+        }
 
-      public CompoundNBT get(String p_227493_1_) {
-         CompoundNBT compoundnbt = this.storage.get(p_227493_1_);
-         return compoundnbt != null ? compoundnbt : new CompoundNBT();
-      }
+        public void setData(String id, CompoundNBT nbt)
+        {
+            if (nbt.isEmpty())
+            {
+                this.contents.remove(id);
+            }
+            else
+            {
+                this.contents.put(id, nbt);
+            }
 
-      public void put(String p_227495_1_, CompoundNBT p_227495_2_) {
-         if (p_227495_2_.isEmpty()) {
-            this.storage.remove(p_227495_1_);
-         } else {
-            this.storage.put(p_227495_1_, p_227495_2_);
-         }
+            this.markDirty();
+        }
 
-         this.setDirty();
-      }
-
-      public Stream<ResourceLocation> getKeys(String p_227497_1_) {
-         return this.storage.keySet().stream().map((p_227494_1_) -> {
-            return new ResourceLocation(p_227497_1_, p_227494_1_);
-         });
-      }
-   }
+        public Stream<ResourceLocation> getSavedKeys(String namespace)
+        {
+            return this.contents.keySet().stream().map((id) ->
+            {
+                return new ResourceLocation(namespace, id);
+            });
+        }
+    }
 }

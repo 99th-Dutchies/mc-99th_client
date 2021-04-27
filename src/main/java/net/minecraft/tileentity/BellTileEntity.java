@@ -18,142 +18,185 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.mutable.MutableInt;
 
-public class BellTileEntity extends TileEntity implements ITickableTileEntity {
-   private long lastRingTimestamp;
-   public int ticks;
-   public boolean shaking;
-   public Direction clickDirection;
-   private List<LivingEntity> nearbyEntities;
-   private boolean resonating;
-   private int resonationTicks;
+public class BellTileEntity extends TileEntity implements ITickableTileEntity
+{
+    private long ringTime;
 
-   public BellTileEntity() {
-      super(TileEntityType.BELL);
-   }
+    /** How long the bell has been ringing */
+    public int ringingTicks;
+    public boolean isRinging;
+    public Direction ringDirection;
+    private List<LivingEntity> entitiesAtRing;
+    private boolean shouldReveal;
 
-   public boolean triggerEvent(int p_145842_1_, int p_145842_2_) {
-      if (p_145842_1_ == 1) {
-         this.updateEntities();
-         this.resonationTicks = 0;
-         this.clickDirection = Direction.from3DDataValue(p_145842_2_);
-         this.ticks = 0;
-         this.shaking = true;
-         return true;
-      } else {
-         return super.triggerEvent(p_145842_1_, p_145842_2_);
-      }
-   }
+    /** Warmup counter until raiders are revealed by glow and particle */
+    private int revealWarmup;
 
-   public void tick() {
-      if (this.shaking) {
-         ++this.ticks;
-      }
+    public BellTileEntity()
+    {
+        super(TileEntityType.BELL);
+    }
 
-      if (this.ticks >= 50) {
-         this.shaking = false;
-         this.ticks = 0;
-      }
-
-      if (this.ticks >= 5 && this.resonationTicks == 0 && this.areRaidersNearby()) {
-         this.resonating = true;
-         this.playResonateSound();
-      }
-
-      if (this.resonating) {
-         if (this.resonationTicks < 40) {
-            ++this.resonationTicks;
-         } else {
-            this.makeRaidersGlow(this.level);
-            this.showBellParticles(this.level);
-            this.resonating = false;
-         }
-      }
-
-   }
-
-   private void playResonateSound() {
-      this.level.playSound((PlayerEntity)null, this.getBlockPos(), SoundEvents.BELL_RESONATE, SoundCategory.BLOCKS, 1.0F, 1.0F);
-   }
-
-   public void onHit(Direction p_213939_1_) {
-      BlockPos blockpos = this.getBlockPos();
-      this.clickDirection = p_213939_1_;
-      if (this.shaking) {
-         this.ticks = 0;
-      } else {
-         this.shaking = true;
-      }
-
-      this.level.blockEvent(blockpos, this.getBlockState().getBlock(), 1, p_213939_1_.get3DDataValue());
-   }
-
-   private void updateEntities() {
-      BlockPos blockpos = this.getBlockPos();
-      if (this.level.getGameTime() > this.lastRingTimestamp + 60L || this.nearbyEntities == null) {
-         this.lastRingTimestamp = this.level.getGameTime();
-         AxisAlignedBB axisalignedbb = (new AxisAlignedBB(blockpos)).inflate(48.0D);
-         this.nearbyEntities = this.level.getEntitiesOfClass(LivingEntity.class, axisalignedbb);
-      }
-
-      if (!this.level.isClientSide) {
-         for(LivingEntity livingentity : this.nearbyEntities) {
-            if (livingentity.isAlive() && !livingentity.removed && blockpos.closerThan(livingentity.position(), 32.0D)) {
-               livingentity.getBrain().setMemory(MemoryModuleType.HEARD_BELL_TIME, this.level.getGameTime());
-            }
-         }
-      }
-
-   }
-
-   private boolean areRaidersNearby() {
-      BlockPos blockpos = this.getBlockPos();
-
-      for(LivingEntity livingentity : this.nearbyEntities) {
-         if (livingentity.isAlive() && !livingentity.removed && blockpos.closerThan(livingentity.position(), 32.0D) && livingentity.getType().is(EntityTypeTags.RAIDERS)) {
+    /**
+     * See {@link Block#eventReceived} for more information. This must return true serverside before it is called
+     * clientside.
+     */
+    public boolean receiveClientEvent(int id, int type)
+    {
+        if (id == 1)
+        {
+            this.func_213941_c();
+            this.revealWarmup = 0;
+            this.ringDirection = Direction.byIndex(type);
+            this.ringingTicks = 0;
+            this.isRinging = true;
             return true;
-         }
-      }
+        }
+        else
+        {
+            return super.receiveClientEvent(id, type);
+        }
+    }
 
-      return false;
-   }
+    public void tick()
+    {
+        if (this.isRinging)
+        {
+            ++this.ringingTicks;
+        }
 
-   private void makeRaidersGlow(World p_222828_1_) {
-      if (!p_222828_1_.isClientSide) {
-         this.nearbyEntities.stream().filter(this::isRaiderWithinRange).forEach(this::glow);
-      }
-   }
+        if (this.ringingTicks >= 50)
+        {
+            this.isRinging = false;
+            this.ringingTicks = 0;
+        }
 
-   private void showBellParticles(World p_222826_1_) {
-      if (p_222826_1_.isClientSide) {
-         BlockPos blockpos = this.getBlockPos();
-         MutableInt mutableint = new MutableInt(16700985);
-         int i = (int)this.nearbyEntities.stream().filter((p_222829_1_) -> {
-            return blockpos.closerThan(p_222829_1_.position(), 48.0D);
-         }).count();
-         this.nearbyEntities.stream().filter(this::isRaiderWithinRange).forEach((p_235655_4_) -> {
-            float f = 1.0F;
-            float f1 = MathHelper.sqrt((p_235655_4_.getX() - (double)blockpos.getX()) * (p_235655_4_.getX() - (double)blockpos.getX()) + (p_235655_4_.getZ() - (double)blockpos.getZ()) * (p_235655_4_.getZ() - (double)blockpos.getZ()));
-            double d0 = (double)((float)blockpos.getX() + 0.5F) + (double)(1.0F / f1) * (p_235655_4_.getX() - (double)blockpos.getX());
-            double d1 = (double)((float)blockpos.getZ() + 0.5F) + (double)(1.0F / f1) * (p_235655_4_.getZ() - (double)blockpos.getZ());
-            int j = MathHelper.clamp((i - 21) / -2, 3, 15);
+        if (this.ringingTicks >= 5 && this.revealWarmup == 0 && this.hasRaidersNearby())
+        {
+            this.shouldReveal = true;
+            this.resonate();
+        }
 
-            for(int k = 0; k < j; ++k) {
-               int l = mutableint.addAndGet(5);
-               double d2 = (double)ColorHelper.PackedColor.red(l) / 255.0D;
-               double d3 = (double)ColorHelper.PackedColor.green(l) / 255.0D;
-               double d4 = (double)ColorHelper.PackedColor.blue(l) / 255.0D;
-               p_222826_1_.addParticle(ParticleTypes.ENTITY_EFFECT, d0, (double)((float)blockpos.getY() + 0.5F), d1, d2, d3, d4);
+        if (this.shouldReveal)
+        {
+            if (this.revealWarmup < 40)
+            {
+                ++this.revealWarmup;
             }
+            else
+            {
+                this.glowRaiders(this.world);
+                this.addRaiderParticles(this.world);
+                this.shouldReveal = false;
+            }
+        }
+    }
 
-         });
-      }
-   }
+    private void resonate()
+    {
+        this.world.playSound((PlayerEntity)null, this.getPos(), SoundEvents.BLOCK_BELL_RESONATE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+    }
 
-   private boolean isRaiderWithinRange(LivingEntity p_222832_1_) {
-      return p_222832_1_.isAlive() && !p_222832_1_.removed && this.getBlockPos().closerThan(p_222832_1_.position(), 48.0D) && p_222832_1_.getType().is(EntityTypeTags.RAIDERS);
-   }
+    public void ring(Direction p_213939_1_)
+    {
+        BlockPos blockpos = this.getPos();
+        this.ringDirection = p_213939_1_;
 
-   private void glow(LivingEntity p_222827_1_) {
-      p_222827_1_.addEffect(new EffectInstance(Effects.GLOWING, 60));
-   }
+        if (this.isRinging)
+        {
+            this.ringingTicks = 0;
+        }
+        else
+        {
+            this.isRinging = true;
+        }
+
+        this.world.addBlockEvent(blockpos, this.getBlockState().getBlock(), 1, p_213939_1_.getIndex());
+    }
+
+    private void func_213941_c()
+    {
+        BlockPos blockpos = this.getPos();
+
+        if (this.world.getGameTime() > this.ringTime + 60L || this.entitiesAtRing == null)
+        {
+            this.ringTime = this.world.getGameTime();
+            AxisAlignedBB axisalignedbb = (new AxisAlignedBB(blockpos)).grow(48.0D);
+            this.entitiesAtRing = this.world.getEntitiesWithinAABB(LivingEntity.class, axisalignedbb);
+        }
+
+        if (!this.world.isRemote)
+        {
+            for (LivingEntity livingentity : this.entitiesAtRing)
+            {
+                if (livingentity.isAlive() && !livingentity.removed && blockpos.withinDistance(livingentity.getPositionVec(), 32.0D))
+                {
+                    livingentity.getBrain().setMemory(MemoryModuleType.HEARD_BELL_TIME, this.world.getGameTime());
+                }
+            }
+        }
+    }
+
+    private boolean hasRaidersNearby()
+    {
+        BlockPos blockpos = this.getPos();
+
+        for (LivingEntity livingentity : this.entitiesAtRing)
+        {
+            if (livingentity.isAlive() && !livingentity.removed && blockpos.withinDistance(livingentity.getPositionVec(), 32.0D) && livingentity.getType().isContained(EntityTypeTags.RAIDERS))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void glowRaiders(World p_222828_1_)
+    {
+        if (!p_222828_1_.isRemote)
+        {
+            this.entitiesAtRing.stream().filter(this::isNearbyRaider).forEach(this::glow);
+        }
+    }
+
+    private void addRaiderParticles(World p_222826_1_)
+    {
+        if (p_222826_1_.isRemote)
+        {
+            BlockPos blockpos = this.getPos();
+            MutableInt mutableint = new MutableInt(16700985);
+            int i = (int)this.entitiesAtRing.stream().filter((p_222829_1_) ->
+            {
+                return blockpos.withinDistance(p_222829_1_.getPositionVec(), 48.0D);
+            }).count();
+            this.entitiesAtRing.stream().filter(this::isNearbyRaider).forEach((p_235655_4_) ->
+            {
+                float f = 1.0F;
+                float f1 = MathHelper.sqrt((p_235655_4_.getPosX() - (double)blockpos.getX()) * (p_235655_4_.getPosX() - (double)blockpos.getX()) + (p_235655_4_.getPosZ() - (double)blockpos.getZ()) * (p_235655_4_.getPosZ() - (double)blockpos.getZ()));
+                double d0 = (double)((float)blockpos.getX() + 0.5F) + (double)(1.0F / f1) * (p_235655_4_.getPosX() - (double)blockpos.getX());
+                double d1 = (double)((float)blockpos.getZ() + 0.5F) + (double)(1.0F / f1) * (p_235655_4_.getPosZ() - (double)blockpos.getZ());
+                int j = MathHelper.clamp((i - 21) / -2, 3, 15);
+
+                for (int k = 0; k < j; ++k)
+                {
+                    int l = mutableint.addAndGet(5);
+                    double d2 = (double)ColorHelper.PackedColor.getRed(l) / 255.0D;
+                    double d3 = (double)ColorHelper.PackedColor.getGreen(l) / 255.0D;
+                    double d4 = (double)ColorHelper.PackedColor.getBlue(l) / 255.0D;
+                    p_222826_1_.addParticle(ParticleTypes.ENTITY_EFFECT, d0, (double)((float)blockpos.getY() + 0.5F), d1, d2, d3, d4);
+                }
+            });
+        }
+    }
+
+    private boolean isNearbyRaider(LivingEntity p_222832_1_)
+    {
+        return p_222832_1_.isAlive() && !p_222832_1_.removed && this.getPos().withinDistance(p_222832_1_.getPositionVec(), 48.0D) && p_222832_1_.getType().isContained(EntityTypeTags.RAIDERS);
+    }
+
+    private void glow(LivingEntity p_222827_1_)
+    {
+        p_222827_1_.addPotionEffect(new EffectInstance(Effects.GLOWING, 60));
+    }
 }

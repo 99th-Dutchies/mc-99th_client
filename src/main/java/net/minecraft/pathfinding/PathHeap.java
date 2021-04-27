@@ -1,119 +1,172 @@
 package net.minecraft.pathfinding;
 
-public class PathHeap {
-   private PathPoint[] heap = new PathPoint[128];
-   private int size;
+public class PathHeap
+{
+    private PathPoint[] pathPoints = new PathPoint[128];
+    private int count;
 
-   public PathPoint insert(PathPoint p_75849_1_) {
-      if (p_75849_1_.heapIdx >= 0) {
-         throw new IllegalStateException("OW KNOWS!");
-      } else {
-         if (this.size == this.heap.length) {
-            PathPoint[] apathpoint = new PathPoint[this.size << 1];
-            System.arraycopy(this.heap, 0, apathpoint, 0, this.size);
-            this.heap = apathpoint;
-         }
-
-         this.heap[this.size] = p_75849_1_;
-         p_75849_1_.heapIdx = this.size;
-         this.upHeap(this.size++);
-         return p_75849_1_;
-      }
-   }
-
-   public void clear() {
-      this.size = 0;
-   }
-
-   public PathPoint pop() {
-      PathPoint pathpoint = this.heap[0];
-      this.heap[0] = this.heap[--this.size];
-      this.heap[this.size] = null;
-      if (this.size > 0) {
-         this.downHeap(0);
-      }
-
-      pathpoint.heapIdx = -1;
-      return pathpoint;
-   }
-
-   public void changeCost(PathPoint p_75850_1_, float p_75850_2_) {
-      float f = p_75850_1_.f;
-      p_75850_1_.f = p_75850_2_;
-      if (p_75850_2_ < f) {
-         this.upHeap(p_75850_1_.heapIdx);
-      } else {
-         this.downHeap(p_75850_1_.heapIdx);
-      }
-
-   }
-
-   private void upHeap(int p_75847_1_) {
-      PathPoint pathpoint = this.heap[p_75847_1_];
-
-      int i;
-      for(float f = pathpoint.f; p_75847_1_ > 0; p_75847_1_ = i) {
-         i = p_75847_1_ - 1 >> 1;
-         PathPoint pathpoint1 = this.heap[i];
-         if (!(f < pathpoint1.f)) {
-            break;
-         }
-
-         this.heap[p_75847_1_] = pathpoint1;
-         pathpoint1.heapIdx = p_75847_1_;
-      }
-
-      this.heap[p_75847_1_] = pathpoint;
-      pathpoint.heapIdx = p_75847_1_;
-   }
-
-   private void downHeap(int p_75846_1_) {
-      PathPoint pathpoint = this.heap[p_75846_1_];
-      float f = pathpoint.f;
-
-      while(true) {
-         int i = 1 + (p_75846_1_ << 1);
-         int j = i + 1;
-         if (i >= this.size) {
-            break;
-         }
-
-         PathPoint pathpoint1 = this.heap[i];
-         float f1 = pathpoint1.f;
-         PathPoint pathpoint2;
-         float f2;
-         if (j >= this.size) {
-            pathpoint2 = null;
-            f2 = Float.POSITIVE_INFINITY;
-         } else {
-            pathpoint2 = this.heap[j];
-            f2 = pathpoint2.f;
-         }
-
-         if (f1 < f2) {
-            if (!(f1 < f)) {
-               break;
+    /**
+     * Adds a point to the path
+     */
+    public PathPoint addPoint(PathPoint point)
+    {
+        if (point.index >= 0)
+        {
+            throw new IllegalStateException("OW KNOWS!");
+        }
+        else
+        {
+            if (this.count == this.pathPoints.length)
+            {
+                PathPoint[] apathpoint = new PathPoint[this.count << 1];
+                System.arraycopy(this.pathPoints, 0, apathpoint, 0, this.count);
+                this.pathPoints = apathpoint;
             }
 
-            this.heap[p_75846_1_] = pathpoint1;
-            pathpoint1.heapIdx = p_75846_1_;
-            p_75846_1_ = i;
-         } else {
-            if (!(f2 < f)) {
-               break;
+            this.pathPoints[this.count] = point;
+            point.index = this.count;
+            this.sortBack(this.count++);
+            return point;
+        }
+    }
+
+    /**
+     * Clears the path
+     */
+    public void clearPath()
+    {
+        this.count = 0;
+    }
+
+    /**
+     * Returns and removes the first point in the path
+     */
+    public PathPoint dequeue()
+    {
+        PathPoint pathpoint = this.pathPoints[0];
+        this.pathPoints[0] = this.pathPoints[--this.count];
+        this.pathPoints[this.count] = null;
+
+        if (this.count > 0)
+        {
+            this.sortForward(0);
+        }
+
+        pathpoint.index = -1;
+        return pathpoint;
+    }
+
+    /**
+     * Changes the provided point's distance to target
+     */
+    public void changeDistance(PathPoint point, float distance)
+    {
+        float f = point.distanceToTarget;
+        point.distanceToTarget = distance;
+
+        if (distance < f)
+        {
+            this.sortBack(point.index);
+        }
+        else
+        {
+            this.sortForward(point.index);
+        }
+    }
+
+    /**
+     * Sorts a point to the left
+     */
+    private void sortBack(int index)
+    {
+        PathPoint pathpoint = this.pathPoints[index];
+        int i;
+
+        for (float f = pathpoint.distanceToTarget; index > 0; index = i)
+        {
+            i = index - 1 >> 1;
+            PathPoint pathpoint1 = this.pathPoints[i];
+
+            if (!(f < pathpoint1.distanceToTarget))
+            {
+                break;
             }
 
-            this.heap[p_75846_1_] = pathpoint2;
-            pathpoint2.heapIdx = p_75846_1_;
-            p_75846_1_ = j;
-         }
-      }
+            this.pathPoints[index] = pathpoint1;
+            pathpoint1.index = index;
+        }
 
-      this.heap[p_75846_1_] = pathpoint;
-      pathpoint.heapIdx = p_75846_1_;
-   }
+        this.pathPoints[index] = pathpoint;
+        pathpoint.index = index;
+    }
 
-   public boolean isEmpty() {
-      return this.size == 0;
-   }
+    /**
+     * Sorts a point to the right
+     */
+    private void sortForward(int index)
+    {
+        PathPoint pathpoint = this.pathPoints[index];
+        float f = pathpoint.distanceToTarget;
+
+        while (true)
+        {
+            int i = 1 + (index << 1);
+            int j = i + 1;
+
+            if (i >= this.count)
+            {
+                break;
+            }
+
+            PathPoint pathpoint1 = this.pathPoints[i];
+            float f1 = pathpoint1.distanceToTarget;
+            PathPoint pathpoint2;
+            float f2;
+
+            if (j >= this.count)
+            {
+                pathpoint2 = null;
+                f2 = Float.POSITIVE_INFINITY;
+            }
+            else
+            {
+                pathpoint2 = this.pathPoints[j];
+                f2 = pathpoint2.distanceToTarget;
+            }
+
+            if (f1 < f2)
+            {
+                if (!(f1 < f))
+                {
+                    break;
+                }
+
+                this.pathPoints[index] = pathpoint1;
+                pathpoint1.index = index;
+                index = i;
+            }
+            else
+            {
+                if (!(f2 < f))
+                {
+                    break;
+                }
+
+                this.pathPoints[index] = pathpoint2;
+                pathpoint2.index = index;
+                index = j;
+            }
+        }
+
+        this.pathPoints[index] = pathpoint;
+        pathpoint.index = index;
+    }
+
+    /**
+     * Returns true if this path contains no points
+     */
+    public boolean isPathEmpty()
+    {
+        return this.count == 0;
+    }
 }

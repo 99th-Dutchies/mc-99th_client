@@ -23,132 +23,176 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class SNBTToNBTConverter implements IDataProvider {
-   @Nullable
-   private static final Path dumpSnbtTo = null;
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final DataGenerator generator;
-   private final List<SNBTToNBTConverter.ITransformer> filters = Lists.newArrayList();
+public class SNBTToNBTConverter implements IDataProvider
+{
+    @Nullable
+    private static final Path EMPTY = null;
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final DataGenerator generator;
+    private final List<SNBTToNBTConverter.ITransformer> transformers = Lists.newArrayList();
 
-   public SNBTToNBTConverter(DataGenerator p_i48257_1_) {
-      this.generator = p_i48257_1_;
-   }
+    public SNBTToNBTConverter(DataGenerator generatorIn)
+    {
+        this.generator = generatorIn;
+    }
 
-   public SNBTToNBTConverter addFilter(SNBTToNBTConverter.ITransformer p_225369_1_) {
-      this.filters.add(p_225369_1_);
-      return this;
-   }
+    public SNBTToNBTConverter addTransformer(SNBTToNBTConverter.ITransformer transformer)
+    {
+        this.transformers.add(transformer);
+        return this;
+    }
 
-   private CompoundNBT applyFilters(String p_225368_1_, CompoundNBT p_225368_2_) {
-      CompoundNBT compoundnbt = p_225368_2_;
+    private CompoundNBT snbtToNBT(String fileName, CompoundNBT nbt)
+    {
+        CompoundNBT compoundnbt = nbt;
 
-      for(SNBTToNBTConverter.ITransformer snbttonbtconverter$itransformer : this.filters) {
-         compoundnbt = snbttonbtconverter$itransformer.apply(p_225368_1_, compoundnbt);
-      }
+        for (SNBTToNBTConverter.ITransformer snbttonbtconverter$itransformer : this.transformers)
+        {
+            compoundnbt = snbttonbtconverter$itransformer.func_225371_a(fileName, compoundnbt);
+        }
 
-      return compoundnbt;
-   }
+        return compoundnbt;
+    }
 
-   public void run(DirectoryCache p_200398_1_) throws IOException {
-      Path path = this.generator.getOutputFolder();
-      List<CompletableFuture<SNBTToNBTConverter.TaskResult>> list = Lists.newArrayList();
+    /**
+     * Performs this provider's action.
+     */
+    public void act(DirectoryCache cache) throws IOException
+    {
+        Path path = this.generator.getOutputFolder();
+        List<CompletableFuture<SNBTToNBTConverter.TaskResult>> list = Lists.newArrayList();
 
-      for(Path path1 : this.generator.getInputFolders()) {
-         Files.walk(path1).filter((p_200422_0_) -> {
-            return p_200422_0_.toString().endsWith(".snbt");
-         }).forEach((p_229447_3_) -> {
-            list.add(CompletableFuture.supplyAsync(() -> {
-               return this.readStructure(p_229447_3_, this.getName(path1, p_229447_3_));
-            }, Util.backgroundExecutor()));
-         });
-      }
+        for (Path path1 : this.generator.getInputFolders())
+        {
+            Files.walk(path1).filter((snbtPath) ->
+            {
+                return snbtPath.toString().endsWith(".snbt");
+            }).forEach((filePath) ->
+            {
+                list.add(CompletableFuture.supplyAsync(() -> {
+                    return this.convertSNBTToNBT(filePath, this.getFileName(path1, filePath));
+                }, Util.getServerExecutor()));
+            });
+        }
 
-      Util.sequence(list).join().stream().filter(Objects::nonNull).forEach((p_229445_3_) -> {
-         this.storeStructureIfChanged(p_200398_1_, p_229445_3_, path);
-      });
-   }
+        Util.gather(list).join().stream().filter(Objects::nonNull).forEach((result) ->
+        {
+            this.writeStructureSNBT(cache, result, path);
+        });
+    }
 
-   public String getName() {
-      return "SNBT -> NBT";
-   }
+    /**
+     * Gets a name for this provider, to use in logging.
+     */
+    public String getName()
+    {
+        return "SNBT -> NBT";
+    }
 
-   private String getName(Path p_200423_1_, Path p_200423_2_) {
-      String s = p_200423_1_.relativize(p_200423_2_).toString().replaceAll("\\\\", "/");
-      return s.substring(0, s.length() - ".snbt".length());
-   }
+    /**
+     * Gets the name of the given SNBT file, based on its path and the input directory. The result does not have the
+     * ".snbt" extension.
+     */
+    private String getFileName(Path inputFolder, Path fileIn)
+    {
+        String s = inputFolder.relativize(fileIn).toString().replaceAll("\\\\", "/");
+        return s.substring(0, s.length() - ".snbt".length());
+    }
 
-   @Nullable
-   private SNBTToNBTConverter.TaskResult readStructure(Path p_229446_1_, String p_229446_2_) {
-      try (BufferedReader bufferedreader = Files.newBufferedReader(p_229446_1_)) {
-         String s = IOUtils.toString((Reader)bufferedreader);
-         CompoundNBT compoundnbt = this.applyFilters(p_229446_2_, JsonToNBT.parseTag(s));
-         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
-         CompressedStreamTools.writeCompressed(compoundnbt, bytearrayoutputstream);
-         byte[] abyte = bytearrayoutputstream.toByteArray();
-         String s1 = SHA1.hashBytes(abyte).toString();
-         String s2;
-         if (dumpSnbtTo != null) {
-            s2 = compoundnbt.getPrettyDisplay("    ", 0).getString() + "\n";
-         } else {
-            s2 = null;
-         }
+    @Nullable
+    private SNBTToNBTConverter.TaskResult convertSNBTToNBT(Path filePath, String fileName)
+    {
+        try (BufferedReader bufferedreader = Files.newBufferedReader(filePath))
+        {
+            String s = IOUtils.toString((Reader)bufferedreader);
+            CompoundNBT compoundnbt = this.snbtToNBT(fileName, JsonToNBT.getTagFromJson(s));
+            ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
+            CompressedStreamTools.writeCompressed(compoundnbt, bytearrayoutputstream);
+            byte[] abyte = bytearrayoutputstream.toByteArray();
+            String s1 = HASH_FUNCTION.hashBytes(abyte).toString();
+            String s2;
 
-         return new SNBTToNBTConverter.TaskResult(p_229446_2_, abyte, s2, s1);
-      } catch (CommandSyntaxException commandsyntaxexception) {
-         LOGGER.error("Couldn't convert {} from SNBT to NBT at {} as it's invalid SNBT", p_229446_2_, p_229446_1_, commandsyntaxexception);
-      } catch (IOException ioexception) {
-         LOGGER.error("Couldn't convert {} from SNBT to NBT at {}", p_229446_2_, p_229446_1_, ioexception);
-      }
-
-      return null;
-   }
-
-   private void storeStructureIfChanged(DirectoryCache p_229444_1_, SNBTToNBTConverter.TaskResult p_229444_2_, Path p_229444_3_) {
-      if (p_229444_2_.snbtPayload != null) {
-         Path path = dumpSnbtTo.resolve(p_229444_2_.name + ".snbt");
-
-         try {
-            FileUtils.write(path.toFile(), p_229444_2_.snbtPayload, StandardCharsets.UTF_8);
-         } catch (IOException ioexception) {
-            LOGGER.error("Couldn't write structure SNBT {} at {}", p_229444_2_.name, path, ioexception);
-         }
-      }
-
-      Path path1 = p_229444_3_.resolve(p_229444_2_.name + ".nbt");
-
-      try {
-         if (!Objects.equals(p_229444_1_.getHash(path1), p_229444_2_.hash) || !Files.exists(path1)) {
-            Files.createDirectories(path1.getParent());
-
-            try (OutputStream outputstream = Files.newOutputStream(path1)) {
-               outputstream.write(p_229444_2_.payload);
+            if (EMPTY != null)
+            {
+                s2 = compoundnbt.toFormattedComponent("    ", 0).getString() + "\n";
             }
-         }
+            else
+            {
+                s2 = null;
+            }
 
-         p_229444_1_.putNew(path1, p_229444_2_.hash);
-      } catch (IOException ioexception1) {
-         LOGGER.error("Couldn't write structure {} at {}", p_229444_2_.name, path1, ioexception1);
-      }
+            return new SNBTToNBTConverter.TaskResult(fileName, abyte, s2, s1);
+        }
+        catch (CommandSyntaxException commandsyntaxexception)
+        {
+            LOGGER.error("Couldn't convert {} from SNBT to NBT at {} as it's invalid SNBT", fileName, filePath, commandsyntaxexception);
+        }
+        catch (IOException ioexception)
+        {
+            LOGGER.error("Couldn't convert {} from SNBT to NBT at {}", fileName, filePath, ioexception);
+        }
 
-   }
+        return null;
+    }
 
-   @FunctionalInterface
-   public interface ITransformer {
-      CompoundNBT apply(String p_225371_1_, CompoundNBT p_225371_2_);
-   }
+    private void writeStructureSNBT(DirectoryCache directory, SNBTToNBTConverter.TaskResult taskResult, Path pathIn)
+    {
+        if (taskResult.field_240515_c_ != null)
+        {
+            Path path = EMPTY.resolve(taskResult.fileName + ".snbt");
 
-   static class TaskResult {
-      private final String name;
-      private final byte[] payload;
-      @Nullable
-      private final String snbtPayload;
-      private final String hash;
+            try
+            {
+                FileUtils.write(path.toFile(), taskResult.field_240515_c_, StandardCharsets.UTF_8);
+            }
+            catch (IOException ioexception)
+            {
+                LOGGER.error("Couldn't write structure SNBT {} at {}", taskResult.fileName, path, ioexception);
+            }
+        }
 
-      public TaskResult(String p_i232551_1_, byte[] p_i232551_2_, @Nullable String p_i232551_3_, String p_i232551_4_) {
-         this.name = p_i232551_1_;
-         this.payload = p_i232551_2_;
-         this.snbtPayload = p_i232551_3_;
-         this.hash = p_i232551_4_;
-      }
-   }
+        Path path1 = pathIn.resolve(taskResult.fileName + ".nbt");
+
+        try
+        {
+            if (!Objects.equals(directory.getPreviousHash(path1), taskResult.bytesHash) || !Files.exists(path1))
+            {
+                Files.createDirectories(path1.getParent());
+
+                try (OutputStream outputstream = Files.newOutputStream(path1))
+                {
+                    outputstream.write(taskResult.nbtBytes);
+                }
+            }
+
+            directory.recordHash(path1, taskResult.bytesHash);
+        }
+        catch (IOException ioexception1)
+        {
+            LOGGER.error("Couldn't write structure {} at {}", taskResult.fileName, path1, ioexception1);
+        }
+    }
+
+    @FunctionalInterface
+    public interface ITransformer
+    {
+        CompoundNBT func_225371_a(String p_225371_1_, CompoundNBT p_225371_2_);
+    }
+
+    static class TaskResult
+    {
+        private final String fileName;
+        private final byte[] nbtBytes;
+        @Nullable
+        private final String field_240515_c_;
+        private final String bytesHash;
+
+        public TaskResult(String fileName, byte[] p_i232551_2_, @Nullable String p_i232551_3_, String bytesHash)
+        {
+            this.fileName = fileName;
+            this.nbtBytes = p_i232551_2_;
+            this.field_240515_c_ = p_i232551_3_;
+            this.bytesHash = bytesHash;
+        }
+    }
 }

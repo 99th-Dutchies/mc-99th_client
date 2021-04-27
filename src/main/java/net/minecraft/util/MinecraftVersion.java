@@ -12,87 +12,112 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MinecraftVersion implements GameVersion {
-   private static final Logger LOGGER = LogManager.getLogger();
-   public static final GameVersion BUILT_IN = new MinecraftVersion();
-   private final String id;
-   private final String name;
-   private final boolean stable;
-   private final int worldVersion;
-   private final int protocolVersion;
-   private final int packVersion;
-   private final Date buildTime;
-   private final String releaseTarget;
+public class MinecraftVersion implements GameVersion
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static final GameVersion GAME_VERSION = new MinecraftVersion();
+    private final String id;
+    private final String name;
+    private final boolean stable;
+    private final int worldVersion;
+    private final int protocolVersion;
+    private final int packVersion;
+    private final Date buildTime;
+    private final String releaseTarget;
 
-   private MinecraftVersion() {
-      this.id = UUID.randomUUID().toString().replaceAll("-", "");
-      this.name = "1.16.5";
-      this.stable = true;
-      this.worldVersion = 2586;
-      this.protocolVersion = SharedConstants.getProtocolVersion();
-      this.packVersion = 6;
-      this.buildTime = new Date();
-      this.releaseTarget = "1.16.5";
-   }
+    private MinecraftVersion()
+    {
+        this.id = UUID.randomUUID().toString().replaceAll("-", "");
+        this.name = "1.16.5";
+        this.stable = true;
+        this.worldVersion = 2586;
+        this.protocolVersion = SharedConstants.func_244709_b();
+        this.packVersion = 6;
+        this.buildTime = new Date();
+        this.releaseTarget = "1.16.5";
+    }
 
-   private MinecraftVersion(JsonObject p_i51407_1_) {
-      this.id = JSONUtils.getAsString(p_i51407_1_, "id");
-      this.name = JSONUtils.getAsString(p_i51407_1_, "name");
-      this.releaseTarget = JSONUtils.getAsString(p_i51407_1_, "release_target");
-      this.stable = JSONUtils.getAsBoolean(p_i51407_1_, "stable");
-      this.worldVersion = JSONUtils.getAsInt(p_i51407_1_, "world_version");
-      this.protocolVersion = JSONUtils.getAsInt(p_i51407_1_, "protocol_version");
-      this.packVersion = JSONUtils.getAsInt(p_i51407_1_, "pack_version");
-      this.buildTime = Date.from(ZonedDateTime.parse(JSONUtils.getAsString(p_i51407_1_, "build_time")).toInstant());
-   }
+    private MinecraftVersion(JsonObject json)
+    {
+        this.id = JSONUtils.getString(json, "id");
+        this.name = JSONUtils.getString(json, "name");
+        this.releaseTarget = JSONUtils.getString(json, "release_target");
+        this.stable = JSONUtils.getBoolean(json, "stable");
+        this.worldVersion = JSONUtils.getInt(json, "world_version");
+        this.protocolVersion = JSONUtils.getInt(json, "protocol_version");
+        this.packVersion = JSONUtils.getInt(json, "pack_version");
+        this.buildTime = Date.from(ZonedDateTime.parse(JSONUtils.getString(json, "build_time")).toInstant());
+    }
 
-   public static GameVersion tryDetectVersion() {
-      try (InputStream inputstream = MinecraftVersion.class.getResourceAsStream("/version.json")) {
-         if (inputstream == null) {
-            LOGGER.warn("Missing version information!");
-            return BUILT_IN;
-         } else {
-            MinecraftVersion minecraftversion;
-            try (InputStreamReader inputstreamreader = new InputStreamReader(inputstream)) {
-               minecraftversion = new MinecraftVersion(JSONUtils.parse(inputstreamreader));
+    /**
+     * Creates a new instance containing game version data from version.json (or fallback data if necessary).
+     *  
+     * For getting data, use {@link SharedConstants#getVersion} instead, as that is cached.
+     */
+    public static GameVersion load()
+    {
+        try (InputStream inputstream = MinecraftVersion.class.getResourceAsStream("/version.json"))
+        {
+            if (inputstream == null)
+            {
+                LOGGER.warn("Missing version information!");
+                return GAME_VERSION;
             }
+            else
+            {
+                MinecraftVersion minecraftversion;
 
-            return minecraftversion;
-         }
-      } catch (JsonParseException | IOException ioexception) {
-         throw new IllegalStateException("Game version information is corrupt", ioexception);
-      }
-   }
+                try (InputStreamReader inputstreamreader = new InputStreamReader(inputstream))
+                {
+                    minecraftversion = new MinecraftVersion(JSONUtils.fromJson(inputstreamreader));
+                }
 
-   public String getId() {
-      return this.id;
-   }
+                return minecraftversion;
+            }
+        }
+        catch (JsonParseException | IOException ioexception)
+        {
+            throw new IllegalStateException("Game version information is corrupt", ioexception);
+        }
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getId()
+    {
+        return this.id;
+    }
 
-   public String getReleaseTarget() {
-      return this.releaseTarget;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   public int getWorldVersion() {
-      return this.worldVersion;
-   }
+    public String getReleaseTarget()
+    {
+        return this.releaseTarget;
+    }
 
-   public int getProtocolVersion() {
-      return this.protocolVersion;
-   }
+    public int getWorldVersion()
+    {
+        return this.worldVersion;
+    }
 
-   public int getPackVersion() {
-      return this.packVersion;
-   }
+    public int getProtocolVersion()
+    {
+        return this.protocolVersion;
+    }
 
-   public Date getBuildTime() {
-      return this.buildTime;
-   }
+    public int getPackVersion()
+    {
+        return this.packVersion;
+    }
 
-   public boolean isStable() {
-      return this.stable;
-   }
+    public Date getBuildTime()
+    {
+        return this.buildTime;
+    }
+
+    public boolean isStable()
+    {
+        return this.stable;
+    }
 }

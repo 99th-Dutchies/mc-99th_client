@@ -6,20 +6,23 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.item.Item;
 import net.minecraft.util.math.BlockPos;
 
-public interface ISelectionContext {
-   static ISelectionContext empty() {
-      return EntitySelectionContext.EMPTY;
-   }
+public interface ISelectionContext
+{
+    static ISelectionContext dummy()
+    {
+        return EntitySelectionContext.DUMMY;
+    }
 
-   static ISelectionContext of(Entity p_216374_0_) {
-      return new EntitySelectionContext(p_216374_0_);
-   }
+    static ISelectionContext forEntity(Entity entityIn)
+    {
+        return new EntitySelectionContext(entityIn);
+    }
 
-   boolean isDescending();
+    boolean getPosY();
 
-   boolean isAbove(VoxelShape p_216378_1_, BlockPos p_216378_2_, boolean p_216378_3_);
+    boolean func_216378_a(VoxelShape shape, BlockPos pos, boolean p_216378_3_);
 
-   boolean isHoldingItem(Item p_216375_1_);
+    boolean hasItem(Item itemIn);
 
-   boolean canStandOnFluid(FluidState p_230426_1_, FlowingFluid p_230426_2_);
+    boolean func_230426_a_(FluidState p_230426_1_, FlowingFluid p_230426_2_);
 }

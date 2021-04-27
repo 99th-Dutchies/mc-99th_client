@@ -2,16 +2,16 @@ package net.minecraft.block;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class GravelBlock extends FallingBlock {
-   public GravelBlock(AbstractBlock.Properties p_i48384_1_) {
-      super(p_i48384_1_);
-   }
+public class GravelBlock extends FallingBlock
+{
+    public GravelBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getDustColor(BlockState p_189876_1_, IBlockReader p_189876_2_, BlockPos p_189876_3_) {
-      return -8356741;
-   }
+    public int getDustColor(BlockState state, IBlockReader reader, BlockPos pos)
+    {
+        return -8356741;
+    }
 }

@@ -5,41 +5,55 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CQueryTileEntityNBTPacket implements IPacket<IServerPlayNetHandler> {
-   private int transactionId;
-   private BlockPos pos;
+public class CQueryTileEntityNBTPacket implements IPacket<IServerPlayNetHandler>
+{
+    private int transactionId;
+    private BlockPos pos;
 
-   public CQueryTileEntityNBTPacket() {
-   }
+    public CQueryTileEntityNBTPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CQueryTileEntityNBTPacket(int p_i49756_1_, BlockPos p_i49756_2_) {
-      this.transactionId = p_i49756_1_;
-      this.pos = p_i49756_2_;
-   }
+    public CQueryTileEntityNBTPacket(int p_i49756_1_, BlockPos p_i49756_2_)
+    {
+        this.transactionId = p_i49756_1_;
+        this.pos = p_i49756_2_;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.transactionId = p_148837_1_.readVarInt();
-      this.pos = p_148837_1_.readBlockPos();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.transactionId = buf.readVarInt();
+        this.pos = buf.readBlockPos();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.transactionId);
-      p_148840_1_.writeBlockPos(this.pos);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.transactionId);
+        buf.writeBlockPos(this.pos);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleBlockEntityTagQuery(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processNBTQueryBlockEntity(this);
+    }
 
-   public int getTransactionId() {
-      return this.transactionId;
-   }
+    public int getTransactionId()
+    {
+        return this.transactionId;
+    }
 
-   public BlockPos getPos() {
-      return this.pos;
-   }
+    public BlockPos getPosition()
+    {
+        return this.pos;
+    }
 }

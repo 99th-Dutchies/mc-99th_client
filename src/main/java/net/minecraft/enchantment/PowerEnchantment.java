@@ -2,20 +2,31 @@ package net.minecraft.enchantment;
 
 import net.minecraft.inventory.EquipmentSlotType;
 
-public class PowerEnchantment extends Enchantment {
-   public PowerEnchantment(Enchantment.Rarity p_i46738_1_, EquipmentSlotType... p_i46738_2_) {
-      super(p_i46738_1_, EnchantmentType.BOW, p_i46738_2_);
-   }
+public class PowerEnchantment extends Enchantment
+{
+    public PowerEnchantment(Enchantment.Rarity rarityIn, EquipmentSlotType... slots)
+    {
+        super(rarityIn, EnchantmentType.BOW, slots);
+    }
 
-   public int getMinCost(int p_77321_1_) {
-      return 1 + (p_77321_1_ - 1) * 10;
-   }
+    /**
+     * Returns the minimal value of enchantability needed on the enchantment level passed.
+     */
+    public int getMinEnchantability(int enchantmentLevel)
+    {
+        return 1 + (enchantmentLevel - 1) * 10;
+    }
 
-   public int getMaxCost(int p_223551_1_) {
-      return this.getMinCost(p_223551_1_) + 15;
-   }
+    public int getMaxEnchantability(int enchantmentLevel)
+    {
+        return this.getMinEnchantability(enchantmentLevel) + 15;
+    }
 
-   public int getMaxLevel() {
-      return 5;
-   }
+    /**
+     * Returns the maximum level that the enchantment can have.
+     */
+    public int getMaxLevel()
+    {
+        return 5;
+    }
 }

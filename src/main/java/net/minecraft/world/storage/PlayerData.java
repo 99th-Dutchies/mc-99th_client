@@ -12,64 +12,81 @@ import net.minecraft.util.datafix.DefaultTypeReferences;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PlayerData {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final File playerDir;
-   protected final DataFixer fixerUpper;
+public class PlayerData
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final File playerDataFolder;
+    protected final DataFixer fixer;
 
-   public PlayerData(SaveFormat.LevelSave p_i232157_1_, DataFixer p_i232157_2_) {
-      this.fixerUpper = p_i232157_2_;
-      this.playerDir = p_i232157_1_.getLevelPath(FolderName.PLAYER_DATA_DIR).toFile();
-      this.playerDir.mkdirs();
-   }
+    public PlayerData(SaveFormat.LevelSave levelSave, DataFixer fixer)
+    {
+        this.fixer = fixer;
+        this.playerDataFolder = levelSave.resolveFilePath(FolderName.PLAYERDATA).toFile();
+        this.playerDataFolder.mkdirs();
+    }
 
-   public void save(PlayerEntity p_237335_1_) {
-      try {
-         CompoundNBT compoundnbt = p_237335_1_.saveWithoutId(new CompoundNBT());
-         File file1 = File.createTempFile(p_237335_1_.getStringUUID() + "-", ".dat", this.playerDir);
-         CompressedStreamTools.writeCompressed(compoundnbt, file1);
-         File file2 = new File(this.playerDir, p_237335_1_.getStringUUID() + ".dat");
-         File file3 = new File(this.playerDir, p_237335_1_.getStringUUID() + ".dat_old");
-         Util.safeReplaceFile(file2, file1, file3);
-      } catch (Exception exception) {
-         LOGGER.warn("Failed to save player data for {}", (Object)p_237335_1_.getName().getString());
-      }
+    public void savePlayerData(PlayerEntity player)
+    {
+        try
+        {
+            CompoundNBT compoundnbt = player.writeWithoutTypeId(new CompoundNBT());
+            File file1 = File.createTempFile(player.getCachedUniqueIdString() + "-", ".dat", this.playerDataFolder);
+            CompressedStreamTools.writeCompressed(compoundnbt, file1);
+            File file2 = new File(this.playerDataFolder, player.getCachedUniqueIdString() + ".dat");
+            File file3 = new File(this.playerDataFolder, player.getCachedUniqueIdString() + ".dat_old");
+            Util.backupThenUpdate(file2, file1, file3);
+        }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Failed to save player data for {}", (Object)player.getName().getString());
+        }
+    }
 
-   }
+    @Nullable
+    public CompoundNBT loadPlayerData(PlayerEntity player)
+    {
+        CompoundNBT compoundnbt = null;
 
-   @Nullable
-   public CompoundNBT load(PlayerEntity p_237336_1_) {
-      CompoundNBT compoundnbt = null;
+        try
+        {
+            File file1 = new File(this.playerDataFolder, player.getCachedUniqueIdString() + ".dat");
 
-      try {
-         File file1 = new File(this.playerDir, p_237336_1_.getStringUUID() + ".dat");
-         if (file1.exists() && file1.isFile()) {
-            compoundnbt = CompressedStreamTools.readCompressed(file1);
-         }
-      } catch (Exception exception) {
-         LOGGER.warn("Failed to load player data for {}", (Object)p_237336_1_.getName().getString());
-      }
+            if (file1.exists() && file1.isFile())
+            {
+                compoundnbt = CompressedStreamTools.readCompressed(file1);
+            }
+        }
+        catch (Exception exception)
+        {
+            LOGGER.warn("Failed to load player data for {}", (Object)player.getName().getString());
+        }
 
-      if (compoundnbt != null) {
-         int i = compoundnbt.contains("DataVersion", 3) ? compoundnbt.getInt("DataVersion") : -1;
-         p_237336_1_.load(NBTUtil.update(this.fixerUpper, DefaultTypeReferences.PLAYER, compoundnbt, i));
-      }
+        if (compoundnbt != null)
+        {
+            int i = compoundnbt.contains("DataVersion", 3) ? compoundnbt.getInt("DataVersion") : -1;
+            player.read(NBTUtil.update(this.fixer, DefaultTypeReferences.PLAYER, compoundnbt, i));
+        }
 
-      return compoundnbt;
-   }
+        return compoundnbt;
+    }
 
-   public String[] getSeenPlayers() {
-      String[] astring = this.playerDir.list();
-      if (astring == null) {
-         astring = new String[0];
-      }
+    public String[] getSeenPlayerUUIDs()
+    {
+        String[] astring = this.playerDataFolder.list();
 
-      for(int i = 0; i < astring.length; ++i) {
-         if (astring[i].endsWith(".dat")) {
-            astring[i] = astring[i].substring(0, astring[i].length() - 4);
-         }
-      }
+        if (astring == null)
+        {
+            astring = new String[0];
+        }
 
-      return astring;
-   }
+        for (int i = 0; i < astring.length; ++i)
+        {
+            if (astring[i].endsWith(".dat"))
+            {
+                astring[i] = astring[i].substring(0, astring[i].length() - 4);
+            }
+        }
+
+        return astring;
+    }
 }

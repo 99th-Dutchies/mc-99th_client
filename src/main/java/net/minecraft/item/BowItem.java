@@ -14,105 +14,154 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.world.World;
 
-public class BowItem extends ShootableItem implements IVanishable {
-   public BowItem(Item.Properties p_i48522_1_) {
-      super(p_i48522_1_);
-   }
+public class BowItem extends ShootableItem implements IVanishable
+{
+    public BowItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public void releaseUsing(ItemStack p_77615_1_, World p_77615_2_, LivingEntity p_77615_3_, int p_77615_4_) {
-      if (p_77615_3_ instanceof PlayerEntity) {
-         PlayerEntity playerentity = (PlayerEntity)p_77615_3_;
-         boolean flag = playerentity.abilities.instabuild || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, p_77615_1_) > 0;
-         ItemStack itemstack = playerentity.getProjectile(p_77615_1_);
-         if (!itemstack.isEmpty() || flag) {
-            if (itemstack.isEmpty()) {
-               itemstack = new ItemStack(Items.ARROW);
+    /**
+     * Called when the player stops using an Item (stops holding the right mouse button).
+     */
+    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft)
+    {
+        if (entityLiving instanceof PlayerEntity)
+        {
+            PlayerEntity playerentity = (PlayerEntity)entityLiving;
+            boolean flag = playerentity.abilities.isCreativeMode || EnchantmentHelper.getEnchantmentLevel(Enchantments.INFINITY, stack) > 0;
+            ItemStack itemstack = playerentity.findAmmo(stack);
+
+            if (!itemstack.isEmpty() || flag)
+            {
+                if (itemstack.isEmpty())
+                {
+                    itemstack = new ItemStack(Items.ARROW);
+                }
+
+                int i = this.getUseDuration(stack) - timeLeft;
+                float f = getArrowVelocity(i);
+
+                if (!((double)f < 0.1D))
+                {
+                    boolean flag1 = flag && itemstack.getItem() == Items.ARROW;
+
+                    if (!worldIn.isRemote)
+                    {
+                        ArrowItem arrowitem = (ArrowItem)(itemstack.getItem() instanceof ArrowItem ? itemstack.getItem() : Items.ARROW);
+                        AbstractArrowEntity abstractarrowentity = arrowitem.createArrow(worldIn, itemstack, playerentity);
+                        abstractarrowentity.func_234612_a_(playerentity, playerentity.rotationPitch, playerentity.rotationYaw, 0.0F, f * 3.0F, 1.0F);
+
+                        if (f == 1.0F)
+                        {
+                            abstractarrowentity.setIsCritical(true);
+                        }
+
+                        int j = EnchantmentHelper.getEnchantmentLevel(Enchantments.POWER, stack);
+
+                        if (j > 0)
+                        {
+                            abstractarrowentity.setDamage(abstractarrowentity.getDamage() + (double)j * 0.5D + 0.5D);
+                        }
+
+                        int k = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH, stack);
+
+                        if (k > 0)
+                        {
+                            abstractarrowentity.setKnockbackStrength(k);
+                        }
+
+                        if (EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, stack) > 0)
+                        {
+                            abstractarrowentity.setFire(100);
+                        }
+
+                        stack.damageItem(1, playerentity, (p_220009_1_) ->
+                        {
+                            p_220009_1_.sendBreakAnimation(playerentity.getActiveHand());
+                        });
+
+                        if (flag1 || playerentity.abilities.isCreativeMode && (itemstack.getItem() == Items.SPECTRAL_ARROW || itemstack.getItem() == Items.TIPPED_ARROW))
+                        {
+                            abstractarrowentity.pickupStatus = AbstractArrowEntity.PickupStatus.CREATIVE_ONLY;
+                        }
+
+                        worldIn.addEntity(abstractarrowentity);
+                    }
+
+                    worldIn.playSound((PlayerEntity)null, playerentity.getPosX(), playerentity.getPosY(), playerentity.getPosZ(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
+
+                    if (!flag1 && !playerentity.abilities.isCreativeMode)
+                    {
+                        itemstack.shrink(1);
+
+                        if (itemstack.isEmpty())
+                        {
+                            playerentity.inventory.deleteStack(itemstack);
+                        }
+                    }
+
+                    playerentity.addStat(Stats.ITEM_USED.get(this));
+                }
             }
+        }
+    }
 
-            int i = this.getUseDuration(p_77615_1_) - p_77615_4_;
-            float f = getPowerForTime(i);
-            if (!((double)f < 0.1D)) {
-               boolean flag1 = flag && itemstack.getItem() == Items.ARROW;
-               if (!p_77615_2_.isClientSide) {
-                  ArrowItem arrowitem = (ArrowItem)(itemstack.getItem() instanceof ArrowItem ? itemstack.getItem() : Items.ARROW);
-                  AbstractArrowEntity abstractarrowentity = arrowitem.createArrow(p_77615_2_, itemstack, playerentity);
-                  abstractarrowentity.shootFromRotation(playerentity, playerentity.xRot, playerentity.yRot, 0.0F, f * 3.0F, 1.0F);
-                  if (f == 1.0F) {
-                     abstractarrowentity.setCritArrow(true);
-                  }
+    /**
+     * Gets the velocity of the arrow entity from the bow's charge
+     */
+    public static float getArrowVelocity(int charge)
+    {
+        float f = (float)charge / 20.0F;
+        f = (f * f + f * 2.0F) / 3.0F;
 
-                  int j = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, p_77615_1_);
-                  if (j > 0) {
-                     abstractarrowentity.setBaseDamage(abstractarrowentity.getBaseDamage() + (double)j * 0.5D + 0.5D);
-                  }
+        if (f > 1.0F)
+        {
+            f = 1.0F;
+        }
 
-                  int k = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, p_77615_1_);
-                  if (k > 0) {
-                     abstractarrowentity.setKnockback(k);
-                  }
+        return f;
+    }
 
-                  if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, p_77615_1_) > 0) {
-                     abstractarrowentity.setSecondsOnFire(100);
-                  }
+    /**
+     * How long it takes to use or consume an item
+     */
+    public int getUseDuration(ItemStack stack)
+    {
+        return 72000;
+    }
 
-                  p_77615_1_.hurtAndBreak(1, playerentity, (p_220009_1_) -> {
-                     p_220009_1_.broadcastBreakEvent(playerentity.getUsedItemHand());
-                  });
-                  if (flag1 || playerentity.abilities.instabuild && (itemstack.getItem() == Items.SPECTRAL_ARROW || itemstack.getItem() == Items.TIPPED_ARROW)) {
-                     abstractarrowentity.pickup = AbstractArrowEntity.PickupStatus.CREATIVE_ONLY;
-                  }
+    /**
+     * returns the action that specifies what animation to play when the items is being used
+     */
+    public UseAction getUseAction(ItemStack stack)
+    {
+        return UseAction.BOW;
+    }
 
-                  p_77615_2_.addFreshEntity(abstractarrowentity);
-               }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        boolean flag = !playerIn.findAmmo(itemstack).isEmpty();
 
-               p_77615_2_.playSound((PlayerEntity)null, playerentity.getX(), playerentity.getY(), playerentity.getZ(), SoundEvents.ARROW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
-               if (!flag1 && !playerentity.abilities.instabuild) {
-                  itemstack.shrink(1);
-                  if (itemstack.isEmpty()) {
-                     playerentity.inventory.removeItem(itemstack);
-                  }
-               }
+        if (!playerIn.abilities.isCreativeMode && !flag)
+        {
+            return ActionResult.resultFail(itemstack);
+        }
+        else
+        {
+            playerIn.setActiveHand(handIn);
+            return ActionResult.resultConsume(itemstack);
+        }
+    }
 
-               playerentity.awardStat(Stats.ITEM_USED.get(this));
-            }
-         }
-      }
-   }
+    public Predicate<ItemStack> getInventoryAmmoPredicate()
+    {
+        return ARROWS;
+    }
 
-   public static float getPowerForTime(int p_185059_0_) {
-      float f = (float)p_185059_0_ / 20.0F;
-      f = (f * f + f * 2.0F) / 3.0F;
-      if (f > 1.0F) {
-         f = 1.0F;
-      }
-
-      return f;
-   }
-
-   public int getUseDuration(ItemStack p_77626_1_) {
-      return 72000;
-   }
-
-   public UseAction getUseAnimation(ItemStack p_77661_1_) {
-      return UseAction.BOW;
-   }
-
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      boolean flag = !p_77659_2_.getProjectile(itemstack).isEmpty();
-      if (!p_77659_2_.abilities.instabuild && !flag) {
-         return ActionResult.fail(itemstack);
-      } else {
-         p_77659_2_.startUsingItem(p_77659_3_);
-         return ActionResult.consume(itemstack);
-      }
-   }
-
-   public Predicate<ItemStack> getAllSupportedProjectiles() {
-      return ARROW_ONLY;
-   }
-
-   public int getDefaultProjectileRange() {
-      return 15;
-   }
+    public int func_230305_d_()
+    {
+        return 15;
+    }
 }

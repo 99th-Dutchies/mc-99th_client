@@ -12,47 +12,62 @@ import net.minecraft.world.gen.feature.BaseTreeFeatureConfig;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.server.ServerWorld;
 
-public abstract class BigTree extends Tree {
-   public boolean growTree(ServerWorld p_230339_1_, ChunkGenerator p_230339_2_, BlockPos p_230339_3_, BlockState p_230339_4_, Random p_230339_5_) {
-      for(int i = 0; i >= -1; --i) {
-         for(int j = 0; j >= -1; --j) {
-            if (isTwoByTwoSapling(p_230339_4_, p_230339_1_, p_230339_3_, i, j)) {
-               return this.placeMega(p_230339_1_, p_230339_2_, p_230339_3_, p_230339_4_, p_230339_5_, i, j);
+public abstract class BigTree extends Tree
+{
+    public boolean attemptGrowTree(ServerWorld world, ChunkGenerator chunkGenerator, BlockPos pos, BlockState state, Random rand)
+    {
+        for (int i = 0; i >= -1; --i)
+        {
+            for (int j = 0; j >= -1; --j)
+            {
+                if (canBigTreeSpawnAt(state, world, pos, i, j))
+                {
+                    return this.growBigTree(world, chunkGenerator, pos, state, rand, i, j);
+                }
             }
-         }
-      }
+        }
 
-      return super.growTree(p_230339_1_, p_230339_2_, p_230339_3_, p_230339_4_, p_230339_5_);
-   }
+        return super.attemptGrowTree(world, chunkGenerator, pos, state, rand);
+    }
 
-   @Nullable
-   protected abstract ConfiguredFeature<BaseTreeFeatureConfig, ?> getConfiguredMegaFeature(Random p_225547_1_);
+    @Nullable
+    protected abstract ConfiguredFeature < BaseTreeFeatureConfig, ? > getHugeTreeFeature(Random rand);
 
-   public boolean placeMega(ServerWorld p_235678_1_, ChunkGenerator p_235678_2_, BlockPos p_235678_3_, BlockState p_235678_4_, Random p_235678_5_, int p_235678_6_, int p_235678_7_) {
-      ConfiguredFeature<BaseTreeFeatureConfig, ?> configuredfeature = this.getConfiguredMegaFeature(p_235678_5_);
-      if (configuredfeature == null) {
-         return false;
-      } else {
-         configuredfeature.config.setFromSapling();
-         BlockState blockstate = Blocks.AIR.defaultBlockState();
-         p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_, 0, p_235678_7_), blockstate, 4);
-         p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_ + 1, 0, p_235678_7_), blockstate, 4);
-         p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_, 0, p_235678_7_ + 1), blockstate, 4);
-         p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_ + 1, 0, p_235678_7_ + 1), blockstate, 4);
-         if (configuredfeature.place(p_235678_1_, p_235678_2_, p_235678_5_, p_235678_3_.offset(p_235678_6_, 0, p_235678_7_))) {
-            return true;
-         } else {
-            p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_, 0, p_235678_7_), p_235678_4_, 4);
-            p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_ + 1, 0, p_235678_7_), p_235678_4_, 4);
-            p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_, 0, p_235678_7_ + 1), p_235678_4_, 4);
-            p_235678_1_.setBlock(p_235678_3_.offset(p_235678_6_ + 1, 0, p_235678_7_ + 1), p_235678_4_, 4);
+    public boolean growBigTree(ServerWorld world, ChunkGenerator chunkGenerator, BlockPos pos, BlockState state, Random rand, int branchX, int branchY)
+    {
+        ConfiguredFeature < BaseTreeFeatureConfig, ? > configuredfeature = this.getHugeTreeFeature(rand);
+
+        if (configuredfeature == null)
+        {
             return false;
-         }
-      }
-   }
+        }
+        else
+        {
+            configuredfeature.config.forcePlacement();
+            BlockState blockstate = Blocks.AIR.getDefaultState();
+            world.setBlockState(pos.add(branchX, 0, branchY), blockstate, 4);
+            world.setBlockState(pos.add(branchX + 1, 0, branchY), blockstate, 4);
+            world.setBlockState(pos.add(branchX, 0, branchY + 1), blockstate, 4);
+            world.setBlockState(pos.add(branchX + 1, 0, branchY + 1), blockstate, 4);
 
-   public static boolean isTwoByTwoSapling(BlockState p_196937_0_, IBlockReader p_196937_1_, BlockPos p_196937_2_, int p_196937_3_, int p_196937_4_) {
-      Block block = p_196937_0_.getBlock();
-      return block == p_196937_1_.getBlockState(p_196937_2_.offset(p_196937_3_, 0, p_196937_4_)).getBlock() && block == p_196937_1_.getBlockState(p_196937_2_.offset(p_196937_3_ + 1, 0, p_196937_4_)).getBlock() && block == p_196937_1_.getBlockState(p_196937_2_.offset(p_196937_3_, 0, p_196937_4_ + 1)).getBlock() && block == p_196937_1_.getBlockState(p_196937_2_.offset(p_196937_3_ + 1, 0, p_196937_4_ + 1)).getBlock();
-   }
+            if (configuredfeature.func_242765_a(world, chunkGenerator, rand, pos.add(branchX, 0, branchY)))
+            {
+                return true;
+            }
+            else
+            {
+                world.setBlockState(pos.add(branchX, 0, branchY), state, 4);
+                world.setBlockState(pos.add(branchX + 1, 0, branchY), state, 4);
+                world.setBlockState(pos.add(branchX, 0, branchY + 1), state, 4);
+                world.setBlockState(pos.add(branchX + 1, 0, branchY + 1), state, 4);
+                return false;
+            }
+        }
+    }
+
+    public static boolean canBigTreeSpawnAt(BlockState blockUnder, IBlockReader worldIn, BlockPos pos, int xOffset, int zOffset)
+    {
+        Block block = blockUnder.getBlock();
+        return block == worldIn.getBlockState(pos.add(xOffset, 0, zOffset)).getBlock() && block == worldIn.getBlockState(pos.add(xOffset + 1, 0, zOffset)).getBlock() && block == worldIn.getBlockState(pos.add(xOffset, 0, zOffset + 1)).getBlock() && block == worldIn.getBlockState(pos.add(xOffset + 1, 0, zOffset + 1)).getBlock();
+    }
 }

@@ -8,44 +8,57 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.potion.Effect;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SRemoveEntityEffectPacket implements IPacket<IClientPlayNetHandler> {
-   private int entityId;
-   private Effect effect;
+public class SRemoveEntityEffectPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private Effect effectId;
 
-   public SRemoveEntityEffectPacket() {
-   }
+    public SRemoveEntityEffectPacket()
+    {
+    }
 
-   public SRemoveEntityEffectPacket(int p_i46925_1_, Effect p_i46925_2_) {
-      this.entityId = p_i46925_1_;
-      this.effect = p_i46925_2_;
-   }
+    public SRemoveEntityEffectPacket(int entityIdIn, Effect potionIn)
+    {
+        this.entityId = entityIdIn;
+        this.effectId = potionIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.entityId = p_148837_1_.readVarInt();
-      this.effect = Effect.byId(p_148837_1_.readUnsignedByte());
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.effectId = Effect.get(buf.readUnsignedByte());
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.entityId);
-      p_148840_1_.writeByte(Effect.getId(this.effect));
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeByte(Effect.getId(this.effectId));
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleRemoveMobEffect(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleRemoveEntityEffect(this);
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public Entity getEntity(World p_186967_1_) {
-      return p_186967_1_.getEntity(this.entityId);
-   }
+    @Nullable
+    public Entity getEntity(World worldIn)
+    {
+        return worldIn.getEntityByID(this.entityId);
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public Effect getEffect() {
-      return this.effect;
-   }
+    @Nullable
+    public Effect getPotion()
+    {
+        return this.effectId;
+    }
 }

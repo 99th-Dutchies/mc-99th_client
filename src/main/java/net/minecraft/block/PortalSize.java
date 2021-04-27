@@ -14,192 +14,248 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.server.ServerWorld;
 
-public class PortalSize {
-   private static final AbstractBlock.IPositionPredicate FRAME = (p_242966_0_, p_242966_1_, p_242966_2_) -> {
-      return p_242966_0_.is(Blocks.OBSIDIAN);
-   };
-   private final IWorld level;
-   private final Direction.Axis axis;
-   private final Direction rightDir;
-   private int numPortalBlocks;
-   @Nullable
-   private BlockPos bottomLeft;
-   private int height;
-   private int width;
+public class PortalSize
+{
+    private static final AbstractBlock.IPositionPredicate POSITION_PREDICATE = (state, blockReader, pos) ->
+    {
+        return state.isIn(Blocks.OBSIDIAN);
+    };
+    private final IWorld world;
+    private final Direction.Axis axis;
+    private final Direction rightDir;
+    private int portalBlockCount;
+    @Nullable
+    private BlockPos bottomLeft;
+    private int height;
+    private int width;
 
-   public static Optional<PortalSize> findEmptyPortalShape(IWorld p_242964_0_, BlockPos p_242964_1_, Direction.Axis p_242964_2_) {
-      return findPortalShape(p_242964_0_, p_242964_1_, (p_242968_0_) -> {
-         return p_242968_0_.isValid() && p_242968_0_.numPortalBlocks == 0;
-      }, p_242964_2_);
-   }
+    public static Optional<PortalSize> func_242964_a(IWorld world, BlockPos pos, Direction.Axis axis)
+    {
+        return func_242965_a(world, pos, (size) ->
+        {
+            return size.isValid() && size.portalBlockCount == 0;
+        }, axis);
+    }
 
-   public static Optional<PortalSize> findPortalShape(IWorld p_242965_0_, BlockPos p_242965_1_, Predicate<PortalSize> p_242965_2_, Direction.Axis p_242965_3_) {
-      Optional<PortalSize> optional = Optional.of(new PortalSize(p_242965_0_, p_242965_1_, p_242965_3_)).filter(p_242965_2_);
-      if (optional.isPresent()) {
-         return optional;
-      } else {
-         Direction.Axis direction$axis = p_242965_3_ == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
-         return Optional.of(new PortalSize(p_242965_0_, p_242965_1_, direction$axis)).filter(p_242965_2_);
-      }
-   }
+    public static Optional<PortalSize> func_242965_a(IWorld world, BlockPos pos, Predicate<PortalSize> sizePredicate, Direction.Axis axis)
+    {
+        Optional<PortalSize> optional = Optional.of(new PortalSize(world, pos, axis)).filter(sizePredicate);
 
-   public PortalSize(IWorld p_i48740_1_, BlockPos p_i48740_2_, Direction.Axis p_i48740_3_) {
-      this.level = p_i48740_1_;
-      this.axis = p_i48740_3_;
-      this.rightDir = p_i48740_3_ == Direction.Axis.X ? Direction.WEST : Direction.SOUTH;
-      this.bottomLeft = this.calculateBottomLeft(p_i48740_2_);
-      if (this.bottomLeft == null) {
-         this.bottomLeft = p_i48740_2_;
-         this.width = 1;
-         this.height = 1;
-      } else {
-         this.width = this.calculateWidth();
-         if (this.width > 0) {
-            this.height = this.calculateHeight();
-         }
-      }
+        if (optional.isPresent())
+        {
+            return optional;
+        }
+        else
+        {
+            Direction.Axis direction$axis = axis == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
+            return Optional.of(new PortalSize(world, pos, direction$axis)).filter(sizePredicate);
+        }
+    }
 
-   }
+    public PortalSize(IWorld worldIn, BlockPos pos, Direction.Axis axisIn)
+    {
+        this.world = worldIn;
+        this.axis = axisIn;
+        this.rightDir = axisIn == Direction.Axis.X ? Direction.WEST : Direction.SOUTH;
+        this.bottomLeft = this.func_242971_a(pos);
 
-   @Nullable
-   private BlockPos calculateBottomLeft(BlockPos p_242971_1_) {
-      for(int i = Math.max(0, p_242971_1_.getY() - 21); p_242971_1_.getY() > i && isEmpty(this.level.getBlockState(p_242971_1_.below())); p_242971_1_ = p_242971_1_.below()) {
-      }
+        if (this.bottomLeft == null)
+        {
+            this.bottomLeft = pos;
+            this.width = 1;
+            this.height = 1;
+        }
+        else
+        {
+            this.width = this.func_242974_d();
 
-      Direction direction = this.rightDir.getOpposite();
-      int j = this.getDistanceUntilEdgeAboveFrame(p_242971_1_, direction) - 1;
-      return j < 0 ? null : p_242971_1_.relative(direction, j);
-   }
-
-   private int calculateWidth() {
-      int i = this.getDistanceUntilEdgeAboveFrame(this.bottomLeft, this.rightDir);
-      return i >= 2 && i <= 21 ? i : 0;
-   }
-
-   private int getDistanceUntilEdgeAboveFrame(BlockPos p_242972_1_, Direction p_242972_2_) {
-      BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
-
-      for(int i = 0; i <= 21; ++i) {
-         blockpos$mutable.set(p_242972_1_).move(p_242972_2_, i);
-         BlockState blockstate = this.level.getBlockState(blockpos$mutable);
-         if (!isEmpty(blockstate)) {
-            if (FRAME.test(blockstate, this.level, blockpos$mutable)) {
-               return i;
+            if (this.width > 0)
+            {
+                this.height = this.func_242975_e();
             }
-            break;
-         }
+        }
+    }
 
-         BlockState blockstate1 = this.level.getBlockState(blockpos$mutable.move(Direction.DOWN));
-         if (!FRAME.test(blockstate1, this.level, blockpos$mutable)) {
-            break;
-         }
-      }
+    @Nullable
+    private BlockPos func_242971_a(BlockPos pos)
+    {
+        for (int i = Math.max(0, pos.getY() - 21); pos.getY() > i && canConnect(this.world.getBlockState(pos.down())); pos = pos.down())
+        {
+        }
 
-      return 0;
-   }
+        Direction direction = this.rightDir.getOpposite();
+        int j = this.func_242972_a(pos, direction) - 1;
+        return j < 0 ? null : pos.offset(direction, j);
+    }
 
-   private int calculateHeight() {
-      BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
-      int i = this.getDistanceUntilTop(blockpos$mutable);
-      return i >= 3 && i <= 21 && this.hasTopFrame(blockpos$mutable, i) ? i : 0;
-   }
+    private int func_242974_d()
+    {
+        int i = this.func_242972_a(this.bottomLeft, this.rightDir);
+        return i >= 2 && i <= 21 ? i : 0;
+    }
 
-   private boolean hasTopFrame(BlockPos.Mutable p_242970_1_, int p_242970_2_) {
-      for(int i = 0; i < this.width; ++i) {
-         BlockPos.Mutable blockpos$mutable = p_242970_1_.set(this.bottomLeft).move(Direction.UP, p_242970_2_).move(this.rightDir, i);
-         if (!FRAME.test(this.level.getBlockState(blockpos$mutable), this.level, blockpos$mutable)) {
-            return false;
-         }
-      }
+    private int func_242972_a(BlockPos pos, Direction direction)
+    {
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
-      return true;
-   }
+        for (int i = 0; i <= 21; ++i)
+        {
+            blockpos$mutable.setPos(pos).move(direction, i);
+            BlockState blockstate = this.world.getBlockState(blockpos$mutable);
 
-   private int getDistanceUntilTop(BlockPos.Mutable p_242969_1_) {
-      for(int i = 0; i < 21; ++i) {
-         p_242969_1_.set(this.bottomLeft).move(Direction.UP, i).move(this.rightDir, -1);
-         if (!FRAME.test(this.level.getBlockState(p_242969_1_), this.level, p_242969_1_)) {
-            return i;
-         }
+            if (!canConnect(blockstate))
+            {
+                if (POSITION_PREDICATE.test(blockstate, this.world, blockpos$mutable))
+                {
+                    return i;
+                }
 
-         p_242969_1_.set(this.bottomLeft).move(Direction.UP, i).move(this.rightDir, this.width);
-         if (!FRAME.test(this.level.getBlockState(p_242969_1_), this.level, p_242969_1_)) {
-            return i;
-         }
-
-         for(int j = 0; j < this.width; ++j) {
-            p_242969_1_.set(this.bottomLeft).move(Direction.UP, i).move(this.rightDir, j);
-            BlockState blockstate = this.level.getBlockState(p_242969_1_);
-            if (!isEmpty(blockstate)) {
-               return i;
+                break;
             }
 
-            if (blockstate.is(Blocks.NETHER_PORTAL)) {
-               ++this.numPortalBlocks;
+            BlockState blockstate1 = this.world.getBlockState(blockpos$mutable.move(Direction.DOWN));
+
+            if (!POSITION_PREDICATE.test(blockstate1, this.world, blockpos$mutable))
+            {
+                break;
             }
-         }
-      }
+        }
 
-      return 21;
-   }
+        return 0;
+    }
 
-   private static boolean isEmpty(BlockState p_196900_0_) {
-      return p_196900_0_.isAir() || p_196900_0_.is(BlockTags.FIRE) || p_196900_0_.is(Blocks.NETHER_PORTAL);
-   }
+    private int func_242975_e()
+    {
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+        int i = this.func_242969_a(blockpos$mutable);
+        return i >= 3 && i <= 21 && this.func_242970_a(blockpos$mutable, i) ? i : 0;
+    }
 
-   public boolean isValid() {
-      return this.bottomLeft != null && this.width >= 2 && this.width <= 21 && this.height >= 3 && this.height <= 21;
-   }
+    private boolean func_242970_a(BlockPos.Mutable mutablePos, int upDisplacement)
+    {
+        for (int i = 0; i < this.width; ++i)
+        {
+            BlockPos.Mutable blockpos$mutable = mutablePos.setPos(this.bottomLeft).move(Direction.UP, upDisplacement).move(this.rightDir, i);
 
-   public void createPortalBlocks() {
-      BlockState blockstate = Blocks.NETHER_PORTAL.defaultBlockState().setValue(NetherPortalBlock.AXIS, this.axis);
-      BlockPos.betweenClosed(this.bottomLeft, this.bottomLeft.relative(Direction.UP, this.height - 1).relative(this.rightDir, this.width - 1)).forEach((p_242967_2_) -> {
-         this.level.setBlock(p_242967_2_, blockstate, 18);
-      });
-   }
+            if (!POSITION_PREDICATE.test(this.world.getBlockState(blockpos$mutable), this.world, blockpos$mutable))
+            {
+                return false;
+            }
+        }
 
-   public boolean isComplete() {
-      return this.isValid() && this.numPortalBlocks == this.width * this.height;
-   }
+        return true;
+    }
 
-   public static Vector3d getRelativePosition(TeleportationRepositioner.Result p_242973_0_, Direction.Axis p_242973_1_, Vector3d p_242973_2_, EntitySize p_242973_3_) {
-      double d0 = (double)p_242973_0_.axis1Size - (double)p_242973_3_.width;
-      double d1 = (double)p_242973_0_.axis2Size - (double)p_242973_3_.height;
-      BlockPos blockpos = p_242973_0_.minCorner;
-      double d2;
-      if (d0 > 0.0D) {
-         float f = (float)blockpos.get(p_242973_1_) + p_242973_3_.width / 2.0F;
-         d2 = MathHelper.clamp(MathHelper.inverseLerp(p_242973_2_.get(p_242973_1_) - (double)f, 0.0D, d0), 0.0D, 1.0D);
-      } else {
-         d2 = 0.5D;
-      }
+    private int func_242969_a(BlockPos.Mutable mutablePos)
+    {
+        for (int i = 0; i < 21; ++i)
+        {
+            mutablePos.setPos(this.bottomLeft).move(Direction.UP, i).move(this.rightDir, -1);
 
-      double d4;
-      if (d1 > 0.0D) {
-         Direction.Axis direction$axis = Direction.Axis.Y;
-         d4 = MathHelper.clamp(MathHelper.inverseLerp(p_242973_2_.get(direction$axis) - (double)blockpos.get(direction$axis), 0.0D, d1), 0.0D, 1.0D);
-      } else {
-         d4 = 0.0D;
-      }
+            if (!POSITION_PREDICATE.test(this.world.getBlockState(mutablePos), this.world, mutablePos))
+            {
+                return i;
+            }
 
-      Direction.Axis direction$axis1 = p_242973_1_ == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
-      double d3 = p_242973_2_.get(direction$axis1) - ((double)blockpos.get(direction$axis1) + 0.5D);
-      return new Vector3d(d2, d4, d3);
-   }
+            mutablePos.setPos(this.bottomLeft).move(Direction.UP, i).move(this.rightDir, this.width);
 
-   public static PortalInfo createPortalInfo(ServerWorld p_242963_0_, TeleportationRepositioner.Result p_242963_1_, Direction.Axis p_242963_2_, Vector3d p_242963_3_, EntitySize p_242963_4_, Vector3d p_242963_5_, float p_242963_6_, float p_242963_7_) {
-      BlockPos blockpos = p_242963_1_.minCorner;
-      BlockState blockstate = p_242963_0_.getBlockState(blockpos);
-      Direction.Axis direction$axis = blockstate.getValue(BlockStateProperties.HORIZONTAL_AXIS);
-      double d0 = (double)p_242963_1_.axis1Size;
-      double d1 = (double)p_242963_1_.axis2Size;
-      int i = p_242963_2_ == direction$axis ? 0 : 90;
-      Vector3d vector3d = p_242963_2_ == direction$axis ? p_242963_5_ : new Vector3d(p_242963_5_.z, p_242963_5_.y, -p_242963_5_.x);
-      double d2 = (double)p_242963_4_.width / 2.0D + (d0 - (double)p_242963_4_.width) * p_242963_3_.x();
-      double d3 = (d1 - (double)p_242963_4_.height) * p_242963_3_.y();
-      double d4 = 0.5D + p_242963_3_.z();
-      boolean flag = direction$axis == Direction.Axis.X;
-      Vector3d vector3d1 = new Vector3d((double)blockpos.getX() + (flag ? d2 : d4), (double)blockpos.getY() + d3, (double)blockpos.getZ() + (flag ? d4 : d2));
-      return new PortalInfo(vector3d1, vector3d, p_242963_6_ + (float)i, p_242963_7_);
-   }
+            if (!POSITION_PREDICATE.test(this.world.getBlockState(mutablePos), this.world, mutablePos))
+            {
+                return i;
+            }
+
+            for (int j = 0; j < this.width; ++j)
+            {
+                mutablePos.setPos(this.bottomLeft).move(Direction.UP, i).move(this.rightDir, j);
+                BlockState blockstate = this.world.getBlockState(mutablePos);
+
+                if (!canConnect(blockstate))
+                {
+                    return i;
+                }
+
+                if (blockstate.isIn(Blocks.NETHER_PORTAL))
+                {
+                    ++this.portalBlockCount;
+                }
+            }
+        }
+
+        return 21;
+    }
+
+    private static boolean canConnect(BlockState state)
+    {
+        return state.isAir() || state.isIn(BlockTags.FIRE) || state.isIn(Blocks.NETHER_PORTAL);
+    }
+
+    public boolean isValid()
+    {
+        return this.bottomLeft != null && this.width >= 2 && this.width <= 21 && this.height >= 3 && this.height <= 21;
+    }
+
+    public void placePortalBlocks()
+    {
+        BlockState blockstate = Blocks.NETHER_PORTAL.getDefaultState().with(NetherPortalBlock.AXIS, this.axis);
+        BlockPos.getAllInBoxMutable(this.bottomLeft, this.bottomLeft.offset(Direction.UP, this.height - 1).offset(this.rightDir, this.width - 1)).forEach((pos) ->
+        {
+            this.world.setBlockState(pos, blockstate, 18);
+        });
+    }
+
+    public boolean validatePortal()
+    {
+        return this.isValid() && this.portalBlockCount == this.width * this.height;
+    }
+
+    public static Vector3d func_242973_a(TeleportationRepositioner.Result result, Direction.Axis axis, Vector3d positionVector, EntitySize size)
+    {
+        double d0 = (double)result.width - (double)size.width;
+        double d1 = (double)result.height - (double)size.height;
+        BlockPos blockpos = result.startPos;
+        double d2;
+
+        if (d0 > 0.0D)
+        {
+            float f = (float)blockpos.func_243648_a(axis) + size.width / 2.0F;
+            d2 = MathHelper.clamp(MathHelper.func_233020_c_(positionVector.getCoordinate(axis) - (double)f, 0.0D, d0), 0.0D, 1.0D);
+        }
+        else
+        {
+            d2 = 0.5D;
+        }
+
+        double d4;
+
+        if (d1 > 0.0D)
+        {
+            Direction.Axis direction$axis = Direction.Axis.Y;
+            d4 = MathHelper.clamp(MathHelper.func_233020_c_(positionVector.getCoordinate(direction$axis) - (double)blockpos.func_243648_a(direction$axis), 0.0D, d1), 0.0D, 1.0D);
+        }
+        else
+        {
+            d4 = 0.0D;
+        }
+
+        Direction.Axis direction$axis1 = axis == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
+        double d3 = positionVector.getCoordinate(direction$axis1) - ((double)blockpos.func_243648_a(direction$axis1) + 0.5D);
+        return new Vector3d(d2, d4, d3);
+    }
+
+    public static PortalInfo func_242963_a(ServerWorld world, TeleportationRepositioner.Result result, Direction.Axis axis, Vector3d offsetVector, EntitySize size, Vector3d motion, float rotationYaw, float rotationPitch)
+    {
+        BlockPos blockpos = result.startPos;
+        BlockState blockstate = world.getBlockState(blockpos);
+        Direction.Axis direction$axis = blockstate.get(BlockStateProperties.HORIZONTAL_AXIS);
+        double d0 = (double)result.width;
+        double d1 = (double)result.height;
+        int i = axis == direction$axis ? 0 : 90;
+        Vector3d vector3d = axis == direction$axis ? motion : new Vector3d(motion.z, motion.y, -motion.x);
+        double d2 = (double)size.width / 2.0D + (d0 - (double)size.width) * offsetVector.getX();
+        double d3 = (d1 - (double)size.height) * offsetVector.getY();
+        double d4 = 0.5D + offsetVector.getZ();
+        boolean flag = direction$axis == Direction.Axis.X;
+        Vector3d vector3d1 = new Vector3d((double)blockpos.getX() + (flag ? d2 : d4), (double)blockpos.getY() + d3, (double)blockpos.getZ() + (flag ? d4 : d2));
+        return new PortalInfo(vector3d1, vector3d, rotationYaw + (float)i, rotationPitch);
+    }
 }

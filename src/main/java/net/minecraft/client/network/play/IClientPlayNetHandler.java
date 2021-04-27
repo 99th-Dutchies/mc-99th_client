@@ -91,182 +91,331 @@ import net.minecraft.network.play.server.SWindowPropertyPacket;
 import net.minecraft.network.play.server.SWorldBorderPacket;
 import net.minecraft.network.play.server.SWorldSpawnChangedPacket;
 
-public interface IClientPlayNetHandler extends INetHandler {
-   void handleAddEntity(SSpawnObjectPacket p_147235_1_);
+public interface IClientPlayNetHandler extends INetHandler
+{
+    /**
+     * Spawns an instance of the objecttype indicated by the packet and sets its position and momentum
+     */
+    void handleSpawnObject(SSpawnObjectPacket packetIn);
+
+    /**
+     * Spawns an experience orb and sets its value (amount of XP)
+     */
+    void handleSpawnExperienceOrb(SSpawnExperienceOrbPacket packetIn);
+
+    /**
+     * Spawns the mob entity at the specified location, with the specified rotation, momentum and type. Updates the
+     * entities Datawatchers with the entity metadata specified in the packet
+     */
+    void handleSpawnMob(SSpawnMobPacket packetIn);
+
+    /**
+     * May create a scoreboard objective, remove an objective from the scoreboard or update an objectives' displayname
+     */
+    void handleScoreboardObjective(SScoreboardObjectivePacket packetIn);
+
+    /**
+     * Handles the spawning of a painting object
+     */
+    void handleSpawnPainting(SSpawnPaintingPacket packetIn);
+
+    /**
+     * Handles the creation of a nearby player entity, sets the position and held item
+     */
+    void handleSpawnPlayer(SSpawnPlayerPacket packetIn);
+
+    /**
+     * Renders a specified animation: Waking up a player, a living entity swinging its currently held item, being hurt
+     * or receiving a critical hit by normal or magical means
+     */
+    void handleAnimation(SAnimateHandPacket packetIn);
+
+    /**
+     * Updates the players statistics or achievements
+     */
+    void handleStatistics(SStatisticsPacket packetIn);
+
+    void handleRecipeBook(SRecipeBookPacket packetIn);
+
+    /**
+     * Updates all registered IWorldAccess instances with destroyBlockInWorldPartially
+     */
+    void handleBlockBreakAnim(SAnimateBlockBreakPacket packetIn);
+
+    /**
+     * Creates a sign in the specified location if it didn't exist and opens the GUI to edit its text
+     */
+    void handleSignEditorOpen(SOpenSignMenuPacket packetIn);
+
+    /**
+     * Updates the NBTTagCompound metadata of instances of the following entitytypes: Mob spawners, command blocks,
+     * beacons, skulls, flowerpot
+     */
+    void handleUpdateTileEntity(SUpdateTileEntityPacket packetIn);
+
+    /**
+     * Triggers Block.onBlockEventReceived, which is implemented in BlockPistonBase for extension/retraction, BlockNote
+     * for setting the instrument (including audiovisual feedback) and in BlockContainer to set the number of players
+     * accessing a (Ender)Chest
+     */
+    void handleBlockAction(SBlockActionPacket packetIn);
+
+    /**
+     * Updates the block and metadata and generates a blockupdate (and notify the clients)
+     */
+    void handleBlockChange(SChangeBlockPacket packetIn);
+
+    /**
+     * Prints a chatmessage in the chat GUI
+     */
+    void handleChat(SChatPacket packetIn);
+
+    /**
+     * Received from the servers PlayerManager if between 1 and 64 blocks in a chunk are changed. If only one block
+     * requires an update, the server sends S23PacketBlockChange and if 64 or more blocks are changed, the server sends
+     * S21PacketChunkData
+     */
+    void handleMultiBlockChange(SMultiBlockChangePacket packetIn);
+
+    /**
+     * Updates the worlds MapStorage with the specified MapData for the specified map-identifier and invokes a
+     * MapItemRenderer for it
+     */
+    void handleMaps(SMapDataPacket packetIn);
+
+    /**
+     * Verifies that the server and client are synchronized with respect to the inventory/container opened by the player
+     * and confirms if it is the case.
+     */
+    void handleConfirmTransaction(SConfirmTransactionPacket packetIn);
+
+    /**
+     * Resets the ItemStack held in hand and closes the window that is opened
+     */
+    void handleCloseWindow(SCloseWindowPacket packetIn);
+
+    /**
+     * Handles the placement of a specified ItemStack in a specified container/inventory slot
+     */
+    void handleWindowItems(SWindowItemsPacket packetIn);
+
+    void handleOpenHorseWindow(SOpenHorseWindowPacket packetIn);
+
+    /**
+     * Sets the progressbar of the opened window to the specified value
+     */
+    void handleWindowProperty(SWindowPropertyPacket packetIn);
+
+    /**
+     * Handles pickin up an ItemStack or dropping one in your inventory or an open (non-creative) container
+     */
+    void handleSetSlot(SSetSlotPacket packetIn);
+
+    /**
+     * Handles packets that have room for a channel specification. Vanilla implemented channels are "MC|TrList" to
+     * acquire a MerchantRecipeList trades for a villager merchant, "MC|Brand" which sets the server brand? on the
+     * player instance and finally "MC|RPack" which the server uses to communicate the identifier of the default server
+     * resourcepack for the client to load.
+     */
+    void handleCustomPayload(SCustomPayloadPlayPacket packetIn);
+
+    /**
+     * Closes the network channel
+     */
+    void handleDisconnect(SDisconnectPacket packetIn);
+
+    /**
+     * Invokes the entities' handleUpdateHealth method which is implemented in LivingBase (hurt/death),
+     * MinecartMobSpawner (spawn delay), FireworkRocket & MinecartTNT (explosion), IronGolem (throwing,...), Witch
+     * (spawn particles), Zombie (villager transformation), Animal (breeding mode particles), Horse (breeding/smoke
+     * particles), Sheep (...), Tameable (...), Villager (particles for breeding mode, angry and happy), Wolf (...)
+     */
+    void handleEntityStatus(SEntityStatusPacket packetIn);
+
+    void handleEntityAttach(SMountEntityPacket packetIn);
+
+    void handleSetPassengers(SSetPassengersPacket packetIn);
+
+    /**
+     * Initiates a new explosion (sound, particles, drop spawn) for the affected blocks indicated by the packet.
+     */
+    void handleExplosion(SExplosionPacket packetIn);
+
+    void handleChangeGameState(SChangeGameStatePacket packetIn);
 
-   void handleAddExperienceOrb(SSpawnExperienceOrbPacket p_147286_1_);
+    void handleKeepAlive(SKeepAlivePacket packetIn);
 
-   void handleAddMob(SSpawnMobPacket p_147281_1_);
+    /**
+     * Updates the specified chunk with the supplied data, marks it for re-rendering and lighting recalculation
+     */
+    void handleChunkData(SChunkDataPacket packetIn);
 
-   void handleAddObjective(SScoreboardObjectivePacket p_147291_1_);
+    void processChunkUnload(SUnloadChunkPacket packetIn);
 
-   void handleAddPainting(SSpawnPaintingPacket p_147288_1_);
+    void handleEffect(SPlaySoundEventPacket packetIn);
 
-   void handleAddPlayer(SSpawnPlayerPacket p_147237_1_);
+    /**
+     * Registers some server properties (gametype,hardcore-mode,terraintype,difficulty,player limit), creates a new
+     * WorldClient and sets the player initial dimension
+     */
+    void handleJoinGame(SJoinGamePacket packetIn);
 
-   void handleAnimate(SAnimateHandPacket p_147279_1_);
+    /**
+     * Updates the specified entity's position by the specified relative moment and absolute rotation. Note that
+     * subclassing of the packet allows for the specification of a subset of this data (e.g. only rel. position, abs.
+     * rotation or both).
+     */
+    void handleEntityMovement(SEntityPacket packetIn);
 
-   void handleAwardStats(SStatisticsPacket p_147293_1_);
+    void handlePlayerPosLook(SPlayerPositionLookPacket packetIn);
 
-   void handleAddOrRemoveRecipes(SRecipeBookPacket p_191980_1_);
+    /**
+     * Spawns a specified number of particles at the specified location with a randomized displacement according to
+     * specified bounds
+     */
+    void handleParticles(SSpawnParticlePacket packetIn);
 
-   void handleBlockDestruction(SAnimateBlockBreakPacket p_147294_1_);
+    void handlePlayerAbilities(SPlayerAbilitiesPacket packetIn);
 
-   void handleOpenSignEditor(SOpenSignMenuPacket p_147268_1_);
+    void handlePlayerListItem(SPlayerListItemPacket packetIn);
 
-   void handleBlockEntityData(SUpdateTileEntityPacket p_147273_1_);
+    /**
+     * Locally eliminates the entities. Invoked by the server when the items are in fact destroyed, or the player is no
+     * longer registered as required to monitor them. The latter  happens when distance between the player and item
+     * increases beyond a certain treshold (typically the viewing distance)
+     */
+    void handleDestroyEntities(SDestroyEntitiesPacket packetIn);
 
-   void handleBlockEvent(SBlockActionPacket p_147261_1_);
+    void handleRemoveEntityEffect(SRemoveEntityEffectPacket packetIn);
 
-   void handleBlockUpdate(SChangeBlockPacket p_147234_1_);
+    void handleRespawn(SRespawnPacket packetIn);
 
-   void handleChat(SChatPacket p_147251_1_);
+    /**
+     * Updates the direction in which the specified entity is looking, normally this head rotation is independent of the
+     * rotation of the entity itself
+     */
+    void handleEntityHeadLook(SEntityHeadLookPacket packetIn);
 
-   void handleChunkBlocksUpdate(SMultiBlockChangePacket p_147287_1_);
+    /**
+     * Updates which hotbar slot of the player is currently selected
+     */
+    void handleHeldItemChange(SHeldItemChangePacket packetIn);
 
-   void handleMapItemData(SMapDataPacket p_147264_1_);
+    /**
+     * Removes or sets the ScoreObjective to be displayed at a particular scoreboard position (list, sidebar, below
+     * name)
+     */
+    void handleDisplayObjective(SDisplayObjectivePacket packetIn);
 
-   void handleContainerAck(SConfirmTransactionPacket p_147239_1_);
+    /**
+     * Invoked when the server registers new proximate objects in your watchlist or when objects in your watchlist have
+     * changed -> Registers any changes locally
+     */
+    void handleEntityMetadata(SEntityMetadataPacket packetIn);
 
-   void handleContainerClose(SCloseWindowPacket p_147276_1_);
+    /**
+     * Sets the velocity of the specified entity to the specified value
+     */
+    void handleEntityVelocity(SEntityVelocityPacket packetIn);
 
-   void handleContainerContent(SWindowItemsPacket p_147241_1_);
+    void handleEntityEquipment(SEntityEquipmentPacket packetIn);
 
-   void handleHorseScreenOpen(SOpenHorseWindowPacket p_217271_1_);
+    void handleSetExperience(SSetExperiencePacket packetIn);
 
-   void handleContainerSetData(SWindowPropertyPacket p_147245_1_);
+    void handleUpdateHealth(SUpdateHealthPacket packetIn);
 
-   void handleContainerSetSlot(SSetSlotPacket p_147266_1_);
+    /**
+     * Updates a team managed by the scoreboard: Create/Remove the team registration, Register/Remove the player-team-
+     * memberships, Set team displayname/prefix/suffix and/or whether friendly fire is enabled
+     */
+    void handleTeams(STeamsPacket packetIn);
 
-   void handleCustomPayload(SCustomPayloadPlayPacket p_147240_1_);
+    /**
+     * Either updates the score with a specified value or removes the score for an objective
+     */
+    void handleUpdateScore(SUpdateScorePacket packetIn);
 
-   void handleDisconnect(SDisconnectPacket p_147253_1_);
+    void func_230488_a_(SWorldSpawnChangedPacket p_230488_1_);
 
-   void handleEntityEvent(SEntityStatusPacket p_147236_1_);
+    void handleTimeUpdate(SUpdateTimePacket packetIn);
 
-   void handleEntityLinkPacket(SMountEntityPacket p_147243_1_);
+    void handleSoundEffect(SPlaySoundEffectPacket packetIn);
 
-   void handleSetEntityPassengersPacket(SSetPassengersPacket p_184328_1_);
+    void handleSpawnMovingSoundEffect(SSpawnMovingSoundEffectPacket packetIn);
 
-   void handleExplosion(SExplosionPacket p_147283_1_);
+    void handleCustomSound(SPlaySoundPacket packetIn);
 
-   void handleGameEvent(SChangeGameStatePacket p_147252_1_);
+    void handleCollectItem(SCollectItemPacket packetIn);
 
-   void handleKeepAlive(SKeepAlivePacket p_147272_1_);
+    /**
+     * Updates an entity's position and rotation as specified by the packet
+     */
+    void handleEntityTeleport(SEntityTeleportPacket packetIn);
 
-   void handleLevelChunk(SChunkDataPacket p_147263_1_);
+    /**
+     * Updates en entity's attributes and their respective modifiers, which are used for speed bonusses (player
+     * sprinting, animals fleeing, baby speed), weapon/tool attackDamage, hostiles followRange randomization, zombie
+     * maxHealth and knockback resistance as well as reinforcement spawning chance.
+     */
+    void handleEntityProperties(SEntityPropertiesPacket packetIn);
 
-   void handleForgetLevelChunk(SUnloadChunkPacket p_184326_1_);
+    void handleEntityEffect(SPlayEntityEffectPacket packetIn);
 
-   void handleLevelEvent(SPlaySoundEventPacket p_147277_1_);
+    void handleTags(STagsListPacket packetIn);
 
-   void handleLogin(SJoinGamePacket p_147282_1_);
+    void handleCombatEvent(SCombatPacket packetIn);
 
-   void handleMoveEntity(SEntityPacket p_147259_1_);
+    void handleServerDifficulty(SServerDifficultyPacket packetIn);
 
-   void handleMovePlayer(SPlayerPositionLookPacket p_184330_1_);
+    void handleCamera(SCameraPacket packetIn);
 
-   void handleParticleEvent(SSpawnParticlePacket p_147289_1_);
+    void handleWorldBorder(SWorldBorderPacket packetIn);
 
-   void handlePlayerAbilities(SPlayerAbilitiesPacket p_147270_1_);
+    void handleTitle(STitlePacket packetIn);
 
-   void handlePlayerInfo(SPlayerListItemPacket p_147256_1_);
+    void handlePlayerListHeaderFooter(SPlayerListHeaderFooterPacket packetIn);
 
-   void handleRemoveEntity(SDestroyEntitiesPacket p_147238_1_);
+    void handleResourcePack(SSendResourcePackPacket packetIn);
 
-   void handleRemoveMobEffect(SRemoveEntityEffectPacket p_147262_1_);
+    void handleUpdateBossInfo(SUpdateBossInfoPacket packetIn);
 
-   void handleRespawn(SRespawnPacket p_147280_1_);
+    void handleCooldown(SCooldownPacket packetIn);
 
-   void handleRotateMob(SEntityHeadLookPacket p_147267_1_);
+    void handleMoveVehicle(SMoveVehiclePacket packetIn);
 
-   void handleSetCarriedItem(SHeldItemChangePacket p_147257_1_);
+    void handleAdvancementInfo(SAdvancementInfoPacket packetIn);
 
-   void handleSetDisplayObjective(SDisplayObjectivePacket p_147254_1_);
+    void handleSelectAdvancementsTab(SSelectAdvancementsTabPacket packetIn);
 
-   void handleSetEntityData(SEntityMetadataPacket p_147284_1_);
+    void handlePlaceGhostRecipe(SPlaceGhostRecipePacket packetIn);
 
-   void handleSetEntityMotion(SEntityVelocityPacket p_147244_1_);
+    void handleCommandList(SCommandListPacket packetIn);
 
-   void handleSetEquipment(SEntityEquipmentPacket p_147242_1_);
+    void handleStopSound(SStopSoundPacket packetIn);
 
-   void handleSetExperience(SSetExperiencePacket p_147295_1_);
+    /**
+     * This method is only called for manual tab-completion (the {@link
+     * net.minecraft.command.arguments.SuggestionProviders#ASK_SERVER minecraft:ask_server} suggestion provider).
+     */
+    void handleTabComplete(STabCompletePacket packetIn);
 
-   void handleSetHealth(SUpdateHealthPacket p_147249_1_);
+    void handleUpdateRecipes(SUpdateRecipesPacket packetIn);
 
-   void handleSetPlayerTeamPacket(STeamsPacket p_147247_1_);
+    void handlePlayerLook(SPlayerLookPacket packetIn);
 
-   void handleSetScore(SUpdateScorePacket p_147250_1_);
+    void handleNBTQueryResponse(SQueryNBTResponsePacket packetIn);
 
-   void handleSetSpawn(SWorldSpawnChangedPacket p_230488_1_);
+    void handleUpdateLight(SUpdateLightPacket packetIn);
 
-   void handleSetTime(SUpdateTimePacket p_147285_1_);
+    void handleOpenBookPacket(SOpenBookWindowPacket packetIn);
 
-   void handleSoundEvent(SPlaySoundEffectPacket p_184327_1_);
+    void handleOpenWindowPacket(SOpenWindowPacket packetIn);
 
-   void handleSoundEntityEvent(SSpawnMovingSoundEffectPacket p_217266_1_);
+    void handleMerchantOffers(SMerchantOffersPacket packetIn);
 
-   void handleCustomSoundEvent(SPlaySoundPacket p_184329_1_);
+    void handleUpdateViewDistancePacket(SUpdateViewDistancePacket packetIn);
 
-   void handleTakeItemEntity(SCollectItemPacket p_147246_1_);
+    void handleChunkPositionPacket(SUpdateChunkPositionPacket packetIn);
 
-   void handleTeleportEntity(SEntityTeleportPacket p_147275_1_);
-
-   void handleUpdateAttributes(SEntityPropertiesPacket p_147290_1_);
-
-   void handleUpdateMobEffect(SPlayEntityEffectPacket p_147260_1_);
-
-   void handleUpdateTags(STagsListPacket p_199723_1_);
-
-   void handlePlayerCombat(SCombatPacket p_175098_1_);
-
-   void handleChangeDifficulty(SServerDifficultyPacket p_175101_1_);
-
-   void handleSetCamera(SCameraPacket p_175094_1_);
-
-   void handleSetBorder(SWorldBorderPacket p_175093_1_);
-
-   void handleSetTitles(STitlePacket p_175099_1_);
-
-   void handleTabListCustomisation(SPlayerListHeaderFooterPacket p_175096_1_);
-
-   void handleResourcePack(SSendResourcePackPacket p_175095_1_);
-
-   void handleBossUpdate(SUpdateBossInfoPacket p_184325_1_);
-
-   void handleItemCooldown(SCooldownPacket p_184324_1_);
-
-   void handleMoveVehicle(SMoveVehiclePacket p_184323_1_);
-
-   void handleUpdateAdvancementsPacket(SAdvancementInfoPacket p_191981_1_);
-
-   void handleSelectAdvancementsTab(SSelectAdvancementsTabPacket p_194022_1_);
-
-   void handlePlaceRecipe(SPlaceGhostRecipePacket p_194307_1_);
-
-   void handleCommands(SCommandListPacket p_195511_1_);
-
-   void handleStopSoundEvent(SStopSoundPacket p_195512_1_);
-
-   void handleCommandSuggestions(STabCompletePacket p_195510_1_);
-
-   void handleUpdateRecipes(SUpdateRecipesPacket p_199525_1_);
-
-   void handleLookAt(SPlayerLookPacket p_200232_1_);
-
-   void handleTagQueryPacket(SQueryNBTResponsePacket p_211522_1_);
-
-   void handleLightUpdatePacked(SUpdateLightPacket p_217269_1_);
-
-   void handleOpenBook(SOpenBookWindowPacket p_217268_1_);
-
-   void handleOpenScreen(SOpenWindowPacket p_217272_1_);
-
-   void handleMerchantOffers(SMerchantOffersPacket p_217273_1_);
-
-   void handleSetChunkCacheRadius(SUpdateViewDistancePacket p_217270_1_);
-
-   void handleSetChunkCacheCenter(SUpdateChunkPositionPacket p_217267_1_);
-
-   void handleBlockBreakAck(SPlayerDiggingPacket p_225312_1_);
+    void handleAcknowledgePlayerDigging(SPlayerDiggingPacket packetIn);
 }

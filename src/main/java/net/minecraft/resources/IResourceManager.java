@@ -10,53 +10,52 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IResourceManager {
-   @OnlyIn(Dist.CLIENT)
-   Set<String> getNamespaces();
+public interface IResourceManager
+{
+    Set<String> getResourceNamespaces();
 
-   IResource getResource(ResourceLocation p_199002_1_) throws IOException;
+    IResource getResource(ResourceLocation resourceLocationIn) throws IOException;
 
-   @OnlyIn(Dist.CLIENT)
-   boolean hasResource(ResourceLocation p_219533_1_);
+    boolean hasResource(ResourceLocation path);
 
-   List<IResource> getResources(ResourceLocation p_199004_1_) throws IOException;
+    List<IResource> getAllResources(ResourceLocation resourceLocationIn) throws IOException;
 
-   Collection<ResourceLocation> listResources(String p_199003_1_, Predicate<String> p_199003_2_);
+    Collection<ResourceLocation> getAllResourceLocations(String pathIn, Predicate<String> filter);
 
-   @OnlyIn(Dist.CLIENT)
-   Stream<IResourcePack> listPacks();
+    Stream<IResourcePack> getResourcePackStream();
 
-   public static enum Instance implements IResourceManager {
-      INSTANCE;
+    public static enum Instance implements IResourceManager
+    {
+        INSTANCE;
 
-      @OnlyIn(Dist.CLIENT)
-      public Set<String> getNamespaces() {
-         return ImmutableSet.of();
-      }
+        public Set<String> getResourceNamespaces()
+        {
+            return ImmutableSet.of();
+        }
 
-      public IResource getResource(ResourceLocation p_199002_1_) throws IOException {
-         throw new FileNotFoundException(p_199002_1_.toString());
-      }
+        public IResource getResource(ResourceLocation resourceLocationIn) throws IOException {
+            throw new FileNotFoundException(resourceLocationIn.toString());
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public boolean hasResource(ResourceLocation p_219533_1_) {
-         return false;
-      }
+        public boolean hasResource(ResourceLocation path)
+        {
+            return false;
+        }
 
-      public List<IResource> getResources(ResourceLocation p_199004_1_) {
-         return ImmutableList.of();
-      }
+        public List<IResource> getAllResources(ResourceLocation resourceLocationIn)
+        {
+            return ImmutableList.of();
+        }
 
-      public Collection<ResourceLocation> listResources(String p_199003_1_, Predicate<String> p_199003_2_) {
-         return ImmutableSet.of();
-      }
+        public Collection<ResourceLocation> getAllResourceLocations(String pathIn, Predicate<String> filter)
+        {
+            return ImmutableSet.of();
+        }
 
-      @OnlyIn(Dist.CLIENT)
-      public Stream<IResourcePack> listPacks() {
-         return Stream.of();
-      }
-   }
+        public Stream<IResourcePack> getResourcePackStream()
+        {
+            return Stream.of();
+        }
+    }
 }

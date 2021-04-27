@@ -14,44 +14,66 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
-public class BeaconBlock extends ContainerBlock implements IBeaconBeamColorProvider {
-   public BeaconBlock(AbstractBlock.Properties p_i48443_1_) {
-      super(p_i48443_1_);
-   }
+public class BeaconBlock extends ContainerBlock implements IBeaconBeamColorProvider
+{
+    public BeaconBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public DyeColor getColor() {
-      return DyeColor.WHITE;
-   }
+    public DyeColor getColor()
+    {
+        return DyeColor.WHITE;
+    }
 
-   public TileEntity newBlockEntity(IBlockReader p_196283_1_) {
-      return new BeaconTileEntity();
-   }
+    public TileEntity createNewTileEntity(IBlockReader worldIn)
+    {
+        return new BeaconTileEntity();
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         return ActionResultType.SUCCESS;
-      } else {
-         TileEntity tileentity = p_225533_2_.getBlockEntity(p_225533_3_);
-         if (tileentity instanceof BeaconTileEntity) {
-            p_225533_4_.openMenu((BeaconTileEntity)tileentity);
-            p_225533_4_.awardStat(Stats.INTERACT_WITH_BEACON);
-         }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-         return ActionResultType.CONSUME;
-      }
-   }
+            if (tileentity instanceof BeaconTileEntity)
+            {
+                player.openContainer((BeaconTileEntity)tileentity);
+                player.addStat(Stats.INTERACT_WITH_BEACON);
+            }
 
-   public BlockRenderType getRenderShape(BlockState p_149645_1_) {
-      return BlockRenderType.MODEL;
-   }
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   public void setPlacedBy(World p_180633_1_, BlockPos p_180633_2_, BlockState p_180633_3_, LivingEntity p_180633_4_, ItemStack p_180633_5_) {
-      if (p_180633_5_.hasCustomHoverName()) {
-         TileEntity tileentity = p_180633_1_.getBlockEntity(p_180633_2_);
-         if (tileentity instanceof BeaconTileEntity) {
-            ((BeaconTileEntity)tileentity).setCustomName(p_180633_5_.getHoverName());
-         }
-      }
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
+    public BlockRenderType getRenderType(BlockState state)
+    {
+        return BlockRenderType.MODEL;
+    }
 
-   }
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
+    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack)
+    {
+        if (stack.hasDisplayName())
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
+
+            if (tileentity instanceof BeaconTileEntity)
+            {
+                ((BeaconTileEntity)tileentity).setCustomName(stack.getDisplayName());
+            }
+        }
+    }
 }

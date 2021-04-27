@@ -8,48 +8,71 @@ import net.minecraft.util.SharedConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class WorldSavedData {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final String id;
-   private boolean dirty;
+public abstract class WorldSavedData
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final String name;
+    private boolean dirty;
 
-   public WorldSavedData(String p_i2141_1_) {
-      this.id = p_i2141_1_;
-   }
+    public WorldSavedData(String name)
+    {
+        this.name = name;
+    }
 
-   public abstract void load(CompoundNBT p_76184_1_);
+    /**
+     * reads in data from the NBTTagCompound into this MapDataBase
+     */
+    public abstract void read(CompoundNBT nbt);
 
-   public abstract CompoundNBT save(CompoundNBT p_189551_1_);
+    public abstract CompoundNBT write(CompoundNBT compound);
 
-   public void setDirty() {
-      this.setDirty(true);
-   }
+    /**
+     * Marks this MapDataBase dirty, to be saved to disk when the level next saves.
+     */
+    public void markDirty()
+    {
+        this.setDirty(true);
+    }
 
-   public void setDirty(boolean p_76186_1_) {
-      this.dirty = p_76186_1_;
-   }
+    /**
+     * Sets the dirty state of this MapDataBase, whether it needs saving to disk.
+     */
+    public void setDirty(boolean isDirty)
+    {
+        this.dirty = isDirty;
+    }
 
-   public boolean isDirty() {
-      return this.dirty;
-   }
+    /**
+     * Whether this MapDataBase needs saving to disk.
+     */
+    public boolean isDirty()
+    {
+        return this.dirty;
+    }
 
-   public String getId() {
-      return this.id;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   public void save(File p_215158_1_) {
-      if (this.isDirty()) {
-         CompoundNBT compoundnbt = new CompoundNBT();
-         compoundnbt.put("data", this.save(new CompoundNBT()));
-         compoundnbt.putInt("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
+    public void save(File fileIn)
+    {
+        if (this.isDirty())
+        {
+            CompoundNBT compoundnbt = new CompoundNBT();
+            compoundnbt.put("data", this.write(new CompoundNBT()));
+            compoundnbt.putInt("DataVersion", SharedConstants.getVersion().getWorldVersion());
 
-         try {
-            CompressedStreamTools.writeCompressed(compoundnbt, p_215158_1_);
-         } catch (IOException ioexception) {
-            LOGGER.error("Could not save data {}", this, ioexception);
-         }
+            try
+            {
+                CompressedStreamTools.writeCompressed(compoundnbt, fileIn);
+            }
+            catch (IOException ioexception)
+            {
+                LOGGER.error("Could not save data {}", this, ioexception);
+            }
 
-         this.setDirty(false);
-      }
-   }
+            this.setDirty(false);
+        }
+    }
 }

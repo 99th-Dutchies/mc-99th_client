@@ -13,128 +13,193 @@ import net.minecraft.pathfinding.WalkNodeProcessor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 
-public class FollowOwnerGoal extends Goal {
-   private final TameableEntity tamable;
-   private LivingEntity owner;
-   private final IWorldReader level;
-   private final double speedModifier;
-   private final PathNavigator navigation;
-   private int timeToRecalcPath;
-   private final float stopDistance;
-   private final float startDistance;
-   private float oldWaterCost;
-   private final boolean canFly;
+public class FollowOwnerGoal extends Goal
+{
+    private final TameableEntity tameable;
+    private LivingEntity owner;
+    private final IWorldReader world;
+    private final double followSpeed;
+    private final PathNavigator navigator;
+    private int timeToRecalcPath;
+    private final float maxDist;
+    private final float minDist;
+    private float oldWaterCost;
+    private final boolean teleportToLeaves;
 
-   public FollowOwnerGoal(TameableEntity p_i225711_1_, double p_i225711_2_, float p_i225711_4_, float p_i225711_5_, boolean p_i225711_6_) {
-      this.tamable = p_i225711_1_;
-      this.level = p_i225711_1_.level;
-      this.speedModifier = p_i225711_2_;
-      this.navigation = p_i225711_1_.getNavigation();
-      this.startDistance = p_i225711_4_;
-      this.stopDistance = p_i225711_5_;
-      this.canFly = p_i225711_6_;
-      this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-      if (!(p_i225711_1_.getNavigation() instanceof GroundPathNavigator) && !(p_i225711_1_.getNavigation() instanceof FlyingPathNavigator)) {
-         throw new IllegalArgumentException("Unsupported mob type for FollowOwnerGoal");
-      }
-   }
+    public FollowOwnerGoal(TameableEntity tameable, double speed, float minDist, float maxDist, boolean teleportToLeaves)
+    {
+        this.tameable = tameable;
+        this.world = tameable.world;
+        this.followSpeed = speed;
+        this.navigator = tameable.getNavigator();
+        this.minDist = minDist;
+        this.maxDist = maxDist;
+        this.teleportToLeaves = teleportToLeaves;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
 
-   public boolean canUse() {
-      LivingEntity livingentity = this.tamable.getOwner();
-      if (livingentity == null) {
-         return false;
-      } else if (livingentity.isSpectator()) {
-         return false;
-      } else if (this.tamable.isOrderedToSit()) {
-         return false;
-      } else if (this.tamable.distanceToSqr(livingentity) < (double)(this.startDistance * this.startDistance)) {
-         return false;
-      } else {
-         this.owner = livingentity;
-         return true;
-      }
-   }
+        if (!(tameable.getNavigator() instanceof GroundPathNavigator) && !(tameable.getNavigator() instanceof FlyingPathNavigator))
+        {
+            throw new IllegalArgumentException("Unsupported mob type for FollowOwnerGoal");
+        }
+    }
 
-   public boolean canContinueToUse() {
-      if (this.navigation.isDone()) {
-         return false;
-      } else if (this.tamable.isOrderedToSit()) {
-         return false;
-      } else {
-         return !(this.tamable.distanceToSqr(this.owner) <= (double)(this.stopDistance * this.stopDistance));
-      }
-   }
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        LivingEntity livingentity = this.tameable.getOwner();
 
-   public void start() {
-      this.timeToRecalcPath = 0;
-      this.oldWaterCost = this.tamable.getPathfindingMalus(PathNodeType.WATER);
-      this.tamable.setPathfindingMalus(PathNodeType.WATER, 0.0F);
-   }
-
-   public void stop() {
-      this.owner = null;
-      this.navigation.stop();
-      this.tamable.setPathfindingMalus(PathNodeType.WATER, this.oldWaterCost);
-   }
-
-   public void tick() {
-      this.tamable.getLookControl().setLookAt(this.owner, 10.0F, (float)this.tamable.getMaxHeadXRot());
-      if (--this.timeToRecalcPath <= 0) {
-         this.timeToRecalcPath = 10;
-         if (!this.tamable.isLeashed() && !this.tamable.isPassenger()) {
-            if (this.tamable.distanceToSqr(this.owner) >= 144.0D) {
-               this.teleportToOwner();
-            } else {
-               this.navigation.moveTo(this.owner, this.speedModifier);
-            }
-
-         }
-      }
-   }
-
-   private void teleportToOwner() {
-      BlockPos blockpos = this.owner.blockPosition();
-
-      for(int i = 0; i < 10; ++i) {
-         int j = this.randomIntInclusive(-3, 3);
-         int k = this.randomIntInclusive(-1, 1);
-         int l = this.randomIntInclusive(-3, 3);
-         boolean flag = this.maybeTeleportTo(blockpos.getX() + j, blockpos.getY() + k, blockpos.getZ() + l);
-         if (flag) {
-            return;
-         }
-      }
-
-   }
-
-   private boolean maybeTeleportTo(int p_226328_1_, int p_226328_2_, int p_226328_3_) {
-      if (Math.abs((double)p_226328_1_ - this.owner.getX()) < 2.0D && Math.abs((double)p_226328_3_ - this.owner.getZ()) < 2.0D) {
-         return false;
-      } else if (!this.canTeleportTo(new BlockPos(p_226328_1_, p_226328_2_, p_226328_3_))) {
-         return false;
-      } else {
-         this.tamable.moveTo((double)p_226328_1_ + 0.5D, (double)p_226328_2_, (double)p_226328_3_ + 0.5D, this.tamable.yRot, this.tamable.xRot);
-         this.navigation.stop();
-         return true;
-      }
-   }
-
-   private boolean canTeleportTo(BlockPos p_226329_1_) {
-      PathNodeType pathnodetype = WalkNodeProcessor.getBlockPathTypeStatic(this.level, p_226329_1_.mutable());
-      if (pathnodetype != PathNodeType.WALKABLE) {
-         return false;
-      } else {
-         BlockState blockstate = this.level.getBlockState(p_226329_1_.below());
-         if (!this.canFly && blockstate.getBlock() instanceof LeavesBlock) {
+        if (livingentity == null)
+        {
             return false;
-         } else {
-            BlockPos blockpos = p_226329_1_.subtract(this.tamable.blockPosition());
-            return this.level.noCollision(this.tamable, this.tamable.getBoundingBox().move(blockpos));
-         }
-      }
-   }
+        }
+        else if (livingentity.isSpectator())
+        {
+            return false;
+        }
+        else if (this.tameable.isSitting())
+        {
+            return false;
+        }
+        else if (this.tameable.getDistanceSq(livingentity) < (double)(this.minDist * this.minDist))
+        {
+            return false;
+        }
+        else
+        {
+            this.owner = livingentity;
+            return true;
+        }
+    }
 
-   private int randomIntInclusive(int p_226327_1_, int p_226327_2_) {
-      return this.tamable.getRandom().nextInt(p_226327_2_ - p_226327_1_ + 1) + p_226327_1_;
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        if (this.navigator.noPath())
+        {
+            return false;
+        }
+        else if (this.tameable.isSitting())
+        {
+            return false;
+        }
+        else
+        {
+            return !(this.tameable.getDistanceSq(this.owner) <= (double)(this.maxDist * this.maxDist));
+        }
+    }
+
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.timeToRecalcPath = 0;
+        this.oldWaterCost = this.tameable.getPathPriority(PathNodeType.WATER);
+        this.tameable.setPathPriority(PathNodeType.WATER, 0.0F);
+    }
+
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        this.owner = null;
+        this.navigator.clearPath();
+        this.tameable.setPathPriority(PathNodeType.WATER, this.oldWaterCost);
+    }
+
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        this.tameable.getLookController().setLookPositionWithEntity(this.owner, 10.0F, (float)this.tameable.getVerticalFaceSpeed());
+
+        if (--this.timeToRecalcPath <= 0)
+        {
+            this.timeToRecalcPath = 10;
+
+            if (!this.tameable.getLeashed() && !this.tameable.isPassenger())
+            {
+                if (this.tameable.getDistanceSq(this.owner) >= 144.0D)
+                {
+                    this.tryToTeleportNearEntity();
+                }
+                else
+                {
+                    this.navigator.tryMoveToEntityLiving(this.owner, this.followSpeed);
+                }
+            }
+        }
+    }
+
+    private void tryToTeleportNearEntity()
+    {
+        BlockPos blockpos = this.owner.getPosition();
+
+        for (int i = 0; i < 10; ++i)
+        {
+            int j = this.getRandomNumber(-3, 3);
+            int k = this.getRandomNumber(-1, 1);
+            int l = this.getRandomNumber(-3, 3);
+            boolean flag = this.tryToTeleportToLocation(blockpos.getX() + j, blockpos.getY() + k, blockpos.getZ() + l);
+
+            if (flag)
+            {
+                return;
+            }
+        }
+    }
+
+    private boolean tryToTeleportToLocation(int x, int y, int z)
+    {
+        if (Math.abs((double)x - this.owner.getPosX()) < 2.0D && Math.abs((double)z - this.owner.getPosZ()) < 2.0D)
+        {
+            return false;
+        }
+        else if (!this.isTeleportFriendlyBlock(new BlockPos(x, y, z)))
+        {
+            return false;
+        }
+        else
+        {
+            this.tameable.setLocationAndAngles((double)x + 0.5D, (double)y, (double)z + 0.5D, this.tameable.rotationYaw, this.tameable.rotationPitch);
+            this.navigator.clearPath();
+            return true;
+        }
+    }
+
+    private boolean isTeleportFriendlyBlock(BlockPos pos)
+    {
+        PathNodeType pathnodetype = WalkNodeProcessor.func_237231_a_(this.world, pos.toMutable());
+
+        if (pathnodetype != PathNodeType.WALKABLE)
+        {
+            return false;
+        }
+        else
+        {
+            BlockState blockstate = this.world.getBlockState(pos.down());
+
+            if (!this.teleportToLeaves && blockstate.getBlock() instanceof LeavesBlock)
+            {
+                return false;
+            }
+            else
+            {
+                BlockPos blockpos = pos.subtract(this.tameable.getPosition());
+                return this.world.hasNoCollisions(this.tameable, this.tameable.getBoundingBox().offset(blockpos));
+            }
+        }
+    }
+
+    private int getRandomNumber(int min, int max)
+    {
+        return this.tameable.getRNG().nextInt(max - min + 1) + min;
+    }
 }

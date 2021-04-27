@@ -4,58 +4,92 @@ import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.entity.passive.fish.AbstractGroupFishEntity;
 
-public class FollowSchoolLeaderGoal extends Goal {
-   private final AbstractGroupFishEntity mob;
-   private int timeToRecalcPath;
-   private int nextStartTick;
+public class FollowSchoolLeaderGoal extends Goal
+{
+    private final AbstractGroupFishEntity taskOwner;
+    private int navigateTimer;
+    private int cooldown;
 
-   public FollowSchoolLeaderGoal(AbstractGroupFishEntity p_i49857_1_) {
-      this.mob = p_i49857_1_;
-      this.nextStartTick = this.nextStartTick(p_i49857_1_);
-   }
+    public FollowSchoolLeaderGoal(AbstractGroupFishEntity taskOwnerIn)
+    {
+        this.taskOwner = taskOwnerIn;
+        this.cooldown = this.getNewCooldown(taskOwnerIn);
+    }
 
-   protected int nextStartTick(AbstractGroupFishEntity p_212825_1_) {
-      return 200 + p_212825_1_.getRandom().nextInt(200) % 20;
-   }
+    protected int getNewCooldown(AbstractGroupFishEntity taskOwnerIn)
+    {
+        return 200 + taskOwnerIn.getRNG().nextInt(200) % 20;
+    }
 
-   public boolean canUse() {
-      if (this.mob.hasFollowers()) {
-         return false;
-      } else if (this.mob.isFollower()) {
-         return true;
-      } else if (this.nextStartTick > 0) {
-         --this.nextStartTick;
-         return false;
-      } else {
-         this.nextStartTick = this.nextStartTick(this.mob);
-         Predicate<AbstractGroupFishEntity> predicate = (p_212824_0_) -> {
-            return p_212824_0_.canBeFollowed() || !p_212824_0_.isFollower();
-         };
-         List<AbstractGroupFishEntity> list = this.mob.level.getEntitiesOfClass(this.mob.getClass(), this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D), predicate);
-         AbstractGroupFishEntity abstractgroupfishentity = list.stream().filter(AbstractGroupFishEntity::canBeFollowed).findAny().orElse(this.mob);
-         abstractgroupfishentity.addFollowers(list.stream().filter((p_212823_0_) -> {
-            return !p_212823_0_.isFollower();
-         }));
-         return this.mob.isFollower();
-      }
-   }
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        if (this.taskOwner.isGroupLeader())
+        {
+            return false;
+        }
+        else if (this.taskOwner.hasGroupLeader())
+        {
+            return true;
+        }
+        else if (this.cooldown > 0)
+        {
+            --this.cooldown;
+            return false;
+        }
+        else
+        {
+            this.cooldown = this.getNewCooldown(this.taskOwner);
+            Predicate<AbstractGroupFishEntity> predicate = (fish) ->
+            {
+                return fish.canGroupGrow() || !fish.hasGroupLeader();
+            };
+            List<AbstractGroupFishEntity> list = this.taskOwner.world.getEntitiesWithinAABB(this.taskOwner.getClass(), this.taskOwner.getBoundingBox().grow(8.0D, 8.0D, 8.0D), predicate);
+            AbstractGroupFishEntity abstractgroupfishentity = list.stream().filter(AbstractGroupFishEntity::canGroupGrow).findAny().orElse(this.taskOwner);
+            abstractgroupfishentity.func_212810_a(list.stream().filter((fish) ->
+            {
+                return !fish.hasGroupLeader();
+            }));
+            return this.taskOwner.hasGroupLeader();
+        }
+    }
 
-   public boolean canContinueToUse() {
-      return this.mob.isFollower() && this.mob.inRangeOfLeader();
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        return this.taskOwner.hasGroupLeader() && this.taskOwner.inRangeOfGroupLeader();
+    }
 
-   public void start() {
-      this.timeToRecalcPath = 0;
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.navigateTimer = 0;
+    }
 
-   public void stop() {
-      this.mob.stopFollowing();
-   }
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        this.taskOwner.leaveGroup();
+    }
 
-   public void tick() {
-      if (--this.timeToRecalcPath <= 0) {
-         this.timeToRecalcPath = 10;
-         this.mob.pathToLeader();
-      }
-   }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        if (--this.navigateTimer <= 0)
+        {
+            this.navigateTimer = 10;
+            this.taskOwner.moveToGroupLeader();
+        }
+    }
 }

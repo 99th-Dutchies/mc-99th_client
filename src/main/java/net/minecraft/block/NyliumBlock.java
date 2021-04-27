@@ -12,45 +12,63 @@ import net.minecraft.world.gen.feature.TwistingVineFeature;
 import net.minecraft.world.lighting.LightEngine;
 import net.minecraft.world.server.ServerWorld;
 
-public class NyliumBlock extends Block implements IGrowable {
-   protected NyliumBlock(AbstractBlock.Properties p_i241184_1_) {
-      super(p_i241184_1_);
-   }
+public class NyliumBlock extends Block implements IGrowable
+{
+    protected NyliumBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   private static boolean canBeNylium(BlockState p_235516_0_, IWorldReader p_235516_1_, BlockPos p_235516_2_) {
-      BlockPos blockpos = p_235516_2_.above();
-      BlockState blockstate = p_235516_1_.getBlockState(blockpos);
-      int i = LightEngine.getLightBlockInto(p_235516_1_, p_235516_0_, p_235516_2_, blockstate, blockpos, Direction.UP, blockstate.getLightBlock(p_235516_1_, blockpos));
-      return i < p_235516_1_.getMaxLightLevel();
-   }
+    private static boolean isDarkEnough(BlockState state, IWorldReader reader, BlockPos pos)
+    {
+        BlockPos blockpos = pos.up();
+        BlockState blockstate = reader.getBlockState(blockpos);
+        int i = LightEngine.func_215613_a(reader, state, pos, blockstate, blockpos, Direction.UP, blockstate.getOpacity(reader, blockpos));
+        return i < reader.getMaxLightLevel();
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (!canBeNylium(p_225542_1_, p_225542_2_, p_225542_3_)) {
-         p_225542_2_.setBlockAndUpdate(p_225542_3_, Blocks.NETHERRACK.defaultBlockState());
-      }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (!isDarkEnough(state, worldIn, pos))
+        {
+            worldIn.setBlockState(pos, Blocks.NETHERRACK.getDefaultState());
+        }
+    }
 
-   }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return worldIn.getBlockState(pos.up()).isAir();
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return p_176473_1_.getBlockState(p_176473_2_.above()).isAir();
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return true;
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return true;
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        BlockState blockstate = worldIn.getBlockState(pos);
+        BlockPos blockpos = pos.up();
 
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      BlockState blockstate = p_225535_1_.getBlockState(p_225535_3_);
-      BlockPos blockpos = p_225535_3_.above();
-      if (blockstate.is(Blocks.CRIMSON_NYLIUM)) {
-         NetherVegetationFeature.place(p_225535_1_, p_225535_2_, blockpos, Features.Configs.CRIMSON_FOREST_CONFIG, 3, 1);
-      } else if (blockstate.is(Blocks.WARPED_NYLIUM)) {
-         NetherVegetationFeature.place(p_225535_1_, p_225535_2_, blockpos, Features.Configs.WARPED_FOREST_CONFIG, 3, 1);
-         NetherVegetationFeature.place(p_225535_1_, p_225535_2_, blockpos, Features.Configs.NETHER_SPROUTS_CONFIG, 3, 1);
-         if (p_225535_2_.nextInt(8) == 0) {
-            TwistingVineFeature.place(p_225535_1_, p_225535_2_, blockpos, 3, 1, 2);
-         }
-      }
+        if (blockstate.isIn(Blocks.CRIMSON_NYLIUM))
+        {
+            NetherVegetationFeature.func_236325_a_(worldIn, rand, blockpos, Features.Configs.CRIMSON_FOREST_VEGETATION_CONFIG, 3, 1);
+        }
+        else if (blockstate.isIn(Blocks.WARPED_NYLIUM))
+        {
+            NetherVegetationFeature.func_236325_a_(worldIn, rand, blockpos, Features.Configs.WARPED_FOREST_VEGETATION_CONFIG, 3, 1);
+            NetherVegetationFeature.func_236325_a_(worldIn, rand, blockpos, Features.Configs.NETHER_SPROUTS_CONFIG, 3, 1);
 
-   }
+            if (rand.nextInt(8) == 0)
+            {
+                TwistingVineFeature.func_236423_a_(worldIn, rand, blockpos, 3, 1, 2);
+            }
+        }
+    }
 }

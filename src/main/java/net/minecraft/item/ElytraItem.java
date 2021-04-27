@@ -9,30 +9,42 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
-public class ElytraItem extends Item implements IArmorVanishable {
-   public ElytraItem(Item.Properties p_i48507_1_) {
-      super(p_i48507_1_);
-      DispenserBlock.registerBehavior(this, ArmorItem.DISPENSE_ITEM_BEHAVIOR);
-   }
+public class ElytraItem extends Item implements IArmorVanishable
+{
+    public ElytraItem(Item.Properties builder)
+    {
+        super(builder);
+        DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR);
+    }
 
-   public static boolean isFlyEnabled(ItemStack p_185069_0_) {
-      return p_185069_0_.getDamageValue() < p_185069_0_.getMaxDamage() - 1;
-   }
+    public static boolean isUsable(ItemStack stack)
+    {
+        return stack.getDamage() < stack.getMaxDamage() - 1;
+    }
 
-   public boolean isValidRepairItem(ItemStack p_82789_1_, ItemStack p_82789_2_) {
-      return p_82789_2_.getItem() == Items.PHANTOM_MEMBRANE;
-   }
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
+    public boolean getIsRepairable(ItemStack toRepair, ItemStack repair)
+    {
+        return repair.getItem() == Items.PHANTOM_MEMBRANE;
+    }
 
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      ItemStack itemstack = p_77659_2_.getItemInHand(p_77659_3_);
-      EquipmentSlotType equipmentslottype = MobEntity.getEquipmentSlotForItem(itemstack);
-      ItemStack itemstack1 = p_77659_2_.getItemBySlot(equipmentslottype);
-      if (itemstack1.isEmpty()) {
-         p_77659_2_.setItemSlot(equipmentslottype, itemstack.copy());
-         itemstack.setCount(0);
-         return ActionResult.sidedSuccess(itemstack, p_77659_1_.isClientSide());
-      } else {
-         return ActionResult.fail(itemstack);
-      }
-   }
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        EquipmentSlotType equipmentslottype = MobEntity.getSlotForItemStack(itemstack);
+        ItemStack itemstack1 = playerIn.getItemStackFromSlot(equipmentslottype);
+
+        if (itemstack1.isEmpty())
+        {
+            playerIn.setItemStackToSlot(equipmentslottype, itemstack.copy());
+            itemstack.setCount(0);
+            return ActionResult.func_233538_a_(itemstack, worldIn.isRemote());
+        }
+        else
+        {
+            return ActionResult.resultFail(itemstack);
+        }
+    }
 }

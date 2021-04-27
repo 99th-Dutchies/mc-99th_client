@@ -14,115 +14,171 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public abstract class AbstractPressurePlateBlock extends Block {
-   protected static final VoxelShape PRESSED_AABB = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 0.5D, 15.0D);
-   protected static final VoxelShape AABB = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 1.0D, 15.0D);
-   protected static final AxisAlignedBB TOUCH_AABB = new AxisAlignedBB(0.125D, 0.0D, 0.125D, 0.875D, 0.25D, 0.875D);
+public abstract class AbstractPressurePlateBlock extends Block
+{
+    protected static final VoxelShape PRESSED_AABB = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 0.5D, 15.0D);
+    protected static final VoxelShape UNPRESSED_AABB = Block.makeCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 1.0D, 15.0D);
+    protected static final AxisAlignedBB PRESSURE_AABB = new AxisAlignedBB(0.125D, 0.0D, 0.125D, 0.875D, 0.25D, 0.875D);
 
-   protected AbstractPressurePlateBlock(AbstractBlock.Properties p_i48445_1_) {
-      super(p_i48445_1_);
-   }
+    protected AbstractPressurePlateBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return this.getSignalForState(p_220053_1_) > 0 ? PRESSED_AABB : AABB;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return this.getRedstoneStrength(state) > 0 ? PRESSED_AABB : UNPRESSED_AABB;
+    }
 
-   protected int getPressedTime() {
-      return 20;
-   }
+    protected int getPoweredDuration()
+    {
+        return 20;
+    }
 
-   public boolean isPossibleToRespawnInThis() {
-      return true;
-   }
+    /**
+     * Return true if an entity can be spawned inside the block (used to get the player's bed spawn location)
+     */
+    public boolean canSpawnInBlock()
+    {
+        return true;
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      return p_196271_2_ == Direction.DOWN && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_) ? Blocks.AIR.defaultBlockState() : super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        return facing == Direction.DOWN && !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockPos blockpos = p_196260_3_.below();
-      return canSupportRigidBlock(p_196260_2_, blockpos) || canSupportCenter(p_196260_2_, blockpos, Direction.UP);
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockPos blockpos = pos.down();
+        return hasSolidSideOnTop(worldIn, blockpos) || hasEnoughSolidSide(worldIn, blockpos, Direction.UP);
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      int i = this.getSignalForState(p_225534_1_);
-      if (i > 0) {
-         this.checkPressed(p_225534_2_, p_225534_3_, p_225534_1_, i);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        int i = this.getRedstoneStrength(state);
 
-   }
+        if (i > 0)
+        {
+            this.updateState(worldIn, pos, state, i);
+        }
+    }
 
-   public void entityInside(BlockState p_196262_1_, World p_196262_2_, BlockPos p_196262_3_, Entity p_196262_4_) {
-      if (!p_196262_2_.isClientSide) {
-         int i = this.getSignalForState(p_196262_1_);
-         if (i == 0) {
-            this.checkPressed(p_196262_2_, p_196262_3_, p_196262_1_, i);
-         }
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn)
+    {
+        if (!worldIn.isRemote)
+        {
+            int i = this.getRedstoneStrength(state);
 
-      }
-   }
+            if (i == 0)
+            {
+                this.updateState(worldIn, pos, state, i);
+            }
+        }
+    }
 
-   protected void checkPressed(World p_180666_1_, BlockPos p_180666_2_, BlockState p_180666_3_, int p_180666_4_) {
-      int i = this.getSignalStrength(p_180666_1_, p_180666_2_);
-      boolean flag = p_180666_4_ > 0;
-      boolean flag1 = i > 0;
-      if (p_180666_4_ != i) {
-         BlockState blockstate = this.setSignalForState(p_180666_3_, i);
-         p_180666_1_.setBlock(p_180666_2_, blockstate, 2);
-         this.updateNeighbours(p_180666_1_, p_180666_2_);
-         p_180666_1_.setBlocksDirty(p_180666_2_, p_180666_3_, blockstate);
-      }
+    /**
+     * Updates the pressure plate when stepped on
+     */
+    protected void updateState(World worldIn, BlockPos pos, BlockState state, int oldRedstoneStrength)
+    {
+        int i = this.computeRedstoneStrength(worldIn, pos);
+        boolean flag = oldRedstoneStrength > 0;
+        boolean flag1 = i > 0;
 
-      if (!flag1 && flag) {
-         this.playOffSound(p_180666_1_, p_180666_2_);
-      } else if (flag1 && !flag) {
-         this.playOnSound(p_180666_1_, p_180666_2_);
-      }
+        if (oldRedstoneStrength != i)
+        {
+            BlockState blockstate = this.setRedstoneStrength(state, i);
+            worldIn.setBlockState(pos, blockstate, 2);
+            this.updateNeighbors(worldIn, pos);
+            worldIn.markBlockRangeForRenderUpdate(pos, state, blockstate);
+        }
 
-      if (flag1) {
-         p_180666_1_.getBlockTicks().scheduleTick(new BlockPos(p_180666_2_), this, this.getPressedTime());
-      }
+        if (!flag1 && flag)
+        {
+            this.playClickOffSound(worldIn, pos);
+        }
+        else if (flag1 && !flag)
+        {
+            this.playClickOnSound(worldIn, pos);
+        }
 
-   }
+        if (flag1)
+        {
+            worldIn.getPendingBlockTicks().scheduleTick(new BlockPos(pos), this, this.getPoweredDuration());
+        }
+    }
 
-   protected abstract void playOnSound(IWorld p_185507_1_, BlockPos p_185507_2_);
+    protected abstract void playClickOnSound(IWorld worldIn, BlockPos pos);
 
-   protected abstract void playOffSound(IWorld p_185508_1_, BlockPos p_185508_2_);
+    protected abstract void playClickOffSound(IWorld worldIn, BlockPos pos);
 
-   public void onRemove(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
-      if (!p_196243_5_ && !p_196243_1_.is(p_196243_4_.getBlock())) {
-         if (this.getSignalForState(p_196243_1_) > 0) {
-            this.updateNeighbours(p_196243_2_, p_196243_3_);
-         }
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving)
+    {
+        if (!isMoving && !state.isIn(newState.getBlock()))
+        {
+            if (this.getRedstoneStrength(state) > 0)
+            {
+                this.updateNeighbors(worldIn, pos);
+            }
 
-         super.onRemove(p_196243_1_, p_196243_2_, p_196243_3_, p_196243_4_, p_196243_5_);
-      }
-   }
+            super.onReplaced(state, worldIn, pos, newState, isMoving);
+        }
+    }
 
-   protected void updateNeighbours(World p_176578_1_, BlockPos p_176578_2_) {
-      p_176578_1_.updateNeighborsAt(p_176578_2_, this);
-      p_176578_1_.updateNeighborsAt(p_176578_2_.below(), this);
-   }
+    /**
+     * Notify block and block below of changes
+     */
+    protected void updateNeighbors(World worldIn, BlockPos pos)
+    {
+        worldIn.notifyNeighborsOfStateChange(pos, this);
+        worldIn.notifyNeighborsOfStateChange(pos.down(), this);
+    }
 
-   public int getSignal(BlockState p_180656_1_, IBlockReader p_180656_2_, BlockPos p_180656_3_, Direction p_180656_4_) {
-      return this.getSignalForState(p_180656_1_);
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getWeakPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return this.getRedstoneStrength(blockState);
+    }
 
-   public int getDirectSignal(BlockState p_176211_1_, IBlockReader p_176211_2_, BlockPos p_176211_3_, Direction p_176211_4_) {
-      return p_176211_4_ == Direction.UP ? this.getSignalForState(p_176211_1_) : 0;
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getStrongPower(IBlockAccess,BlockPos,EnumFacing)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public int getStrongPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side)
+    {
+        return side == Direction.UP ? this.getRedstoneStrength(blockState) : 0;
+    }
 
-   public boolean isSignalSource(BlockState p_149744_1_) {
-      return true;
-   }
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     * @deprecated call via {@link IBlockState#canProvidePower()} whenever possible. Implementing/overriding is fine.
+     */
+    public boolean canProvidePower(BlockState state)
+    {
+        return true;
+    }
 
-   public PushReaction getPistonPushReaction(BlockState p_149656_1_) {
-      return PushReaction.DESTROY;
-   }
+    /**
+     * @deprecated call via {@link IBlockState#getMobilityFlag()} whenever possible. Implementing/overriding is fine.
+     */
+    public PushReaction getPushReaction(BlockState state)
+    {
+        return PushReaction.DESTROY;
+    }
 
-   protected abstract int getSignalStrength(World p_180669_1_, BlockPos p_180669_2_);
+    protected abstract int computeRedstoneStrength(World worldIn, BlockPos pos);
 
-   protected abstract int getSignalForState(BlockState p_176576_1_);
+    protected abstract int getRedstoneStrength(BlockState state);
 
-   protected abstract BlockState setSignalForState(BlockState p_176575_1_, int p_176575_2_);
+    protected abstract BlockState setRedstoneStrength(BlockState state, int strength);
 }

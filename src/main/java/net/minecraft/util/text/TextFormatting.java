@@ -9,141 +9,191 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public enum TextFormatting {
-   BLACK("BLACK", '0', 0, 0),
-   DARK_BLUE("DARK_BLUE", '1', 1, 170),
-   DARK_GREEN("DARK_GREEN", '2', 2, 43520),
-   DARK_AQUA("DARK_AQUA", '3', 3, 43690),
-   DARK_RED("DARK_RED", '4', 4, 11141120),
-   DARK_PURPLE("DARK_PURPLE", '5', 5, 11141290),
-   GOLD("GOLD", '6', 6, 16755200),
-   GRAY("GRAY", '7', 7, 11184810),
-   DARK_GRAY("DARK_GRAY", '8', 8, 5592405),
-   BLUE("BLUE", '9', 9, 5592575),
-   GREEN("GREEN", 'a', 10, 5635925),
-   AQUA("AQUA", 'b', 11, 5636095),
-   RED("RED", 'c', 12, 16733525),
-   LIGHT_PURPLE("LIGHT_PURPLE", 'd', 13, 16733695),
-   YELLOW("YELLOW", 'e', 14, 16777045),
-   WHITE("WHITE", 'f', 15, 16777215),
-   OBFUSCATED("OBFUSCATED", 'k', true),
-   BOLD("BOLD", 'l', true),
-   STRIKETHROUGH("STRIKETHROUGH", 'm', true),
-   UNDERLINE("UNDERLINE", 'n', true),
-   ITALIC("ITALIC", 'o', true),
-   RESET("RESET", 'r', -1, (Integer)null);
+public enum TextFormatting
+{
+    BLACK("BLACK", '0', 0, 0),
+    DARK_BLUE("DARK_BLUE", '1', 1, 170),
+    DARK_GREEN("DARK_GREEN", '2', 2, 43520),
+    DARK_AQUA("DARK_AQUA", '3', 3, 43690),
+    DARK_RED("DARK_RED", '4', 4, 11141120),
+    DARK_PURPLE("DARK_PURPLE", '5', 5, 11141290),
+    GOLD("GOLD", '6', 6, 16755200),
+    GRAY("GRAY", '7', 7, 11184810),
+    DARK_GRAY("DARK_GRAY", '8', 8, 5592405),
+    BLUE("BLUE", '9', 9, 5592575),
+    GREEN("GREEN", 'a', 10, 5635925),
+    AQUA("AQUA", 'b', 11, 5636095),
+    RED("RED", 'c', 12, 16733525),
+    LIGHT_PURPLE("LIGHT_PURPLE", 'd', 13, 16733695),
+    YELLOW("YELLOW", 'e', 14, 16777045),
+    WHITE("WHITE", 'f', 15, 16777215),
+    OBFUSCATED("OBFUSCATED", 'k', true),
+    BOLD("BOLD", 'l', true),
+    STRIKETHROUGH("STRIKETHROUGH", 'm', true),
+    UNDERLINE("UNDERLINE", 'n', true),
+    ITALIC("ITALIC", 'o', true),
+    RESET("RESET", 'r', -1, (Integer)null);
 
-   private static final Map<String, TextFormatting> FORMATTING_BY_NAME = Arrays.stream(values()).collect(Collectors.toMap((p_199746_0_) -> {
-      return cleanName(p_199746_0_.name);
-   }, (p_199747_0_) -> {
-      return p_199747_0_;
-   }));
-   private static final Pattern STRIP_FORMATTING_PATTERN = Pattern.compile("(?i)\u00a7[0-9A-FK-OR]");
-   private final String name;
-   private final char code;
-   private final boolean isFormat;
-   private final String toString;
-   private final int id;
-   @Nullable
-   private final Integer color;
+    private static final Map<String, TextFormatting> NAME_MAPPING = Arrays.stream(values()).collect(Collectors.toMap((p_199746_0_) -> {
+        return lowercaseAlpha(p_199746_0_.name);
+    }, (p_199747_0_) -> {
+        return p_199747_0_;
+    }));
+    private static final Pattern FORMATTING_CODE_PATTERN = Pattern.compile("(?i)\u00a7[0-9A-FK-OR]");
 
-   private static String cleanName(String p_175745_0_) {
-      return p_175745_0_.toLowerCase(Locale.ROOT).replaceAll("[^a-z]", "");
-   }
+    /** The name of this color/formatting */
+    private final String name;
+    private final char formattingCode;
+    private final boolean fancyStyling;
+    private final String controlString;
 
-   private TextFormatting(String p_i49745_3_, char p_i49745_4_, int p_i49745_5_, @Nullable Integer p_i49745_6_) {
-      this(p_i49745_3_, p_i49745_4_, false, p_i49745_5_, p_i49745_6_);
-   }
+    /** The numerical index that represents this color */
+    private final int colorIndex;
+    @Nullable
+    private final Integer color;
 
-   private TextFormatting(String p_i46292_3_, char p_i46292_4_, boolean p_i46292_5_) {
-      this(p_i46292_3_, p_i46292_4_, p_i46292_5_, -1, (Integer)null);
-   }
+    private static String lowercaseAlpha(String string)
+    {
+        return string.toLowerCase(Locale.ROOT).replaceAll("[^a-z]", "");
+    }
 
-   private TextFormatting(String p_i49746_3_, char p_i49746_4_, boolean p_i49746_5_, int p_i49746_6_, @Nullable Integer p_i49746_7_) {
-      this.name = p_i49746_3_;
-      this.code = p_i49746_4_;
-      this.isFormat = p_i49746_5_;
-      this.id = p_i49746_6_;
-      this.color = p_i49746_7_;
-      this.toString = "\u00a7" + p_i49746_4_;
-   }
+    private TextFormatting(String formattingName, char formattingCodeIn, int index, @Nullable Integer colorCode)
+    {
+        this(formattingName, formattingCodeIn, false, index, colorCode);
+    }
 
-   public int getId() {
-      return this.id;
-   }
+    private TextFormatting(String formattingName, char formattingCodeIn, boolean fancyStylingIn)
+    {
+        this(formattingName, formattingCodeIn, fancyStylingIn, -1, (Integer)null);
+    }
 
-   public boolean isFormat() {
-      return this.isFormat;
-   }
+    private TextFormatting(String formattingName, char formattingCodeIn, boolean fancyStylingIn, int index, @Nullable Integer colorCode)
+    {
+        this.name = formattingName;
+        this.formattingCode = formattingCodeIn;
+        this.fancyStyling = fancyStylingIn;
+        this.colorIndex = index;
+        this.color = colorCode;
+        this.controlString = "\u00a7" + formattingCodeIn;
+    }
 
-   public boolean isColor() {
-      return !this.isFormat && this != RESET;
-   }
+    /**
+     * Returns the numerical color index that represents this formatting
+     */
+    public int getColorIndex()
+    {
+        return this.colorIndex;
+    }
 
-   @Nullable
-   public Integer getColor() {
-      return this.color;
-   }
+    /**
+     * False if this is just changing the color or resetting; true otherwise.
+     */
+    public boolean isFancyStyling()
+    {
+        return this.fancyStyling;
+    }
 
-   public String getName() {
-      return this.name().toLowerCase(Locale.ROOT);
-   }
+    /**
+     * Checks if this is a color code.
+     */
+    public boolean isColor()
+    {
+        return !this.fancyStyling && this != RESET;
+    }
 
-   public String toString() {
-      return this.toString;
-   }
+    @Nullable
+    public Integer getColor()
+    {
+        return this.color;
+    }
 
-   @Nullable
-   public static String stripFormatting(@Nullable String p_110646_0_) {
-      return p_110646_0_ == null ? null : STRIP_FORMATTING_PATTERN.matcher(p_110646_0_).replaceAll("");
-   }
+    /**
+     * Gets the friendly name of this value.
+     */
+    public String getFriendlyName()
+    {
+        return this.name().toLowerCase(Locale.ROOT);
+    }
 
-   @Nullable
-   public static TextFormatting getByName(@Nullable String p_96300_0_) {
-      return p_96300_0_ == null ? null : FORMATTING_BY_NAME.get(cleanName(p_96300_0_));
-   }
+    public String toString()
+    {
+        return this.controlString;
+    }
 
-   @Nullable
-   public static TextFormatting getById(int p_175744_0_) {
-      if (p_175744_0_ < 0) {
-         return RESET;
-      } else {
-         for(TextFormatting textformatting : values()) {
-            if (textformatting.getId() == p_175744_0_) {
-               return textformatting;
+    @Nullable
+
+    /**
+     * Returns a copy of the given string, with formatting codes stripped away.
+     */
+    public static String getTextWithoutFormattingCodes(@Nullable String text)
+    {
+        return text == null ? null : FORMATTING_CODE_PATTERN.matcher(text).replaceAll("");
+    }
+
+    @Nullable
+
+    /**
+     * Gets a value by its friendly name; null if the given name does not map to a defined value.
+     */
+    public static TextFormatting getValueByName(@Nullable String friendlyName)
+    {
+        return friendlyName == null ? null : NAME_MAPPING.get(lowercaseAlpha(friendlyName));
+    }
+
+    @Nullable
+
+    /**
+     * Get a TextFormatting from it's color index
+     */
+    public static TextFormatting fromColorIndex(int index)
+    {
+        if (index < 0)
+        {
+            return RESET;
+        }
+        else
+        {
+            for (TextFormatting textformatting : values())
+            {
+                if (textformatting.getColorIndex() == index)
+                {
+                    return textformatting;
+                }
             }
-         }
 
-         return null;
-      }
-   }
+            return null;
+        }
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public static TextFormatting getByCode(char p_211165_0_) {
-      char c0 = Character.toString(p_211165_0_).toLowerCase(Locale.ROOT).charAt(0);
+    @Nullable
+    public static TextFormatting fromFormattingCode(char formattingCodeIn)
+    {
+        char c0 = Character.toString(formattingCodeIn).toLowerCase(Locale.ROOT).charAt(0);
 
-      for(TextFormatting textformatting : values()) {
-         if (textformatting.code == c0) {
-            return textformatting;
-         }
-      }
+        for (TextFormatting textformatting : values())
+        {
+            if (textformatting.formattingCode == c0)
+            {
+                return textformatting;
+            }
+        }
 
-      return null;
-   }
+        return null;
+    }
 
-   public static Collection<String> getNames(boolean p_96296_0_, boolean p_96296_1_) {
-      List<String> list = Lists.newArrayList();
+    public static Collection<String> getValidValues(boolean getColor, boolean getFancyStyling)
+    {
+        List<String> list = Lists.newArrayList();
 
-      for(TextFormatting textformatting : values()) {
-         if ((!textformatting.isColor() || p_96296_0_) && (!textformatting.isFormat() || p_96296_1_)) {
-            list.add(textformatting.getName());
-         }
-      }
+        for (TextFormatting textformatting : values())
+        {
+            if ((!textformatting.isColor() || getColor) && (!textformatting.isFancyStyling() || getFancyStyling))
+            {
+                list.add(textformatting.getFriendlyName());
+            }
+        }
 
-      return list;
-   }
+        return list;
+    }
 }

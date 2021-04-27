@@ -1,5 +1,6 @@
 package net.minecraft.client.settings;
 
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -9,69 +10,114 @@ import net.minecraft.client.gui.widget.OptionSlider;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.Config;
 
-@OnlyIn(Dist.CLIENT)
-public class SliderPercentageOption extends AbstractOption {
-   protected final float steps;
-   protected final double minValue;
-   protected double maxValue;
-   private final Function<GameSettings, Double> getter;
-   private final BiConsumer<GameSettings, Double> setter;
-   private final BiFunction<GameSettings, SliderPercentageOption, ITextComponent> toString;
+public class SliderPercentageOption extends AbstractOption
+{
+    protected final float stepSize;
+    protected final double minValue;
+    protected double maxValue;
+    protected Function<GameSettings, Double> getter;
+    protected BiConsumer<GameSettings, Double> setter;
+    protected BiFunction<GameSettings, SliderPercentageOption, ITextComponent> getDisplayStringFunc;
+    protected double[] stepValues;
 
-   public SliderPercentageOption(String p_i51155_1_, double p_i51155_2_, double p_i51155_4_, float p_i51155_6_, Function<GameSettings, Double> p_i51155_7_, BiConsumer<GameSettings, Double> p_i51155_8_, BiFunction<GameSettings, SliderPercentageOption, ITextComponent> p_i51155_9_) {
-      super(p_i51155_1_);
-      this.minValue = p_i51155_2_;
-      this.maxValue = p_i51155_4_;
-      this.steps = p_i51155_6_;
-      this.getter = p_i51155_7_;
-      this.setter = p_i51155_8_;
-      this.toString = p_i51155_9_;
-   }
+    public SliderPercentageOption(String translationKey, double minValueIn, double maxValueIn, float stepSizeIn, Function<GameSettings, Double> getter, BiConsumer<GameSettings, Double> setter, BiFunction<GameSettings, SliderPercentageOption, ITextComponent> getDisplayString)
+    {
+        super(translationKey);
+        this.minValue = minValueIn;
+        this.maxValue = maxValueIn;
+        this.stepSize = stepSizeIn;
+        this.getter = getter;
+        this.setter = setter;
+        this.getDisplayStringFunc = getDisplayString;
+    }
 
-   public Widget createButton(GameSettings p_216586_1_, int p_216586_2_, int p_216586_3_, int p_216586_4_) {
-      return new OptionSlider(p_216586_1_, p_216586_2_, p_216586_3_, p_216586_4_, 20, this);
-   }
+    public SliderPercentageOption(String p_i242103_1_, double p_i242103_2_, double p_i242103_4_, double[] p_i242103_6_, Function<GameSettings, Double> p_i242103_7_, BiConsumer<GameSettings, Double> p_i242103_8_, BiFunction<GameSettings, SliderPercentageOption, ITextComponent> p_i242103_9_)
+    {
+        super(p_i242103_1_);
+        this.minValue = p_i242103_2_;
+        this.maxValue = p_i242103_4_;
+        this.stepSize = 0.0F;
+        this.getter = p_i242103_7_;
+        this.setter = p_i242103_8_;
+        this.getDisplayStringFunc = p_i242103_9_;
+        this.stepValues = p_i242103_6_;
 
-   public double toPct(double p_216726_1_) {
-      return MathHelper.clamp((this.clamp(p_216726_1_) - this.minValue) / (this.maxValue - this.minValue), 0.0D, 1.0D);
-   }
+        if (p_i242103_6_ != null)
+        {
+            p_i242103_6_ = (double[])p_i242103_6_.clone();
+            Arrays.sort(p_i242103_6_);
+        }
+    }
 
-   public double toValue(double p_216725_1_) {
-      return this.clamp(MathHelper.lerp(MathHelper.clamp(p_216725_1_, 0.0D, 1.0D), this.minValue, this.maxValue));
-   }
+    public Widget createWidget(GameSettings options, int xIn, int yIn, int widthIn)
+    {
+        return new OptionSlider(options, xIn, yIn, widthIn, 20, this);
+    }
 
-   private double clamp(double p_216731_1_) {
-      if (this.steps > 0.0F) {
-         p_216731_1_ = (double)(this.steps * (float)Math.round(p_216731_1_ / (double)this.steps));
-      }
+    public double normalizeValue(double value)
+    {
+        return MathHelper.clamp((this.snapToStepClamp(value) - this.minValue) / (this.maxValue - this.minValue), 0.0D, 1.0D);
+    }
 
-      return MathHelper.clamp(p_216731_1_, this.minValue, this.maxValue);
-   }
+    public double denormalizeValue(double value)
+    {
+        return this.snapToStepClamp(MathHelper.lerp(MathHelper.clamp(value, 0.0D, 1.0D), this.minValue, this.maxValue));
+    }
 
-   public double getMinValue() {
-      return this.minValue;
-   }
+    private double snapToStepClamp(double valueIn)
+    {
+        if (this.stepSize > 0.0F)
+        {
+            valueIn = (double)(this.stepSize * (float)Math.round(valueIn / (double)this.stepSize));
+        }
 
-   public double getMaxValue() {
-      return this.maxValue;
-   }
+        if (this.stepValues != null)
+        {
+            for (int i = 0; i < this.stepValues.length; ++i)
+            {
+                double d0 = i <= 0 ? -Double.MAX_VALUE : (this.stepValues[i - 1] + this.stepValues[i]) / 2.0D;
+                double d1 = i >= this.stepValues.length - 1 ? Double.MAX_VALUE : (this.stepValues[i] + this.stepValues[i + 1]) / 2.0D;
 
-   public void setMaxValue(float p_216728_1_) {
-      this.maxValue = (double)p_216728_1_;
-   }
+                if (Config.between(valueIn, d0, d1))
+                {
+                    valueIn = this.stepValues[i];
+                    break;
+                }
+            }
+        }
 
-   public void set(GameSettings p_216727_1_, double p_216727_2_) {
-      this.setter.accept(p_216727_1_, p_216727_2_);
-   }
+        return MathHelper.clamp(valueIn, this.minValue, this.maxValue);
+    }
 
-   public double get(GameSettings p_216729_1_) {
-      return this.getter.apply(p_216729_1_);
-   }
+    public double getMinValue()
+    {
+        return this.minValue;
+    }
 
-   public ITextComponent getMessage(GameSettings p_238334_1_) {
-      return this.toString.apply(p_238334_1_, this);
-   }
+    public double getMaxValue()
+    {
+        return this.maxValue;
+    }
+
+    public void setMaxValue(float valueIn)
+    {
+        this.maxValue = (double)valueIn;
+    }
+
+    public void set(GameSettings options, double valueIn)
+    {
+        this.setter.accept(options, valueIn);
+    }
+
+    public double get(GameSettings options)
+    {
+        return this.getter.apply(options);
+    }
+
+    public ITextComponent func_238334_c_(GameSettings p_238334_1_)
+    {
+        return this.getDisplayStringFunc.apply(p_238334_1_, this);
+    }
 }

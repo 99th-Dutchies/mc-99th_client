@@ -14,100 +14,159 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CryptManager {
-   @OnlyIn(Dist.CLIENT)
-   public static SecretKey generateSecretKey() throws CryptException {
-      try {
-         KeyGenerator keygenerator = KeyGenerator.getInstance("AES");
-         keygenerator.init(128);
-         return keygenerator.generateKey();
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+public class CryptManager
+{
+    /**
+     * Generate a new shared secret AES key from a secure random source
+     */
+    public static SecretKey createNewSharedKey() throws CryptException
+    {
+        try
+        {
+            KeyGenerator keygenerator = KeyGenerator.getInstance("AES");
+            keygenerator.init(128);
+            return keygenerator.generateKey();
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 
-   public static KeyPair generateKeyPair() throws CryptException {
-      try {
-         KeyPairGenerator keypairgenerator = KeyPairGenerator.getInstance("RSA");
-         keypairgenerator.initialize(1024);
-         return keypairgenerator.generateKeyPair();
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+    /**
+     * Generates RSA KeyPair
+     */
+    public static KeyPair generateKeyPair() throws CryptException
+    {
+        try
+        {
+            KeyPairGenerator keypairgenerator = KeyPairGenerator.getInstance("RSA");
+            keypairgenerator.initialize(1024);
+            return keypairgenerator.generateKeyPair();
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 
-   public static byte[] digestData(String p_75895_0_, PublicKey p_75895_1_, SecretKey p_75895_2_) throws CryptException {
-      try {
-         return digestData(p_75895_0_.getBytes("ISO_8859_1"), p_75895_2_.getEncoded(), p_75895_1_.getEncoded());
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+    /**
+     * Compute a serverId hash for use by sendSessionRequest()
+     */
+    public static byte[] getServerIdHash(String serverId, PublicKey publicKey, SecretKey secretKey) throws CryptException
+    {
+        try
+        {
+            return func_244731_a(serverId.getBytes("ISO_8859_1"), secretKey.getEncoded(), publicKey.getEncoded());
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 
-   private static byte[] digestData(byte[]... p_244731_0_) throws Exception {
-      MessageDigest messagedigest = MessageDigest.getInstance("SHA-1");
+    private static byte[] func_244731_a(byte[]... p_244731_0_) throws Exception
+    {
+        MessageDigest messagedigest = MessageDigest.getInstance("SHA-1");
 
-      for(byte[] abyte : p_244731_0_) {
-         messagedigest.update(abyte);
-      }
+        for (byte[] abyte : p_244731_0_)
+        {
+            messagedigest.update(abyte);
+        }
 
-      return messagedigest.digest();
-   }
+        return messagedigest.digest();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static PublicKey byteToPublicKey(byte[] p_75896_0_) throws CryptException {
-      try {
-         EncodedKeySpec encodedkeyspec = new X509EncodedKeySpec(p_75896_0_);
-         KeyFactory keyfactory = KeyFactory.getInstance("RSA");
-         return keyfactory.generatePublic(encodedkeyspec);
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+    /**
+     * Create a new PublicKey from encoded X.509 data
+     */
+    public static PublicKey decodePublicKey(byte[] encodedKey) throws CryptException
+    {
+        try
+        {
+            EncodedKeySpec encodedkeyspec = new X509EncodedKeySpec(encodedKey);
+            KeyFactory keyfactory = KeyFactory.getInstance("RSA");
+            return keyfactory.generatePublic(encodedkeyspec);
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 
-   public static SecretKey decryptByteToSecretKey(PrivateKey p_75887_0_, byte[] p_75887_1_) throws CryptException {
-      byte[] abyte = decryptUsingKey(p_75887_0_, p_75887_1_);
+    /**
+     * Decrypt shared secret AES key using RSA private key
+     */
+    public static SecretKey decryptSharedKey(PrivateKey key, byte[] secretKeyEncrypted) throws CryptException
+    {
+        byte[] abyte = decryptData(key, secretKeyEncrypted);
 
-      try {
-         return new SecretKeySpec(abyte, "AES");
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+        try
+        {
+            return new SecretKeySpec(abyte, "AES");
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static byte[] encryptUsingKey(Key p_75894_0_, byte[] p_75894_1_) throws CryptException {
-      return cipherData(1, p_75894_0_, p_75894_1_);
-   }
+    /**
+     * Encrypt byte[] data with RSA public key
+     */
+    public static byte[] encryptData(Key key, byte[] data) throws CryptException
+    {
+        return cipherOperation(1, key, data);
+    }
 
-   public static byte[] decryptUsingKey(Key p_75889_0_, byte[] p_75889_1_) throws CryptException {
-      return cipherData(2, p_75889_0_, p_75889_1_);
-   }
+    /**
+     * Decrypt byte[] data with RSA private key
+     */
+    public static byte[] decryptData(Key key, byte[] data) throws CryptException
+    {
+        return cipherOperation(2, key, data);
+    }
 
-   private static byte[] cipherData(int p_75885_0_, Key p_75885_1_, byte[] p_75885_2_) throws CryptException {
-      try {
-         return setupCipher(p_75885_0_, p_75885_1_.getAlgorithm(), p_75885_1_).doFinal(p_75885_2_);
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+    /**
+     * Encrypt or decrypt byte[] data using the specified key
+     */
+    private static byte[] cipherOperation(int opMode, Key key, byte[] data) throws CryptException
+    {
+        try
+        {
+            return createTheCipherInstance(opMode, key.getAlgorithm(), key).doFinal(data);
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 
-   private static Cipher setupCipher(int p_75886_0_, String p_75886_1_, Key p_75886_2_) throws Exception {
-      Cipher cipher = Cipher.getInstance(p_75886_1_);
-      cipher.init(p_75886_0_, p_75886_2_);
-      return cipher;
-   }
+    /**
+     * Creates the Cipher Instance.
+     */
+    private static Cipher createTheCipherInstance(int opMode, String transformation, Key key) throws Exception
+    {
+        Cipher cipher = Cipher.getInstance(transformation);
+        cipher.init(opMode, key);
+        return cipher;
+    }
 
-   public static Cipher getCipher(int p_151229_0_, Key p_151229_1_) throws CryptException {
-      try {
-         Cipher cipher = Cipher.getInstance("AES/CFB8/NoPadding");
-         cipher.init(p_151229_0_, p_151229_1_, new IvParameterSpec(p_151229_1_.getEncoded()));
-         return cipher;
-      } catch (Exception exception) {
-         throw new CryptException(exception);
-      }
-   }
+    /**
+     * Creates an Cipher instance using the AES/CFB8/NoPadding algorithm. Used for protocol encryption.
+     */
+    public static Cipher createNetCipherInstance(int opMode, Key key) throws CryptException
+    {
+        try
+        {
+            Cipher cipher = Cipher.getInstance("AES/CFB8/NoPadding");
+            cipher.init(opMode, key, new IvParameterSpec(key.getEncoded()));
+            return cipher;
+        }
+        catch (Exception exception)
+        {
+            throw new CryptException(exception);
+        }
+    }
 }

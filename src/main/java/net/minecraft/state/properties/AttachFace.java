@@ -2,18 +2,21 @@ package net.minecraft.state.properties;
 
 import net.minecraft.util.IStringSerializable;
 
-public enum AttachFace implements IStringSerializable {
-   FLOOR("floor"),
-   WALL("wall"),
-   CEILING("ceiling");
+public enum AttachFace implements IStringSerializable
+{
+    FLOOR("floor"),
+    WALL("wall"),
+    CEILING("ceiling");
 
-   private final String name;
+    private final String name;
 
-   private AttachFace(String p_i49343_3_) {
-      this.name = p_i49343_3_;
-   }
+    private AttachFace(String name)
+    {
+        this.name = name;
+    }
 
-   public String getSerializedName() {
-      return this.name;
-   }
+    public String getString()
+    {
+        return this.name;
+    }
 }

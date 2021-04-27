@@ -1,17 +1,20 @@
 package net.minecraft.util.math;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public class Tuple3d
+{
+    /** The X coordinate */
+    public double x;
 
-@OnlyIn(Dist.CLIENT)
-public class Tuple3d {
-   public double x;
-   public double y;
-   public double z;
+    /** The Y coordinate */
+    public double y;
 
-   public Tuple3d(double p_i51794_1_, double p_i51794_3_, double p_i51794_5_) {
-      this.x = p_i51794_1_;
-      this.y = p_i51794_3_;
-      this.z = p_i51794_5_;
-   }
+    /** The Z coordinate */
+    public double z;
+
+    public Tuple3d(double xIn, double yIn, double zIn)
+    {
+        this.x = xIn;
+        this.y = yIn;
+        this.z = zIn;
+    }
 }

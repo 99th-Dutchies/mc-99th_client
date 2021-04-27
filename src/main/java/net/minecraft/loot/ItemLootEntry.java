@@ -13,42 +13,55 @@ import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
 
-public class ItemLootEntry extends StandaloneLootEntry {
-   private final Item item;
+public class ItemLootEntry extends StandaloneLootEntry
+{
+    private final Item item;
 
-   private ItemLootEntry(Item p_i51255_1_, int p_i51255_2_, int p_i51255_3_, ILootCondition[] p_i51255_4_, ILootFunction[] p_i51255_5_) {
-      super(p_i51255_2_, p_i51255_3_, p_i51255_4_, p_i51255_5_);
-      this.item = p_i51255_1_;
-   }
+    private ItemLootEntry(Item itemIn, int weightIn, int qualityIn, ILootCondition[] conditionsIn, ILootFunction[] functionsIn)
+    {
+        super(weightIn, qualityIn, conditionsIn, functionsIn);
+        this.item = itemIn;
+    }
 
-   public LootPoolEntryType getType() {
-      return LootEntryManager.ITEM;
-   }
+    public LootPoolEntryType func_230420_a_()
+    {
+        return LootEntryManager.ITEM;
+    }
 
-   public void createItemStack(Consumer<ItemStack> p_216154_1_, LootContext p_216154_2_) {
-      p_216154_1_.accept(new ItemStack(this.item));
-   }
+    public void func_216154_a(Consumer<ItemStack> stackConsumer, LootContext context)
+    {
+        stackConsumer.accept(new ItemStack(this.item));
+    }
 
-   public static StandaloneLootEntry.Builder<?> lootTableItem(IItemProvider p_216168_0_) {
-      return simpleBuilder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
-         return new ItemLootEntry(p_216168_0_.asItem(), p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_);
-      });
-   }
+    public static StandaloneLootEntry.Builder<?> builder(IItemProvider itemIn)
+    {
+        return builder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) ->
+        {
+            return new ItemLootEntry(itemIn.asItem(), p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_);
+        });
+    }
 
-   public static class Serializer extends StandaloneLootEntry.Serializer<ItemLootEntry> {
-      public void serializeCustom(JsonObject p_230422_1_, ItemLootEntry p_230422_2_, JsonSerializationContext p_230422_3_) {
-         super.serializeCustom(p_230422_1_, p_230422_2_, p_230422_3_);
-         ResourceLocation resourcelocation = Registry.ITEM.getKey(p_230422_2_.item);
-         if (resourcelocation == null) {
-            throw new IllegalArgumentException("Can't serialize unknown item " + p_230422_2_.item);
-         } else {
-            p_230422_1_.addProperty("name", resourcelocation.toString());
-         }
-      }
+    public static class Serializer extends StandaloneLootEntry.Serializer<ItemLootEntry>
+    {
+        public void doSerialize(JsonObject object, ItemLootEntry context, JsonSerializationContext conditions)
+        {
+            super.doSerialize(object, context, conditions);
+            ResourceLocation resourcelocation = Registry.ITEM.getKey(context.item);
 
-      protected ItemLootEntry deserialize(JsonObject p_212829_1_, JsonDeserializationContext p_212829_2_, int p_212829_3_, int p_212829_4_, ILootCondition[] p_212829_5_, ILootFunction[] p_212829_6_) {
-         Item item = JSONUtils.getAsItem(p_212829_1_, "name");
-         return new ItemLootEntry(item, p_212829_3_, p_212829_4_, p_212829_5_, p_212829_6_);
-      }
-   }
+            if (resourcelocation == null)
+            {
+                throw new IllegalArgumentException("Can't serialize unknown item " + context.item);
+            }
+            else
+            {
+                object.addProperty("name", resourcelocation.toString());
+            }
+        }
+
+        protected ItemLootEntry deserialize(JsonObject object, JsonDeserializationContext context, int weight, int quality, ILootCondition[] conditions, ILootFunction[] functions)
+        {
+            Item item = JSONUtils.getItem(object, "name");
+            return new ItemLootEntry(item, weight, quality, conditions, functions);
+        }
+    }
 }

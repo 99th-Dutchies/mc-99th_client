@@ -12,50 +12,67 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class SaplingBlock extends BushBlock implements IGrowable {
-   public static final IntegerProperty STAGE = BlockStateProperties.STAGE;
-   protected static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 12.0D, 14.0D);
-   private final Tree treeGrower;
+public class SaplingBlock extends BushBlock implements IGrowable
+{
+    public static final IntegerProperty STAGE = BlockStateProperties.STAGE_0_1;
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 12.0D, 14.0D);
+    private final Tree tree;
 
-   protected SaplingBlock(Tree p_i48337_1_, AbstractBlock.Properties p_i48337_2_) {
-      super(p_i48337_2_);
-      this.treeGrower = p_i48337_1_;
-      this.registerDefaultState(this.stateDefinition.any().setValue(STAGE, Integer.valueOf(0)));
-   }
+    protected SaplingBlock(Tree treeIn, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.tree = treeIn;
+        this.setDefaultState(this.stateContainer.getBaseState().with(STAGE, Integer.valueOf(0)));
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_2_.getMaxLocalRawBrightness(p_225542_3_.above()) >= 9 && p_225542_4_.nextInt(7) == 0) {
-         this.advanceTree(p_225542_2_, p_225542_3_, p_225542_1_, p_225542_4_);
-      }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (worldIn.getLight(pos.up()) >= 9 && random.nextInt(7) == 0)
+        {
+            this.placeTree(worldIn, pos, state, random);
+        }
+    }
 
-   }
+    public void placeTree(ServerWorld world, BlockPos pos, BlockState state, Random rand)
+    {
+        if (state.get(STAGE) == 0)
+        {
+            world.setBlockState(pos, state.func_235896_a_(STAGE), 4);
+        }
+        else
+        {
+            this.tree.attemptGrowTree(world, world.getChunkProvider().getChunkGenerator(), pos, state, rand);
+        }
+    }
 
-   public void advanceTree(ServerWorld p_226942_1_, BlockPos p_226942_2_, BlockState p_226942_3_, Random p_226942_4_) {
-      if (p_226942_3_.getValue(STAGE) == 0) {
-         p_226942_1_.setBlock(p_226942_2_, p_226942_3_.cycle(STAGE), 4);
-      } else {
-         this.treeGrower.growTree(p_226942_1_, p_226942_1_.getChunkSource().getGenerator(), p_226942_2_, p_226942_3_, p_226942_4_);
-      }
+    /**
+     * Whether this IGrowable can grow
+     */
+    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient)
+    {
+        return true;
+    }
 
-   }
+    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        return (double)worldIn.rand.nextFloat() < 0.45D;
+    }
 
-   public boolean isValidBonemealTarget(IBlockReader p_176473_1_, BlockPos p_176473_2_, BlockState p_176473_3_, boolean p_176473_4_) {
-      return true;
-   }
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state)
+    {
+        this.placeTree(worldIn, pos, state, rand);
+    }
 
-   public boolean isBonemealSuccess(World p_180670_1_, Random p_180670_2_, BlockPos p_180670_3_, BlockState p_180670_4_) {
-      return (double)p_180670_1_.random.nextFloat() < 0.45D;
-   }
-
-   public void performBonemeal(ServerWorld p_225535_1_, Random p_225535_2_, BlockPos p_225535_3_, BlockState p_225535_4_) {
-      this.advanceTree(p_225535_1_, p_225535_3_, p_225535_4_, p_225535_2_);
-   }
-
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(STAGE);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(STAGE);
+    }
 }

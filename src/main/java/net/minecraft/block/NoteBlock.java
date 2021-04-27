@@ -19,71 +19,100 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
-public class NoteBlock extends Block {
-   public static final EnumProperty<NoteBlockInstrument> INSTRUMENT = BlockStateProperties.NOTEBLOCK_INSTRUMENT;
-   public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-   public static final IntegerProperty NOTE = BlockStateProperties.NOTE;
+public class NoteBlock extends Block
+{
+    public static final EnumProperty<NoteBlockInstrument> INSTRUMENT = BlockStateProperties.NOTE_BLOCK_INSTRUMENT;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    public static final IntegerProperty NOTE = BlockStateProperties.NOTE_0_24;
 
-   public NoteBlock(AbstractBlock.Properties p_i48359_1_) {
-      super(p_i48359_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(INSTRUMENT, NoteBlockInstrument.HARP).setValue(NOTE, Integer.valueOf(0)).setValue(POWERED, Boolean.valueOf(false)));
-   }
+    public NoteBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(INSTRUMENT, NoteBlockInstrument.HARP).with(NOTE, Integer.valueOf(0)).with(POWERED, Boolean.valueOf(false)));
+    }
 
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      return this.defaultBlockState().setValue(INSTRUMENT, NoteBlockInstrument.byState(p_196258_1_.getLevel().getBlockState(p_196258_1_.getClickedPos().below())));
-   }
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        return this.getDefaultState().with(INSTRUMENT, NoteBlockInstrument.byState(context.getWorld().getBlockState(context.getPos().down())));
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      return p_196271_2_ == Direction.DOWN ? p_196271_1_.setValue(INSTRUMENT, NoteBlockInstrument.byState(p_196271_3_)) : super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        return facing == Direction.DOWN ? stateIn.with(INSTRUMENT, NoteBlockInstrument.byState(facingState)) : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      boolean flag = p_220069_2_.hasNeighborSignal(p_220069_3_);
-      if (flag != p_220069_1_.getValue(POWERED)) {
-         if (flag) {
-            this.playNote(p_220069_2_, p_220069_3_);
-         }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        boolean flag = worldIn.isBlockPowered(pos);
 
-         p_220069_2_.setBlock(p_220069_3_, p_220069_1_.setValue(POWERED, Boolean.valueOf(flag)), 3);
-      }
+        if (flag != state.get(POWERED))
+        {
+            if (flag)
+            {
+                this.triggerNote(worldIn, pos);
+            }
 
-   }
+            worldIn.setBlockState(pos, state.with(POWERED, Boolean.valueOf(flag)), 3);
+        }
+    }
 
-   private void playNote(World p_196482_1_, BlockPos p_196482_2_) {
-      if (p_196482_1_.getBlockState(p_196482_2_.above()).isAir()) {
-         p_196482_1_.blockEvent(p_196482_2_, this, 0, 0);
-      }
+    private void triggerNote(World worldIn, BlockPos pos)
+    {
+        if (worldIn.getBlockState(pos.up()).isAir())
+        {
+            worldIn.addBlockEvent(pos, this, 0, 0);
+        }
+    }
 
-   }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            state = state.func_235896_a_(NOTE);
+            worldIn.setBlockState(pos, state, 3);
+            this.triggerNote(worldIn, pos);
+            player.addStat(Stats.TUNE_NOTEBLOCK);
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         return ActionResultType.SUCCESS;
-      } else {
-         p_225533_1_ = p_225533_1_.cycle(NOTE);
-         p_225533_2_.setBlock(p_225533_3_, p_225533_1_, 3);
-         this.playNote(p_225533_2_, p_225533_3_);
-         p_225533_4_.awardStat(Stats.TUNE_NOTEBLOCK);
-         return ActionResultType.CONSUME;
-      }
-   }
+    public void onBlockClicked(BlockState state, World worldIn, BlockPos pos, PlayerEntity player)
+    {
+        if (!worldIn.isRemote)
+        {
+            this.triggerNote(worldIn, pos);
+            player.addStat(Stats.PLAY_NOTEBLOCK);
+        }
+    }
 
-   public void attack(BlockState p_196270_1_, World p_196270_2_, BlockPos p_196270_3_, PlayerEntity p_196270_4_) {
-      if (!p_196270_2_.isClientSide) {
-         this.playNote(p_196270_2_, p_196270_3_);
-         p_196270_4_.awardStat(Stats.PLAY_NOTEBLOCK);
-      }
-   }
+    /**
+     * Called on server when World#addBlockEvent is called. If server returns true, then also called on the client. On
+     * the Server, this may perform additional changes to the world, like pistons replacing the block with an extended
+     * base. On the client, the update may involve replacing tile entities or effects such as sounds or particles
+     * @deprecated call via {@link IBlockState#onBlockEventReceived(World,BlockPos,int,int)} whenever possible.
+     * Implementing/overriding is fine.
+     */
+    public boolean eventReceived(BlockState state, World worldIn, BlockPos pos, int id, int param)
+    {
+        int i = state.get(NOTE);
+        float f = (float)Math.pow(2.0D, (double)(i - 12) / 12.0D);
+        worldIn.playSound((PlayerEntity)null, pos, state.get(INSTRUMENT).getSound(), SoundCategory.RECORDS, 3.0F, f);
+        worldIn.addParticle(ParticleTypes.NOTE, (double)pos.getX() + 0.5D, (double)pos.getY() + 1.2D, (double)pos.getZ() + 0.5D, (double)i / 24.0D, 0.0D, 0.0D);
+        return true;
+    }
 
-   public boolean triggerEvent(BlockState p_189539_1_, World p_189539_2_, BlockPos p_189539_3_, int p_189539_4_, int p_189539_5_) {
-      int i = p_189539_1_.getValue(NOTE);
-      float f = (float)Math.pow(2.0D, (double)(i - 12) / 12.0D);
-      p_189539_2_.playSound((PlayerEntity)null, p_189539_3_, p_189539_1_.getValue(INSTRUMENT).getSoundEvent(), SoundCategory.RECORDS, 3.0F, f);
-      p_189539_2_.addParticle(ParticleTypes.NOTE, (double)p_189539_3_.getX() + 0.5D, (double)p_189539_3_.getY() + 1.2D, (double)p_189539_3_.getZ() + 0.5D, (double)i / 24.0D, 0.0D, 0.0D);
-      return true;
-   }
-
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(INSTRUMENT, POWERED, NOTE);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(INSTRUMENT, POWERED, NOTE);
+    }
 }

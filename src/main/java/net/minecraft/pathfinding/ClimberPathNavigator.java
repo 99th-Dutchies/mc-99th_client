@@ -5,46 +5,72 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class ClimberPathNavigator extends GroundPathNavigator {
-   private BlockPos pathToPosition;
+public class ClimberPathNavigator extends GroundPathNavigator
+{
+    /** Current path navigation target */
+    private BlockPos targetPosition;
 
-   public ClimberPathNavigator(MobEntity p_i45874_1_, World p_i45874_2_) {
-      super(p_i45874_1_, p_i45874_2_);
-   }
+    public ClimberPathNavigator(MobEntity entityLivingIn, World worldIn)
+    {
+        super(entityLivingIn, worldIn);
+    }
 
-   public Path createPath(BlockPos p_179680_1_, int p_179680_2_) {
-      this.pathToPosition = p_179680_1_;
-      return super.createPath(p_179680_1_, p_179680_2_);
-   }
+    /**
+     * Returns path to given BlockPos
+     */
+    public Path getPathToPos(BlockPos pos, int p_179680_2_)
+    {
+        this.targetPosition = pos;
+        return super.getPathToPos(pos, p_179680_2_);
+    }
 
-   public Path createPath(Entity p_75494_1_, int p_75494_2_) {
-      this.pathToPosition = p_75494_1_.blockPosition();
-      return super.createPath(p_75494_1_, p_75494_2_);
-   }
+    /**
+     * Returns the path to the given EntityLiving. Args : entity
+     */
+    public Path getPathToEntity(Entity entityIn, int p_75494_2_)
+    {
+        this.targetPosition = entityIn.getPosition();
+        return super.getPathToEntity(entityIn, p_75494_2_);
+    }
 
-   public boolean moveTo(Entity p_75497_1_, double p_75497_2_) {
-      Path path = this.createPath(p_75497_1_, 0);
-      if (path != null) {
-         return this.moveTo(path, p_75497_2_);
-      } else {
-         this.pathToPosition = p_75497_1_.blockPosition();
-         this.speedModifier = p_75497_2_;
-         return true;
-      }
-   }
+    /**
+     * Try to find and set a path to EntityLiving. Returns true if successful. Args : entity, speed
+     */
+    public boolean tryMoveToEntityLiving(Entity entityIn, double speedIn)
+    {
+        Path path = this.getPathToEntity(entityIn, 0);
 
-   public void tick() {
-      if (!this.isDone()) {
-         super.tick();
-      } else {
-         if (this.pathToPosition != null) {
-            if (!this.pathToPosition.closerThan(this.mob.position(), (double)this.mob.getBbWidth()) && (!(this.mob.getY() > (double)this.pathToPosition.getY()) || !(new BlockPos((double)this.pathToPosition.getX(), this.mob.getY(), (double)this.pathToPosition.getZ())).closerThan(this.mob.position(), (double)this.mob.getBbWidth()))) {
-               this.mob.getMoveControl().setWantedPosition((double)this.pathToPosition.getX(), (double)this.pathToPosition.getY(), (double)this.pathToPosition.getZ(), this.speedModifier);
-            } else {
-               this.pathToPosition = null;
+        if (path != null)
+        {
+            return this.setPath(path, speedIn);
+        }
+        else
+        {
+            this.targetPosition = entityIn.getPosition();
+            this.speed = speedIn;
+            return true;
+        }
+    }
+
+    public void tick()
+    {
+        if (!this.noPath())
+        {
+            super.tick();
+        }
+        else
+        {
+            if (this.targetPosition != null)
+            {
+                if (!this.targetPosition.withinDistance(this.entity.getPositionVec(), (double)this.entity.getWidth()) && (!(this.entity.getPosY() > (double)this.targetPosition.getY()) || !(new BlockPos((double)this.targetPosition.getX(), this.entity.getPosY(), (double)this.targetPosition.getZ())).withinDistance(this.entity.getPositionVec(), (double)this.entity.getWidth())))
+                {
+                    this.entity.getMoveHelper().setMoveTo((double)this.targetPosition.getX(), (double)this.targetPosition.getY(), (double)this.targetPosition.getZ(), this.speed);
+                }
+                else
+                {
+                    this.targetPosition = null;
+                }
             }
-         }
-
-      }
-   }
+        }
+    }
 }

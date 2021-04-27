@@ -8,91 +8,113 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BlockParticleData;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class DiggingParticle extends SpriteTexturedParticle {
-   private final BlockState blockState;
-   private BlockPos pos;
-   private final float uo;
-   private final float vo;
+public class DiggingParticle extends SpriteTexturedParticle
+{
+    private final BlockState sourceState;
+    private BlockPos sourcePos;
+    private final float u;
+    private final float v;
 
-   public DiggingParticle(ClientWorld p_i232446_1_, double p_i232446_2_, double p_i232446_4_, double p_i232446_6_, double p_i232446_8_, double p_i232446_10_, double p_i232446_12_, BlockState p_i232446_14_) {
-      super(p_i232446_1_, p_i232446_2_, p_i232446_4_, p_i232446_6_, p_i232446_8_, p_i232446_10_, p_i232446_12_);
-      this.blockState = p_i232446_14_;
-      this.setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getParticleIcon(p_i232446_14_));
-      this.gravity = 1.0F;
-      this.rCol = 0.6F;
-      this.gCol = 0.6F;
-      this.bCol = 0.6F;
-      this.quadSize /= 2.0F;
-      this.uo = this.random.nextFloat() * 3.0F;
-      this.vo = this.random.nextFloat() * 3.0F;
-   }
+    public DiggingParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ, BlockState state)
+    {
+        super(world, x, y, z, motionX, motionY, motionZ);
+        this.sourceState = state;
+        this.setSprite(Minecraft.getInstance().getBlockRendererDispatcher().getBlockModelShapes().getTexture(state));
+        this.particleGravity = 1.0F;
+        this.particleRed = 0.6F;
+        this.particleGreen = 0.6F;
+        this.particleBlue = 0.6F;
+        this.particleScale /= 2.0F;
+        this.u = this.rand.nextFloat() * 3.0F;
+        this.v = this.rand.nextFloat() * 3.0F;
+    }
 
-   public IParticleRenderType getRenderType() {
-      return IParticleRenderType.TERRAIN_SHEET;
-   }
+    public IParticleRenderType getRenderType()
+    {
+        return IParticleRenderType.TERRAIN_SHEET;
+    }
 
-   public DiggingParticle init(BlockPos p_174846_1_) {
-      this.pos = p_174846_1_;
-      if (this.blockState.is(Blocks.GRASS_BLOCK)) {
-         return this;
-      } else {
-         this.multiplyColor(p_174846_1_);
-         return this;
-      }
-   }
+    /**
+     * Sets the position of the block that this particle came from. Used for calculating texture and color multiplier.
+     */
+    public DiggingParticle setBlockPos(BlockPos pos)
+    {
+        this.sourcePos = pos;
 
-   public DiggingParticle init() {
-      this.pos = new BlockPos(this.x, this.y, this.z);
-      if (this.blockState.is(Blocks.GRASS_BLOCK)) {
-         return this;
-      } else {
-         this.multiplyColor(this.pos);
-         return this;
-      }
-   }
+        if (this.sourceState.isIn(Blocks.GRASS_BLOCK))
+        {
+            return this;
+        }
+        else
+        {
+            this.multiplyColor(pos);
+            return this;
+        }
+    }
 
-   protected void multiplyColor(@Nullable BlockPos p_187154_1_) {
-      int i = Minecraft.getInstance().getBlockColors().getColor(this.blockState, this.level, p_187154_1_, 0);
-      this.rCol *= (float)(i >> 16 & 255) / 255.0F;
-      this.gCol *= (float)(i >> 8 & 255) / 255.0F;
-      this.bCol *= (float)(i & 255) / 255.0F;
-   }
+    public DiggingParticle init()
+    {
+        this.sourcePos = new BlockPos(this.posX, this.posY, this.posZ);
 
-   protected float getU0() {
-      return this.sprite.getU((double)((this.uo + 1.0F) / 4.0F * 16.0F));
-   }
+        if (this.sourceState.isIn(Blocks.GRASS_BLOCK))
+        {
+            return this;
+        }
+        else
+        {
+            this.multiplyColor(this.sourcePos);
+            return this;
+        }
+    }
 
-   protected float getU1() {
-      return this.sprite.getU((double)(this.uo / 4.0F * 16.0F));
-   }
+    protected void multiplyColor(@Nullable BlockPos pos)
+    {
+        int i = Minecraft.getInstance().getBlockColors().getColor(this.sourceState, this.world, pos, 0);
+        this.particleRed *= (float)(i >> 16 & 255) / 255.0F;
+        this.particleGreen *= (float)(i >> 8 & 255) / 255.0F;
+        this.particleBlue *= (float)(i & 255) / 255.0F;
+    }
 
-   protected float getV0() {
-      return this.sprite.getV((double)(this.vo / 4.0F * 16.0F));
-   }
+    protected float getMinU()
+    {
+        return this.sprite.getInterpolatedU((double)((this.u + 1.0F) / 4.0F * 16.0F));
+    }
 
-   protected float getV1() {
-      return this.sprite.getV((double)((this.vo + 1.0F) / 4.0F * 16.0F));
-   }
+    protected float getMaxU()
+    {
+        return this.sprite.getInterpolatedU((double)(this.u / 4.0F * 16.0F));
+    }
 
-   public int getLightColor(float p_189214_1_) {
-      int i = super.getLightColor(p_189214_1_);
-      int j = 0;
-      if (this.level.hasChunkAt(this.pos)) {
-         j = WorldRenderer.getLightColor(this.level, this.pos);
-      }
+    protected float getMinV()
+    {
+        return this.sprite.getInterpolatedV((double)(this.v / 4.0F * 16.0F));
+    }
 
-      return i == 0 ? j : i;
-   }
+    protected float getMaxV()
+    {
+        return this.sprite.getInterpolatedV((double)((this.v + 1.0F) / 4.0F * 16.0F));
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static class Factory implements IParticleFactory<BlockParticleData> {
-      public Particle createParticle(BlockParticleData p_199234_1_, ClientWorld p_199234_2_, double p_199234_3_, double p_199234_5_, double p_199234_7_, double p_199234_9_, double p_199234_11_, double p_199234_13_) {
-         BlockState blockstate = p_199234_1_.getState();
-         return !blockstate.isAir() && !blockstate.is(Blocks.MOVING_PISTON) ? (new DiggingParticle(p_199234_2_, p_199234_3_, p_199234_5_, p_199234_7_, p_199234_9_, p_199234_11_, p_199234_13_, blockstate)).init() : null;
-      }
-   }
+    public int getBrightnessForRender(float partialTick)
+    {
+        int i = super.getBrightnessForRender(partialTick);
+        int j = 0;
+
+        if (this.world.isBlockLoaded(this.sourcePos))
+        {
+            j = WorldRenderer.getCombinedLight(this.world, this.sourcePos);
+        }
+
+        return i == 0 ? j : i;
+    }
+
+    public static class Factory implements IParticleFactory<BlockParticleData>
+    {
+        public Particle makeParticle(BlockParticleData typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        {
+            BlockState blockstate = typeIn.getBlockState();
+            return !blockstate.isAir() && !blockstate.isIn(Blocks.MOVING_PISTON) ? (new DiggingParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed, blockstate)).init() : null;
+        }
+    }
 }

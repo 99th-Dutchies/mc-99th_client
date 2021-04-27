@@ -1,41 +1,45 @@
 package net.minecraft.client.tutorial;
 
 import java.util.function.Function;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public enum TutorialSteps {
-   MOVEMENT("movement", MovementStep::new),
-   FIND_TREE("find_tree", FindTreeStep::new),
-   PUNCH_TREE("punch_tree", PunchTreeStep::new),
-   OPEN_INVENTORY("open_inventory", OpenInventoryStep::new),
-   CRAFT_PLANKS("craft_planks", CraftPlanksStep::new),
-   NONE("none", CompletedTutorialStep::new);
+public enum TutorialSteps
+{
+    MOVEMENT("movement", MovementStep::new),
+    FIND_TREE("find_tree", FindTreeStep::new),
+    PUNCH_TREE("punch_tree", PunchTreeStep::new),
+    OPEN_INVENTORY("open_inventory", OpenInventoryStep::new),
+    CRAFT_PLANKS("craft_planks", CraftPlanksStep::new),
+    NONE("none", CompletedTutorialStep::new);
 
-   private final String name;
-   private final Function<Tutorial, ? extends ITutorialStep> constructor;
+    private final String name;
+    private final Function < Tutorial, ? extends ITutorialStep > tutorial;
 
-   private <T extends ITutorialStep> TutorialSteps(String p_i47577_3_, Function<Tutorial, T> p_i47577_4_) {
-      this.name = p_i47577_3_;
-      this.constructor = p_i47577_4_;
-   }
+    private <T extends ITutorialStep> TutorialSteps(String nameIn, Function<Tutorial, T> constructor)
+    {
+        this.name = nameIn;
+        this.tutorial = constructor;
+    }
 
-   public ITutorialStep create(Tutorial p_193309_1_) {
-      return this.constructor.apply(p_193309_1_);
-   }
+    public ITutorialStep create(Tutorial tutorial)
+    {
+        return this.tutorial.apply(tutorial);
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getName()
+    {
+        return this.name;
+    }
 
-   public static TutorialSteps getByName(String p_193307_0_) {
-      for(TutorialSteps tutorialsteps : values()) {
-         if (tutorialsteps.name.equals(p_193307_0_)) {
-            return tutorialsteps;
-         }
-      }
+    public static TutorialSteps byName(String name)
+    {
+        for (TutorialSteps tutorialsteps : values())
+        {
+            if (tutorialsteps.name.equals(name))
+            {
+                return tutorialsteps;
+            }
+        }
 
-      return NONE;
-   }
+        return NONE;
+    }
 }

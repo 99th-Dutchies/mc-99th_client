@@ -1,64 +1,70 @@
 package net.minecraft.entity.player;
 
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class PlayerAbilities {
-   public boolean invulnerable;
-   public boolean flying;
-   public boolean mayfly;
-   public boolean instabuild;
-   public boolean mayBuild = true;
-   private float flyingSpeed = 0.05F;
-   private float walkingSpeed = 0.1F;
+public class PlayerAbilities
+{
+    public boolean disableDamage;
+    public boolean isFlying;
+    public boolean allowFlying;
+    public boolean isCreativeMode;
+    public boolean allowEdit = true;
+    private float flySpeed = 0.05F;
+    private float walkSpeed = 0.1F;
 
-   public void addSaveData(CompoundNBT p_75091_1_) {
-      CompoundNBT compoundnbt = new CompoundNBT();
-      compoundnbt.putBoolean("invulnerable", this.invulnerable);
-      compoundnbt.putBoolean("flying", this.flying);
-      compoundnbt.putBoolean("mayfly", this.mayfly);
-      compoundnbt.putBoolean("instabuild", this.instabuild);
-      compoundnbt.putBoolean("mayBuild", this.mayBuild);
-      compoundnbt.putFloat("flySpeed", this.flyingSpeed);
-      compoundnbt.putFloat("walkSpeed", this.walkingSpeed);
-      p_75091_1_.put("abilities", compoundnbt);
-   }
+    public void write(CompoundNBT tagCompound)
+    {
+        CompoundNBT compoundnbt = new CompoundNBT();
+        compoundnbt.putBoolean("invulnerable", this.disableDamage);
+        compoundnbt.putBoolean("flying", this.isFlying);
+        compoundnbt.putBoolean("mayfly", this.allowFlying);
+        compoundnbt.putBoolean("instabuild", this.isCreativeMode);
+        compoundnbt.putBoolean("mayBuild", this.allowEdit);
+        compoundnbt.putFloat("flySpeed", this.flySpeed);
+        compoundnbt.putFloat("walkSpeed", this.walkSpeed);
+        tagCompound.put("abilities", compoundnbt);
+    }
 
-   public void loadSaveData(CompoundNBT p_75095_1_) {
-      if (p_75095_1_.contains("abilities", 10)) {
-         CompoundNBT compoundnbt = p_75095_1_.getCompound("abilities");
-         this.invulnerable = compoundnbt.getBoolean("invulnerable");
-         this.flying = compoundnbt.getBoolean("flying");
-         this.mayfly = compoundnbt.getBoolean("mayfly");
-         this.instabuild = compoundnbt.getBoolean("instabuild");
-         if (compoundnbt.contains("flySpeed", 99)) {
-            this.flyingSpeed = compoundnbt.getFloat("flySpeed");
-            this.walkingSpeed = compoundnbt.getFloat("walkSpeed");
-         }
+    public void read(CompoundNBT tagCompound)
+    {
+        if (tagCompound.contains("abilities", 10))
+        {
+            CompoundNBT compoundnbt = tagCompound.getCompound("abilities");
+            this.disableDamage = compoundnbt.getBoolean("invulnerable");
+            this.isFlying = compoundnbt.getBoolean("flying");
+            this.allowFlying = compoundnbt.getBoolean("mayfly");
+            this.isCreativeMode = compoundnbt.getBoolean("instabuild");
 
-         if (compoundnbt.contains("mayBuild", 1)) {
-            this.mayBuild = compoundnbt.getBoolean("mayBuild");
-         }
-      }
+            if (compoundnbt.contains("flySpeed", 99))
+            {
+                this.flySpeed = compoundnbt.getFloat("flySpeed");
+                this.walkSpeed = compoundnbt.getFloat("walkSpeed");
+            }
 
-   }
+            if (compoundnbt.contains("mayBuild", 1))
+            {
+                this.allowEdit = compoundnbt.getBoolean("mayBuild");
+            }
+        }
+    }
 
-   public float getFlyingSpeed() {
-      return this.flyingSpeed;
-   }
+    public float getFlySpeed()
+    {
+        return this.flySpeed;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void setFlyingSpeed(float p_195931_1_) {
-      this.flyingSpeed = p_195931_1_;
-   }
+    public void setFlySpeed(float speed)
+    {
+        this.flySpeed = speed;
+    }
 
-   public float getWalkingSpeed() {
-      return this.walkingSpeed;
-   }
+    public float getWalkSpeed()
+    {
+        return this.walkSpeed;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void setWalkingSpeed(float p_82877_1_) {
-      this.walkingSpeed = p_82877_1_;
-   }
+    public void setWalkSpeed(float speed)
+    {
+        this.walkSpeed = speed;
+    }
 }

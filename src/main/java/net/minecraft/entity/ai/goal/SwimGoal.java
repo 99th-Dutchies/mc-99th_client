@@ -4,23 +4,34 @@ import java.util.EnumSet;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.tags.FluidTags;
 
-public class SwimGoal extends Goal {
-   private final MobEntity mob;
+public class SwimGoal extends Goal
+{
+    private final MobEntity entity;
 
-   public SwimGoal(MobEntity p_i1624_1_) {
-      this.mob = p_i1624_1_;
-      this.setFlags(EnumSet.of(Goal.Flag.JUMP));
-      p_i1624_1_.getNavigation().setCanFloat(true);
-   }
+    public SwimGoal(MobEntity entityIn)
+    {
+        this.entity = entityIn;
+        this.setMutexFlags(EnumSet.of(Goal.Flag.JUMP));
+        entityIn.getNavigator().setCanSwim(true);
+    }
 
-   public boolean canUse() {
-      return this.mob.isInWater() && this.mob.getFluidHeight(FluidTags.WATER) > this.mob.getFluidJumpThreshold() || this.mob.isInLava();
-   }
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        return this.entity.isInWater() && this.entity.func_233571_b_(FluidTags.WATER) > this.entity.func_233579_cu_() || this.entity.isInLava();
+    }
 
-   public void tick() {
-      if (this.mob.getRandom().nextFloat() < 0.8F) {
-         this.mob.getJumpControl().jump();
-      }
-
-   }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        if (this.entity.getRNG().nextFloat() < 0.8F)
+        {
+            this.entity.getJumpController().setJumping();
+        }
+    }
 }

@@ -5,155 +5,216 @@ import net.minecraft.nbt.IntArrayNBT;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.vector.Vector3i;
 
-public class MutableBoundingBox {
-   public int x0;
-   public int y0;
-   public int z0;
-   public int x1;
-   public int y1;
-   public int z1;
+public class MutableBoundingBox
+{
+    public int minX;
+    public int minY;
+    public int minZ;
+    public int maxX;
+    public int maxY;
+    public int maxZ;
 
-   public MutableBoundingBox() {
-   }
+    public MutableBoundingBox()
+    {
+    }
 
-   public MutableBoundingBox(int[] p_i43000_1_) {
-      if (p_i43000_1_.length == 6) {
-         this.x0 = p_i43000_1_[0];
-         this.y0 = p_i43000_1_[1];
-         this.z0 = p_i43000_1_[2];
-         this.x1 = p_i43000_1_[3];
-         this.y1 = p_i43000_1_[4];
-         this.z1 = p_i43000_1_[5];
-      }
+    public MutableBoundingBox(int[] coords)
+    {
+        if (coords.length == 6)
+        {
+            this.minX = coords[0];
+            this.minY = coords[1];
+            this.minZ = coords[2];
+            this.maxX = coords[3];
+            this.maxY = coords[4];
+            this.maxZ = coords[5];
+        }
+    }
 
-   }
+    /**
+     * returns a new StructureBoundingBox with MAX values
+     */
+    public static MutableBoundingBox getNewBoundingBox()
+    {
+        return new MutableBoundingBox(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+    }
 
-   public static MutableBoundingBox getUnknownBox() {
-      return new MutableBoundingBox(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
-   }
+    public static MutableBoundingBox func_236990_b_()
+    {
+        return new MutableBoundingBox(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+    }
 
-   public static MutableBoundingBox infinite() {
-      return new MutableBoundingBox(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
-   }
+    /**
+     * Create a bounding box with the specified dimensions and rotate it. Used to project a possible new component
+     * Bounding Box - to check if it would cut anything already spawned
+     */
+    public static MutableBoundingBox getComponentToAddBoundingBox(int structureMinX, int structureMinY, int structureMinZ, int xMin, int yMin, int zMin, int xMax, int yMax, int zMax, Direction facing)
+    {
+        switch (facing)
+        {
+            case NORTH:
+                return new MutableBoundingBox(structureMinX + xMin, structureMinY + yMin, structureMinZ - zMax + 1 + zMin, structureMinX + xMax - 1 + xMin, structureMinY + yMax - 1 + yMin, structureMinZ + zMin);
 
-   public static MutableBoundingBox orientBox(int p_175897_0_, int p_175897_1_, int p_175897_2_, int p_175897_3_, int p_175897_4_, int p_175897_5_, int p_175897_6_, int p_175897_7_, int p_175897_8_, Direction p_175897_9_) {
-      switch(p_175897_9_) {
-      case NORTH:
-         return new MutableBoundingBox(p_175897_0_ + p_175897_3_, p_175897_1_ + p_175897_4_, p_175897_2_ - p_175897_8_ + 1 + p_175897_5_, p_175897_0_ + p_175897_6_ - 1 + p_175897_3_, p_175897_1_ + p_175897_7_ - 1 + p_175897_4_, p_175897_2_ + p_175897_5_);
-      case SOUTH:
-         return new MutableBoundingBox(p_175897_0_ + p_175897_3_, p_175897_1_ + p_175897_4_, p_175897_2_ + p_175897_5_, p_175897_0_ + p_175897_6_ - 1 + p_175897_3_, p_175897_1_ + p_175897_7_ - 1 + p_175897_4_, p_175897_2_ + p_175897_8_ - 1 + p_175897_5_);
-      case WEST:
-         return new MutableBoundingBox(p_175897_0_ - p_175897_8_ + 1 + p_175897_5_, p_175897_1_ + p_175897_4_, p_175897_2_ + p_175897_3_, p_175897_0_ + p_175897_5_, p_175897_1_ + p_175897_7_ - 1 + p_175897_4_, p_175897_2_ + p_175897_6_ - 1 + p_175897_3_);
-      case EAST:
-         return new MutableBoundingBox(p_175897_0_ + p_175897_5_, p_175897_1_ + p_175897_4_, p_175897_2_ + p_175897_3_, p_175897_0_ + p_175897_8_ - 1 + p_175897_5_, p_175897_1_ + p_175897_7_ - 1 + p_175897_4_, p_175897_2_ + p_175897_6_ - 1 + p_175897_3_);
-      default:
-         return new MutableBoundingBox(p_175897_0_ + p_175897_3_, p_175897_1_ + p_175897_4_, p_175897_2_ + p_175897_5_, p_175897_0_ + p_175897_6_ - 1 + p_175897_3_, p_175897_1_ + p_175897_7_ - 1 + p_175897_4_, p_175897_2_ + p_175897_8_ - 1 + p_175897_5_);
-      }
-   }
+            case SOUTH:
+                return new MutableBoundingBox(structureMinX + xMin, structureMinY + yMin, structureMinZ + zMin, structureMinX + xMax - 1 + xMin, structureMinY + yMax - 1 + yMin, structureMinZ + zMax - 1 + zMin);
 
-   public static MutableBoundingBox createProper(int p_175899_0_, int p_175899_1_, int p_175899_2_, int p_175899_3_, int p_175899_4_, int p_175899_5_) {
-      return new MutableBoundingBox(Math.min(p_175899_0_, p_175899_3_), Math.min(p_175899_1_, p_175899_4_), Math.min(p_175899_2_, p_175899_5_), Math.max(p_175899_0_, p_175899_3_), Math.max(p_175899_1_, p_175899_4_), Math.max(p_175899_2_, p_175899_5_));
-   }
+            case WEST:
+                return new MutableBoundingBox(structureMinX - zMax + 1 + zMin, structureMinY + yMin, structureMinZ + xMin, structureMinX + zMin, structureMinY + yMax - 1 + yMin, structureMinZ + xMax - 1 + xMin);
 
-   public MutableBoundingBox(MutableBoundingBox p_i2031_1_) {
-      this.x0 = p_i2031_1_.x0;
-      this.y0 = p_i2031_1_.y0;
-      this.z0 = p_i2031_1_.z0;
-      this.x1 = p_i2031_1_.x1;
-      this.y1 = p_i2031_1_.y1;
-      this.z1 = p_i2031_1_.z1;
-   }
+            case EAST:
+                return new MutableBoundingBox(structureMinX + zMin, structureMinY + yMin, structureMinZ + xMin, structureMinX + zMax - 1 + zMin, structureMinY + yMax - 1 + yMin, structureMinZ + xMax - 1 + xMin);
 
-   public MutableBoundingBox(int p_i2032_1_, int p_i2032_2_, int p_i2032_3_, int p_i2032_4_, int p_i2032_5_, int p_i2032_6_) {
-      this.x0 = p_i2032_1_;
-      this.y0 = p_i2032_2_;
-      this.z0 = p_i2032_3_;
-      this.x1 = p_i2032_4_;
-      this.y1 = p_i2032_5_;
-      this.z1 = p_i2032_6_;
-   }
+            default:
+                return new MutableBoundingBox(structureMinX + xMin, structureMinY + yMin, structureMinZ + zMin, structureMinX + xMax - 1 + xMin, structureMinY + yMax - 1 + yMin, structureMinZ + zMax - 1 + zMin);
+        }
+    }
 
-   public MutableBoundingBox(Vector3i p_i45626_1_, Vector3i p_i45626_2_) {
-      this.x0 = Math.min(p_i45626_1_.getX(), p_i45626_2_.getX());
-      this.y0 = Math.min(p_i45626_1_.getY(), p_i45626_2_.getY());
-      this.z0 = Math.min(p_i45626_1_.getZ(), p_i45626_2_.getZ());
-      this.x1 = Math.max(p_i45626_1_.getX(), p_i45626_2_.getX());
-      this.y1 = Math.max(p_i45626_1_.getY(), p_i45626_2_.getY());
-      this.z1 = Math.max(p_i45626_1_.getZ(), p_i45626_2_.getZ());
-   }
+    public static MutableBoundingBox createProper(int x1, int y1, int z1, int x2, int y2, int z2)
+    {
+        return new MutableBoundingBox(Math.min(x1, x2), Math.min(y1, y2), Math.min(z1, z2), Math.max(x1, x2), Math.max(y1, y2), Math.max(z1, z2));
+    }
 
-   public MutableBoundingBox(int p_i2033_1_, int p_i2033_2_, int p_i2033_3_, int p_i2033_4_) {
-      this.x0 = p_i2033_1_;
-      this.z0 = p_i2033_2_;
-      this.x1 = p_i2033_3_;
-      this.z1 = p_i2033_4_;
-      this.y0 = 1;
-      this.y1 = 512;
-   }
+    public MutableBoundingBox(MutableBoundingBox structurebb)
+    {
+        this.minX = structurebb.minX;
+        this.minY = structurebb.minY;
+        this.minZ = structurebb.minZ;
+        this.maxX = structurebb.maxX;
+        this.maxY = structurebb.maxY;
+        this.maxZ = structurebb.maxZ;
+    }
 
-   public boolean intersects(MutableBoundingBox p_78884_1_) {
-      return this.x1 >= p_78884_1_.x0 && this.x0 <= p_78884_1_.x1 && this.z1 >= p_78884_1_.z0 && this.z0 <= p_78884_1_.z1 && this.y1 >= p_78884_1_.y0 && this.y0 <= p_78884_1_.y1;
-   }
+    public MutableBoundingBox(int xMin, int yMin, int zMin, int xMax, int yMax, int zMax)
+    {
+        this.minX = xMin;
+        this.minY = yMin;
+        this.minZ = zMin;
+        this.maxX = xMax;
+        this.maxY = yMax;
+        this.maxZ = zMax;
+    }
 
-   public boolean intersects(int p_78885_1_, int p_78885_2_, int p_78885_3_, int p_78885_4_) {
-      return this.x1 >= p_78885_1_ && this.x0 <= p_78885_3_ && this.z1 >= p_78885_2_ && this.z0 <= p_78885_4_;
-   }
+    public MutableBoundingBox(Vector3i vec1, Vector3i vec2)
+    {
+        this.minX = Math.min(vec1.getX(), vec2.getX());
+        this.minY = Math.min(vec1.getY(), vec2.getY());
+        this.minZ = Math.min(vec1.getZ(), vec2.getZ());
+        this.maxX = Math.max(vec1.getX(), vec2.getX());
+        this.maxY = Math.max(vec1.getY(), vec2.getY());
+        this.maxZ = Math.max(vec1.getZ(), vec2.getZ());
+    }
 
-   public void expand(MutableBoundingBox p_78888_1_) {
-      this.x0 = Math.min(this.x0, p_78888_1_.x0);
-      this.y0 = Math.min(this.y0, p_78888_1_.y0);
-      this.z0 = Math.min(this.z0, p_78888_1_.z0);
-      this.x1 = Math.max(this.x1, p_78888_1_.x1);
-      this.y1 = Math.max(this.y1, p_78888_1_.y1);
-      this.z1 = Math.max(this.z1, p_78888_1_.z1);
-   }
+    public MutableBoundingBox(int xMin, int zMin, int xMax, int zMax)
+    {
+        this.minX = xMin;
+        this.minZ = zMin;
+        this.maxX = xMax;
+        this.maxZ = zMax;
+        this.minY = 1;
+        this.maxY = 512;
+    }
 
-   public void move(int p_78886_1_, int p_78886_2_, int p_78886_3_) {
-      this.x0 += p_78886_1_;
-      this.y0 += p_78886_2_;
-      this.z0 += p_78886_3_;
-      this.x1 += p_78886_1_;
-      this.y1 += p_78886_2_;
-      this.z1 += p_78886_3_;
-   }
+    /**
+     * Discover if bounding box can fit within the current bounding box object.
+     */
+    public boolean intersectsWith(MutableBoundingBox structurebb)
+    {
+        return this.maxX >= structurebb.minX && this.minX <= structurebb.maxX && this.maxZ >= structurebb.minZ && this.minZ <= structurebb.maxZ && this.maxY >= structurebb.minY && this.minY <= structurebb.maxY;
+    }
 
-   public MutableBoundingBox moved(int p_215127_1_, int p_215127_2_, int p_215127_3_) {
-      return new MutableBoundingBox(this.x0 + p_215127_1_, this.y0 + p_215127_2_, this.z0 + p_215127_3_, this.x1 + p_215127_1_, this.y1 + p_215127_2_, this.z1 + p_215127_3_);
-   }
+    /**
+     * Discover if a coordinate is inside the bounding box area.
+     */
+    public boolean intersectsWith(int minXIn, int minZIn, int maxXIn, int maxZIn)
+    {
+        return this.maxX >= minXIn && this.minX <= maxXIn && this.maxZ >= minZIn && this.minZ <= maxZIn;
+    }
 
-   public void move(Vector3i p_236989_1_) {
-      this.move(p_236989_1_.getX(), p_236989_1_.getY(), p_236989_1_.getZ());
-   }
+    /**
+     * Expands a bounding box's dimensions to include the supplied bounding box.
+     */
+    public void expandTo(MutableBoundingBox sbb)
+    {
+        this.minX = Math.min(this.minX, sbb.minX);
+        this.minY = Math.min(this.minY, sbb.minY);
+        this.minZ = Math.min(this.minZ, sbb.minZ);
+        this.maxX = Math.max(this.maxX, sbb.maxX);
+        this.maxY = Math.max(this.maxY, sbb.maxY);
+        this.maxZ = Math.max(this.maxZ, sbb.maxZ);
+    }
 
-   public boolean isInside(Vector3i p_175898_1_) {
-      return p_175898_1_.getX() >= this.x0 && p_175898_1_.getX() <= this.x1 && p_175898_1_.getZ() >= this.z0 && p_175898_1_.getZ() <= this.z1 && p_175898_1_.getY() >= this.y0 && p_175898_1_.getY() <= this.y1;
-   }
+    /**
+     * Offsets the current bounding box by the specified amount.
+     */
+    public void offset(int x, int y, int z)
+    {
+        this.minX += x;
+        this.minY += y;
+        this.minZ += z;
+        this.maxX += x;
+        this.maxY += y;
+        this.maxZ += z;
+    }
 
-   public Vector3i getLength() {
-      return new Vector3i(this.x1 - this.x0, this.y1 - this.y0, this.z1 - this.z0);
-   }
+    public MutableBoundingBox func_215127_b(int p_215127_1_, int p_215127_2_, int p_215127_3_)
+    {
+        return new MutableBoundingBox(this.minX + p_215127_1_, this.minY + p_215127_2_, this.minZ + p_215127_3_, this.maxX + p_215127_1_, this.maxY + p_215127_2_, this.maxZ + p_215127_3_);
+    }
 
-   public int getXSpan() {
-      return this.x1 - this.x0 + 1;
-   }
+    public void func_236989_a_(Vector3i p_236989_1_)
+    {
+        this.offset(p_236989_1_.getX(), p_236989_1_.getY(), p_236989_1_.getZ());
+    }
 
-   public int getYSpan() {
-      return this.y1 - this.y0 + 1;
-   }
+    /**
+     * Checks if given Vec3i is inside of StructureBoundingBox
+     */
+    public boolean isVecInside(Vector3i vec)
+    {
+        return vec.getX() >= this.minX && vec.getX() <= this.maxX && vec.getZ() >= this.minZ && vec.getZ() <= this.maxZ && vec.getY() >= this.minY && vec.getY() <= this.maxY;
+    }
 
-   public int getZSpan() {
-      return this.z1 - this.z0 + 1;
-   }
+    public Vector3i getLength()
+    {
+        return new Vector3i(this.maxX - this.minX, this.maxY - this.minY, this.maxZ - this.minZ);
+    }
 
-   public Vector3i getCenter() {
-      return new BlockPos(this.x0 + (this.x1 - this.x0 + 1) / 2, this.y0 + (this.y1 - this.y0 + 1) / 2, this.z0 + (this.z1 - this.z0 + 1) / 2);
-   }
+    /**
+     * Get dimension of the bounding box in the x direction.
+     */
+    public int getXSize()
+    {
+        return this.maxX - this.minX + 1;
+    }
 
-   public String toString() {
-      return MoreObjects.toStringHelper(this).add("x0", this.x0).add("y0", this.y0).add("z0", this.z0).add("x1", this.x1).add("y1", this.y1).add("z1", this.z1).toString();
-   }
+    /**
+     * Get dimension of the bounding box in the y direction.
+     */
+    public int getYSize()
+    {
+        return this.maxY - this.minY + 1;
+    }
 
-   public IntArrayNBT createTag() {
-      return new IntArrayNBT(new int[]{this.x0, this.y0, this.z0, this.x1, this.y1, this.z1});
-   }
+    /**
+     * Get dimension of the bounding box in the z direction.
+     */
+    public int getZSize()
+    {
+        return this.maxZ - this.minZ + 1;
+    }
+
+    public Vector3i func_215126_f()
+    {
+        return new BlockPos(this.minX + (this.maxX - this.minX + 1) / 2, this.minY + (this.maxY - this.minY + 1) / 2, this.minZ + (this.maxZ - this.minZ + 1) / 2);
+    }
+
+    public String toString()
+    {
+        return MoreObjects.toStringHelper(this).add("x0", this.minX).add("y0", this.minY).add("z0", this.minZ).add("x1", this.maxX).add("y1", this.maxY).add("z1", this.maxZ).toString();
+    }
+
+    public IntArrayNBT toNBTTagIntArray()
+    {
+        return new IntArrayNBT(new int[] {this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ});
+    }
 }

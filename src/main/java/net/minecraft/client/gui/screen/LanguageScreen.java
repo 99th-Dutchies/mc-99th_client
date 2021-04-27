@@ -16,122 +16,150 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class LanguageScreen extends SettingsScreen {
-   private static final ITextComponent WARNING_LABEL = (new StringTextComponent("(")).append(new TranslationTextComponent("options.languageWarning")).append(")").withStyle(TextFormatting.GRAY);
-   private LanguageScreen.List packSelectionList;
-   private final LanguageManager languageManager;
-   private OptionButton forceUnicodeButton;
-   private Button doneButton;
+public class LanguageScreen extends SettingsScreen
+{
+    private static final ITextComponent field_243292_c = (new StringTextComponent("(")).append(new TranslationTextComponent("options.languageWarning")).appendString(")").mergeStyle(TextFormatting.GRAY);
 
-   public LanguageScreen(Screen p_i1043_1_, GameSettings p_i1043_2_, LanguageManager p_i1043_3_) {
-      super(p_i1043_1_, p_i1043_2_, new TranslationTextComponent("options.language"));
-      this.languageManager = p_i1043_3_;
-   }
+    /** The List GuiSlot object reference. */
+    private LanguageScreen.List list;
 
-   protected void init() {
-      this.packSelectionList = new LanguageScreen.List(this.minecraft);
-      this.children.add(this.packSelectionList);
-      this.forceUnicodeButton = this.addButton(new OptionButton(this.width / 2 - 155, this.height - 38, 150, 20, AbstractOption.FORCE_UNICODE_FONT, AbstractOption.FORCE_UNICODE_FONT.getMessage(this.options), (p_213037_1_) -> {
-         AbstractOption.FORCE_UNICODE_FONT.toggle(this.options);
-         this.options.save();
-         p_213037_1_.setMessage(AbstractOption.FORCE_UNICODE_FONT.getMessage(this.options));
-         this.minecraft.resizeDisplay();
-      }));
-      this.doneButton = this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 38, 150, 20, DialogTexts.GUI_DONE, (p_213036_1_) -> {
-         LanguageScreen.List.LanguageEntry languagescreen$list$languageentry = this.packSelectionList.getSelected();
-         if (languagescreen$list$languageentry != null && !languagescreen$list$languageentry.language.getCode().equals(this.languageManager.getSelected().getCode())) {
-            this.languageManager.setSelected(languagescreen$list$languageentry.language);
-            this.options.languageCode = languagescreen$list$languageentry.language.getCode();
-            this.minecraft.reloadResourcePacks();
-            this.doneButton.setMessage(DialogTexts.GUI_DONE);
-            this.forceUnicodeButton.setMessage(AbstractOption.FORCE_UNICODE_FONT.getMessage(this.options));
-            this.options.save();
-         }
+    /** Reference to the LanguageManager object. */
+    private final LanguageManager languageManager;
+    private OptionButton field_211832_i;
 
-         this.minecraft.setScreen(this.lastScreen);
-      }));
-      super.init();
-   }
+    /** The button to confirm the current settings. */
+    private Button confirmSettingsBtn;
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.packSelectionList.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-      drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 16, 16777215);
-      drawCenteredString(p_230430_1_, this.font, WARNING_LABEL, this.width / 2, this.height - 56, 8421504);
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-   }
+    public LanguageScreen(Screen screen, GameSettings gameSettingsObj, LanguageManager manager)
+    {
+        super(screen, gameSettingsObj, new TranslationTextComponent("options.language"));
+        this.languageManager = manager;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   class List extends ExtendedList<LanguageScreen.List.LanguageEntry> {
-      public List(Minecraft p_i45519_2_) {
-         super(p_i45519_2_, LanguageScreen.this.width, LanguageScreen.this.height, 32, LanguageScreen.this.height - 65 + 4, 18);
+    protected void init()
+    {
+        this.list = new LanguageScreen.List(this.minecraft);
+        this.children.add(this.list);
+        this.field_211832_i = this.addButton(new OptionButton(this.width / 2 - 155, this.height - 38, 150, 20, AbstractOption.FORCE_UNICODE_FONT, AbstractOption.FORCE_UNICODE_FONT.func_238152_c_(this.gameSettings), (p_213037_1_) ->
+        {
+            AbstractOption.FORCE_UNICODE_FONT.nextValue(this.gameSettings);
+            this.gameSettings.saveOptions();
+            p_213037_1_.setMessage(AbstractOption.FORCE_UNICODE_FONT.func_238152_c_(this.gameSettings));
+            this.minecraft.updateWindowSize();
+        }));
+        this.confirmSettingsBtn = this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 38, 150, 20, DialogTexts.GUI_DONE, (p_213036_1_) ->
+        {
+            LanguageScreen.List.LanguageEntry languagescreen$list$languageentry = this.list.getSelected();
 
-         for(Language language : LanguageScreen.this.languageManager.getLanguages()) {
-            LanguageScreen.List.LanguageEntry languagescreen$list$languageentry = new LanguageScreen.List.LanguageEntry(language);
-            this.addEntry(languagescreen$list$languageentry);
-            if (LanguageScreen.this.languageManager.getSelected().getCode().equals(language.getCode())) {
-               this.setSelected(languagescreen$list$languageentry);
+            if (languagescreen$list$languageentry != null && !languagescreen$list$languageentry.field_214398_b.getCode().equals(this.languageManager.getCurrentLanguage().getCode()))
+            {
+                this.languageManager.setCurrentLanguage(languagescreen$list$languageentry.field_214398_b);
+                this.gameSettings.language = languagescreen$list$languageentry.field_214398_b.getCode();
+                this.minecraft.reloadResources();
+                this.confirmSettingsBtn.setMessage(DialogTexts.GUI_DONE);
+                this.field_211832_i.setMessage(AbstractOption.FORCE_UNICODE_FONT.func_238152_c_(this.gameSettings));
+                this.gameSettings.saveOptions();
             }
-         }
 
-         if (this.getSelected() != null) {
-            this.centerScrollOn(this.getSelected());
-         }
+            this.minecraft.displayGuiScreen(this.parentScreen);
+        }));
+        super.init();
+    }
 
-      }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.list.render(matrixStack, mouseX, mouseY, partialTicks);
+        drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 16, 16777215);
+        drawCenteredString(matrixStack, this.font, field_243292_c, this.width / 2, this.height - 56, 8421504);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
 
-      protected int getScrollbarPosition() {
-         return super.getScrollbarPosition() + 20;
-      }
+    class List extends ExtendedList<LanguageScreen.List.LanguageEntry>
+    {
+        public List(Minecraft mcIn)
+        {
+            super(mcIn, LanguageScreen.this.width, LanguageScreen.this.height, 32, LanguageScreen.this.height - 65 + 4, 18);
 
-      public int getRowWidth() {
-         return super.getRowWidth() + 50;
-      }
+            for (Language language : LanguageScreen.this.languageManager.getLanguages())
+            {
+                LanguageScreen.List.LanguageEntry languagescreen$list$languageentry = new LanguageScreen.List.LanguageEntry(language);
+                this.addEntry(languagescreen$list$languageentry);
 
-      public void setSelected(@Nullable LanguageScreen.List.LanguageEntry p_241215_1_) {
-         super.setSelected(p_241215_1_);
-         if (p_241215_1_ != null) {
-            NarratorChatListener.INSTANCE.sayNow((new TranslationTextComponent("narrator.select", p_241215_1_.language)).getString());
-         }
-
-      }
-
-      protected void renderBackground(MatrixStack p_230433_1_) {
-         LanguageScreen.this.renderBackground(p_230433_1_);
-      }
-
-      protected boolean isFocused() {
-         return LanguageScreen.this.getFocused() == this;
-      }
-
-      @OnlyIn(Dist.CLIENT)
-      public class LanguageEntry extends ExtendedList.AbstractListEntry<LanguageScreen.List.LanguageEntry> {
-         private final Language language;
-
-         public LanguageEntry(Language p_i50494_2_) {
-            this.language = p_i50494_2_;
-         }
-
-         public void render(MatrixStack p_230432_1_, int p_230432_2_, int p_230432_3_, int p_230432_4_, int p_230432_5_, int p_230432_6_, int p_230432_7_, int p_230432_8_, boolean p_230432_9_, float p_230432_10_) {
-            String s = this.language.toString();
-            LanguageScreen.this.font.drawShadow(p_230432_1_, s, (float)(List.this.width / 2 - LanguageScreen.this.font.width(s) / 2), (float)(p_230432_3_ + 1), 16777215, true);
-         }
-
-         public boolean mouseClicked(double p_231044_1_, double p_231044_3_, int p_231044_5_) {
-            if (p_231044_5_ == 0) {
-               this.select();
-               return true;
-            } else {
-               return false;
+                if (LanguageScreen.this.languageManager.getCurrentLanguage().getCode().equals(language.getCode()))
+                {
+                    this.setSelected(languagescreen$list$languageentry);
+                }
             }
-         }
 
-         private void select() {
-            List.this.setSelected(this);
-         }
-      }
-   }
+            if (this.getSelected() != null)
+            {
+                this.centerScrollOn(this.getSelected());
+            }
+        }
+
+        protected int getScrollbarPosition()
+        {
+            return super.getScrollbarPosition() + 20;
+        }
+
+        public int getRowWidth()
+        {
+            return super.getRowWidth() + 50;
+        }
+
+        public void setSelected(@Nullable LanguageScreen.List.LanguageEntry entry)
+        {
+            super.setSelected(entry);
+
+            if (entry != null)
+            {
+                NarratorChatListener.INSTANCE.say((new TranslationTextComponent("narrator.select", entry.field_214398_b)).getString());
+            }
+        }
+
+        protected void renderBackground(MatrixStack p_230433_1_)
+        {
+            LanguageScreen.this.renderBackground(p_230433_1_);
+        }
+
+        protected boolean isFocused()
+        {
+            return LanguageScreen.this.getListener() == this;
+        }
+
+        public class LanguageEntry extends ExtendedList.AbstractListEntry<LanguageScreen.List.LanguageEntry>
+        {
+            private final Language field_214398_b;
+
+            public LanguageEntry(Language p_i50494_2_)
+            {
+                this.field_214398_b = p_i50494_2_;
+            }
+
+            public void render(MatrixStack p_230432_1_, int p_230432_2_, int p_230432_3_, int p_230432_4_, int p_230432_5_, int p_230432_6_, int p_230432_7_, int p_230432_8_, boolean p_230432_9_, float p_230432_10_)
+            {
+                String s = this.field_214398_b.toString();
+                LanguageScreen.this.font.func_238406_a_(p_230432_1_, s, (float)(List.this.width / 2 - LanguageScreen.this.font.getStringWidth(s) / 2), (float)(p_230432_3_ + 1), 16777215, true);
+            }
+
+            public boolean mouseClicked(double mouseX, double mouseY, int button)
+            {
+                if (button == 0)
+                {
+                    this.func_214395_a();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            private void func_214395_a()
+            {
+                List.this.setSelected(this);
+            }
+        }
+    }
 }

@@ -15,257 +15,351 @@ import javax.annotation.Nullable;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public abstract class MinMaxBounds<T extends Number> {
-   public static final SimpleCommandExceptionType ERROR_EMPTY = new SimpleCommandExceptionType(new TranslationTextComponent("argument.range.empty"));
-   public static final SimpleCommandExceptionType ERROR_SWAPPED = new SimpleCommandExceptionType(new TranslationTextComponent("argument.range.swapped"));
-   protected final T min;
-   protected final T max;
+public abstract class MinMaxBounds<T extends Number>
+{
+    public static final SimpleCommandExceptionType ERROR_EMPTY = new SimpleCommandExceptionType(new TranslationTextComponent("argument.range.empty"));
+    public static final SimpleCommandExceptionType ERROR_SWAPPED = new SimpleCommandExceptionType(new TranslationTextComponent("argument.range.swapped"));
+    protected final T min;
+    protected final T max;
 
-   protected MinMaxBounds(@Nullable T p_i49720_1_, @Nullable T p_i49720_2_) {
-      this.min = p_i49720_1_;
-      this.max = p_i49720_2_;
-   }
+    protected MinMaxBounds(@Nullable T min, @Nullable T max)
+    {
+        this.min = min;
+        this.max = max;
+    }
 
-   @Nullable
-   public T getMin() {
-      return this.min;
-   }
+    @Nullable
+    public T getMin()
+    {
+        return this.min;
+    }
 
-   @Nullable
-   public T getMax() {
-      return this.max;
-   }
+    @Nullable
+    public T getMax()
+    {
+        return this.max;
+    }
 
-   public boolean isAny() {
-      return this.min == null && this.max == null;
-   }
+    public boolean isUnbounded()
+    {
+        return this.min == null && this.max == null;
+    }
 
-   public JsonElement serializeToJson() {
-      if (this.isAny()) {
-         return JsonNull.INSTANCE;
-      } else if (this.min != null && this.min.equals(this.max)) {
-         return new JsonPrimitive(this.min);
-      } else {
-         JsonObject jsonobject = new JsonObject();
-         if (this.min != null) {
-            jsonobject.addProperty("min", this.min);
-         }
+    public JsonElement serialize()
+    {
+        if (this.isUnbounded())
+        {
+            return JsonNull.INSTANCE;
+        }
+        else if (this.min != null && this.min.equals(this.max))
+        {
+            return new JsonPrimitive(this.min);
+        }
+        else
+        {
+            JsonObject jsonobject = new JsonObject();
 
-         if (this.max != null) {
-            jsonobject.addProperty("max", this.max);
-         }
-
-         return jsonobject;
-      }
-   }
-
-   protected static <T extends Number, R extends MinMaxBounds<T>> R fromJson(@Nullable JsonElement p_211331_0_, R p_211331_1_, BiFunction<JsonElement, String, T> p_211331_2_, MinMaxBounds.IBoundFactory<T, R> p_211331_3_) {
-      if (p_211331_0_ != null && !p_211331_0_.isJsonNull()) {
-         if (JSONUtils.isNumberValue(p_211331_0_)) {
-            T t2 = p_211331_2_.apply(p_211331_0_, "value");
-            return p_211331_3_.create(t2, t2);
-         } else {
-            JsonObject jsonobject = JSONUtils.convertToJsonObject(p_211331_0_, "value");
-            T t = jsonobject.has("min") ? p_211331_2_.apply(jsonobject.get("min"), "min") : null;
-            T t1 = jsonobject.has("max") ? p_211331_2_.apply(jsonobject.get("max"), "max") : null;
-            return p_211331_3_.create(t, t1);
-         }
-      } else {
-         return p_211331_1_;
-      }
-   }
-
-   protected static <T extends Number, R extends MinMaxBounds<T>> R fromReader(StringReader p_211337_0_, MinMaxBounds.IBoundReader<T, R> p_211337_1_, Function<String, T> p_211337_2_, Supplier<DynamicCommandExceptionType> p_211337_3_, Function<T, T> p_211337_4_) throws CommandSyntaxException {
-      if (!p_211337_0_.canRead()) {
-         throw ERROR_EMPTY.createWithContext(p_211337_0_);
-      } else {
-         int i = p_211337_0_.getCursor();
-
-         try {
-            T t = optionallyFormat(readNumber(p_211337_0_, p_211337_2_, p_211337_3_), p_211337_4_);
-            T t1;
-            if (p_211337_0_.canRead(2) && p_211337_0_.peek() == '.' && p_211337_0_.peek(1) == '.') {
-               p_211337_0_.skip();
-               p_211337_0_.skip();
-               t1 = optionallyFormat(readNumber(p_211337_0_, p_211337_2_, p_211337_3_), p_211337_4_);
-               if (t == null && t1 == null) {
-                  throw ERROR_EMPTY.createWithContext(p_211337_0_);
-               }
-            } else {
-               t1 = t;
+            if (this.min != null)
+            {
+                jsonobject.addProperty("min", this.min);
             }
 
-            if (t == null && t1 == null) {
-               throw ERROR_EMPTY.createWithContext(p_211337_0_);
-            } else {
-               return p_211337_1_.create(p_211337_0_, t, t1);
+            if (this.max != null)
+            {
+                jsonobject.addProperty("max", this.max);
             }
-         } catch (CommandSyntaxException commandsyntaxexception) {
-            p_211337_0_.setCursor(i);
-            throw new CommandSyntaxException(commandsyntaxexception.getType(), commandsyntaxexception.getRawMessage(), commandsyntaxexception.getInput(), i);
-         }
-      }
-   }
 
-   @Nullable
-   private static <T extends Number> T readNumber(StringReader p_196975_0_, Function<String, T> p_196975_1_, Supplier<DynamicCommandExceptionType> p_196975_2_) throws CommandSyntaxException {
-      int i = p_196975_0_.getCursor();
+            return jsonobject;
+        }
+    }
 
-      while(p_196975_0_.canRead() && isAllowedInputChat(p_196975_0_)) {
-         p_196975_0_.skip();
-      }
+    protected static <T extends Number, R extends MinMaxBounds<T>> R fromJson(@Nullable JsonElement element, R defaultIn, BiFunction<JsonElement, String, T> biFunction, MinMaxBounds.IBoundFactory<T, R> boundedFactory)
+    {
+        if (element != null && !element.isJsonNull())
+        {
+            if (JSONUtils.isNumber(element))
+            {
+                T t2 = biFunction.apply(element, "value");
+                return boundedFactory.create(t2, t2);
+            }
+            else
+            {
+                JsonObject jsonobject = JSONUtils.getJsonObject(element, "value");
+                T t = jsonobject.has("min") ? biFunction.apply(jsonobject.get("min"), "min") : null;
+                T t1 = jsonobject.has("max") ? biFunction.apply(jsonobject.get("max"), "max") : null;
+                return boundedFactory.create(t, t1);
+            }
+        }
+        else
+        {
+            return defaultIn;
+        }
+    }
 
-      String s = p_196975_0_.getString().substring(i, p_196975_0_.getCursor());
-      if (s.isEmpty()) {
-         return (T)null;
-      } else {
-         try {
-            return p_196975_1_.apply(s);
-         } catch (NumberFormatException numberformatexception) {
-            throw p_196975_2_.get().createWithContext(p_196975_0_, s);
-         }
-      }
-   }
+    protected static <T extends Number, R extends MinMaxBounds<T>> R fromReader(StringReader reader, MinMaxBounds.IBoundReader<T, R> minMaxReader, Function<String, T> valueFunction, Supplier<DynamicCommandExceptionType> commandExceptionSupplier, Function<T, T> function) throws CommandSyntaxException
+    {
+        if (!reader.canRead())
+        {
+            throw ERROR_EMPTY.createWithContext(reader);
+        }
+        else
+        {
+            int i = reader.getCursor();
 
-   private static boolean isAllowedInputChat(StringReader p_196970_0_) {
-      char c0 = p_196970_0_.peek();
-      if ((c0 < '0' || c0 > '9') && c0 != '-') {
-         if (c0 != '.') {
-            return false;
-         } else {
-            return !p_196970_0_.canRead(2) || p_196970_0_.peek(1) != '.';
-         }
-      } else {
-         return true;
-      }
-   }
+            try
+            {
+                T t = optionallyFormat(readNumber(reader, valueFunction, commandExceptionSupplier), function);
+                T t1;
 
-   @Nullable
-   private static <T> T optionallyFormat(@Nullable T p_196972_0_, Function<T, T> p_196972_1_) {
-      return (T)(p_196972_0_ == null ? null : p_196972_1_.apply(p_196972_0_));
-   }
+                if (reader.canRead(2) && reader.peek() == '.' && reader.peek(1) == '.')
+                {
+                    reader.skip();
+                    reader.skip();
+                    t1 = optionallyFormat(readNumber(reader, valueFunction, commandExceptionSupplier), function);
 
-   public static class FloatBound extends MinMaxBounds<Float> {
-      public static final MinMaxBounds.FloatBound ANY = new MinMaxBounds.FloatBound((Float)null, (Float)null);
-      private final Double minSq;
-      private final Double maxSq;
+                    if (t == null && t1 == null)
+                    {
+                        throw ERROR_EMPTY.createWithContext(reader);
+                    }
+                }
+                else
+                {
+                    t1 = t;
+                }
 
-      private static MinMaxBounds.FloatBound create(StringReader p_211352_0_, @Nullable Float p_211352_1_, @Nullable Float p_211352_2_) throws CommandSyntaxException {
-         if (p_211352_1_ != null && p_211352_2_ != null && p_211352_1_ > p_211352_2_) {
-            throw ERROR_SWAPPED.createWithContext(p_211352_0_);
-         } else {
-            return new MinMaxBounds.FloatBound(p_211352_1_, p_211352_2_);
-         }
-      }
+                if (t == null && t1 == null)
+                {
+                    throw ERROR_EMPTY.createWithContext(reader);
+                }
+                else
+                {
+                    return minMaxReader.create(reader, t, t1);
+                }
+            }
+            catch (CommandSyntaxException commandsyntaxexception)
+            {
+                reader.setCursor(i);
+                throw new CommandSyntaxException(commandsyntaxexception.getType(), commandsyntaxexception.getRawMessage(), commandsyntaxexception.getInput(), i);
+            }
+        }
+    }
 
-      @Nullable
-      private static Double squareOpt(@Nullable Float p_211350_0_) {
-         return p_211350_0_ == null ? null : p_211350_0_.doubleValue() * p_211350_0_.doubleValue();
-      }
+    @Nullable
+    private static <T extends Number> T readNumber(StringReader reader, Function<String, T> stringToValueFunction, Supplier<DynamicCommandExceptionType> commandExceptionSupplier) throws CommandSyntaxException
+    {
+        int i = reader.getCursor();
 
-      private FloatBound(@Nullable Float p_i49717_1_, @Nullable Float p_i49717_2_) {
-         super(p_i49717_1_, p_i49717_2_);
-         this.minSq = squareOpt(p_i49717_1_);
-         this.maxSq = squareOpt(p_i49717_2_);
-      }
+        while (reader.canRead() && isAllowedInputChat(reader))
+        {
+            reader.skip();
+        }
 
-      public static MinMaxBounds.FloatBound atLeast(float p_211355_0_) {
-         return new MinMaxBounds.FloatBound(p_211355_0_, (Float)null);
-      }
+        String s = reader.getString().substring(i, reader.getCursor());
 
-      public boolean matches(float p_211354_1_) {
-         if (this.min != null && this.min > p_211354_1_) {
-            return false;
-         } else {
-            return this.max == null || !(this.max < p_211354_1_);
-         }
-      }
+        if (s.isEmpty())
+        {
+            return (T)null;
+        }
+        else
+        {
+            try
+            {
+                return stringToValueFunction.apply(s);
+            }
+            catch (NumberFormatException numberformatexception)
+            {
+                throw commandExceptionSupplier.get().createWithContext(reader, s);
+            }
+        }
+    }
 
-      public boolean matchesSqr(double p_211351_1_) {
-         if (this.minSq != null && this.minSq > p_211351_1_) {
-            return false;
-         } else {
-            return this.maxSq == null || !(this.maxSq < p_211351_1_);
-         }
-      }
+    private static boolean isAllowedInputChat(StringReader reader)
+    {
+        char c0 = reader.peek();
 
-      public static MinMaxBounds.FloatBound fromJson(@Nullable JsonElement p_211356_0_) {
-         return fromJson(p_211356_0_, ANY, JSONUtils::convertToFloat, MinMaxBounds.FloatBound::new);
-      }
+        if ((c0 < '0' || c0 > '9') && c0 != '-')
+        {
+            if (c0 != '.')
+            {
+                return false;
+            }
+            else
+            {
+                return !reader.canRead(2) || reader.peek(1) != '.';
+            }
+        }
+        else
+        {
+            return true;
+        }
+    }
 
-      public static MinMaxBounds.FloatBound fromReader(StringReader p_211357_0_) throws CommandSyntaxException {
-         return fromReader(p_211357_0_, (p_211358_0_) -> {
-            return p_211358_0_;
-         });
-      }
+    @Nullable
+    private static <T> T optionallyFormat(@Nullable T value, Function<T, T> formatterFunction)
+    {
+        return (T)(value == null ? null : formatterFunction.apply(value));
+    }
 
-      public static MinMaxBounds.FloatBound fromReader(StringReader p_211353_0_, Function<Float, Float> p_211353_1_) throws CommandSyntaxException {
-         return fromReader(p_211353_0_, MinMaxBounds.FloatBound::create, Float::parseFloat, CommandSyntaxException.BUILT_IN_EXCEPTIONS::readerInvalidFloat, p_211353_1_);
-      }
-   }
+    public static class FloatBound extends MinMaxBounds<Float>
+    {
+        public static final MinMaxBounds.FloatBound UNBOUNDED = new MinMaxBounds.FloatBound((Float)null, (Float)null);
+        private final Double minSquared;
+        private final Double maxSquared;
 
-   @FunctionalInterface
-   public interface IBoundFactory<T extends Number, R extends MinMaxBounds<T>> {
-      R create(@Nullable T p_create_1_, @Nullable T p_create_2_);
-   }
+        private static MinMaxBounds.FloatBound create(StringReader reader, @Nullable Float min, @Nullable Float max) throws CommandSyntaxException
+        {
+            if (min != null && max != null && min > max)
+            {
+                throw ERROR_SWAPPED.createWithContext(reader);
+            }
+            else
+            {
+                return new MinMaxBounds.FloatBound(min, max);
+            }
+        }
 
-   @FunctionalInterface
-   public interface IBoundReader<T extends Number, R extends MinMaxBounds<T>> {
-      R create(StringReader p_create_1_, @Nullable T p_create_2_, @Nullable T p_create_3_) throws CommandSyntaxException;
-   }
+        @Nullable
+        private static Double square(@Nullable Float value)
+        {
+            return value == null ? null : value.doubleValue() * value.doubleValue();
+        }
 
-   public static class IntBound extends MinMaxBounds<Integer> {
-      public static final MinMaxBounds.IntBound ANY = new MinMaxBounds.IntBound((Integer)null, (Integer)null);
-      private final Long minSq;
-      private final Long maxSq;
+        private FloatBound(@Nullable Float min, @Nullable Float max)
+        {
+            super(min, max);
+            this.minSquared = square(min);
+            this.maxSquared = square(max);
+        }
 
-      private static MinMaxBounds.IntBound create(StringReader p_211338_0_, @Nullable Integer p_211338_1_, @Nullable Integer p_211338_2_) throws CommandSyntaxException {
-         if (p_211338_1_ != null && p_211338_2_ != null && p_211338_1_ > p_211338_2_) {
-            throw ERROR_SWAPPED.createWithContext(p_211338_0_);
-         } else {
-            return new MinMaxBounds.IntBound(p_211338_1_, p_211338_2_);
-         }
-      }
+        public static MinMaxBounds.FloatBound atLeast(float value)
+        {
+            return new MinMaxBounds.FloatBound(value, (Float)null);
+        }
 
-      @Nullable
-      private static Long squareOpt(@Nullable Integer p_211343_0_) {
-         return p_211343_0_ == null ? null : p_211343_0_.longValue() * p_211343_0_.longValue();
-      }
+        public boolean test(float value)
+        {
+            if (this.min != null && this.min > value)
+            {
+                return false;
+            }
+            else
+            {
+                return this.max == null || !(this.max < value);
+            }
+        }
 
-      private IntBound(@Nullable Integer p_i49716_1_, @Nullable Integer p_i49716_2_) {
-         super(p_i49716_1_, p_i49716_2_);
-         this.minSq = squareOpt(p_i49716_1_);
-         this.maxSq = squareOpt(p_i49716_2_);
-      }
+        public boolean testSquared(double value)
+        {
+            if (this.minSquared != null && this.minSquared > value)
+            {
+                return false;
+            }
+            else
+            {
+                return this.maxSquared == null || !(this.maxSquared < value);
+            }
+        }
 
-      public static MinMaxBounds.IntBound exactly(int p_211345_0_) {
-         return new MinMaxBounds.IntBound(p_211345_0_, p_211345_0_);
-      }
+        public static MinMaxBounds.FloatBound fromJson(@Nullable JsonElement element)
+        {
+            return fromJson(element, UNBOUNDED, JSONUtils::getFloat, MinMaxBounds.FloatBound::new);
+        }
 
-      public static MinMaxBounds.IntBound atLeast(int p_211340_0_) {
-         return new MinMaxBounds.IntBound(p_211340_0_, (Integer)null);
-      }
+        public static MinMaxBounds.FloatBound fromReader(StringReader reader) throws CommandSyntaxException
+        {
+            return fromReader(reader, (floatValue) ->
+            {
+                return floatValue;
+            });
+        }
 
-      public boolean matches(int p_211339_1_) {
-         if (this.min != null && this.min > p_211339_1_) {
-            return false;
-         } else {
-            return this.max == null || this.max >= p_211339_1_;
-         }
-      }
+        public static MinMaxBounds.FloatBound fromReader(StringReader reader, Function<Float, Float> valueFunction) throws CommandSyntaxException
+        {
+            return fromReader(reader, MinMaxBounds.FloatBound::create, Float::parseFloat, CommandSyntaxException.BUILT_IN_EXCEPTIONS::readerInvalidFloat, valueFunction);
+        }
+    }
 
-      public static MinMaxBounds.IntBound fromJson(@Nullable JsonElement p_211344_0_) {
-         return fromJson(p_211344_0_, ANY, JSONUtils::convertToInt, MinMaxBounds.IntBound::new);
-      }
+    @FunctionalInterface
+    public interface IBoundFactory<T extends Number, R extends MinMaxBounds<T>>
+    {
+        R create(@Nullable T p_create_1_, @Nullable T p_create_2_);
+    }
 
-      public static MinMaxBounds.IntBound fromReader(StringReader p_211342_0_) throws CommandSyntaxException {
-         return fromReader(p_211342_0_, (p_211346_0_) -> {
-            return p_211346_0_;
-         });
-      }
+    @FunctionalInterface
+    public interface IBoundReader<T extends Number, R extends MinMaxBounds<T>>
+    {
+        R create(StringReader p_create_1_, @Nullable T p_create_2_, @Nullable T p_create_3_) throws CommandSyntaxException;
+    }
 
-      public static MinMaxBounds.IntBound fromReader(StringReader p_211341_0_, Function<Integer, Integer> p_211341_1_) throws CommandSyntaxException {
-         return fromReader(p_211341_0_, MinMaxBounds.IntBound::create, Integer::parseInt, CommandSyntaxException.BUILT_IN_EXCEPTIONS::readerInvalidInt, p_211341_1_);
-      }
-   }
+    public static class IntBound extends MinMaxBounds<Integer>
+    {
+        public static final MinMaxBounds.IntBound UNBOUNDED = new MinMaxBounds.IntBound((Integer)null, (Integer)null);
+        private final Long minSquared;
+        private final Long maxSquared;
+
+        private static MinMaxBounds.IntBound create(StringReader reader, @Nullable Integer min, @Nullable Integer max) throws CommandSyntaxException
+        {
+            if (min != null && max != null && min > max)
+            {
+                throw ERROR_SWAPPED.createWithContext(reader);
+            }
+            else
+            {
+                return new MinMaxBounds.IntBound(min, max);
+            }
+        }
+
+        @Nullable
+        private static Long square(@Nullable Integer value)
+        {
+            return value == null ? null : value.longValue() * value.longValue();
+        }
+
+        private IntBound(@Nullable Integer min, @Nullable Integer max)
+        {
+            super(min, max);
+            this.minSquared = square(min);
+            this.maxSquared = square(max);
+        }
+
+        public static MinMaxBounds.IntBound exactly(int value)
+        {
+            return new MinMaxBounds.IntBound(value, value);
+        }
+
+        public static MinMaxBounds.IntBound atLeast(int value)
+        {
+            return new MinMaxBounds.IntBound(value, (Integer)null);
+        }
+
+        public boolean test(int value)
+        {
+            if (this.min != null && this.min > value)
+            {
+                return false;
+            }
+            else
+            {
+                return this.max == null || this.max >= value;
+            }
+        }
+
+        public static MinMaxBounds.IntBound fromJson(@Nullable JsonElement element)
+        {
+            return fromJson(element, UNBOUNDED, JSONUtils::getInt, MinMaxBounds.IntBound::new);
+        }
+
+        public static MinMaxBounds.IntBound fromReader(StringReader reader) throws CommandSyntaxException
+        {
+            return fromReader(reader, (integer) ->
+            {
+                return integer;
+            });
+        }
+
+        public static MinMaxBounds.IntBound fromReader(StringReader reader, Function<Integer, Integer> valueFunction) throws CommandSyntaxException
+        {
+            return fromReader(reader, MinMaxBounds.IntBound::create, Integer::parseInt, CommandSyntaxException.BUILT_IN_EXCEPTIONS::readerInvalidInt, valueFunction);
+        }
+    }
 }

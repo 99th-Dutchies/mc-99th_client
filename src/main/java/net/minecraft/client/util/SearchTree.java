@@ -11,74 +11,101 @@ import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SearchTree<T> extends SearchTreeReloadable<T> {
-   protected SuffixArray<T> tree = new SuffixArray<>();
-   private final Function<T, Stream<String>> filler;
+public class SearchTree<T> extends SearchTreeReloadable<T>
+{
+    protected SuffixArray<T> byName = new SuffixArray<>();
+    private final Function<T, Stream<String>> nameFunc;
 
-   public SearchTree(Function<T, Stream<String>> p_i47612_1_, Function<T, Stream<ResourceLocation>> p_i47612_2_) {
-      super(p_i47612_2_);
-      this.filler = p_i47612_1_;
-   }
+    public SearchTree(Function<T, Stream<String>> nameFuncIn, Function<T, Stream<ResourceLocation>> idFuncIn)
+    {
+        super(idFuncIn);
+        this.nameFunc = nameFuncIn;
+    }
 
-   public void refresh() {
-      this.tree = new SuffixArray<>();
-      super.refresh();
-      this.tree.generate();
-   }
+    /**
+     * Recalculates the contents of this search tree, reapplying {@link #nameFunc} and {@link #idFunc}. Should be called
+     * whenever resources are reloaded (e.g. language changes).
+     */
+    public void recalculate()
+    {
+        this.byName = new SuffixArray<>();
+        super.recalculate();
+        this.byName.generate();
+    }
 
-   protected void index(T p_194042_1_) {
-      super.index(p_194042_1_);
-      this.filler.apply(p_194042_1_).forEach((p_217880_2_) -> {
-         this.tree.add(p_194042_1_, p_217880_2_.toLowerCase(Locale.ROOT));
-      });
-   }
+    /**
+     * Directly puts the given item into {@link #byId} and {@link #byName}, applying {@link #nameFunc} and {@link
+     * idFunc}.
+     */
+    protected void index(T element)
+    {
+        super.index(element);
+        this.nameFunc.apply(element).forEach((p_217880_2_) ->
+        {
+            this.byName.add(element, p_217880_2_.toLowerCase(Locale.ROOT));
+        });
+    }
 
-   public List<T> search(String p_194038_1_) {
-      int i = p_194038_1_.indexOf(58);
-      if (i < 0) {
-         return this.tree.search(p_194038_1_);
-      } else {
-         List<T> list = this.namespaceTree.search(p_194038_1_.substring(0, i).trim());
-         String s = p_194038_1_.substring(i + 1).trim();
-         List<T> list1 = this.pathTree.search(s);
-         List<T> list2 = this.tree.search(s);
-         return Lists.newArrayList(new SearchTreeReloadable.JoinedIterator<>(list.iterator(), new SearchTree.MergingIterator<>(list1.iterator(), list2.iterator(), this::comparePosition), this::comparePosition));
-      }
-   }
+    public List<T> search(String searchText)
+    {
+        int i = searchText.indexOf(58);
 
-   @OnlyIn(Dist.CLIENT)
-   static class MergingIterator<T> extends AbstractIterator<T> {
-      private final PeekingIterator<T> firstIterator;
-      private final PeekingIterator<T> secondIterator;
-      private final Comparator<T> orderT;
+        if (i < 0)
+        {
+            return this.byName.search(searchText);
+        }
+        else
+        {
+            List<T> list = this.namespaceList.search(searchText.substring(0, i).trim());
+            String s = searchText.substring(i + 1).trim();
+            List<T> list1 = this.pathList.search(s);
+            List<T> list2 = this.byName.search(s);
+            return Lists.newArrayList(new SearchTreeReloadable.JoinedIterator<>(list.iterator(), new SearchTree.MergingIterator<>(list1.iterator(), list2.iterator(), this::compare), this::compare));
+        }
+    }
 
-      public MergingIterator(Iterator<T> p_i49977_1_, Iterator<T> p_i49977_2_, Comparator<T> p_i49977_3_) {
-         this.firstIterator = Iterators.peekingIterator(p_i49977_1_);
-         this.secondIterator = Iterators.peekingIterator(p_i49977_2_);
-         this.orderT = p_i49977_3_;
-      }
+    static class MergingIterator<T> extends AbstractIterator<T>
+    {
+        private final PeekingIterator<T> leftItr;
+        private final PeekingIterator<T> rightItr;
+        private final Comparator<T> numbers;
 
-      protected T computeNext() {
-         boolean flag = !this.firstIterator.hasNext();
-         boolean flag1 = !this.secondIterator.hasNext();
-         if (flag && flag1) {
-            return this.endOfData();
-         } else if (flag) {
-            return this.secondIterator.next();
-         } else if (flag1) {
-            return this.firstIterator.next();
-         } else {
-            int i = this.orderT.compare(this.firstIterator.peek(), this.secondIterator.peek());
-            if (i == 0) {
-               this.secondIterator.next();
+        public MergingIterator(Iterator<T> p_i49977_1_, Iterator<T> p_i49977_2_, Comparator<T> p_i49977_3_)
+        {
+            this.leftItr = Iterators.peekingIterator(p_i49977_1_);
+            this.rightItr = Iterators.peekingIterator(p_i49977_2_);
+            this.numbers = p_i49977_3_;
+        }
+
+        protected T computeNext()
+        {
+            boolean flag = !this.leftItr.hasNext();
+            boolean flag1 = !this.rightItr.hasNext();
+
+            if (flag && flag1)
+            {
+                return this.endOfData();
             }
+            else if (flag)
+            {
+                return this.rightItr.next();
+            }
+            else if (flag1)
+            {
+                return this.leftItr.next();
+            }
+            else
+            {
+                int i = this.numbers.compare(this.leftItr.peek(), this.rightItr.peek());
 
-            return (T)(i <= 0 ? this.firstIterator.next() : this.secondIterator.next());
-         }
-      }
-   }
+                if (i == 0)
+                {
+                    this.rightItr.next();
+                }
+
+                return (T)(i <= 0 ? this.leftItr.next() : this.rightItr.next());
+            }
+        }
+    }
 }

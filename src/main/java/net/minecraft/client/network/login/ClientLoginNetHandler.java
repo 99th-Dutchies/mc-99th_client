@@ -34,116 +34,149 @@ import net.minecraft.util.CryptManager;
 import net.minecraft.util.HTTPUtil;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@OnlyIn(Dist.CLIENT)
-public class ClientLoginNetHandler implements IClientLoginNetHandler {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final Minecraft minecraft;
-   @Nullable
-   private final Screen parent;
-   private final Consumer<ITextComponent> updateStatus;
-   private final NetworkManager connection;
-   private GameProfile localGameProfile;
+public class ClientLoginNetHandler implements IClientLoginNetHandler
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final Minecraft mc;
+    @Nullable
+    private final Screen previousGuiScreen;
+    private final Consumer<ITextComponent> statusMessageConsumer;
+    private final NetworkManager networkManager;
+    private GameProfile gameProfile;
 
-   public ClientLoginNetHandler(NetworkManager p_i49527_1_, Minecraft p_i49527_2_, @Nullable Screen p_i49527_3_, Consumer<ITextComponent> p_i49527_4_) {
-      this.connection = p_i49527_1_;
-      this.minecraft = p_i49527_2_;
-      this.parent = p_i49527_3_;
-      this.updateStatus = p_i49527_4_;
-   }
+    public ClientLoginNetHandler(NetworkManager networkManagerIn, Minecraft mcIn, @Nullable Screen previousScreen, Consumer<ITextComponent> statusMessageConsumerIn)
+    {
+        this.networkManager = networkManagerIn;
+        this.mc = mcIn;
+        this.previousGuiScreen = previousScreen;
+        this.statusMessageConsumer = statusMessageConsumerIn;
+    }
 
-   public void handleHello(SEncryptionRequestPacket p_147389_1_) {
-      Cipher cipher;
-      Cipher cipher1;
-      String s;
-      CEncryptionResponsePacket cencryptionresponsepacket;
-      try {
-         SecretKey secretkey = CryptManager.generateSecretKey();
-         PublicKey publickey = p_147389_1_.getPublicKey();
-         s = (new BigInteger(CryptManager.digestData(p_147389_1_.getServerId(), publickey, secretkey))).toString(16);
-         cipher = CryptManager.getCipher(2, secretkey);
-         cipher1 = CryptManager.getCipher(1, secretkey);
-         cencryptionresponsepacket = new CEncryptionResponsePacket(secretkey, publickey, p_147389_1_.getNonce());
-      } catch (CryptException cryptexception) {
-         throw new IllegalStateException("Protocol error", cryptexception);
-      }
+    public void handleEncryptionRequest(SEncryptionRequestPacket packetIn)
+    {
+        Cipher cipher;
+        Cipher cipher1;
+        String s;
+        CEncryptionResponsePacket cencryptionresponsepacket;
 
-      this.updateStatus.accept(new TranslationTextComponent("connect.authorizing"));
-      HTTPUtil.DOWNLOAD_EXECUTOR.submit(() -> {
-         ITextComponent itextcomponent = this.authenticateServer(s);
-         if (itextcomponent != null) {
-            if (this.minecraft.getCurrentServer() == null || !this.minecraft.getCurrentServer().isLan()) {
-               this.connection.disconnect(itextcomponent);
-               return;
+        try
+        {
+            SecretKey secretkey = CryptManager.createNewSharedKey();
+            PublicKey publickey = packetIn.getPublicKey();
+            s = (new BigInteger(CryptManager.getServerIdHash(packetIn.getServerId(), publickey, secretkey))).toString(16);
+            cipher = CryptManager.createNetCipherInstance(2, secretkey);
+            cipher1 = CryptManager.createNetCipherInstance(1, secretkey);
+            cencryptionresponsepacket = new CEncryptionResponsePacket(secretkey, publickey, packetIn.getVerifyToken());
+        }
+        catch (CryptException cryptexception)
+        {
+            throw new IllegalStateException("Protocol error", cryptexception);
+        }
+
+        this.statusMessageConsumer.accept(new TranslationTextComponent("connect.authorizing"));
+        HTTPUtil.DOWNLOADER_EXECUTOR.submit(() ->
+        {
+            ITextComponent itextcomponent = this.joinServer(s);
+
+            if (itextcomponent != null)
+            {
+                if (this.mc.getCurrentServerData() == null || !this.mc.getCurrentServerData().isOnLAN())
+                {
+                    this.networkManager.closeChannel(itextcomponent);
+                    return;
+                }
+
+                LOGGER.warn(itextcomponent.getString());
             }
 
-            LOGGER.warn(itextcomponent.getString());
-         }
+            this.statusMessageConsumer.accept(new TranslationTextComponent("connect.encrypting"));
+            this.networkManager.sendPacket(cencryptionresponsepacket, (p_244776_3_) -> {
+                this.networkManager.func_244777_a(cipher, cipher1);
+            });
+        });
+    }
 
-         this.updateStatus.accept(new TranslationTextComponent("connect.encrypting"));
-         this.connection.send(cencryptionresponsepacket, (p_244776_3_) -> {
-            this.connection.setEncryptionKey(cipher, cipher1);
-         });
-      });
-   }
+    @Nullable
+    private ITextComponent joinServer(String serverHash)
+    {
+        try
+        {
+            this.getSessionService().joinServer(this.mc.getSession().getProfile(), this.mc.getSession().getToken(), serverHash);
+            return null;
+        }
+        catch (AuthenticationUnavailableException authenticationunavailableexception)
+        {
+            return new TranslationTextComponent("disconnect.loginFailedInfo", new TranslationTextComponent("disconnect.loginFailedInfo.serversUnavailable"));
+        }
+        catch (InvalidCredentialsException invalidcredentialsexception)
+        {
+            return new TranslationTextComponent("disconnect.loginFailedInfo", new TranslationTextComponent("disconnect.loginFailedInfo.invalidSession"));
+        }
+        catch (InsufficientPrivilegesException insufficientprivilegesexception)
+        {
+            return new TranslationTextComponent("disconnect.loginFailedInfo", new TranslationTextComponent("disconnect.loginFailedInfo.insufficientPrivileges"));
+        }
+        catch (AuthenticationException authenticationexception)
+        {
+            return new TranslationTextComponent("disconnect.loginFailedInfo", authenticationexception.getMessage());
+        }
+    }
 
-   @Nullable
-   private ITextComponent authenticateServer(String p_209522_1_) {
-      try {
-         this.getMinecraftSessionService().joinServer(this.minecraft.getUser().getGameProfile(), this.minecraft.getUser().getAccessToken(), p_209522_1_);
-         return null;
-      } catch (AuthenticationUnavailableException authenticationunavailableexception) {
-         return new TranslationTextComponent("disconnect.loginFailedInfo", new TranslationTextComponent("disconnect.loginFailedInfo.serversUnavailable"));
-      } catch (InvalidCredentialsException invalidcredentialsexception) {
-         return new TranslationTextComponent("disconnect.loginFailedInfo", new TranslationTextComponent("disconnect.loginFailedInfo.invalidSession"));
-      } catch (InsufficientPrivilegesException insufficientprivilegesexception) {
-         return new TranslationTextComponent("disconnect.loginFailedInfo", new TranslationTextComponent("disconnect.loginFailedInfo.insufficientPrivileges"));
-      } catch (AuthenticationException authenticationexception) {
-         return new TranslationTextComponent("disconnect.loginFailedInfo", authenticationexception.getMessage());
-      }
-   }
+    private MinecraftSessionService getSessionService()
+    {
+        return this.mc.getSessionService();
+    }
 
-   private MinecraftSessionService getMinecraftSessionService() {
-      return this.minecraft.getMinecraftSessionService();
-   }
+    public void handleLoginSuccess(SLoginSuccessPacket packetIn)
+    {
+        this.statusMessageConsumer.accept(new TranslationTextComponent("connect.joining"));
+        this.gameProfile = packetIn.getProfile();
+        this.networkManager.setConnectionState(ProtocolType.PLAY);
+        this.networkManager.setNetHandler(new ClientPlayNetHandler(this.mc, this.previousGuiScreen, this.networkManager, this.gameProfile));
+    }
 
-   public void handleGameProfile(SLoginSuccessPacket p_147390_1_) {
-      this.updateStatus.accept(new TranslationTextComponent("connect.joining"));
-      this.localGameProfile = p_147390_1_.getGameProfile();
-      this.connection.setProtocol(ProtocolType.PLAY);
-      this.connection.setListener(new ClientPlayNetHandler(this.minecraft, this.parent, this.connection, this.localGameProfile));
-   }
+    /**
+     * Invoked when disconnecting, the parameter is a ChatComponent describing the reason for termination
+     */
+    public void onDisconnect(ITextComponent reason)
+    {
+        if (this.previousGuiScreen != null && this.previousGuiScreen instanceof RealmsScreen)
+        {
+            this.mc.displayGuiScreen(new DisconnectedRealmsScreen(this.previousGuiScreen, DialogTexts.CONNECTION_FAILED, reason));
+        }
+        else
+        {
+            this.mc.displayGuiScreen(new DisconnectedScreen(this.previousGuiScreen, DialogTexts.CONNECTION_FAILED, reason));
+        }
+    }
 
-   public void onDisconnect(ITextComponent p_147231_1_) {
-      if (this.parent != null && this.parent instanceof RealmsScreen) {
-         this.minecraft.setScreen(new DisconnectedRealmsScreen(this.parent, DialogTexts.CONNECT_FAILED, p_147231_1_));
-      } else {
-         this.minecraft.setScreen(new DisconnectedScreen(this.parent, DialogTexts.CONNECT_FAILED, p_147231_1_));
-      }
+    /**
+     * Returns this the NetworkManager instance registered with this NetworkHandlerPlayClient
+     */
+    public NetworkManager getNetworkManager()
+    {
+        return this.networkManager;
+    }
 
-   }
+    public void handleDisconnect(SDisconnectLoginPacket packetIn)
+    {
+        this.networkManager.closeChannel(packetIn.getReason());
+    }
 
-   public NetworkManager getConnection() {
-      return this.connection;
-   }
+    public void handleEnableCompression(SEnableCompressionPacket packetIn)
+    {
+        if (!this.networkManager.isLocalChannel())
+        {
+            this.networkManager.setCompressionThreshold(packetIn.getCompressionThreshold());
+        }
+    }
 
-   public void handleDisconnect(SDisconnectLoginPacket p_147388_1_) {
-      this.connection.disconnect(p_147388_1_.getReason());
-   }
-
-   public void handleCompression(SEnableCompressionPacket p_180464_1_) {
-      if (!this.connection.isMemoryConnection()) {
-         this.connection.setupCompression(p_180464_1_.getCompressionThreshold());
-      }
-
-   }
-
-   public void handleCustomQuery(SCustomPayloadLoginPacket p_209521_1_) {
-      this.updateStatus.accept(new TranslationTextComponent("connect.negotiating"));
-      this.connection.send(new CCustomPayloadLoginPacket(p_209521_1_.getTransactionId(), (PacketBuffer)null));
-   }
+    public void handleCustomPayloadLogin(SCustomPayloadLoginPacket packetIn)
+    {
+        this.statusMessageConsumer.accept(new TranslationTextComponent("connect.negotiating"));
+        this.networkManager.sendPacket(new CCustomPayloadLoginPacket(packetIn.getTransaction(), (PacketBuffer)null));
+    }
 }

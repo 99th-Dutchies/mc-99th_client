@@ -1,13 +1,10 @@
 package net.minecraft.client.audio;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+public interface ISoundEventAccessor<T>
+{
+    int getWeight();
 
-@OnlyIn(Dist.CLIENT)
-public interface ISoundEventAccessor<T> {
-   int getWeight();
+    T cloneEntry();
 
-   T getSound();
-
-   void preloadIfRequired(SoundEngine p_217867_1_);
+    void enqueuePreload(SoundEngine engine);
 }

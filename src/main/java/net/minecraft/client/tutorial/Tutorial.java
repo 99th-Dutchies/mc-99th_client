@@ -15,146 +15,189 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.KeybindTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.GameType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class Tutorial {
-   private final Minecraft minecraft;
-   @Nullable
-   private ITutorialStep instance;
-   private List<Tutorial.ToastTimeInfo> timedToasts = Lists.newArrayList();
+public class Tutorial
+{
+    private final Minecraft minecraft;
+    @Nullable
+    private ITutorialStep tutorialStep;
+    private List<Tutorial.ToastTimeInfo> field_244696_c = Lists.newArrayList();
 
-   public Tutorial(Minecraft p_i47578_1_) {
-      this.minecraft = p_i47578_1_;
-   }
+    public Tutorial(Minecraft minecraft)
+    {
+        this.minecraft = minecraft;
+    }
 
-   public void onInput(MovementInput p_193293_1_) {
-      if (this.instance != null) {
-         this.instance.onInput(p_193293_1_);
-      }
+    public void handleMovement(MovementInput p_193293_1_)
+    {
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.handleMovement(p_193293_1_);
+        }
+    }
 
-   }
+    public void onMouseMove(double velocityX, double velocityY)
+    {
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.onMouseMove(velocityX, velocityY);
+        }
+    }
 
-   public void onMouse(double p_195872_1_, double p_195872_3_) {
-      if (this.instance != null) {
-         this.instance.onMouse(p_195872_1_, p_195872_3_);
-      }
+    public void onMouseHover(@Nullable ClientWorld worldIn, @Nullable RayTraceResult result)
+    {
+        if (this.tutorialStep != null && result != null && worldIn != null)
+        {
+            this.tutorialStep.onMouseHover(worldIn, result);
+        }
+    }
 
-   }
+    public void onHitBlock(ClientWorld worldIn, BlockPos pos, BlockState state, float diggingStage)
+    {
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.onHitBlock(worldIn, pos, state, diggingStage);
+        }
+    }
 
-   public void onLookAt(@Nullable ClientWorld p_193297_1_, @Nullable RayTraceResult p_193297_2_) {
-      if (this.instance != null && p_193297_2_ != null && p_193297_1_ != null) {
-         this.instance.onLookAt(p_193297_1_, p_193297_2_);
-      }
+    /**
+     * Called when the player opens his inventory
+     */
+    public void openInventory()
+    {
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.openInventory();
+        }
+    }
 
-   }
+    /**
+     * Called when the player pick up an ItemStack
+     */
+    public void handleSetSlot(ItemStack stack)
+    {
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.handleSetSlot(stack);
+        }
+    }
 
-   public void onDestroyBlock(ClientWorld p_193294_1_, BlockPos p_193294_2_, BlockState p_193294_3_, float p_193294_4_) {
-      if (this.instance != null) {
-         this.instance.onDestroyBlock(p_193294_1_, p_193294_2_, p_193294_3_, p_193294_4_);
-      }
+    public void stop()
+    {
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.onStop();
+            this.tutorialStep = null;
+        }
+    }
 
-   }
-
-   public void onOpenInventory() {
-      if (this.instance != null) {
-         this.instance.onOpenInventory();
-      }
-
-   }
-
-   public void onGetItem(ItemStack p_193301_1_) {
-      if (this.instance != null) {
-         this.instance.onGetItem(p_193301_1_);
-      }
-
-   }
-
-   public void stop() {
-      if (this.instance != null) {
-         this.instance.clear();
-         this.instance = null;
-      }
-   }
-
-   public void start() {
-      if (this.instance != null) {
-         this.stop();
-      }
-
-      this.instance = this.minecraft.options.tutorialStep.create(this);
-   }
-
-   public void addTimedToast(TutorialToast p_244698_1_, int p_244698_2_) {
-      this.timedToasts.add(new Tutorial.ToastTimeInfo(p_244698_1_, p_244698_2_));
-      this.minecraft.getToasts().addToast(p_244698_1_);
-   }
-
-   public void removeTimedToast(TutorialToast p_244697_1_) {
-      this.timedToasts.removeIf((p_244699_1_) -> {
-         return p_244699_1_.toast == p_244697_1_;
-      });
-      p_244697_1_.hide();
-   }
-
-   public void tick() {
-      this.timedToasts.removeIf((p_244700_0_) -> {
-         return p_244700_0_.updateProgress();
-      });
-      if (this.instance != null) {
-         if (this.minecraft.level != null) {
-            this.instance.tick();
-         } else {
+    /**
+     * Reloads the tutorial step from the game settings
+     */
+    public void reload()
+    {
+        if (this.tutorialStep != null)
+        {
             this.stop();
-         }
-      } else if (this.minecraft.level != null) {
-         this.start();
-      }
+        }
 
-   }
+        this.tutorialStep = this.minecraft.gameSettings.tutorialStep.create(this);
+    }
 
-   public void setStep(TutorialSteps p_193292_1_) {
-      this.minecraft.options.tutorialStep = p_193292_1_;
-      this.minecraft.options.save();
-      if (this.instance != null) {
-         this.instance.clear();
-         this.instance = p_193292_1_.create(this);
-      }
+    public void func_244698_a(TutorialToast p_244698_1_, int p_244698_2_)
+    {
+        this.field_244696_c.add(new Tutorial.ToastTimeInfo(p_244698_1_, p_244698_2_));
+        this.minecraft.getToastGui().add(p_244698_1_);
+    }
 
-   }
+    public void func_244697_a(TutorialToast p_244697_1_)
+    {
+        this.field_244696_c.removeIf((p_244699_1_) ->
+        {
+            return p_244699_1_.field_244701_a == p_244697_1_;
+        });
+        p_244697_1_.hide();
+    }
 
-   public Minecraft getMinecraft() {
-      return this.minecraft;
-   }
+    public void tick()
+    {
+        this.field_244696_c.removeIf((p_244700_0_) ->
+        {
+            return p_244700_0_.func_244704_a();
+        });
 
-   public GameType getGameMode() {
-      return this.minecraft.gameMode == null ? GameType.NOT_SET : this.minecraft.gameMode.getPlayerMode();
-   }
+        if (this.tutorialStep != null)
+        {
+            if (this.minecraft.world != null)
+            {
+                this.tutorialStep.tick();
+            }
+            else
+            {
+                this.stop();
+            }
+        }
+        else if (this.minecraft.world != null)
+        {
+            this.reload();
+        }
+    }
 
-   public static ITextComponent key(String p_193291_0_) {
-      return (new KeybindTextComponent("key." + p_193291_0_)).withStyle(TextFormatting.BOLD);
-   }
+    /**
+     * Sets a new step to the tutorial
+     */
+    public void setStep(TutorialSteps step)
+    {
+        this.minecraft.gameSettings.tutorialStep = step;
+        this.minecraft.gameSettings.saveOptions();
 
-   @OnlyIn(Dist.CLIENT)
-   static final class ToastTimeInfo {
-      private final TutorialToast toast;
-      private final int durationTicks;
-      private int progress;
+        if (this.tutorialStep != null)
+        {
+            this.tutorialStep.onStop();
+            this.tutorialStep = step.create(this);
+        }
+    }
 
-      private ToastTimeInfo(TutorialToast p_i244518_1_, int p_i244518_2_) {
-         this.toast = p_i244518_1_;
-         this.durationTicks = p_i244518_2_;
-      }
+    public Minecraft getMinecraft()
+    {
+        return this.minecraft;
+    }
 
-      private boolean updateProgress() {
-         this.toast.updateProgress(Math.min((float)(++this.progress) / (float)this.durationTicks, 1.0F));
-         if (this.progress > this.durationTicks) {
-            this.toast.hide();
-            return true;
-         } else {
-            return false;
-         }
-      }
-   }
+    public GameType getGameType()
+    {
+        return this.minecraft.playerController == null ? GameType.NOT_SET : this.minecraft.playerController.getCurrentGameType();
+    }
+
+    public static ITextComponent createKeybindComponent(String keybind)
+    {
+        return (new KeybindTextComponent("key." + keybind)).mergeStyle(TextFormatting.BOLD);
+    }
+
+    static final class ToastTimeInfo
+    {
+        private final TutorialToast field_244701_a;
+        private final int field_244702_b;
+        private int field_244703_c;
+
+        private ToastTimeInfo(TutorialToast p_i242134_1_, int p_i242134_2_)
+        {
+            this.field_244701_a = p_i242134_1_;
+            this.field_244702_b = p_i242134_2_;
+        }
+
+        private boolean func_244704_a()
+        {
+            this.field_244701_a.setProgress(Math.min((float)(++this.field_244703_c) / (float)this.field_244702_b, 1.0F));
+
+            if (this.field_244703_c > this.field_244702_b)
+            {
+                this.field_244701_a.hide();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 }

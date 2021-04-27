@@ -17,171 +17,260 @@ import net.minecraft.util.Util;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class Effect {
-   private final Map<Attribute, AttributeModifier> attributeModifiers = Maps.newHashMap();
-   private final EffectType category;
-   private final int color;
-   @Nullable
-   private String descriptionId;
+public class Effect
+{
+    private final Map<Attribute, AttributeModifier> attributeModifierMap = Maps.newHashMap();
+    private final EffectType type;
+    private final int liquidColor;
+    @Nullable
+    private String name;
 
-   @Nullable
-   public static Effect byId(int p_188412_0_) {
-      return Registry.MOB_EFFECT.byId(p_188412_0_);
-   }
+    @Nullable
 
-   public static int getId(Effect p_188409_0_) {
-      return Registry.MOB_EFFECT.getId(p_188409_0_);
-   }
+    /**
+     * Gets a Potion from the potion registry using a numeric Id.
+     */
+    public static Effect get(int potionID)
+    {
+        return Registry.EFFECTS.getByValue(potionID);
+    }
 
-   protected Effect(EffectType p_i50391_1_, int p_i50391_2_) {
-      this.category = p_i50391_1_;
-      this.color = p_i50391_2_;
-   }
+    /**
+     * Gets the numeric Id associated with a potion.
+     */
+    public static int getId(Effect potionIn)
+    {
+        return Registry.EFFECTS.getId(potionIn);
+    }
 
-   public void applyEffectTick(LivingEntity p_76394_1_, int p_76394_2_) {
-      if (this == Effects.REGENERATION) {
-         if (p_76394_1_.getHealth() < p_76394_1_.getMaxHealth()) {
-            p_76394_1_.heal(1.0F);
-         }
-      } else if (this == Effects.POISON) {
-         if (p_76394_1_.getHealth() > 1.0F) {
-            p_76394_1_.hurt(DamageSource.MAGIC, 1.0F);
-         }
-      } else if (this == Effects.WITHER) {
-         p_76394_1_.hurt(DamageSource.WITHER, 1.0F);
-      } else if (this == Effects.HUNGER && p_76394_1_ instanceof PlayerEntity) {
-         ((PlayerEntity)p_76394_1_).causeFoodExhaustion(0.005F * (float)(p_76394_2_ + 1));
-      } else if (this == Effects.SATURATION && p_76394_1_ instanceof PlayerEntity) {
-         if (!p_76394_1_.level.isClientSide) {
-            ((PlayerEntity)p_76394_1_).getFoodData().eat(p_76394_2_ + 1, 1.0F);
-         }
-      } else if ((this != Effects.HEAL || p_76394_1_.isInvertedHealAndHarm()) && (this != Effects.HARM || !p_76394_1_.isInvertedHealAndHarm())) {
-         if (this == Effects.HARM && !p_76394_1_.isInvertedHealAndHarm() || this == Effects.HEAL && p_76394_1_.isInvertedHealAndHarm()) {
-            p_76394_1_.hurt(DamageSource.MAGIC, (float)(6 << p_76394_2_));
-         }
-      } else {
-         p_76394_1_.heal((float)Math.max(4 << p_76394_2_, 0));
-      }
+    protected Effect(EffectType typeIn, int liquidColorIn)
+    {
+        this.type = typeIn;
+        this.liquidColor = liquidColorIn;
+    }
 
-   }
-
-   public void applyInstantenousEffect(@Nullable Entity p_180793_1_, @Nullable Entity p_180793_2_, LivingEntity p_180793_3_, int p_180793_4_, double p_180793_5_) {
-      if ((this != Effects.HEAL || p_180793_3_.isInvertedHealAndHarm()) && (this != Effects.HARM || !p_180793_3_.isInvertedHealAndHarm())) {
-         if (this == Effects.HARM && !p_180793_3_.isInvertedHealAndHarm() || this == Effects.HEAL && p_180793_3_.isInvertedHealAndHarm()) {
-            int j = (int)(p_180793_5_ * (double)(6 << p_180793_4_) + 0.5D);
-            if (p_180793_1_ == null) {
-               p_180793_3_.hurt(DamageSource.MAGIC, (float)j);
-            } else {
-               p_180793_3_.hurt(DamageSource.indirectMagic(p_180793_1_, p_180793_2_), (float)j);
+    public void performEffect(LivingEntity entityLivingBaseIn, int amplifier)
+    {
+        if (this == Effects.REGENERATION)
+        {
+            if (entityLivingBaseIn.getHealth() < entityLivingBaseIn.getMaxHealth())
+            {
+                entityLivingBaseIn.heal(1.0F);
             }
-         } else {
-            this.applyEffectTick(p_180793_3_, p_180793_4_);
-         }
-      } else {
-         int i = (int)(p_180793_5_ * (double)(4 << p_180793_4_) + 0.5D);
-         p_180793_3_.heal((float)i);
-      }
+        }
+        else if (this == Effects.POISON)
+        {
+            if (entityLivingBaseIn.getHealth() > 1.0F)
+            {
+                entityLivingBaseIn.attackEntityFrom(DamageSource.MAGIC, 1.0F);
+            }
+        }
+        else if (this == Effects.WITHER)
+        {
+            entityLivingBaseIn.attackEntityFrom(DamageSource.WITHER, 1.0F);
+        }
+        else if (this == Effects.HUNGER && entityLivingBaseIn instanceof PlayerEntity)
+        {
+            ((PlayerEntity)entityLivingBaseIn).addExhaustion(0.005F * (float)(amplifier + 1));
+        }
+        else if (this == Effects.SATURATION && entityLivingBaseIn instanceof PlayerEntity)
+        {
+            if (!entityLivingBaseIn.world.isRemote)
+            {
+                ((PlayerEntity)entityLivingBaseIn).getFoodStats().addStats(amplifier + 1, 1.0F);
+            }
+        }
+        else if ((this != Effects.INSTANT_HEALTH || entityLivingBaseIn.isEntityUndead()) && (this != Effects.INSTANT_DAMAGE || !entityLivingBaseIn.isEntityUndead()))
+        {
+            if (this == Effects.INSTANT_DAMAGE && !entityLivingBaseIn.isEntityUndead() || this == Effects.INSTANT_HEALTH && entityLivingBaseIn.isEntityUndead())
+            {
+                entityLivingBaseIn.attackEntityFrom(DamageSource.MAGIC, (float)(6 << amplifier));
+            }
+        }
+        else
+        {
+            entityLivingBaseIn.heal((float)Math.max(4 << amplifier, 0));
+        }
+    }
 
-   }
+    public void affectEntity(@Nullable Entity source, @Nullable Entity indirectSource, LivingEntity entityLivingBaseIn, int amplifier, double health)
+    {
+        if ((this != Effects.INSTANT_HEALTH || entityLivingBaseIn.isEntityUndead()) && (this != Effects.INSTANT_DAMAGE || !entityLivingBaseIn.isEntityUndead()))
+        {
+            if (this == Effects.INSTANT_DAMAGE && !entityLivingBaseIn.isEntityUndead() || this == Effects.INSTANT_HEALTH && entityLivingBaseIn.isEntityUndead())
+            {
+                int j = (int)(health * (double)(6 << amplifier) + 0.5D);
 
-   public boolean isDurationEffectTick(int p_76397_1_, int p_76397_2_) {
-      if (this == Effects.REGENERATION) {
-         int k = 50 >> p_76397_2_;
-         if (k > 0) {
-            return p_76397_1_ % k == 0;
-         } else {
-            return true;
-         }
-      } else if (this == Effects.POISON) {
-         int j = 25 >> p_76397_2_;
-         if (j > 0) {
-            return p_76397_1_ % j == 0;
-         } else {
-            return true;
-         }
-      } else if (this == Effects.WITHER) {
-         int i = 40 >> p_76397_2_;
-         if (i > 0) {
-            return p_76397_1_ % i == 0;
-         } else {
-            return true;
-         }
-      } else {
-         return this == Effects.HUNGER;
-      }
-   }
+                if (source == null)
+                {
+                    entityLivingBaseIn.attackEntityFrom(DamageSource.MAGIC, (float)j);
+                }
+                else
+                {
+                    entityLivingBaseIn.attackEntityFrom(DamageSource.causeIndirectMagicDamage(source, indirectSource), (float)j);
+                }
+            }
+            else
+            {
+                this.performEffect(entityLivingBaseIn, amplifier);
+            }
+        }
+        else
+        {
+            int i = (int)(health * (double)(4 << amplifier) + 0.5D);
+            entityLivingBaseIn.heal((float)i);
+        }
+    }
 
-   public boolean isInstantenous() {
-      return false;
-   }
+    /**
+     * checks if Potion effect is ready to be applied this tick.
+     */
+    public boolean isReady(int duration, int amplifier)
+    {
+        if (this == Effects.REGENERATION)
+        {
+            int k = 50 >> amplifier;
 
-   protected String getOrCreateDescriptionId() {
-      if (this.descriptionId == null) {
-         this.descriptionId = Util.makeDescriptionId("effect", Registry.MOB_EFFECT.getKey(this));
-      }
+            if (k > 0)
+            {
+                return duration % k == 0;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else if (this == Effects.POISON)
+        {
+            int j = 25 >> amplifier;
 
-      return this.descriptionId;
-   }
+            if (j > 0)
+            {
+                return duration % j == 0;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else if (this == Effects.WITHER)
+        {
+            int i = 40 >> amplifier;
 
-   public String getDescriptionId() {
-      return this.getOrCreateDescriptionId();
-   }
+            if (i > 0)
+            {
+                return duration % i == 0;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else
+        {
+            return this == Effects.HUNGER;
+        }
+    }
 
-   public ITextComponent getDisplayName() {
-      return new TranslationTextComponent(this.getDescriptionId());
-   }
+    /**
+     * Returns true if the potion has an instant effect instead of a continuous one (eg Harming)
+     */
+    public boolean isInstant()
+    {
+        return false;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public EffectType getCategory() {
-      return this.category;
-   }
+    protected String getOrCreateDescriptionId()
+    {
+        if (this.name == null)
+        {
+            this.name = Util.makeTranslationKey("effect", Registry.EFFECTS.getKey(this));
+        }
 
-   public int getColor() {
-      return this.color;
-   }
+        return this.name;
+    }
 
-   public Effect addAttributeModifier(Attribute p_220304_1_, String p_220304_2_, double p_220304_3_, AttributeModifier.Operation p_220304_5_) {
-      AttributeModifier attributemodifier = new AttributeModifier(UUID.fromString(p_220304_2_), this::getDescriptionId, p_220304_3_, p_220304_5_);
-      this.attributeModifiers.put(p_220304_1_, attributemodifier);
-      return this;
-   }
+    /**
+     * returns the name of the potion
+     */
+    public String getName()
+    {
+        return this.getOrCreateDescriptionId();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Map<Attribute, AttributeModifier> getAttributeModifiers() {
-      return this.attributeModifiers;
-   }
+    public ITextComponent getDisplayName()
+    {
+        return new TranslationTextComponent(this.getName());
+    }
 
-   public void removeAttributeModifiers(LivingEntity p_111187_1_, AttributeModifierManager p_111187_2_, int p_111187_3_) {
-      for(Entry<Attribute, AttributeModifier> entry : this.attributeModifiers.entrySet()) {
-         ModifiableAttributeInstance modifiableattributeinstance = p_111187_2_.getInstance(entry.getKey());
-         if (modifiableattributeinstance != null) {
-            modifiableattributeinstance.removeModifier(entry.getValue());
-         }
-      }
+    public EffectType getEffectType()
+    {
+        return this.type;
+    }
 
-   }
+    /**
+     * Returns the color of the potion liquid.
+     */
+    public int getLiquidColor()
+    {
+        return this.liquidColor;
+    }
 
-   public void addAttributeModifiers(LivingEntity p_111185_1_, AttributeModifierManager p_111185_2_, int p_111185_3_) {
-      for(Entry<Attribute, AttributeModifier> entry : this.attributeModifiers.entrySet()) {
-         ModifiableAttributeInstance modifiableattributeinstance = p_111185_2_.getInstance(entry.getKey());
-         if (modifiableattributeinstance != null) {
-            AttributeModifier attributemodifier = entry.getValue();
-            modifiableattributeinstance.removeModifier(attributemodifier);
-            modifiableattributeinstance.addPermanentModifier(new AttributeModifier(attributemodifier.getId(), this.getDescriptionId() + " " + p_111185_3_, this.getAttributeModifierValue(p_111185_3_, attributemodifier), attributemodifier.getOperation()));
-         }
-      }
+    /**
+     * Adds an attribute modifier to this effect. This method can be called for more than one attribute. The attributes
+     * are applied to an entity when the potion effect is active and removed when it stops.
+     */
+    public Effect addAttributesModifier(Attribute attributeIn, String uuid, double amount, AttributeModifier.Operation operation)
+    {
+        AttributeModifier attributemodifier = new AttributeModifier(UUID.fromString(uuid), this::getName, amount, operation);
+        this.attributeModifierMap.put(attributeIn, attributemodifier);
+        return this;
+    }
 
-   }
+    public Map<Attribute, AttributeModifier> getAttributeModifierMap()
+    {
+        return this.attributeModifierMap;
+    }
 
-   public double getAttributeModifierValue(int p_111183_1_, AttributeModifier p_111183_2_) {
-      return p_111183_2_.getAmount() * (double)(p_111183_1_ + 1);
-   }
+    public void removeAttributesModifiersFromEntity(LivingEntity entityLivingBaseIn, AttributeModifierManager attributeMapIn, int amplifier)
+    {
+        for (Entry<Attribute, AttributeModifier> entry : this.attributeModifierMap.entrySet())
+        {
+            ModifiableAttributeInstance modifiableattributeinstance = attributeMapIn.createInstanceIfAbsent(entry.getKey());
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean isBeneficial() {
-      return this.category == EffectType.BENEFICIAL;
-   }
+            if (modifiableattributeinstance != null)
+            {
+                modifiableattributeinstance.removeModifier(entry.getValue());
+            }
+        }
+    }
+
+    public void applyAttributesModifiersToEntity(LivingEntity entityLivingBaseIn, AttributeModifierManager attributeMapIn, int amplifier)
+    {
+        for (Entry<Attribute, AttributeModifier> entry : this.attributeModifierMap.entrySet())
+        {
+            ModifiableAttributeInstance modifiableattributeinstance = attributeMapIn.createInstanceIfAbsent(entry.getKey());
+
+            if (modifiableattributeinstance != null)
+            {
+                AttributeModifier attributemodifier = entry.getValue();
+                modifiableattributeinstance.removeModifier(attributemodifier);
+                modifiableattributeinstance.applyPersistentModifier(new AttributeModifier(attributemodifier.getID(), this.getName() + " " + amplifier, this.getAttributeModifierAmount(amplifier, attributemodifier), attributemodifier.getOperation()));
+            }
+        }
+    }
+
+    public double getAttributeModifierAmount(int amplifier, AttributeModifier modifier)
+    {
+        return modifier.getAmount() * (double)(amplifier + 1);
+    }
+
+    /**
+     * Get if the potion is beneficial to the player. Beneficial potions are shown on the first row of the HUD
+     */
+    public boolean isBeneficial()
+    {
+        return this.type == EffectType.BENEFICIAL;
+    }
 }

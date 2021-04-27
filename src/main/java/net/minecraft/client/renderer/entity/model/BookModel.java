@@ -8,53 +8,56 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.Model;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class BookModel extends Model {
-   private final ModelRenderer leftLid = (new ModelRenderer(64, 32, 0, 0)).addBox(-6.0F, -5.0F, -0.005F, 6.0F, 10.0F, 0.005F);
-   private final ModelRenderer rightLid = (new ModelRenderer(64, 32, 16, 0)).addBox(0.0F, -5.0F, -0.005F, 6.0F, 10.0F, 0.005F);
-   private final ModelRenderer leftPages;
-   private final ModelRenderer rightPages;
-   private final ModelRenderer flipPage1;
-   private final ModelRenderer flipPage2;
-   private final ModelRenderer seam = (new ModelRenderer(64, 32, 12, 0)).addBox(-1.0F, -5.0F, 0.0F, 2.0F, 10.0F, 0.005F);
-   private final List<ModelRenderer> parts;
+public class BookModel extends Model
+{
+    private final ModelRenderer coverRight = (new ModelRenderer(64, 32, 0, 0)).addBox(-6.0F, -5.0F, -0.005F, 6.0F, 10.0F, 0.005F);
+    private final ModelRenderer coverLeft = (new ModelRenderer(64, 32, 16, 0)).addBox(0.0F, -5.0F, -0.005F, 6.0F, 10.0F, 0.005F);
+    private final ModelRenderer pagesRight;
+    private final ModelRenderer pagesLeft;
+    private final ModelRenderer flippingPageRight;
+    private final ModelRenderer flippingPageLeft;
+    private final ModelRenderer bookSpine = (new ModelRenderer(64, 32, 12, 0)).addBox(-1.0F, -5.0F, 0.0F, 2.0F, 10.0F, 0.005F);
+    private final List<ModelRenderer> bookParts;
 
-   public BookModel() {
-      super(RenderType::entitySolid);
-      this.leftPages = (new ModelRenderer(64, 32, 0, 10)).addBox(0.0F, -4.0F, -0.99F, 5.0F, 8.0F, 1.0F);
-      this.rightPages = (new ModelRenderer(64, 32, 12, 10)).addBox(0.0F, -4.0F, -0.01F, 5.0F, 8.0F, 1.0F);
-      this.flipPage1 = (new ModelRenderer(64, 32, 24, 10)).addBox(0.0F, -4.0F, 0.0F, 5.0F, 8.0F, 0.005F);
-      this.flipPage2 = (new ModelRenderer(64, 32, 24, 10)).addBox(0.0F, -4.0F, 0.0F, 5.0F, 8.0F, 0.005F);
-      this.parts = ImmutableList.of(this.leftLid, this.rightLid, this.seam, this.leftPages, this.rightPages, this.flipPage1, this.flipPage2);
-      this.leftLid.setPos(0.0F, 0.0F, -1.0F);
-      this.rightLid.setPos(0.0F, 0.0F, 1.0F);
-      this.seam.yRot = ((float)Math.PI / 2F);
-   }
+    public BookModel()
+    {
+        super(RenderType::getEntitySolid);
+        this.pagesRight = (new ModelRenderer(64, 32, 0, 10)).addBox(0.0F, -4.0F, -0.99F, 5.0F, 8.0F, 1.0F);
+        this.pagesLeft = (new ModelRenderer(64, 32, 12, 10)).addBox(0.0F, -4.0F, -0.01F, 5.0F, 8.0F, 1.0F);
+        this.flippingPageRight = (new ModelRenderer(64, 32, 24, 10)).addBox(0.0F, -4.0F, 0.0F, 5.0F, 8.0F, 0.005F);
+        this.flippingPageLeft = (new ModelRenderer(64, 32, 24, 10)).addBox(0.0F, -4.0F, 0.0F, 5.0F, 8.0F, 0.005F);
+        this.bookParts = ImmutableList.of(this.coverRight, this.coverLeft, this.bookSpine, this.pagesRight, this.pagesLeft, this.flippingPageRight, this.flippingPageLeft);
+        this.coverRight.setRotationPoint(0.0F, 0.0F, -1.0F);
+        this.coverLeft.setRotationPoint(0.0F, 0.0F, 1.0F);
+        this.bookSpine.rotateAngleY = ((float)Math.PI / 2F);
+    }
 
-   public void renderToBuffer(MatrixStack p_225598_1_, IVertexBuilder p_225598_2_, int p_225598_3_, int p_225598_4_, float p_225598_5_, float p_225598_6_, float p_225598_7_, float p_225598_8_) {
-      this.render(p_225598_1_, p_225598_2_, p_225598_3_, p_225598_4_, p_225598_5_, p_225598_6_, p_225598_7_, p_225598_8_);
-   }
+    public void render(MatrixStack matrixStackIn, IVertexBuilder bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha)
+    {
+        this.renderAll(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+    }
 
-   public void render(MatrixStack p_228249_1_, IVertexBuilder p_228249_2_, int p_228249_3_, int p_228249_4_, float p_228249_5_, float p_228249_6_, float p_228249_7_, float p_228249_8_) {
-      this.parts.forEach((p_228248_8_) -> {
-         p_228248_8_.render(p_228249_1_, p_228249_2_, p_228249_3_, p_228249_4_, p_228249_5_, p_228249_6_, p_228249_7_, p_228249_8_);
-      });
-   }
+    public void renderAll(MatrixStack matrixStack, IVertexBuilder buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    {
+        this.bookParts.forEach((p_228248_8_) ->
+        {
+            p_228248_8_.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        });
+    }
 
-   public void setupAnim(float p_228247_1_, float p_228247_2_, float p_228247_3_, float p_228247_4_) {
-      float f = (MathHelper.sin(p_228247_1_ * 0.02F) * 0.1F + 1.25F) * p_228247_4_;
-      this.leftLid.yRot = (float)Math.PI + f;
-      this.rightLid.yRot = -f;
-      this.leftPages.yRot = f;
-      this.rightPages.yRot = -f;
-      this.flipPage1.yRot = f - f * 2.0F * p_228247_2_;
-      this.flipPage2.yRot = f - f * 2.0F * p_228247_3_;
-      this.leftPages.x = MathHelper.sin(f);
-      this.rightPages.x = MathHelper.sin(f);
-      this.flipPage1.x = MathHelper.sin(f);
-      this.flipPage2.x = MathHelper.sin(f);
-   }
+    public void setBookState(float p_228247_1_, float rightPageFlipAmount, float leftPageFlipAmount, float bookOpenAmount)
+    {
+        float f = (MathHelper.sin(p_228247_1_ * 0.02F) * 0.1F + 1.25F) * bookOpenAmount;
+        this.coverRight.rotateAngleY = (float)Math.PI + f;
+        this.coverLeft.rotateAngleY = -f;
+        this.pagesRight.rotateAngleY = f;
+        this.pagesLeft.rotateAngleY = -f;
+        this.flippingPageRight.rotateAngleY = f - f * 2.0F * rightPageFlipAmount;
+        this.flippingPageLeft.rotateAngleY = f - f * 2.0F * leftPageFlipAmount;
+        this.pagesRight.rotationPointX = MathHelper.sin(f);
+        this.pagesLeft.rotationPointX = MathHelper.sin(f);
+        this.flippingPageRight.rotationPointX = MathHelper.sin(f);
+        this.flippingPageLeft.rotationPointX = MathHelper.sin(f);
+    }
 }

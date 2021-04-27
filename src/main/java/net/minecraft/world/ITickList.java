@@ -2,14 +2,19 @@ package net.minecraft.world;
 
 import net.minecraft.util.math.BlockPos;
 
-public interface ITickList<T> {
-   boolean hasScheduledTick(BlockPos p_205359_1_, T p_205359_2_);
+public interface ITickList<T>
+{
+    boolean isTickScheduled(BlockPos pos, T itemIn);
 
-   default void scheduleTick(BlockPos p_205360_1_, T p_205360_2_, int p_205360_3_) {
-      this.scheduleTick(p_205360_1_, p_205360_2_, p_205360_3_, TickPriority.NORMAL);
-   }
+default void scheduleTick(BlockPos pos, T itemIn, int scheduledTime)
+    {
+        this.scheduleTick(pos, itemIn, scheduledTime, TickPriority.NORMAL);
+    }
 
-   void scheduleTick(BlockPos p_205362_1_, T p_205362_2_, int p_205362_3_, TickPriority p_205362_4_);
+    void scheduleTick(BlockPos pos, T itemIn, int scheduledTime, TickPriority priority);
 
-   boolean willTickThisTick(BlockPos p_205361_1_, T p_205361_2_);
+    /**
+     * Checks if this position/item is scheduled to be updated this tick
+     */
+    boolean isTickPending(BlockPos pos, T obj);
 }

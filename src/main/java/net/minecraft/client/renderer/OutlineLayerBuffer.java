@@ -4,102 +4,121 @@ import com.mojang.blaze3d.vertex.DefaultColorVertexBuilder;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import com.mojang.blaze3d.vertex.VertexBuilderUtils;
 import java.util.Optional;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class OutlineLayerBuffer implements IRenderTypeBuffer {
-   private final IRenderTypeBuffer.Impl bufferSource;
-   private final IRenderTypeBuffer.Impl outlineBufferSource = IRenderTypeBuffer.immediate(new BufferBuilder(256));
-   private int teamR = 255;
-   private int teamG = 255;
-   private int teamB = 255;
-   private int teamA = 255;
+public class OutlineLayerBuffer implements IRenderTypeBuffer
+{
+    private final IRenderTypeBuffer.Impl buffer;
+    private final IRenderTypeBuffer.Impl outlineBuffer = IRenderTypeBuffer.getImpl(new BufferBuilder(256));
+    private int red = 255;
+    private int green = 255;
+    private int blue = 255;
+    private int alpha = 255;
 
-   public OutlineLayerBuffer(IRenderTypeBuffer.Impl p_i225970_1_) {
-      this.bufferSource = p_i225970_1_;
-   }
+    public OutlineLayerBuffer(IRenderTypeBuffer.Impl bufferIn)
+    {
+        this.buffer = bufferIn;
+    }
 
-   public IVertexBuilder getBuffer(RenderType p_getBuffer_1_) {
-      if (p_getBuffer_1_.isOutline()) {
-         IVertexBuilder ivertexbuilder2 = this.outlineBufferSource.getBuffer(p_getBuffer_1_);
-         return new OutlineLayerBuffer.ColoredOutline(ivertexbuilder2, this.teamR, this.teamG, this.teamB, this.teamA);
-      } else {
-         IVertexBuilder ivertexbuilder = this.bufferSource.getBuffer(p_getBuffer_1_);
-         Optional<RenderType> optional = p_getBuffer_1_.outline();
-         if (optional.isPresent()) {
-            IVertexBuilder ivertexbuilder1 = this.outlineBufferSource.getBuffer(optional.get());
-            OutlineLayerBuffer.ColoredOutline outlinelayerbuffer$coloredoutline = new OutlineLayerBuffer.ColoredOutline(ivertexbuilder1, this.teamR, this.teamG, this.teamB, this.teamA);
-            return VertexBuilderUtils.create(outlinelayerbuffer$coloredoutline, ivertexbuilder);
-         } else {
-            return ivertexbuilder;
-         }
-      }
-   }
+    public IVertexBuilder getBuffer(RenderType p_getBuffer_1_)
+    {
+        if (p_getBuffer_1_.isColoredOutlineBuffer())
+        {
+            IVertexBuilder ivertexbuilder2 = this.outlineBuffer.getBuffer(p_getBuffer_1_);
+            return new OutlineLayerBuffer.ColoredOutline(ivertexbuilder2, this.red, this.green, this.blue, this.alpha);
+        }
+        else
+        {
+            IVertexBuilder ivertexbuilder = this.buffer.getBuffer(p_getBuffer_1_);
+            Optional<RenderType> optional = p_getBuffer_1_.getOutline();
 
-   public void setColor(int p_228472_1_, int p_228472_2_, int p_228472_3_, int p_228472_4_) {
-      this.teamR = p_228472_1_;
-      this.teamG = p_228472_2_;
-      this.teamB = p_228472_3_;
-      this.teamA = p_228472_4_;
-   }
+            if (optional.isPresent())
+            {
+                IVertexBuilder ivertexbuilder1 = this.outlineBuffer.getBuffer(optional.get());
+                OutlineLayerBuffer.ColoredOutline outlinelayerbuffer$coloredoutline = new OutlineLayerBuffer.ColoredOutline(ivertexbuilder1, this.red, this.green, this.blue, this.alpha);
+                return VertexBuilderUtils.newDelegate(outlinelayerbuffer$coloredoutline, ivertexbuilder);
+            }
+            else
+            {
+                return ivertexbuilder;
+            }
+        }
+    }
 
-   public void endOutlineBatch() {
-      this.outlineBufferSource.endBatch();
-   }
+    public void setColor(int redIn, int greenIn, int blueIn, int alphaIn)
+    {
+        this.red = redIn;
+        this.green = greenIn;
+        this.blue = blueIn;
+        this.alpha = alphaIn;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   static class ColoredOutline extends DefaultColorVertexBuilder {
-      private final IVertexBuilder delegate;
-      private double x;
-      private double y;
-      private double z;
-      private float u;
-      private float v;
+    public void finish()
+    {
+        this.outlineBuffer.finish();
+    }
 
-      private ColoredOutline(IVertexBuilder p_i225971_1_, int p_i225971_2_, int p_i225971_3_, int p_i225971_4_, int p_i225971_5_) {
-         this.delegate = p_i225971_1_;
-         super.defaultColor(p_i225971_2_, p_i225971_3_, p_i225971_4_, p_i225971_5_);
-      }
+    static class ColoredOutline extends DefaultColorVertexBuilder
+    {
+        private final IVertexBuilder coloredBuffer;
+        private double x;
+        private double y;
+        private double z;
+        private float u;
+        private float v;
 
-      public void defaultColor(int p_225611_1_, int p_225611_2_, int p_225611_3_, int p_225611_4_) {
-      }
+        private ColoredOutline(IVertexBuilder bufferIn, int red, int green, int blue, int alpha)
+        {
+            this.coloredBuffer = bufferIn;
+            super.setDefaultColor(red, green, blue, alpha);
+        }
 
-      public IVertexBuilder vertex(double p_225582_1_, double p_225582_3_, double p_225582_5_) {
-         this.x = p_225582_1_;
-         this.y = p_225582_3_;
-         this.z = p_225582_5_;
-         return this;
-      }
+        public void setDefaultColor(int red, int green, int blue, int alpha)
+        {
+        }
 
-      public IVertexBuilder color(int p_225586_1_, int p_225586_2_, int p_225586_3_, int p_225586_4_) {
-         return this;
-      }
+        public IVertexBuilder pos(double x, double y, double z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            return this;
+        }
 
-      public IVertexBuilder uv(float p_225583_1_, float p_225583_2_) {
-         this.u = p_225583_1_;
-         this.v = p_225583_2_;
-         return this;
-      }
+        public IVertexBuilder color(int red, int green, int blue, int alpha)
+        {
+            return this;
+        }
 
-      public IVertexBuilder overlayCoords(int p_225585_1_, int p_225585_2_) {
-         return this;
-      }
+        public IVertexBuilder tex(float u, float v)
+        {
+            this.u = u;
+            this.v = v;
+            return this;
+        }
 
-      public IVertexBuilder uv2(int p_225587_1_, int p_225587_2_) {
-         return this;
-      }
+        public IVertexBuilder overlay(int u, int v)
+        {
+            return this;
+        }
 
-      public IVertexBuilder normal(float p_225584_1_, float p_225584_2_, float p_225584_3_) {
-         return this;
-      }
+        public IVertexBuilder lightmap(int u, int v)
+        {
+            return this;
+        }
 
-      public void vertex(float p_225588_1_, float p_225588_2_, float p_225588_3_, float p_225588_4_, float p_225588_5_, float p_225588_6_, float p_225588_7_, float p_225588_8_, float p_225588_9_, int p_225588_10_, int p_225588_11_, float p_225588_12_, float p_225588_13_, float p_225588_14_) {
-         this.delegate.vertex((double)p_225588_1_, (double)p_225588_2_, (double)p_225588_3_).color(this.defaultR, this.defaultG, this.defaultB, this.defaultA).uv(p_225588_8_, p_225588_9_).endVertex();
-      }
+        public IVertexBuilder normal(float x, float y, float z)
+        {
+            return this;
+        }
 
-      public void endVertex() {
-         this.delegate.vertex(this.x, this.y, this.z).color(this.defaultR, this.defaultG, this.defaultB, this.defaultA).uv(this.u, this.v).endVertex();
-      }
-   }
+        public void addVertex(float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ)
+        {
+            this.coloredBuffer.pos((double)x, (double)y, (double)z).color(this.defaultRed, this.defaultGreen, this.defaultBlue, this.defaultAlpha).tex(texU, texV).endVertex();
+        }
+
+        public void endVertex()
+        {
+            this.coloredBuffer.pos(this.x, this.y, this.z).color(this.defaultRed, this.defaultGreen, this.defaultBlue, this.defaultAlpha).tex(this.u, this.v).endVertex();
+        }
+    }
 }

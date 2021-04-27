@@ -3,6 +3,7 @@ package net.minecraft.client.particle;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import java.util.Random;
 import java.util.stream.Stream;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.world.ClientWorld;
@@ -13,199 +14,287 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.optifine.BlockPosM;
 
-@OnlyIn(Dist.CLIENT)
-public abstract class Particle {
-   private static final AxisAlignedBB INITIAL_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
-   protected final ClientWorld level;
-   protected double xo;
-   protected double yo;
-   protected double zo;
-   protected double x;
-   protected double y;
-   protected double z;
-   protected double xd;
-   protected double yd;
-   protected double zd;
-   private AxisAlignedBB bb = INITIAL_AABB;
-   protected boolean onGround;
-   protected boolean hasPhysics = true;
-   private boolean stoppedByCollision;
-   protected boolean removed;
-   protected float bbWidth = 0.6F;
-   protected float bbHeight = 1.8F;
-   protected final Random random = new Random();
-   protected int age;
-   protected int lifetime;
-   protected float gravity;
-   protected float rCol = 1.0F;
-   protected float gCol = 1.0F;
-   protected float bCol = 1.0F;
-   protected float alpha = 1.0F;
-   protected float roll;
-   protected float oRoll;
+public abstract class Particle
+{
+    private static final AxisAlignedBB EMPTY_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+    protected final ClientWorld world;
+    protected double prevPosX;
+    protected double prevPosY;
+    protected double prevPosZ;
+    protected double posX;
+    protected double posY;
+    protected double posZ;
+    protected double motionX;
+    protected double motionY;
+    protected double motionZ;
+    private AxisAlignedBB boundingBox = EMPTY_AABB;
+    protected boolean onGround;
+    protected boolean canCollide = true;
+    private boolean collidedY;
+    protected boolean isExpired;
+    protected float width = 0.6F;
+    protected float height = 1.8F;
+    protected final Random rand = new Random();
+    protected int age;
+    protected int maxAge;
+    protected float particleGravity;
+    protected float particleRed = 1.0F;
+    protected float particleGreen = 1.0F;
+    protected float particleBlue = 1.0F;
+    protected float particleAlpha = 1.0F;
+    protected float particleAngle;
+    protected float prevParticleAngle;
+    private BlockPosM blockPosM = new BlockPosM();
 
-   protected Particle(ClientWorld p_i232411_1_, double p_i232411_2_, double p_i232411_4_, double p_i232411_6_) {
-      this.level = p_i232411_1_;
-      this.setSize(0.2F, 0.2F);
-      this.setPos(p_i232411_2_, p_i232411_4_, p_i232411_6_);
-      this.xo = p_i232411_2_;
-      this.yo = p_i232411_4_;
-      this.zo = p_i232411_6_;
-      this.lifetime = (int)(4.0F / (this.random.nextFloat() * 0.9F + 0.1F));
-   }
+    protected Particle(ClientWorld world, double x, double y, double z)
+    {
+        this.world = world;
+        this.setSize(0.2F, 0.2F);
+        this.setPosition(x, y, z);
+        this.prevPosX = x;
+        this.prevPosY = y;
+        this.prevPosZ = z;
+        this.maxAge = (int)(4.0F / (this.rand.nextFloat() * 0.9F + 0.1F));
+    }
 
-   public Particle(ClientWorld p_i232412_1_, double p_i232412_2_, double p_i232412_4_, double p_i232412_6_, double p_i232412_8_, double p_i232412_10_, double p_i232412_12_) {
-      this(p_i232412_1_, p_i232412_2_, p_i232412_4_, p_i232412_6_);
-      this.xd = p_i232412_8_ + (Math.random() * 2.0D - 1.0D) * (double)0.4F;
-      this.yd = p_i232412_10_ + (Math.random() * 2.0D - 1.0D) * (double)0.4F;
-      this.zd = p_i232412_12_ + (Math.random() * 2.0D - 1.0D) * (double)0.4F;
-      float f = (float)(Math.random() + Math.random() + 1.0D) * 0.15F;
-      float f1 = MathHelper.sqrt(this.xd * this.xd + this.yd * this.yd + this.zd * this.zd);
-      this.xd = this.xd / (double)f1 * (double)f * (double)0.4F;
-      this.yd = this.yd / (double)f1 * (double)f * (double)0.4F + (double)0.1F;
-      this.zd = this.zd / (double)f1 * (double)f * (double)0.4F;
-   }
+    public Particle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ)
+    {
+        this(world, x, y, z);
+        this.motionX = motionX + (Math.random() * 2.0D - 1.0D) * (double)0.4F;
+        this.motionY = motionY + (Math.random() * 2.0D - 1.0D) * (double)0.4F;
+        this.motionZ = motionZ + (Math.random() * 2.0D - 1.0D) * (double)0.4F;
+        float f = (float)(Math.random() + Math.random() + 1.0D) * 0.15F;
+        float f1 = MathHelper.sqrt(this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ);
+        this.motionX = this.motionX / (double)f1 * (double)f * (double)0.4F;
+        this.motionY = this.motionY / (double)f1 * (double)f * (double)0.4F + (double)0.1F;
+        this.motionZ = this.motionZ / (double)f1 * (double)f * (double)0.4F;
+    }
 
-   public Particle setPower(float p_70543_1_) {
-      this.xd *= (double)p_70543_1_;
-      this.yd = (this.yd - (double)0.1F) * (double)p_70543_1_ + (double)0.1F;
-      this.zd *= (double)p_70543_1_;
-      return this;
-   }
+    public Particle multiplyVelocity(float multiplier)
+    {
+        this.motionX *= (double)multiplier;
+        this.motionY = (this.motionY - (double)0.1F) * (double)multiplier + (double)0.1F;
+        this.motionZ *= (double)multiplier;
+        return this;
+    }
 
-   public Particle scale(float p_70541_1_) {
-      this.setSize(0.2F * p_70541_1_, 0.2F * p_70541_1_);
-      return this;
-   }
+    public Particle multiplyParticleScaleBy(float scale)
+    {
+        this.setSize(0.2F * scale, 0.2F * scale);
+        return this;
+    }
 
-   public void setColor(float p_70538_1_, float p_70538_2_, float p_70538_3_) {
-      this.rCol = p_70538_1_;
-      this.gCol = p_70538_2_;
-      this.bCol = p_70538_3_;
-   }
+    public void setColor(float particleRedIn, float particleGreenIn, float particleBlueIn)
+    {
+        this.particleRed = particleRedIn;
+        this.particleGreen = particleGreenIn;
+        this.particleBlue = particleBlueIn;
+    }
 
-   protected void setAlpha(float p_82338_1_) {
-      this.alpha = p_82338_1_;
-   }
+    /**
+     * Sets the particle alpha (float)
+     */
+    protected void setAlphaF(float alpha)
+    {
+        this.particleAlpha = alpha;
+    }
 
-   public void setLifetime(int p_187114_1_) {
-      this.lifetime = p_187114_1_;
-   }
+    public void setMaxAge(int particleLifeTime)
+    {
+        this.maxAge = particleLifeTime;
+    }
 
-   public int getLifetime() {
-      return this.lifetime;
-   }
+    public int getMaxAge()
+    {
+        return this.maxAge;
+    }
 
-   public void tick() {
-      this.xo = this.x;
-      this.yo = this.y;
-      this.zo = this.z;
-      if (this.age++ >= this.lifetime) {
-         this.remove();
-      } else {
-         this.yd -= 0.04D * (double)this.gravity;
-         this.move(this.xd, this.yd, this.zd);
-         this.xd *= (double)0.98F;
-         this.yd *= (double)0.98F;
-         this.zd *= (double)0.98F;
-         if (this.onGround) {
-            this.xd *= (double)0.7F;
-            this.zd *= (double)0.7F;
-         }
+    public void tick()
+    {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
 
-      }
-   }
+        if (this.age++ >= this.maxAge)
+        {
+            this.setExpired();
+        }
+        else
+        {
+            this.motionY -= 0.04D * (double)this.particleGravity;
+            this.move(this.motionX, this.motionY, this.motionZ);
+            this.motionX *= (double)0.98F;
+            this.motionY *= (double)0.98F;
+            this.motionZ *= (double)0.98F;
 
-   public abstract void render(IVertexBuilder p_225606_1_, ActiveRenderInfo p_225606_2_, float p_225606_3_);
+            if (this.onGround)
+            {
+                this.motionX *= (double)0.7F;
+                this.motionZ *= (double)0.7F;
+            }
+        }
+    }
 
-   public abstract IParticleRenderType getRenderType();
+    public abstract void renderParticle(IVertexBuilder buffer, ActiveRenderInfo renderInfo, float partialTicks);
 
-   public String toString() {
-      return this.getClass().getSimpleName() + ", Pos (" + this.x + "," + this.y + "," + this.z + "), RGBA (" + this.rCol + "," + this.gCol + "," + this.bCol + "," + this.alpha + "), Age " + this.age;
-   }
+    public abstract IParticleRenderType getRenderType();
 
-   public void remove() {
-      this.removed = true;
-   }
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + ", Pos (" + this.posX + "," + this.posY + "," + this.posZ + "), RGBA (" + this.particleRed + "," + this.particleGreen + "," + this.particleBlue + "," + this.particleAlpha + "), Age " + this.age;
+    }
 
-   protected void setSize(float p_187115_1_, float p_187115_2_) {
-      if (p_187115_1_ != this.bbWidth || p_187115_2_ != this.bbHeight) {
-         this.bbWidth = p_187115_1_;
-         this.bbHeight = p_187115_2_;
-         AxisAlignedBB axisalignedbb = this.getBoundingBox();
-         double d0 = (axisalignedbb.minX + axisalignedbb.maxX - (double)p_187115_1_) / 2.0D;
-         double d1 = (axisalignedbb.minZ + axisalignedbb.maxZ - (double)p_187115_1_) / 2.0D;
-         this.setBoundingBox(new AxisAlignedBB(d0, axisalignedbb.minY, d1, d0 + (double)this.bbWidth, axisalignedbb.minY + (double)this.bbHeight, d1 + (double)this.bbWidth));
-      }
+    /**
+     * Called to indicate that this particle effect has expired and should be discontinued.
+     */
+    public void setExpired()
+    {
+        this.isExpired = true;
+    }
 
-   }
+    protected void setSize(float particleWidth, float particleHeight)
+    {
+        if (particleWidth != this.width || particleHeight != this.height)
+        {
+            this.width = particleWidth;
+            this.height = particleHeight;
+            AxisAlignedBB axisalignedbb = this.getBoundingBox();
+            double d0 = (axisalignedbb.minX + axisalignedbb.maxX - (double)particleWidth) / 2.0D;
+            double d1 = (axisalignedbb.minZ + axisalignedbb.maxZ - (double)particleWidth) / 2.0D;
+            this.setBoundingBox(new AxisAlignedBB(d0, axisalignedbb.minY, d1, d0 + (double)this.width, axisalignedbb.minY + (double)this.height, d1 + (double)this.width));
+        }
+    }
 
-   public void setPos(double p_187109_1_, double p_187109_3_, double p_187109_5_) {
-      this.x = p_187109_1_;
-      this.y = p_187109_3_;
-      this.z = p_187109_5_;
-      float f = this.bbWidth / 2.0F;
-      float f1 = this.bbHeight;
-      this.setBoundingBox(new AxisAlignedBB(p_187109_1_ - (double)f, p_187109_3_, p_187109_5_ - (double)f, p_187109_1_ + (double)f, p_187109_3_ + (double)f1, p_187109_5_ + (double)f));
-   }
+    public void setPosition(double x, double y, double z)
+    {
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+        float f = this.width / 2.0F;
+        float f1 = this.height;
+        this.setBoundingBox(new AxisAlignedBB(x - (double)f, y, z - (double)f, x + (double)f, y + (double)f1, z + (double)f));
+    }
 
-   public void move(double p_187110_1_, double p_187110_3_, double p_187110_5_) {
-      if (!this.stoppedByCollision) {
-         double d0 = p_187110_1_;
-         double d1 = p_187110_3_;
-         double d2 = p_187110_5_;
-         if (this.hasPhysics && (p_187110_1_ != 0.0D || p_187110_3_ != 0.0D || p_187110_5_ != 0.0D)) {
-            Vector3d vector3d = Entity.collideBoundingBoxHeuristically((Entity)null, new Vector3d(p_187110_1_, p_187110_3_, p_187110_5_), this.getBoundingBox(), this.level, ISelectionContext.empty(), new ReuseableStream<>(Stream.empty()));
-            p_187110_1_ = vector3d.x;
-            p_187110_3_ = vector3d.y;
-            p_187110_5_ = vector3d.z;
-         }
+    public void move(double x, double y, double z)
+    {
+        if (!this.collidedY)
+        {
+            double d0 = x;
+            double d1 = y;
+            double d2 = z;
 
-         if (p_187110_1_ != 0.0D || p_187110_3_ != 0.0D || p_187110_5_ != 0.0D) {
-            this.setBoundingBox(this.getBoundingBox().move(p_187110_1_, p_187110_3_, p_187110_5_));
-            this.setLocationFromBoundingbox();
-         }
+            if (this.canCollide && (x != 0.0D || y != 0.0D || z != 0.0D) && this.hasNearBlocks(x, y, z))
+            {
+                Vector3d vector3d = Entity.collideBoundingBoxHeuristically((Entity)null, new Vector3d(x, y, z), this.getBoundingBox(), this.world, ISelectionContext.dummy(), new ReuseableStream<>(Stream.empty()));
+                x = vector3d.x;
+                y = vector3d.y;
+                z = vector3d.z;
+            }
 
-         if (Math.abs(d1) >= (double)1.0E-5F && Math.abs(p_187110_3_) < (double)1.0E-5F) {
-            this.stoppedByCollision = true;
-         }
+            if (x != 0.0D || y != 0.0D || z != 0.0D)
+            {
+                this.setBoundingBox(this.getBoundingBox().offset(x, y, z));
+                this.resetPositionToBB();
+            }
 
-         this.onGround = d1 != p_187110_3_ && d1 < 0.0D;
-         if (d0 != p_187110_1_) {
-            this.xd = 0.0D;
-         }
+            if (Math.abs(d1) >= (double)1.0E-5F && Math.abs(y) < (double)1.0E-5F)
+            {
+                this.collidedY = true;
+            }
 
-         if (d2 != p_187110_5_) {
-            this.zd = 0.0D;
-         }
+            this.onGround = d1 != y && d1 < 0.0D;
 
-      }
-   }
+            if (d0 != x)
+            {
+                this.motionX = 0.0D;
+            }
 
-   protected void setLocationFromBoundingbox() {
-      AxisAlignedBB axisalignedbb = this.getBoundingBox();
-      this.x = (axisalignedbb.minX + axisalignedbb.maxX) / 2.0D;
-      this.y = axisalignedbb.minY;
-      this.z = (axisalignedbb.minZ + axisalignedbb.maxZ) / 2.0D;
-   }
+            if (d2 != z)
+            {
+                this.motionZ = 0.0D;
+            }
+        }
+    }
 
-   protected int getLightColor(float p_189214_1_) {
-      BlockPos blockpos = new BlockPos(this.x, this.y, this.z);
-      return this.level.hasChunkAt(blockpos) ? WorldRenderer.getLightColor(this.level, blockpos) : 0;
-   }
+    protected void resetPositionToBB()
+    {
+        AxisAlignedBB axisalignedbb = this.getBoundingBox();
+        this.posX = (axisalignedbb.minX + axisalignedbb.maxX) / 2.0D;
+        this.posY = axisalignedbb.minY;
+        this.posZ = (axisalignedbb.minZ + axisalignedbb.maxZ) / 2.0D;
+    }
 
-   public boolean isAlive() {
-      return !this.removed;
-   }
+    protected int getBrightnessForRender(float partialTick)
+    {
+        BlockPos blockpos = new BlockPos(this.posX, this.posY, this.posZ);
+        return this.world.isBlockLoaded(blockpos) ? WorldRenderer.getCombinedLight(this.world, blockpos) : 0;
+    }
 
-   public AxisAlignedBB getBoundingBox() {
-      return this.bb;
-   }
+    /**
+     * Returns true if this effect has not yet expired. "I feel happy! I feel happy!"
+     */
+    public boolean isAlive()
+    {
+        return !this.isExpired;
+    }
 
-   public void setBoundingBox(AxisAlignedBB p_187108_1_) {
-      this.bb = p_187108_1_;
-   }
+    public AxisAlignedBB getBoundingBox()
+    {
+        return this.boundingBox;
+    }
+
+    public void setBoundingBox(AxisAlignedBB bb)
+    {
+        this.boundingBox = bb;
+    }
+
+    private boolean hasNearBlocks(double p_hasNearBlocks_1_, double p_hasNearBlocks_3_, double p_hasNearBlocks_5_)
+    {
+        if (!(this.width > 1.0F) && !(this.height > 1.0F))
+        {
+            int i = MathHelper.floor(this.posX);
+            int j = MathHelper.floor(this.posY);
+            int k = MathHelper.floor(this.posZ);
+            this.blockPosM.setXyz(i, j, k);
+            BlockState blockstate = this.world.getBlockState(this.blockPosM);
+
+            if (!blockstate.isAir())
+            {
+                return true;
+            }
+            else
+            {
+                double d0 = p_hasNearBlocks_1_ > 0.0D ? this.boundingBox.maxX : (p_hasNearBlocks_1_ < 0.0D ? this.boundingBox.minX : this.posX);
+                double d1 = p_hasNearBlocks_3_ > 0.0D ? this.boundingBox.maxY : (p_hasNearBlocks_3_ < 0.0D ? this.boundingBox.minY : this.posY);
+                double d2 = p_hasNearBlocks_5_ > 0.0D ? this.boundingBox.maxZ : (p_hasNearBlocks_5_ < 0.0D ? this.boundingBox.minZ : this.posZ);
+                int l = MathHelper.floor(d0 + p_hasNearBlocks_1_);
+                int i1 = MathHelper.floor(d1 + p_hasNearBlocks_3_);
+                int j1 = MathHelper.floor(d2 + p_hasNearBlocks_5_);
+
+                if (l != i || i1 != j || j1 != k)
+                {
+                    this.blockPosM.setXyz(l, i1, j1);
+                    BlockState blockstate1 = this.world.getBlockState(this.blockPosM);
+
+                    if (!blockstate1.isAir())
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public boolean shouldCull()
+    {
+        return true;
+    }
 }

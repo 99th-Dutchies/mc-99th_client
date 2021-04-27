@@ -6,24 +6,30 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 
-public class DefaultFlowersFeature extends FlowersFeature<BlockClusterFeatureConfig> {
-   public DefaultFlowersFeature(Codec<BlockClusterFeatureConfig> p_i231945_1_) {
-      super(p_i231945_1_);
-   }
+public class DefaultFlowersFeature extends FlowersFeature<BlockClusterFeatureConfig>
+{
+    public DefaultFlowersFeature(Codec<BlockClusterFeatureConfig> p_i231945_1_)
+    {
+        super(p_i231945_1_);
+    }
 
-   public boolean isValid(IWorld p_225559_1_, BlockPos p_225559_2_, BlockClusterFeatureConfig p_225559_3_) {
-      return !p_225559_3_.blacklist.contains(p_225559_1_.getBlockState(p_225559_2_));
-   }
+    public boolean isValidPosition(IWorld world, BlockPos pos, BlockClusterFeatureConfig config)
+    {
+        return !config.blacklist.contains(world.getBlockState(pos));
+    }
 
-   public int getCount(BlockClusterFeatureConfig p_225560_1_) {
-      return p_225560_1_.tries;
-   }
+    public int getFlowerCount(BlockClusterFeatureConfig config)
+    {
+        return config.tryCount;
+    }
 
-   public BlockPos getPos(Random p_225561_1_, BlockPos p_225561_2_, BlockClusterFeatureConfig p_225561_3_) {
-      return p_225561_2_.offset(p_225561_1_.nextInt(p_225561_3_.xspread) - p_225561_1_.nextInt(p_225561_3_.xspread), p_225561_1_.nextInt(p_225561_3_.yspread) - p_225561_1_.nextInt(p_225561_3_.yspread), p_225561_1_.nextInt(p_225561_3_.zspread) - p_225561_1_.nextInt(p_225561_3_.zspread));
-   }
+    public BlockPos getNearbyPos(Random rand, BlockPos pos, BlockClusterFeatureConfig config)
+    {
+        return pos.add(rand.nextInt(config.xSpread) - rand.nextInt(config.xSpread), rand.nextInt(config.ySpread) - rand.nextInt(config.ySpread), rand.nextInt(config.zSpread) - rand.nextInt(config.zSpread));
+    }
 
-   public BlockState getRandomFlower(Random p_225562_1_, BlockPos p_225562_2_, BlockClusterFeatureConfig p_225562_3_) {
-      return p_225562_3_.stateProvider.getState(p_225562_1_, p_225562_2_);
-   }
+    public BlockState getFlowerToPlace(Random rand, BlockPos pos, BlockClusterFeatureConfig confgi)
+    {
+        return confgi.stateProvider.getBlockState(rand, pos);
+    }
 }

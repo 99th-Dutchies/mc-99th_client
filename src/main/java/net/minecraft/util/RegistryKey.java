@@ -6,46 +6,60 @@ import java.util.Map;
 import java.util.function.Function;
 import net.minecraft.util.registry.Registry;
 
-public class RegistryKey<T> {
-   private static final Map<String, RegistryKey<?>> VALUES = Collections.synchronizedMap(Maps.newIdentityHashMap());
-   private final ResourceLocation registryName;
-   private final ResourceLocation location;
+public class RegistryKey<T>
+{
+    private static final Map < String, RegistryKey<? >> UNIVERSAL_KEY_MAP = Collections.synchronizedMap(Maps.newIdentityHashMap());
+    private final ResourceLocation parent;
+    private final ResourceLocation location;
 
-   public static <T> RegistryKey<T> create(RegistryKey<? extends Registry<T>> p_240903_0_, ResourceLocation p_240903_1_) {
-      return create(p_240903_0_.location, p_240903_1_);
-   }
+    public static <T> RegistryKey<T> getOrCreateKey(RegistryKey <? extends Registry<T >> parent, ResourceLocation location)
+    {
+        return getOrCreateKey(parent.location, location);
+    }
 
-   public static <T> RegistryKey<Registry<T>> createRegistryKey(ResourceLocation p_240904_0_) {
-      return create(Registry.ROOT_REGISTRY_NAME, p_240904_0_);
-   }
+    public static <T> RegistryKey<Registry<T>> getOrCreateRootKey(ResourceLocation location)
+    {
+        return getOrCreateKey(Registry.ROOT, location);
+    }
 
-   private static <T> RegistryKey<T> create(ResourceLocation p_240905_0_, ResourceLocation p_240905_1_) {
-      String s = (p_240905_0_ + ":" + p_240905_1_).intern();
-      return (RegistryKey<T>)VALUES.computeIfAbsent(s, (p_240906_2_) -> {
-         return new RegistryKey(p_240905_0_, p_240905_1_);
-      });
-   }
+    private static <T> RegistryKey<T> getOrCreateKey(ResourceLocation parent, ResourceLocation location)
+    {
+        String s = (parent + ":" + location).intern();
+        return (RegistryKey<T>)UNIVERSAL_KEY_MAP.computeIfAbsent(s, (concatKey) ->
+        {
+            return new RegistryKey(parent, location);
+        });
+    }
 
-   private RegistryKey(ResourceLocation p_i232592_1_, ResourceLocation p_i232592_2_) {
-      this.registryName = p_i232592_1_;
-      this.location = p_i232592_2_;
-   }
+    private RegistryKey(ResourceLocation parent, ResourceLocation location)
+    {
+        this.parent = parent;
+        this.location = location;
+    }
 
-   public String toString() {
-      return "ResourceKey[" + this.registryName + " / " + this.location + ']';
-   }
+    public String toString()
+    {
+        return "ResourceKey[" + this.parent + " / " + this.location + ']';
+    }
 
-   public boolean isFor(RegistryKey<? extends Registry<?>> p_244356_1_) {
-      return this.registryName.equals(p_244356_1_.location());
-   }
+    /**
+     * Returns true if the registry represented by the parent key
+     */
+    public boolean isParent(RegistryKey <? extends Registry<? >> key)
+    {
+        return this.parent.equals(key.getLocation());
+    }
 
-   public ResourceLocation location() {
-      return this.location;
-   }
+    public ResourceLocation getLocation()
+    {
+        return this.location;
+    }
 
-   public static <T> Function<ResourceLocation, RegistryKey<T>> elementKey(RegistryKey<? extends Registry<T>> p_240902_0_) {
-      return (p_240907_1_) -> {
-         return create(p_240902_0_, p_240907_1_);
-      };
-   }
+    public static <T> Function<ResourceLocation, RegistryKey<T>> getKeyCreator(RegistryKey <? extends Registry<T >> parent)
+    {
+        return (location) ->
+        {
+            return getOrCreateKey(parent, location);
+        };
+    }
 }

@@ -3,79 +3,119 @@ package net.minecraft.entity.ai.goal;
 import java.util.EnumSet;
 import javax.annotation.Nullable;
 
-public class PrioritizedGoal extends Goal {
-   private final Goal goal;
-   private final int priority;
-   private boolean isRunning;
+public class PrioritizedGoal extends Goal
+{
+    private final Goal inner;
+    private final int priority;
+    private boolean running;
 
-   public PrioritizedGoal(int p_i50318_1_, Goal p_i50318_2_) {
-      this.priority = p_i50318_1_;
-      this.goal = p_i50318_2_;
-   }
+    public PrioritizedGoal(int priorityIn, Goal goalIn)
+    {
+        this.priority = priorityIn;
+        this.inner = goalIn;
+    }
 
-   public boolean canBeReplacedBy(PrioritizedGoal p_220771_1_) {
-      return this.isInterruptable() && p_220771_1_.getPriority() < this.getPriority();
-   }
+    public boolean isPreemptedBy(PrioritizedGoal other)
+    {
+        return this.isPreemptible() && other.getPriority() < this.getPriority();
+    }
 
-   public boolean canUse() {
-      return this.goal.canUse();
-   }
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        return this.inner.shouldExecute();
+    }
 
-   public boolean canContinueToUse() {
-      return this.goal.canContinueToUse();
-   }
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        return this.inner.shouldContinueExecuting();
+    }
 
-   public boolean isInterruptable() {
-      return this.goal.isInterruptable();
-   }
+    public boolean isPreemptible()
+    {
+        return this.inner.isPreemptible();
+    }
 
-   public void start() {
-      if (!this.isRunning) {
-         this.isRunning = true;
-         this.goal.start();
-      }
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        if (!this.running)
+        {
+            this.running = true;
+            this.inner.startExecuting();
+        }
+    }
 
-   public void stop() {
-      if (this.isRunning) {
-         this.isRunning = false;
-         this.goal.stop();
-      }
-   }
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        if (this.running)
+        {
+            this.running = false;
+            this.inner.resetTask();
+        }
+    }
 
-   public void tick() {
-      this.goal.tick();
-   }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        this.inner.tick();
+    }
 
-   public void setFlags(EnumSet<Goal.Flag> p_220684_1_) {
-      this.goal.setFlags(p_220684_1_);
-   }
+    public void setMutexFlags(EnumSet<Goal.Flag> flagSet)
+    {
+        this.inner.setMutexFlags(flagSet);
+    }
 
-   public EnumSet<Goal.Flag> getFlags() {
-      return this.goal.getFlags();
-   }
+    public EnumSet<Goal.Flag> getMutexFlags()
+    {
+        return this.inner.getMutexFlags();
+    }
 
-   public boolean isRunning() {
-      return this.isRunning;
-   }
+    public boolean isRunning()
+    {
+        return this.running;
+    }
 
-   public int getPriority() {
-      return this.priority;
-   }
+    public int getPriority()
+    {
+        return this.priority;
+    }
 
-   public Goal getGoal() {
-      return this.goal;
-   }
+    /**
+     * "Gets the private goal enclosed by this PrioritizedGoal. Call this rather than use an access transformer"
+     */
+    public Goal getGoal()
+    {
+        return this.inner;
+    }
 
-   public boolean equals(@Nullable Object p_equals_1_) {
-      if (this == p_equals_1_) {
-         return true;
-      } else {
-         return p_equals_1_ != null && this.getClass() == p_equals_1_.getClass() ? this.goal.equals(((PrioritizedGoal)p_equals_1_).goal) : false;
-      }
-   }
+    public boolean equals(@Nullable Object p_equals_1_)
+    {
+        if (this == p_equals_1_)
+        {
+            return true;
+        }
+        else
+        {
+            return p_equals_1_ != null && this.getClass() == p_equals_1_.getClass() ? this.inner.equals(((PrioritizedGoal)p_equals_1_).inner) : false;
+        }
+    }
 
-   public int hashCode() {
-      return this.goal.hashCode();
-   }
+    public int hashCode()
+    {
+        return this.inner.hashCode();
+    }
 }

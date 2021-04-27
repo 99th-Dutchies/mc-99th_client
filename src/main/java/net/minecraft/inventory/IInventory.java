@@ -5,58 +5,93 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-public interface IInventory extends IClearable {
-   int getContainerSize();
+public interface IInventory extends IClearable
+{
+    /**
+     * Returns the number of slots in the inventory.
+     */
+    int getSizeInventory();
 
-   boolean isEmpty();
+    boolean isEmpty();
 
-   ItemStack getItem(int p_70301_1_);
+    /**
+     * Returns the stack in the given slot.
+     */
+    ItemStack getStackInSlot(int index);
 
-   ItemStack removeItem(int p_70298_1_, int p_70298_2_);
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    ItemStack decrStackSize(int index, int count);
 
-   ItemStack removeItemNoUpdate(int p_70304_1_);
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    ItemStack removeStackFromSlot(int index);
 
-   void setItem(int p_70299_1_, ItemStack p_70299_2_);
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    void setInventorySlotContents(int index, ItemStack stack);
 
-   default int getMaxStackSize() {
-      return 64;
-   }
+default int getInventoryStackLimit()
+    {
+        return 64;
+    }
 
-   void setChanged();
+    /**
+     * For tile entities, ensures the chunk containing the tile entity is saved to disk later - the game won't think it
+     * hasn't changed and skip it.
+     */
+    void markDirty();
 
-   boolean stillValid(PlayerEntity p_70300_1_);
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
+    boolean isUsableByPlayer(PlayerEntity player);
 
-   default void startOpen(PlayerEntity p_174889_1_) {
-   }
+default void openInventory(PlayerEntity player)
+    {
+    }
 
-   default void stopOpen(PlayerEntity p_174886_1_) {
-   }
+default void closeInventory(PlayerEntity player)
+    {
+    }
 
-   default boolean canPlaceItem(int p_94041_1_, ItemStack p_94041_2_) {
-      return true;
-   }
+default boolean isItemValidForSlot(int index, ItemStack stack)
+    {
+        return true;
+    }
 
-   default int countItem(Item p_213901_1_) {
-      int i = 0;
+default int count(Item itemIn)
+    {
+        int i = 0;
 
-      for(int j = 0; j < this.getContainerSize(); ++j) {
-         ItemStack itemstack = this.getItem(j);
-         if (itemstack.getItem().equals(p_213901_1_)) {
-            i += itemstack.getCount();
-         }
-      }
+        for (int j = 0; j < this.getSizeInventory(); ++j)
+        {
+            ItemStack itemstack = this.getStackInSlot(j);
 
-      return i;
-   }
+            if (itemstack.getItem().equals(itemIn))
+            {
+                i += itemstack.getCount();
+            }
+        }
 
-   default boolean hasAnyOf(Set<Item> p_213902_1_) {
-      for(int i = 0; i < this.getContainerSize(); ++i) {
-         ItemStack itemstack = this.getItem(i);
-         if (p_213902_1_.contains(itemstack.getItem()) && itemstack.getCount() > 0) {
-            return true;
-         }
-      }
+        return i;
+    }
 
-      return false;
-   }
+default boolean hasAny(Set<Item> set)
+    {
+        for (int i = 0; i < this.getSizeInventory(); ++i)
+        {
+            ItemStack itemstack = this.getStackInSlot(i);
+
+            if (set.contains(itemstack.getItem()) && itemstack.getCount() > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

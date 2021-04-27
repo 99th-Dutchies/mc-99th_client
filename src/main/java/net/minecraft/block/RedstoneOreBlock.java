@@ -18,92 +18,126 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class RedstoneOreBlock extends Block {
-   public static final BooleanProperty LIT = RedstoneTorchBlock.LIT;
+public class RedstoneOreBlock extends Block
+{
+    public static final BooleanProperty LIT = RedstoneTorchBlock.LIT;
 
-   public RedstoneOreBlock(AbstractBlock.Properties p_i48345_1_) {
-      super(p_i48345_1_);
-      this.registerDefaultState(this.defaultBlockState().setValue(LIT, Boolean.valueOf(false)));
-   }
+    public RedstoneOreBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.getDefaultState().with(LIT, Boolean.valueOf(false)));
+    }
 
-   public void attack(BlockState p_196270_1_, World p_196270_2_, BlockPos p_196270_3_, PlayerEntity p_196270_4_) {
-      interact(p_196270_1_, p_196270_2_, p_196270_3_);
-      super.attack(p_196270_1_, p_196270_2_, p_196270_3_, p_196270_4_);
-   }
+    public void onBlockClicked(BlockState state, World worldIn, BlockPos pos, PlayerEntity player)
+    {
+        activate(state, worldIn, pos);
+        super.onBlockClicked(state, worldIn, pos, player);
+    }
 
-   public void stepOn(World p_176199_1_, BlockPos p_176199_2_, Entity p_176199_3_) {
-      interact(p_176199_1_.getBlockState(p_176199_2_), p_176199_1_, p_176199_2_);
-      super.stepOn(p_176199_1_, p_176199_2_, p_176199_3_);
-   }
+    /**
+     * Called when the given entity walks on this Block
+     */
+    public void onEntityWalk(World worldIn, BlockPos pos, Entity entityIn)
+    {
+        activate(worldIn.getBlockState(pos), worldIn, pos);
+        super.onEntityWalk(worldIn, pos, entityIn);
+    }
 
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      if (p_225533_2_.isClientSide) {
-         spawnParticles(p_225533_2_, p_225533_3_);
-      } else {
-         interact(p_225533_1_, p_225533_2_, p_225533_3_);
-      }
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        if (worldIn.isRemote)
+        {
+            spawnParticles(worldIn, pos);
+        }
+        else
+        {
+            activate(state, worldIn, pos);
+        }
 
-      ItemStack itemstack = p_225533_4_.getItemInHand(p_225533_5_);
-      return itemstack.getItem() instanceof BlockItem && (new BlockItemUseContext(p_225533_4_, p_225533_5_, itemstack, p_225533_6_)).canPlace() ? ActionResultType.PASS : ActionResultType.SUCCESS;
-   }
+        ItemStack itemstack = player.getHeldItem(handIn);
+        return itemstack.getItem() instanceof BlockItem && (new BlockItemUseContext(player, handIn, itemstack, hit)).canPlace() ? ActionResultType.PASS : ActionResultType.SUCCESS;
+    }
 
-   private static void interact(BlockState p_196500_0_, World p_196500_1_, BlockPos p_196500_2_) {
-      spawnParticles(p_196500_1_, p_196500_2_);
-      if (!p_196500_0_.getValue(LIT)) {
-         p_196500_1_.setBlock(p_196500_2_, p_196500_0_.setValue(LIT, Boolean.valueOf(true)), 3);
-      }
+    private static void activate(BlockState state, World world, BlockPos pos)
+    {
+        spawnParticles(world, pos);
 
-   }
+        if (!state.get(LIT))
+        {
+            world.setBlockState(pos, state.with(LIT, Boolean.valueOf(true)), 3);
+        }
+    }
 
-   public boolean isRandomlyTicking(BlockState p_149653_1_) {
-      return p_149653_1_.getValue(LIT);
-   }
+    /**
+     * Returns whether or not this block is of a type that needs random ticking. Called for ref-counting purposes by
+     * ExtendedBlockStorage in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
+    public boolean ticksRandomly(BlockState state)
+    {
+        return state.get(LIT);
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_1_.getValue(LIT)) {
-         p_225542_2_.setBlock(p_225542_3_, p_225542_1_.setValue(LIT, Boolean.valueOf(false)), 3);
-      }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (state.get(LIT))
+        {
+            worldIn.setBlockState(pos, state.with(LIT, Boolean.valueOf(false)), 3);
+        }
+    }
 
-   }
+    /**
+     * Perform side-effects from block dropping, such as creating silverfish
+     */
+    public void spawnAdditionalDrops(BlockState state, ServerWorld worldIn, BlockPos pos, ItemStack stack)
+    {
+        super.spawnAdditionalDrops(state, worldIn, pos, stack);
 
-   public void spawnAfterBreak(BlockState p_220062_1_, ServerWorld p_220062_2_, BlockPos p_220062_3_, ItemStack p_220062_4_) {
-      super.spawnAfterBreak(p_220062_1_, p_220062_2_, p_220062_3_, p_220062_4_);
-      if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, p_220062_4_) == 0) {
-         int i = 1 + p_220062_2_.random.nextInt(5);
-         this.popExperience(p_220062_2_, p_220062_3_, i);
-      }
+        if (EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0)
+        {
+            int i = 1 + worldIn.rand.nextInt(5);
+            this.dropXpOnBlockBreak(worldIn, pos, i);
+        }
+    }
 
-   }
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles). Note that
+     * this method is unrelated to {@link randomTick} and {@link #needsRandomTick}, and will always be called regardless
+     * of whether the block can receive random update ticks
+     */
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand)
+    {
+        if (stateIn.get(LIT))
+        {
+            spawnParticles(worldIn, pos);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void animateTick(BlockState p_180655_1_, World p_180655_2_, BlockPos p_180655_3_, Random p_180655_4_) {
-      if (p_180655_1_.getValue(LIT)) {
-         spawnParticles(p_180655_2_, p_180655_3_);
-      }
+    private static void spawnParticles(World world, BlockPos worldIn)
+    {
+        double d0 = 0.5625D;
+        Random random = world.rand;
 
-   }
+        for (Direction direction : Direction.values())
+        {
+            BlockPos blockpos = worldIn.offset(direction);
 
-   private static void spawnParticles(World p_180691_0_, BlockPos p_180691_1_) {
-      double d0 = 0.5625D;
-      Random random = p_180691_0_.random;
+            if (!world.getBlockState(blockpos).isOpaqueCube(world, blockpos))
+            {
+                Direction.Axis direction$axis = direction.getAxis();
+                double d1 = direction$axis == Direction.Axis.X ? 0.5D + 0.5625D * (double)direction.getXOffset() : (double)random.nextFloat();
+                double d2 = direction$axis == Direction.Axis.Y ? 0.5D + 0.5625D * (double)direction.getYOffset() : (double)random.nextFloat();
+                double d3 = direction$axis == Direction.Axis.Z ? 0.5D + 0.5625D * (double)direction.getZOffset() : (double)random.nextFloat();
+                world.addParticle(RedstoneParticleData.REDSTONE_DUST, (double)worldIn.getX() + d1, (double)worldIn.getY() + d2, (double)worldIn.getZ() + d3, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
 
-      for(Direction direction : Direction.values()) {
-         BlockPos blockpos = p_180691_1_.relative(direction);
-         if (!p_180691_0_.getBlockState(blockpos).isSolidRender(p_180691_0_, blockpos)) {
-            Direction.Axis direction$axis = direction.getAxis();
-            double d1 = direction$axis == Direction.Axis.X ? 0.5D + 0.5625D * (double)direction.getStepX() : (double)random.nextFloat();
-            double d2 = direction$axis == Direction.Axis.Y ? 0.5D + 0.5625D * (double)direction.getStepY() : (double)random.nextFloat();
-            double d3 = direction$axis == Direction.Axis.Z ? 0.5D + 0.5625D * (double)direction.getStepZ() : (double)random.nextFloat();
-            p_180691_0_.addParticle(RedstoneParticleData.REDSTONE, (double)p_180691_1_.getX() + d1, (double)p_180691_1_.getY() + d2, (double)p_180691_1_.getZ() + d3, 0.0D, 0.0D, 0.0D);
-         }
-      }
-
-   }
-
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(LIT);
-   }
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(LIT);
+    }
 }

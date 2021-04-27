@@ -7,53 +7,70 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public interface IRecipe<C extends IInventory> {
-   boolean matches(C p_77569_1_, World p_77569_2_);
+public interface IRecipe<C extends IInventory>
+{
+    /**
+     * Used to check if a recipe matches current crafting inventory
+     */
+    boolean matches(C inv, World worldIn);
 
-   ItemStack assemble(C p_77572_1_);
+    /**
+     * Returns an Item that is the result of this recipe
+     */
+    ItemStack getCraftingResult(C inv);
 
-   @OnlyIn(Dist.CLIENT)
-   boolean canCraftInDimensions(int p_194133_1_, int p_194133_2_);
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
+    boolean canFit(int width, int height);
 
-   ItemStack getResultItem();
+    /**
+     * Get the result of this recipe, usually for display purposes (e.g. recipe book). If your recipe has more than one
+     * possible result (e.g. it's dynamic and depends on its inputs), then return an empty stack.
+     */
+    ItemStack getRecipeOutput();
 
-   default NonNullList<ItemStack> getRemainingItems(C p_179532_1_) {
-      NonNullList<ItemStack> nonnulllist = NonNullList.withSize(p_179532_1_.getContainerSize(), ItemStack.EMPTY);
+default NonNullList<ItemStack> getRemainingItems(C inv)
+    {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
-      for(int i = 0; i < nonnulllist.size(); ++i) {
-         Item item = p_179532_1_.getItem(i).getItem();
-         if (item.hasCraftingRemainingItem()) {
-            nonnulllist.set(i, new ItemStack(item.getCraftingRemainingItem()));
-         }
-      }
+        for (int i = 0; i < nonnulllist.size(); ++i)
+        {
+            Item item = inv.getStackInSlot(i).getItem();
 
-      return nonnulllist;
-   }
+            if (item.hasContainerItem())
+            {
+                nonnulllist.set(i, new ItemStack(item.getContainerItem()));
+            }
+        }
 
-   default NonNullList<Ingredient> getIngredients() {
-      return NonNullList.create();
-   }
+        return nonnulllist;
+    }
 
-   default boolean isSpecial() {
-      return false;
-   }
+default NonNullList<Ingredient> getIngredients()
+    {
+        return NonNullList.create();
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   default String getGroup() {
-      return "";
-   }
+default boolean isDynamic()
+    {
+        return false;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   default ItemStack getToastSymbol() {
-      return new ItemStack(Blocks.CRAFTING_TABLE);
-   }
+default String getGroup()
+    {
+        return "";
+    }
 
-   ResourceLocation getId();
+default ItemStack getIcon()
+    {
+        return new ItemStack(Blocks.CRAFTING_TABLE);
+    }
 
-   IRecipeSerializer<?> getSerializer();
+    ResourceLocation getId();
 
-   IRecipeType<?> getType();
+    IRecipeSerializer<?> getSerializer();
+
+    IRecipeType<?> getType();
 }

@@ -21,99 +21,137 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 
-public class TNTBlock extends Block {
-   public static final BooleanProperty UNSTABLE = BlockStateProperties.UNSTABLE;
+public class TNTBlock extends Block
+{
+    public static final BooleanProperty UNSTABLE = BlockStateProperties.UNSTABLE;
 
-   public TNTBlock(AbstractBlock.Properties p_i48309_1_) {
-      super(p_i48309_1_);
-      this.registerDefaultState(this.defaultBlockState().setValue(UNSTABLE, Boolean.valueOf(false)));
-   }
+    public TNTBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.getDefaultState().with(UNSTABLE, Boolean.valueOf(false)));
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      if (!p_220082_4_.is(p_220082_1_.getBlock())) {
-         if (p_220082_2_.hasNeighborSignal(p_220082_3_)) {
-            explode(p_220082_2_, p_220082_3_);
-            p_220082_2_.removeBlock(p_220082_3_, false);
-         }
-
-      }
-   }
-
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      if (p_220069_2_.hasNeighborSignal(p_220069_3_)) {
-         explode(p_220069_2_, p_220069_3_);
-         p_220069_2_.removeBlock(p_220069_3_, false);
-      }
-
-   }
-
-   public void playerWillDestroy(World p_176208_1_, BlockPos p_176208_2_, BlockState p_176208_3_, PlayerEntity p_176208_4_) {
-      if (!p_176208_1_.isClientSide() && !p_176208_4_.isCreative() && p_176208_3_.getValue(UNSTABLE)) {
-         explode(p_176208_1_, p_176208_2_);
-      }
-
-      super.playerWillDestroy(p_176208_1_, p_176208_2_, p_176208_3_, p_176208_4_);
-   }
-
-   public void wasExploded(World p_180652_1_, BlockPos p_180652_2_, Explosion p_180652_3_) {
-      if (!p_180652_1_.isClientSide) {
-         TNTEntity tntentity = new TNTEntity(p_180652_1_, (double)p_180652_2_.getX() + 0.5D, (double)p_180652_2_.getY(), (double)p_180652_2_.getZ() + 0.5D, p_180652_3_.getSourceMob());
-         tntentity.setFuse((short)(p_180652_1_.random.nextInt(tntentity.getLife() / 4) + tntentity.getLife() / 8));
-         p_180652_1_.addFreshEntity(tntentity);
-      }
-   }
-
-   public static void explode(World p_196534_0_, BlockPos p_196534_1_) {
-      explode(p_196534_0_, p_196534_1_, (LivingEntity)null);
-   }
-
-   private static void explode(World p_196535_0_, BlockPos p_196535_1_, @Nullable LivingEntity p_196535_2_) {
-      if (!p_196535_0_.isClientSide) {
-         TNTEntity tntentity = new TNTEntity(p_196535_0_, (double)p_196535_1_.getX() + 0.5D, (double)p_196535_1_.getY(), (double)p_196535_1_.getZ() + 0.5D, p_196535_2_);
-         p_196535_0_.addFreshEntity(tntentity);
-         p_196535_0_.playSound((PlayerEntity)null, tntentity.getX(), tntentity.getY(), tntentity.getZ(), SoundEvents.TNT_PRIMED, SoundCategory.BLOCKS, 1.0F, 1.0F);
-      }
-   }
-
-   public ActionResultType use(BlockState p_225533_1_, World p_225533_2_, BlockPos p_225533_3_, PlayerEntity p_225533_4_, Hand p_225533_5_, BlockRayTraceResult p_225533_6_) {
-      ItemStack itemstack = p_225533_4_.getItemInHand(p_225533_5_);
-      Item item = itemstack.getItem();
-      if (item != Items.FLINT_AND_STEEL && item != Items.FIRE_CHARGE) {
-         return super.use(p_225533_1_, p_225533_2_, p_225533_3_, p_225533_4_, p_225533_5_, p_225533_6_);
-      } else {
-         explode(p_225533_2_, p_225533_3_, p_225533_4_);
-         p_225533_2_.setBlock(p_225533_3_, Blocks.AIR.defaultBlockState(), 11);
-         if (!p_225533_4_.isCreative()) {
-            if (item == Items.FLINT_AND_STEEL) {
-               itemstack.hurtAndBreak(1, p_225533_4_, (p_220287_1_) -> {
-                  p_220287_1_.broadcastBreakEvent(p_225533_5_);
-               });
-            } else {
-               itemstack.shrink(1);
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        if (!oldState.isIn(state.getBlock()))
+        {
+            if (worldIn.isBlockPowered(pos))
+            {
+                explode(worldIn, pos);
+                worldIn.removeBlock(pos, false);
             }
-         }
+        }
+    }
 
-         return ActionResultType.sidedSuccess(p_225533_2_.isClientSide);
-      }
-   }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        if (worldIn.isBlockPowered(pos))
+        {
+            explode(worldIn, pos);
+            worldIn.removeBlock(pos, false);
+        }
+    }
 
-   public void onProjectileHit(World p_220066_1_, BlockState p_220066_2_, BlockRayTraceResult p_220066_3_, ProjectileEntity p_220066_4_) {
-      if (!p_220066_1_.isClientSide) {
-         Entity entity = p_220066_4_.getOwner();
-         if (p_220066_4_.isOnFire()) {
-            BlockPos blockpos = p_220066_3_.getBlockPos();
-            explode(p_220066_1_, blockpos, entity instanceof LivingEntity ? (LivingEntity)entity : null);
-            p_220066_1_.removeBlock(blockpos, false);
-         }
-      }
+    /**
+     * Called before the Block is set to air in the world. Called regardless of if the player's tool can actually
+     * collect this block
+     */
+    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player)
+    {
+        if (!worldIn.isRemote() && !player.isCreative() && state.get(UNSTABLE))
+        {
+            explode(worldIn, pos);
+        }
 
-   }
+        super.onBlockHarvested(worldIn, pos, state, player);
+    }
 
-   public boolean dropFromExplosion(Explosion p_149659_1_) {
-      return false;
-   }
+    /**
+     * Called when this Block is destroyed by an Explosion
+     */
+    public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn)
+    {
+        if (!worldIn.isRemote)
+        {
+            TNTEntity tntentity = new TNTEntity(worldIn, (double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, explosionIn.getExplosivePlacedBy());
+            tntentity.setFuse((short)(worldIn.rand.nextInt(tntentity.getFuse() / 4) + tntentity.getFuse() / 8));
+            worldIn.addEntity(tntentity);
+        }
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(UNSTABLE);
-   }
+    public static void explode(World world, BlockPos worldIn)
+    {
+        explode(world, worldIn, (LivingEntity)null);
+    }
+
+    private static void explode(World worldIn, BlockPos pos, @Nullable LivingEntity entityIn)
+    {
+        if (!worldIn.isRemote)
+        {
+            TNTEntity tntentity = new TNTEntity(worldIn, (double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, entityIn);
+            worldIn.addEntity(tntentity);
+            worldIn.playSound((PlayerEntity)null, tntentity.getPosX(), tntentity.getPosY(), tntentity.getPosZ(), SoundEvents.ENTITY_TNT_PRIMED, SoundCategory.BLOCKS, 1.0F, 1.0F);
+        }
+    }
+
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+    {
+        ItemStack itemstack = player.getHeldItem(handIn);
+        Item item = itemstack.getItem();
+
+        if (item != Items.FLINT_AND_STEEL && item != Items.FIRE_CHARGE)
+        {
+            return super.onBlockActivated(state, worldIn, pos, player, handIn, hit);
+        }
+        else
+        {
+            explode(worldIn, pos, player);
+            worldIn.setBlockState(pos, Blocks.AIR.getDefaultState(), 11);
+
+            if (!player.isCreative())
+            {
+                if (item == Items.FLINT_AND_STEEL)
+                {
+                    itemstack.damageItem(1, player, (player1) ->
+                    {
+                        player1.sendBreakAnimation(handIn);
+                    });
+                }
+                else
+                {
+                    itemstack.shrink(1);
+                }
+            }
+
+            return ActionResultType.func_233537_a_(worldIn.isRemote);
+        }
+    }
+
+    public void onProjectileCollision(World worldIn, BlockState state, BlockRayTraceResult hit, ProjectileEntity projectile)
+    {
+        if (!worldIn.isRemote)
+        {
+            Entity entity = projectile.func_234616_v_();
+
+            if (projectile.isBurning())
+            {
+                BlockPos blockpos = hit.getPos();
+                explode(worldIn, blockpos, entity instanceof LivingEntity ? (LivingEntity)entity : null);
+                worldIn.removeBlock(blockpos, false);
+            }
+        }
+    }
+
+    /**
+     * Return whether this block can drop from an explosion.
+     */
+    public boolean canDropFromExplosion(Explosion explosionIn)
+    {
+        return false;
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(UNSTABLE);
+    }
 }

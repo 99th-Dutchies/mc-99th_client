@@ -27,98 +27,135 @@ import net.minecraft.world.GameRules;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Bootstrap {
-   public static final PrintStream STDOUT = System.out;
-   private static boolean isBootstrapped;
-   private static final Logger LOGGER = LogManager.getLogger();
+public class Bootstrap
+{
+    public static final PrintStream SYSOUT = System.out;
 
-   public static void bootStrap() {
-      if (!isBootstrapped) {
-         isBootstrapped = true;
-         if (Registry.REGISTRY.keySet().isEmpty()) {
-            throw new IllegalStateException("Unable to load registries");
-         } else {
-            FireBlock.bootStrap();
-            ComposterBlock.bootStrap();
-            if (EntityType.getKey(EntityType.PLAYER) == null) {
-               throw new IllegalStateException("Failed loading EntityTypes");
-            } else {
-               PotionBrewing.bootStrap();
-               EntityOptions.bootStrap();
-               IDispenseItemBehavior.bootStrap();
-               ArgumentTypes.bootStrap();
-               TagRegistryManager.bootStrap();
-               wrapStreams();
+    /** Whether the blocks, items, etc have already been registered */
+    private static boolean alreadyRegistered;
+    private static final Logger LOGGER = LogManager.getLogger();
+
+    /**
+     * Registers blocks, items, stats, etc.
+     */
+    public static void register()
+    {
+        if (!alreadyRegistered)
+        {
+            alreadyRegistered = true;
+
+            if (Registry.REGISTRY.keySet().isEmpty())
+            {
+                throw new IllegalStateException("Unable to load registries");
             }
-         }
-      }
-   }
+            else
+            {
+                FireBlock.init();
+                ComposterBlock.init();
 
-   private static <T> void checkTranslations(Iterable<T> p_240912_0_, Function<T, String> p_240912_1_, Set<String> p_240912_2_) {
-      LanguageMap languagemap = LanguageMap.getInstance();
-      p_240912_0_.forEach((p_218818_3_) -> {
-         String s = p_240912_1_.apply(p_218818_3_);
-         if (!languagemap.has(s)) {
-            p_240912_2_.add(s);
-         }
+                if (EntityType.getKey(EntityType.PLAYER) == null)
+                {
+                    throw new IllegalStateException("Failed loading EntityTypes");
+                }
+                else
+                {
+                    PotionBrewing.init();
+                    EntityOptions.registerOptions();
+                    IDispenseItemBehavior.init();
+                    ArgumentTypes.registerArgumentTypes();
+                    TagRegistryManager.checkHelperRegistrations();
+                    redirectOutputToLog();
+                }
+            }
+        }
+    }
 
-      });
-   }
+    private static <T> void addTranslationStrings(Iterable<T> objects, Function<T, String> objectToKeyFunction, Set<String> translationSet)
+    {
+        LanguageMap languagemap = LanguageMap.getInstance();
+        objects.forEach((registryElement) ->
+        {
+            String s = objectToKeyFunction.apply(registryElement);
 
-   private static void checkGameruleTranslations(final Set<String> p_240913_0_) {
-      final LanguageMap languagemap = LanguageMap.getInstance();
-      GameRules.visitGameRuleTypes(new GameRules.IRuleEntryVisitor() {
-         public <T extends GameRules.RuleValue<T>> void visit(GameRules.RuleKey<T> p_223481_1_, GameRules.RuleType<T> p_223481_2_) {
-            if (!languagemap.has(p_223481_1_.getDescriptionId())) {
-               p_240913_0_.add(p_223481_1_.getId());
+            if (!languagemap.func_230506_b_(s))
+            {
+                translationSet.add(s);
+            }
+        });
+    }
+
+    private static void addGameRuleTranslationStrings(final Set<String> translations)
+    {
+        final LanguageMap languagemap = LanguageMap.getInstance();
+        GameRules.visitAll(new GameRules.IRuleEntryVisitor()
+        {
+            public <T extends GameRules.RuleValue<T>> void visit(GameRules.RuleKey<T> key, GameRules.RuleType<T> type)
+            {
+                if (!languagemap.func_230506_b_(key.getLocaleString()))
+                {
+                    translations.add(key.getName());
+                }
+            }
+        });
+    }
+
+    public static Set<String> getTranslationStrings()
+    {
+        Set<String> set = new TreeSet<>();
+        addTranslationStrings(Registry.ATTRIBUTE, Attribute::getAttributeName, set);
+        addTranslationStrings(Registry.ENTITY_TYPE, EntityType::getTranslationKey, set);
+        addTranslationStrings(Registry.EFFECTS, Effect::getName, set);
+        addTranslationStrings(Registry.ITEM, Item::getTranslationKey, set);
+        addTranslationStrings(Registry.ENCHANTMENT, Enchantment::getName, set);
+        addTranslationStrings(Registry.BLOCK, Block::getTranslationKey, set);
+        addTranslationStrings(Registry.CUSTOM_STAT, (translationFunction) ->
+        {
+            return "stat." + translationFunction.toString().replace(':', '.');
+        }, set);
+        addGameRuleTranslationStrings(set);
+        return set;
+    }
+
+    public static void checkTranslations()
+    {
+        if (!alreadyRegistered)
+        {
+            throw new IllegalArgumentException("Not bootstrapped");
+        }
+        else
+        {
+            if (SharedConstants.developmentMode)
+            {
+                getTranslationStrings().forEach((raw) ->
+                {
+                    LOGGER.error("Missing translations: " + raw);
+                });
+                Commands.func_242986_b();
             }
 
-         }
-      });
-   }
+            GlobalEntityTypeAttributes.validateEntityAttributes();
+        }
+    }
 
-   public static Set<String> getMissingTranslations() {
-      Set<String> set = new TreeSet<>();
-      checkTranslations(Registry.ATTRIBUTE, Attribute::getDescriptionId, set);
-      checkTranslations(Registry.ENTITY_TYPE, EntityType::getDescriptionId, set);
-      checkTranslations(Registry.MOB_EFFECT, Effect::getDescriptionId, set);
-      checkTranslations(Registry.ITEM, Item::getDescriptionId, set);
-      checkTranslations(Registry.ENCHANTMENT, Enchantment::getDescriptionId, set);
-      checkTranslations(Registry.BLOCK, Block::getDescriptionId, set);
-      checkTranslations(Registry.CUSTOM_STAT, (p_218820_0_) -> {
-         return "stat." + p_218820_0_.toString().replace(':', '.');
-      }, set);
-      checkGameruleTranslations(set);
-      return set;
-   }
+    /**
+     * redirect standard streams to logger
+     */
+    private static void redirectOutputToLog()
+    {
+        if (LOGGER.isDebugEnabled())
+        {
+            System.setErr(new DebugLoggingPrintStream("STDERR", System.err));
+            System.setOut(new DebugLoggingPrintStream("STDOUT", SYSOUT));
+        }
+        else
+        {
+            System.setErr(new LoggingPrintStream("STDERR", System.err));
+            System.setOut(new LoggingPrintStream("STDOUT", SYSOUT));
+        }
+    }
 
-   public static void validate() {
-      if (!isBootstrapped) {
-         throw new IllegalArgumentException("Not bootstrapped");
-      } else {
-         if (SharedConstants.IS_RUNNING_IN_IDE) {
-            getMissingTranslations().forEach((p_218817_0_) -> {
-               LOGGER.error("Missing translations: " + p_218817_0_);
-            });
-            Commands.validate();
-         }
-
-         GlobalEntityTypeAttributes.validate();
-      }
-   }
-
-   private static void wrapStreams() {
-      if (LOGGER.isDebugEnabled()) {
-         System.setErr(new DebugLoggingPrintStream("STDERR", System.err));
-         System.setOut(new DebugLoggingPrintStream("STDOUT", STDOUT));
-      } else {
-         System.setErr(new LoggingPrintStream("STDERR", System.err));
-         System.setOut(new LoggingPrintStream("STDOUT", STDOUT));
-      }
-
-   }
-
-   public static void realStdoutPrintln(String p_179870_0_) {
-      STDOUT.println(p_179870_0_);
-   }
+    public static void printToSYSOUT(String message)
+    {
+        SYSOUT.println(message);
+    }
 }

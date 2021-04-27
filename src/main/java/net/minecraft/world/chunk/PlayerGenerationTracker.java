@@ -5,37 +5,46 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import java.util.stream.Stream;
 import net.minecraft.entity.player.ServerPlayerEntity;
 
-public final class PlayerGenerationTracker {
-   private final Object2BooleanMap<ServerPlayerEntity> players = new Object2BooleanOpenHashMap<>();
+public final class PlayerGenerationTracker
+{
+    private final Object2BooleanMap<ServerPlayerEntity> generatingPlayers = new Object2BooleanOpenHashMap<>();
 
-   public Stream<ServerPlayerEntity> getPlayers(long p_219444_1_) {
-      return this.players.keySet().stream();
-   }
+    public Stream<ServerPlayerEntity> getGeneratingPlayers(long chunkPosIn)
+    {
+        return this.generatingPlayers.keySet().stream();
+    }
 
-   public void addPlayer(long p_219442_1_, ServerPlayerEntity p_219442_3_, boolean p_219442_4_) {
-      this.players.put(p_219442_3_, p_219442_4_);
-   }
+    public void addPlayer(long chunkPosIn, ServerPlayerEntity player, boolean canGenerateChunks)
+    {
+        this.generatingPlayers.put(player, canGenerateChunks);
+    }
 
-   public void removePlayer(long p_219443_1_, ServerPlayerEntity p_219443_3_) {
-      this.players.removeBoolean(p_219443_3_);
-   }
+    public void removePlayer(long chunkPosIn, ServerPlayerEntity player)
+    {
+        this.generatingPlayers.removeBoolean(player);
+    }
 
-   public void ignorePlayer(ServerPlayerEntity p_219446_1_) {
-      this.players.replace(p_219446_1_, true);
-   }
+    public void disableGeneration(ServerPlayerEntity player)
+    {
+        this.generatingPlayers.replace(player, true);
+    }
 
-   public void unIgnorePlayer(ServerPlayerEntity p_219447_1_) {
-      this.players.replace(p_219447_1_, false);
-   }
+    public void enableGeneration(ServerPlayerEntity player)
+    {
+        this.generatingPlayers.replace(player, false);
+    }
 
-   public boolean ignoredOrUnknown(ServerPlayerEntity p_219448_1_) {
-      return this.players.getOrDefault(p_219448_1_, true);
-   }
+    public boolean cannotGenerateChunks(ServerPlayerEntity player)
+    {
+        return this.generatingPlayers.getOrDefault(player, true);
+    }
 
-   public boolean ignored(ServerPlayerEntity p_225419_1_) {
-      return this.players.getBoolean(p_225419_1_);
-   }
+    public boolean canGeneratePlayer(ServerPlayerEntity player)
+    {
+        return this.generatingPlayers.getBoolean(player);
+    }
 
-   public void updatePlayer(long p_219445_1_, long p_219445_3_, ServerPlayerEntity p_219445_5_) {
-   }
+    public void updatePlayerPosition(long oldChunkPos, long newChunkPos, ServerPlayerEntity player)
+    {
+    }
 }

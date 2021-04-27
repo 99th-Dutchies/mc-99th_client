@@ -2,24 +2,30 @@ package net.minecraft.util.math.shapes;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 
-public class SimpleDoubleMerger implements IDoubleListMerger {
-   private final DoubleList coords;
+public class SimpleDoubleMerger implements IDoubleListMerger
+{
+    private final DoubleList list;
 
-   public SimpleDoubleMerger(DoubleList p_i49559_1_) {
-      this.coords = p_i49559_1_;
-   }
+    public SimpleDoubleMerger(DoubleList list)
+    {
+        this.list = list;
+    }
 
-   public boolean forMergedIndexes(IDoubleListMerger.IConsumer p_197855_1_) {
-      for(int i = 0; i <= this.coords.size(); ++i) {
-         if (!p_197855_1_.merge(i, i, i)) {
-            return false;
-         }
-      }
+    public boolean forMergedIndexes(IDoubleListMerger.IConsumer consumer)
+    {
+        for (int i = 0; i <= this.list.size(); ++i)
+        {
+            if (!consumer.merge(i, i, i))
+            {
+                return false;
+            }
+        }
 
-      return true;
-   }
+        return true;
+    }
 
-   public DoubleList getList() {
-      return this.coords;
-   }
+    public DoubleList func_212435_a()
+    {
+        return this.list;
+    }
 }

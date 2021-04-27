@@ -9,96 +9,127 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 
-public class FlamingSittingPhase extends SittingPhase {
-   private int flameTicks;
-   private int flameCount;
-   private AreaEffectCloudEntity flame;
+public class FlamingSittingPhase extends SittingPhase
+{
+    private int flameTicks;
+    private int flameCount;
+    private AreaEffectCloudEntity areaEffectCloud;
 
-   public FlamingSittingPhase(EnderDragonEntity p_i46786_1_) {
-      super(p_i46786_1_);
-   }
+    public FlamingSittingPhase(EnderDragonEntity dragonIn)
+    {
+        super(dragonIn);
+    }
 
-   public void doClientTick() {
-      ++this.flameTicks;
-      if (this.flameTicks % 2 == 0 && this.flameTicks < 10) {
-         Vector3d vector3d = this.dragon.getHeadLookVector(1.0F).normalize();
-         vector3d.yRot((-(float)Math.PI / 4F));
-         double d0 = this.dragon.head.getX();
-         double d1 = this.dragon.head.getY(0.5D);
-         double d2 = this.dragon.head.getZ();
+    /**
+     * Generates particle effects appropriate to the phase (or sometimes sounds).
+     * Called by dragon's onLivingUpdate. Only used when worldObj.isRemote.
+     */
+    public void clientTick()
+    {
+        ++this.flameTicks;
 
-         for(int i = 0; i < 8; ++i) {
-            double d3 = d0 + this.dragon.getRandom().nextGaussian() / 2.0D;
-            double d4 = d1 + this.dragon.getRandom().nextGaussian() / 2.0D;
-            double d5 = d2 + this.dragon.getRandom().nextGaussian() / 2.0D;
+        if (this.flameTicks % 2 == 0 && this.flameTicks < 10)
+        {
+            Vector3d vector3d = this.dragon.getHeadLookVec(1.0F).normalize();
+            vector3d.rotateYaw((-(float)Math.PI / 4F));
+            double d0 = this.dragon.dragonPartHead.getPosX();
+            double d1 = this.dragon.dragonPartHead.getPosYHeight(0.5D);
+            double d2 = this.dragon.dragonPartHead.getPosZ();
 
-            for(int j = 0; j < 6; ++j) {
-               this.dragon.level.addParticle(ParticleTypes.DRAGON_BREATH, d3, d4, d5, -vector3d.x * (double)0.08F * (double)j, -vector3d.y * (double)0.6F, -vector3d.z * (double)0.08F * (double)j);
+            for (int i = 0; i < 8; ++i)
+            {
+                double d3 = d0 + this.dragon.getRNG().nextGaussian() / 2.0D;
+                double d4 = d1 + this.dragon.getRNG().nextGaussian() / 2.0D;
+                double d5 = d2 + this.dragon.getRNG().nextGaussian() / 2.0D;
+
+                for (int j = 0; j < 6; ++j)
+                {
+                    this.dragon.world.addParticle(ParticleTypes.DRAGON_BREATH, d3, d4, d5, -vector3d.x * (double)0.08F * (double)j, -vector3d.y * (double)0.6F, -vector3d.z * (double)0.08F * (double)j);
+                }
+
+                vector3d.rotateYaw(0.19634955F);
+            }
+        }
+    }
+
+    /**
+     * Gives the phase a chance to update its status.
+     * Called by dragon's onLivingUpdate. Only used when !worldObj.isRemote.
+     */
+    public void serverTick()
+    {
+        ++this.flameTicks;
+
+        if (this.flameTicks >= 200)
+        {
+            if (this.flameCount >= 4)
+            {
+                this.dragon.getPhaseManager().setPhase(PhaseType.TAKEOFF);
+            }
+            else
+            {
+                this.dragon.getPhaseManager().setPhase(PhaseType.SITTING_SCANNING);
+            }
+        }
+        else if (this.flameTicks == 10)
+        {
+            Vector3d vector3d = (new Vector3d(this.dragon.dragonPartHead.getPosX() - this.dragon.getPosX(), 0.0D, this.dragon.dragonPartHead.getPosZ() - this.dragon.getPosZ())).normalize();
+            float f = 5.0F;
+            double d0 = this.dragon.dragonPartHead.getPosX() + vector3d.x * 5.0D / 2.0D;
+            double d1 = this.dragon.dragonPartHead.getPosZ() + vector3d.z * 5.0D / 2.0D;
+            double d2 = this.dragon.dragonPartHead.getPosYHeight(0.5D);
+            double d3 = d2;
+            BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable(d0, d2, d1);
+
+            while (this.dragon.world.isAirBlock(blockpos$mutable))
+            {
+                --d3;
+
+                if (d3 < 0.0D)
+                {
+                    d3 = d2;
+                    break;
+                }
+
+                blockpos$mutable.setPos(d0, d3, d1);
             }
 
-            vector3d.yRot(0.19634955F);
-         }
-      }
+            d3 = (double)(MathHelper.floor(d3) + 1);
+            this.areaEffectCloud = new AreaEffectCloudEntity(this.dragon.world, d0, d3, d1);
+            this.areaEffectCloud.setOwner(this.dragon);
+            this.areaEffectCloud.setRadius(5.0F);
+            this.areaEffectCloud.setDuration(200);
+            this.areaEffectCloud.setParticleData(ParticleTypes.DRAGON_BREATH);
+            this.areaEffectCloud.addEffect(new EffectInstance(Effects.INSTANT_DAMAGE));
+            this.dragon.world.addEntity(this.areaEffectCloud);
+        }
+    }
 
-   }
+    /**
+     * Called when this phase is set to active
+     */
+    public void initPhase()
+    {
+        this.flameTicks = 0;
+        ++this.flameCount;
+    }
 
-   public void doServerTick() {
-      ++this.flameTicks;
-      if (this.flameTicks >= 200) {
-         if (this.flameCount >= 4) {
-            this.dragon.getPhaseManager().setPhase(PhaseType.TAKEOFF);
-         } else {
-            this.dragon.getPhaseManager().setPhase(PhaseType.SITTING_SCANNING);
-         }
-      } else if (this.flameTicks == 10) {
-         Vector3d vector3d = (new Vector3d(this.dragon.head.getX() - this.dragon.getX(), 0.0D, this.dragon.head.getZ() - this.dragon.getZ())).normalize();
-         float f = 5.0F;
-         double d0 = this.dragon.head.getX() + vector3d.x * 5.0D / 2.0D;
-         double d1 = this.dragon.head.getZ() + vector3d.z * 5.0D / 2.0D;
-         double d2 = this.dragon.head.getY(0.5D);
-         double d3 = d2;
-         BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable(d0, d2, d1);
+    public void removeAreaEffect()
+    {
+        if (this.areaEffectCloud != null)
+        {
+            this.areaEffectCloud.remove();
+            this.areaEffectCloud = null;
+        }
+    }
 
-         while(this.dragon.level.isEmptyBlock(blockpos$mutable)) {
-            --d3;
-            if (d3 < 0.0D) {
-               d3 = d2;
-               break;
-            }
+    public PhaseType<FlamingSittingPhase> getType()
+    {
+        return PhaseType.SITTING_FLAMING;
+    }
 
-            blockpos$mutable.set(d0, d3, d1);
-         }
-
-         d3 = (double)(MathHelper.floor(d3) + 1);
-         this.flame = new AreaEffectCloudEntity(this.dragon.level, d0, d3, d1);
-         this.flame.setOwner(this.dragon);
-         this.flame.setRadius(5.0F);
-         this.flame.setDuration(200);
-         this.flame.setParticle(ParticleTypes.DRAGON_BREATH);
-         this.flame.addEffect(new EffectInstance(Effects.HARM));
-         this.dragon.level.addFreshEntity(this.flame);
-      }
-
-   }
-
-   public void begin() {
-      this.flameTicks = 0;
-      ++this.flameCount;
-   }
-
-   public void end() {
-      if (this.flame != null) {
-         this.flame.remove();
-         this.flame = null;
-      }
-
-   }
-
-   public PhaseType<FlamingSittingPhase> getPhase() {
-      return PhaseType.SITTING_FLAMING;
-   }
-
-   public void resetFlameCount() {
-      this.flameCount = 0;
-   }
+    public void resetFlameCount()
+    {
+        this.flameCount = 0;
+    }
 }

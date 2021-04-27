@@ -8,50 +8,58 @@ import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.BlockStateParser;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class BlockParticleData implements IParticleData {
-   public static final IParticleData.IDeserializer<BlockParticleData> DESERIALIZER = new IParticleData.IDeserializer<BlockParticleData>() {
-      public BlockParticleData fromCommand(ParticleType<BlockParticleData> p_197544_1_, StringReader p_197544_2_) throws CommandSyntaxException {
-         p_197544_2_.expect(' ');
-         return new BlockParticleData(p_197544_1_, (new BlockStateParser(p_197544_2_, false)).parse(false).getState());
-      }
+public class BlockParticleData implements IParticleData
+{
+    public static final IParticleData.IDeserializer<BlockParticleData> DESERIALIZER = new IParticleData.IDeserializer<BlockParticleData>()
+    {
+        public BlockParticleData deserialize(ParticleType<BlockParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
+        {
+            reader.expect(' ');
+            return new BlockParticleData(particleTypeIn, (new BlockStateParser(reader, false)).parse(false).getState());
+        }
+        public BlockParticleData read(ParticleType<BlockParticleData> particleTypeIn, PacketBuffer buffer)
+        {
+            return new BlockParticleData(particleTypeIn, Block.BLOCK_STATE_IDS.getByValue(buffer.readVarInt()));
+        }
+    };
+    private final ParticleType<BlockParticleData> particleType;
+    private final BlockState blockState;
 
-      public BlockParticleData fromNetwork(ParticleType<BlockParticleData> p_197543_1_, PacketBuffer p_197543_2_) {
-         return new BlockParticleData(p_197543_1_, Block.BLOCK_STATE_REGISTRY.byId(p_197543_2_.readVarInt()));
-      }
-   };
-   private final ParticleType<BlockParticleData> type;
-   private final BlockState state;
+    public static Codec<BlockParticleData> func_239800_a_(ParticleType<BlockParticleData> p_239800_0_)
+    {
+        return BlockState.CODEC.xmap((p_239801_1_) ->
+        {
+            return new BlockParticleData(p_239800_0_, p_239801_1_);
+        }, (p_239799_0_) ->
+        {
+            return p_239799_0_.blockState;
+        });
+    }
 
-   public static Codec<BlockParticleData> codec(ParticleType<BlockParticleData> p_239800_0_) {
-      return BlockState.CODEC.xmap((p_239801_1_) -> {
-         return new BlockParticleData(p_239800_0_, p_239801_1_);
-      }, (p_239799_0_) -> {
-         return p_239799_0_.state;
-      });
-   }
+    public BlockParticleData(ParticleType<BlockParticleData> particleTypeIn, BlockState blockStateIn)
+    {
+        this.particleType = particleTypeIn;
+        this.blockState = blockStateIn;
+    }
 
-   public BlockParticleData(ParticleType<BlockParticleData> p_i47953_1_, BlockState p_i47953_2_) {
-      this.type = p_i47953_1_;
-      this.state = p_i47953_2_;
-   }
+    public void write(PacketBuffer buffer)
+    {
+        buffer.writeVarInt(Block.BLOCK_STATE_IDS.getId(this.blockState));
+    }
 
-   public void writeToNetwork(PacketBuffer p_197553_1_) {
-      p_197553_1_.writeVarInt(Block.BLOCK_STATE_REGISTRY.getId(this.state));
-   }
+    public String getParameters()
+    {
+        return Registry.PARTICLE_TYPE.getKey(this.getType()) + " " + BlockStateParser.toString(this.blockState);
+    }
 
-   public String writeToString() {
-      return Registry.PARTICLE_TYPE.getKey(this.getType()) + " " + BlockStateParser.serialize(this.state);
-   }
+    public ParticleType<BlockParticleData> getType()
+    {
+        return this.particleType;
+    }
 
-   public ParticleType<BlockParticleData> getType() {
-      return this.type;
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public BlockState getState() {
-      return this.state;
-   }
+    public BlockState getBlockState()
+    {
+        return this.blockState;
+    }
 }

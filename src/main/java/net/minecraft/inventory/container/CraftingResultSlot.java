@@ -8,74 +8,108 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.util.NonNullList;
 
-public class CraftingResultSlot extends Slot {
-   private final CraftingInventory craftSlots;
-   private final PlayerEntity player;
-   private int removeCount;
+public class CraftingResultSlot extends Slot
+{
+    private final CraftingInventory craftMatrix;
+    private final PlayerEntity player;
+    private int amountCrafted;
 
-   public CraftingResultSlot(PlayerEntity p_i45790_1_, CraftingInventory p_i45790_2_, IInventory p_i45790_3_, int p_i45790_4_, int p_i45790_5_, int p_i45790_6_) {
-      super(p_i45790_3_, p_i45790_4_, p_i45790_5_, p_i45790_6_);
-      this.player = p_i45790_1_;
-      this.craftSlots = p_i45790_2_;
-   }
+    public CraftingResultSlot(PlayerEntity player, CraftingInventory craftingInventory, IInventory inventoryIn, int slotIndex, int xPosition, int yPosition)
+    {
+        super(inventoryIn, slotIndex, xPosition, yPosition);
+        this.player = player;
+        this.craftMatrix = craftingInventory;
+    }
 
-   public boolean mayPlace(ItemStack p_75214_1_) {
-      return false;
-   }
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
+    public boolean isItemValid(ItemStack stack)
+    {
+        return false;
+    }
 
-   public ItemStack remove(int p_75209_1_) {
-      if (this.hasItem()) {
-         this.removeCount += Math.min(p_75209_1_, this.getItem().getCount());
-      }
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new
+     * stack.
+     */
+    public ItemStack decrStackSize(int amount)
+    {
+        if (this.getHasStack())
+        {
+            this.amountCrafted += Math.min(amount, this.getStack().getCount());
+        }
 
-      return super.remove(p_75209_1_);
-   }
+        return super.decrStackSize(amount);
+    }
 
-   protected void onQuickCraft(ItemStack p_75210_1_, int p_75210_2_) {
-      this.removeCount += p_75210_2_;
-      this.checkTakeAchievements(p_75210_1_);
-   }
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood. Typically increases an
+     * internal count then calls onCrafting(item).
+     */
+    protected void onCrafting(ItemStack stack, int amount)
+    {
+        this.amountCrafted += amount;
+        this.onCrafting(stack);
+    }
 
-   protected void onSwapCraft(int p_190900_1_) {
-      this.removeCount += p_190900_1_;
-   }
+    protected void onSwapCraft(int numItemsCrafted)
+    {
+        this.amountCrafted += numItemsCrafted;
+    }
 
-   protected void checkTakeAchievements(ItemStack p_75208_1_) {
-      if (this.removeCount > 0) {
-         p_75208_1_.onCraftedBy(this.player.level, this.player, this.removeCount);
-      }
+    /**
+     * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void onCrafting(ItemStack stack)
+    {
+        if (this.amountCrafted > 0)
+        {
+            stack.onCrafting(this.player.world, this.player, this.amountCrafted);
+        }
 
-      if (this.container instanceof IRecipeHolder) {
-         ((IRecipeHolder)this.container).awardUsedRecipes(this.player);
-      }
+        if (this.inventory instanceof IRecipeHolder)
+        {
+            ((IRecipeHolder)this.inventory).onCrafting(this.player);
+        }
 
-      this.removeCount = 0;
-   }
+        this.amountCrafted = 0;
+    }
 
-   public ItemStack onTake(PlayerEntity p_190901_1_, ItemStack p_190901_2_) {
-      this.checkTakeAchievements(p_190901_2_);
-      NonNullList<ItemStack> nonnulllist = p_190901_1_.level.getRecipeManager().getRemainingItemsFor(IRecipeType.CRAFTING, this.craftSlots, p_190901_1_.level);
+    public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+    {
+        this.onCrafting(stack);
+        NonNullList<ItemStack> nonnulllist = thePlayer.world.getRecipeManager().getRecipeNonNull(IRecipeType.CRAFTING, this.craftMatrix, thePlayer.world);
 
-      for(int i = 0; i < nonnulllist.size(); ++i) {
-         ItemStack itemstack = this.craftSlots.getItem(i);
-         ItemStack itemstack1 = nonnulllist.get(i);
-         if (!itemstack.isEmpty()) {
-            this.craftSlots.removeItem(i, 1);
-            itemstack = this.craftSlots.getItem(i);
-         }
+        for (int i = 0; i < nonnulllist.size(); ++i)
+        {
+            ItemStack itemstack = this.craftMatrix.getStackInSlot(i);
+            ItemStack itemstack1 = nonnulllist.get(i);
 
-         if (!itemstack1.isEmpty()) {
-            if (itemstack.isEmpty()) {
-               this.craftSlots.setItem(i, itemstack1);
-            } else if (ItemStack.isSame(itemstack, itemstack1) && ItemStack.tagMatches(itemstack, itemstack1)) {
-               itemstack1.grow(itemstack.getCount());
-               this.craftSlots.setItem(i, itemstack1);
-            } else if (!this.player.inventory.add(itemstack1)) {
-               this.player.drop(itemstack1, false);
+            if (!itemstack.isEmpty())
+            {
+                this.craftMatrix.decrStackSize(i, 1);
+                itemstack = this.craftMatrix.getStackInSlot(i);
             }
-         }
-      }
 
-      return p_190901_2_;
-   }
+            if (!itemstack1.isEmpty())
+            {
+                if (itemstack.isEmpty())
+                {
+                    this.craftMatrix.setInventorySlotContents(i, itemstack1);
+                }
+                else if (ItemStack.areItemsEqual(itemstack, itemstack1) && ItemStack.areItemStackTagsEqual(itemstack, itemstack1))
+                {
+                    itemstack1.grow(itemstack.getCount());
+                    this.craftMatrix.setInventorySlotContents(i, itemstack1);
+                }
+                else if (!this.player.inventory.addItemStackToInventory(itemstack1))
+                {
+                    this.player.dropItem(itemstack1, false);
+                }
+            }
+        }
+
+        return stack;
+    }
 }

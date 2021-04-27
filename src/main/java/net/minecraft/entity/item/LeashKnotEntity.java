@@ -21,123 +21,171 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class LeashKnotEntity extends HangingEntity {
-   public LeashKnotEntity(EntityType<? extends LeashKnotEntity> p_i50223_1_, World p_i50223_2_) {
-      super(p_i50223_1_, p_i50223_2_);
-   }
+public class LeashKnotEntity extends HangingEntity
+{
+    public LeashKnotEntity(EntityType <? extends LeashKnotEntity > p_i50223_1_, World world)
+    {
+        super(p_i50223_1_, world);
+    }
 
-   public LeashKnotEntity(World p_i45851_1_, BlockPos p_i45851_2_) {
-      super(EntityType.LEASH_KNOT, p_i45851_1_, p_i45851_2_);
-      this.setPos((double)p_i45851_2_.getX() + 0.5D, (double)p_i45851_2_.getY() + 0.5D, (double)p_i45851_2_.getZ() + 0.5D);
-      float f = 0.125F;
-      float f1 = 0.1875F;
-      float f2 = 0.25F;
-      this.setBoundingBox(new AxisAlignedBB(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
-      this.forcedLoading = true;
-   }
+    public LeashKnotEntity(World worldIn, BlockPos hangingPositionIn)
+    {
+        super(EntityType.LEASH_KNOT, worldIn, hangingPositionIn);
+        this.setPosition((double)hangingPositionIn.getX() + 0.5D, (double)hangingPositionIn.getY() + 0.5D, (double)hangingPositionIn.getZ() + 0.5D);
+        float f = 0.125F;
+        float f1 = 0.1875F;
+        float f2 = 0.25F;
+        this.setBoundingBox(new AxisAlignedBB(this.getPosX() - 0.1875D, this.getPosY() - 0.25D + 0.125D, this.getPosZ() - 0.1875D, this.getPosX() + 0.1875D, this.getPosY() + 0.25D + 0.125D, this.getPosZ() + 0.1875D));
+        this.forceSpawn = true;
+    }
 
-   public void setPos(double p_70107_1_, double p_70107_3_, double p_70107_5_) {
-      super.setPos((double)MathHelper.floor(p_70107_1_) + 0.5D, (double)MathHelper.floor(p_70107_3_) + 0.5D, (double)MathHelper.floor(p_70107_5_) + 0.5D);
-   }
+    /**
+     * Sets the x,y,z of the entity from the given parameters. Also seems to set up a bounding box.
+     */
+    public void setPosition(double x, double y, double z)
+    {
+        super.setPosition((double)MathHelper.floor(x) + 0.5D, (double)MathHelper.floor(y) + 0.5D, (double)MathHelper.floor(z) + 0.5D);
+    }
 
-   protected void recalculateBoundingBox() {
-      this.setPosRaw((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D);
-   }
+    /**
+     * Updates the entity bounding box based on current facing
+     */
+    protected void updateBoundingBox()
+    {
+        this.setRawPosition((double)this.hangingPosition.getX() + 0.5D, (double)this.hangingPosition.getY() + 0.5D, (double)this.hangingPosition.getZ() + 0.5D);
+    }
 
-   public void setDirection(Direction p_174859_1_) {
-   }
+    /**
+     * Updates facing and bounding box based on it
+     */
+    public void updateFacingWithBoundingBox(Direction facingDirectionIn)
+    {
+    }
 
-   public int getWidth() {
-      return 9;
-   }
+    public int getWidthPixels()
+    {
+        return 9;
+    }
 
-   public int getHeight() {
-      return 9;
-   }
+    public int getHeightPixels()
+    {
+        return 9;
+    }
 
-   protected float getEyeHeight(Pose p_213316_1_, EntitySize p_213316_2_) {
-      return -0.0625F;
-   }
+    protected float getEyeHeight(Pose poseIn, EntitySize sizeIn)
+    {
+        return -0.0625F;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public boolean shouldRenderAtSqrDistance(double p_70112_1_) {
-      return p_70112_1_ < 1024.0D;
-   }
+    /**
+     * Checks if the entity is in range to render.
+     */
+    public boolean isInRangeToRenderDist(double distance)
+    {
+        return distance < 1024.0D;
+    }
 
-   public void dropItem(@Nullable Entity p_110128_1_) {
-      this.playSound(SoundEvents.LEASH_KNOT_BREAK, 1.0F, 1.0F);
-   }
+    /**
+     * Called when this entity is broken. Entity parameter may be null.
+     */
+    public void onBroken(@Nullable Entity brokenEntity)
+    {
+        this.playSound(SoundEvents.ENTITY_LEASH_KNOT_BREAK, 1.0F, 1.0F);
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-   }
+    public void writeAdditional(CompoundNBT compound)
+    {
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+    }
 
-   public ActionResultType interact(PlayerEntity p_184230_1_, Hand p_184230_2_) {
-      if (this.level.isClientSide) {
-         return ActionResultType.SUCCESS;
-      } else {
-         boolean flag = false;
-         double d0 = 7.0D;
-         List<MobEntity> list = this.level.getEntitiesOfClass(MobEntity.class, new AxisAlignedBB(this.getX() - 7.0D, this.getY() - 7.0D, this.getZ() - 7.0D, this.getX() + 7.0D, this.getY() + 7.0D, this.getZ() + 7.0D));
+    public ActionResultType processInitialInteract(PlayerEntity player, Hand hand)
+    {
+        if (this.world.isRemote)
+        {
+            return ActionResultType.SUCCESS;
+        }
+        else
+        {
+            boolean flag = false;
+            double d0 = 7.0D;
+            List<MobEntity> list = this.world.getEntitiesWithinAABB(MobEntity.class, new AxisAlignedBB(this.getPosX() - 7.0D, this.getPosY() - 7.0D, this.getPosZ() - 7.0D, this.getPosX() + 7.0D, this.getPosY() + 7.0D, this.getPosZ() + 7.0D));
 
-         for(MobEntity mobentity : list) {
-            if (mobentity.getLeashHolder() == p_184230_1_) {
-               mobentity.setLeashedTo(this, true);
-               flag = true;
+            for (MobEntity mobentity : list)
+            {
+                if (mobentity.getLeashHolder() == player)
+                {
+                    mobentity.setLeashHolder(this, true);
+                    flag = true;
+                }
             }
-         }
 
-         if (!flag) {
-            this.remove();
-            if (p_184230_1_.abilities.instabuild) {
-               for(MobEntity mobentity1 : list) {
-                  if (mobentity1.isLeashed() && mobentity1.getLeashHolder() == this) {
-                     mobentity1.dropLeash(true, false);
-                  }
-               }
+            if (!flag)
+            {
+                this.remove();
+
+                if (player.abilities.isCreativeMode)
+                {
+                    for (MobEntity mobentity1 : list)
+                    {
+                        if (mobentity1.getLeashed() && mobentity1.getLeashHolder() == this)
+                        {
+                            mobentity1.clearLeashed(true, false);
+                        }
+                    }
+                }
             }
-         }
 
-         return ActionResultType.CONSUME;
-      }
-   }
+            return ActionResultType.CONSUME;
+        }
+    }
 
-   public boolean survives() {
-      return this.level.getBlockState(this.pos).getBlock().is(BlockTags.FENCES);
-   }
+    /**
+     * checks to make sure painting can be placed there
+     */
+    public boolean onValidSurface()
+    {
+        return this.world.getBlockState(this.hangingPosition).getBlock().isIn(BlockTags.FENCES);
+    }
 
-   public static LeashKnotEntity getOrCreateKnot(World p_213855_0_, BlockPos p_213855_1_) {
-      int i = p_213855_1_.getX();
-      int j = p_213855_1_.getY();
-      int k = p_213855_1_.getZ();
+    public static LeashKnotEntity create(World world, BlockPos pos)
+    {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
 
-      for(LeashKnotEntity leashknotentity : p_213855_0_.getEntitiesOfClass(LeashKnotEntity.class, new AxisAlignedBB((double)i - 1.0D, (double)j - 1.0D, (double)k - 1.0D, (double)i + 1.0D, (double)j + 1.0D, (double)k + 1.0D))) {
-         if (leashknotentity.getPos().equals(p_213855_1_)) {
-            return leashknotentity;
-         }
-      }
+        for (LeashKnotEntity leashknotentity : world.getEntitiesWithinAABB(LeashKnotEntity.class, new AxisAlignedBB((double)i - 1.0D, (double)j - 1.0D, (double)k - 1.0D, (double)i + 1.0D, (double)j + 1.0D, (double)k + 1.0D)))
+        {
+            if (leashknotentity.getHangingPosition().equals(pos))
+            {
+                return leashknotentity;
+            }
+        }
 
-      LeashKnotEntity leashknotentity1 = new LeashKnotEntity(p_213855_0_, p_213855_1_);
-      p_213855_0_.addFreshEntity(leashknotentity1);
-      leashknotentity1.playPlacementSound();
-      return leashknotentity1;
-   }
+        LeashKnotEntity leashknotentity1 = new LeashKnotEntity(world, pos);
+        world.addEntity(leashknotentity1);
+        leashknotentity1.playPlaceSound();
+        return leashknotentity1;
+    }
 
-   public void playPlacementSound() {
-      this.playSound(SoundEvents.LEASH_KNOT_PLACE, 1.0F, 1.0F);
-   }
+    public void playPlaceSound()
+    {
+        this.playSound(SoundEvents.ENTITY_LEASH_KNOT_PLACE, 1.0F, 1.0F);
+    }
 
-   public IPacket<?> getAddEntityPacket() {
-      return new SSpawnObjectPacket(this, this.getType(), 0, this.getPos());
-   }
+    public IPacket<?> createSpawnPacket()
+    {
+        return new SSpawnObjectPacket(this, this.getType(), 0, this.getHangingPosition());
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Vector3d getRopeHoldPosition(float p_241843_1_) {
-      return this.getPosition(p_241843_1_).add(0.0D, 0.2D, 0.0D);
-   }
+    public Vector3d getLeashPosition(float partialTicks)
+    {
+        return this.func_242282_l(partialTicks).add(0.0D, 0.2D, 0.0D);
+    }
 }

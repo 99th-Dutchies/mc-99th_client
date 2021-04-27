@@ -4,41 +4,55 @@ import java.io.IOException;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CUpdateBeaconPacket implements IPacket<IServerPlayNetHandler> {
-   private int primary;
-   private int secondary;
+public class CUpdateBeaconPacket implements IPacket<IServerPlayNetHandler>
+{
+    private int primaryEffect;
+    private int secondaryEffect;
 
-   public CUpdateBeaconPacket() {
-   }
+    public CUpdateBeaconPacket()
+    {
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public CUpdateBeaconPacket(int p_i49544_1_, int p_i49544_2_) {
-      this.primary = p_i49544_1_;
-      this.secondary = p_i49544_2_;
-   }
+    public CUpdateBeaconPacket(int primaryEffectIn, int secondaryEffectIn)
+    {
+        this.primaryEffect = primaryEffectIn;
+        this.secondaryEffect = secondaryEffectIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.primary = p_148837_1_.readVarInt();
-      this.secondary = p_148837_1_.readVarInt();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.primaryEffect = buf.readVarInt();
+        this.secondaryEffect = buf.readVarInt();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.primary);
-      p_148840_1_.writeVarInt(this.secondary);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.primaryEffect);
+        buf.writeVarInt(this.secondaryEffect);
+    }
 
-   public void handle(IServerPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetBeaconPacket(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IServerPlayNetHandler handler)
+    {
+        handler.processUpdateBeacon(this);
+    }
 
-   public int getPrimary() {
-      return this.primary;
-   }
+    public int getPrimaryEffect()
+    {
+        return this.primaryEffect;
+    }
 
-   public int getSecondary() {
-      return this.secondary;
-   }
+    public int getSecondaryEffect()
+    {
+        return this.secondaryEffect;
+    }
 }

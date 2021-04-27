@@ -2,8 +2,9 @@ package net.minecraft.world.gen.surfacebuilders;
 
 import net.minecraft.block.BlockState;
 
-public interface ISurfaceBuilderConfig {
-   BlockState getTopMaterial();
+public interface ISurfaceBuilderConfig
+{
+    BlockState getTop();
 
-   BlockState getUnderMaterial();
+    BlockState getUnder();
 }

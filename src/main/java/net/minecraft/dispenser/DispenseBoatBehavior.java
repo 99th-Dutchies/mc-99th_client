@@ -8,41 +8,56 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class DispenseBoatBehavior extends DefaultDispenseItemBehavior {
-   private final DefaultDispenseItemBehavior defaultDispenseItemBehavior = new DefaultDispenseItemBehavior();
-   private final BoatEntity.Type type;
+public class DispenseBoatBehavior extends DefaultDispenseItemBehavior
+{
+    private final DefaultDispenseItemBehavior dispenseItemBehaviour = new DefaultDispenseItemBehavior();
+    private final BoatEntity.Type type;
 
-   public DispenseBoatBehavior(BoatEntity.Type p_i50793_1_) {
-      this.type = p_i50793_1_;
-   }
+    public DispenseBoatBehavior(BoatEntity.Type typeIn)
+    {
+        this.type = typeIn;
+    }
 
-   public ItemStack execute(IBlockSource p_82487_1_, ItemStack p_82487_2_) {
-      Direction direction = p_82487_1_.getBlockState().getValue(DispenserBlock.FACING);
-      World world = p_82487_1_.getLevel();
-      double d0 = p_82487_1_.x() + (double)((float)direction.getStepX() * 1.125F);
-      double d1 = p_82487_1_.y() + (double)((float)direction.getStepY() * 1.125F);
-      double d2 = p_82487_1_.z() + (double)((float)direction.getStepZ() * 1.125F);
-      BlockPos blockpos = p_82487_1_.getPos().relative(direction);
-      double d3;
-      if (world.getFluidState(blockpos).is(FluidTags.WATER)) {
-         d3 = 1.0D;
-      } else {
-         if (!world.getBlockState(blockpos).isAir() || !world.getFluidState(blockpos.below()).is(FluidTags.WATER)) {
-            return this.defaultDispenseItemBehavior.dispense(p_82487_1_, p_82487_2_);
-         }
+    /**
+     * Dispense the specified stack, play the dispense sound and spawn particles.
+     */
+    public ItemStack dispenseStack(IBlockSource source, ItemStack stack)
+    {
+        Direction direction = source.getBlockState().get(DispenserBlock.FACING);
+        World world = source.getWorld();
+        double d0 = source.getX() + (double)((float)direction.getXOffset() * 1.125F);
+        double d1 = source.getY() + (double)((float)direction.getYOffset() * 1.125F);
+        double d2 = source.getZ() + (double)((float)direction.getZOffset() * 1.125F);
+        BlockPos blockpos = source.getBlockPos().offset(direction);
+        double d3;
 
-         d3 = 0.0D;
-      }
+        if (world.getFluidState(blockpos).isTagged(FluidTags.WATER))
+        {
+            d3 = 1.0D;
+        }
+        else
+        {
+            if (!world.getBlockState(blockpos).isAir() || !world.getFluidState(blockpos.down()).isTagged(FluidTags.WATER))
+            {
+                return this.dispenseItemBehaviour.dispense(source, stack);
+            }
 
-      BoatEntity boatentity = new BoatEntity(world, d0, d1 + d3, d2);
-      boatentity.setType(this.type);
-      boatentity.yRot = direction.toYRot();
-      world.addFreshEntity(boatentity);
-      p_82487_2_.shrink(1);
-      return p_82487_2_;
-   }
+            d3 = 0.0D;
+        }
 
-   protected void playSound(IBlockSource p_82485_1_) {
-      p_82485_1_.getLevel().levelEvent(1000, p_82485_1_.getPos(), 0);
-   }
+        BoatEntity boatentity = new BoatEntity(world, d0, d1 + d3, d2);
+        boatentity.setBoatType(this.type);
+        boatentity.rotationYaw = direction.getHorizontalAngle();
+        world.addEntity(boatentity);
+        stack.shrink(1);
+        return stack;
+    }
+
+    /**
+     * Play the dispense sound from the specified block.
+     */
+    protected void playDispenseSound(IBlockSource source)
+    {
+        source.getWorld().playEvent(1000, source.getBlockPos(), 0);
+    }
 }

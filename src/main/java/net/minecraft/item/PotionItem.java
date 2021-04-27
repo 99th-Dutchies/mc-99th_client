@@ -19,87 +19,138 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class PotionItem extends Item {
-   public PotionItem(Item.Properties p_i48476_1_) {
-      super(p_i48476_1_);
-   }
+public class PotionItem extends Item
+{
+    public PotionItem(Item.Properties builder)
+    {
+        super(builder);
+    }
 
-   public ItemStack getDefaultInstance() {
-      return PotionUtils.setPotion(super.getDefaultInstance(), Potions.WATER);
-   }
+    public ItemStack getDefaultInstance()
+    {
+        return PotionUtils.addPotionToItemStack(super.getDefaultInstance(), Potions.WATER);
+    }
 
-   public ItemStack finishUsingItem(ItemStack p_77654_1_, World p_77654_2_, LivingEntity p_77654_3_) {
-      PlayerEntity playerentity = p_77654_3_ instanceof PlayerEntity ? (PlayerEntity)p_77654_3_ : null;
-      if (playerentity instanceof ServerPlayerEntity) {
-         CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayerEntity)playerentity, p_77654_1_);
-      }
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
+     * the Item before the action is complete.
+     */
+    public ItemStack onItemUseFinish(ItemStack stack, World worldIn, LivingEntity entityLiving)
+    {
+        PlayerEntity playerentity = entityLiving instanceof PlayerEntity ? (PlayerEntity)entityLiving : null;
 
-      if (!p_77654_2_.isClientSide) {
-         for(EffectInstance effectinstance : PotionUtils.getMobEffects(p_77654_1_)) {
-            if (effectinstance.getEffect().isInstantenous()) {
-               effectinstance.getEffect().applyInstantenousEffect(playerentity, playerentity, p_77654_3_, effectinstance.getAmplifier(), 1.0D);
-            } else {
-               p_77654_3_.addEffect(new EffectInstance(effectinstance));
+        if (playerentity instanceof ServerPlayerEntity)
+        {
+            CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayerEntity)playerentity, stack);
+        }
+
+        if (!worldIn.isRemote)
+        {
+            for (EffectInstance effectinstance : PotionUtils.getEffectsFromStack(stack))
+            {
+                if (effectinstance.getPotion().isInstant())
+                {
+                    effectinstance.getPotion().affectEntity(playerentity, playerentity, entityLiving, effectinstance.getAmplifier(), 1.0D);
+                }
+                else
+                {
+                    entityLiving.addPotionEffect(new EffectInstance(effectinstance));
+                }
             }
-         }
-      }
+        }
 
-      if (playerentity != null) {
-         playerentity.awardStat(Stats.ITEM_USED.get(this));
-         if (!playerentity.abilities.instabuild) {
-            p_77654_1_.shrink(1);
-         }
-      }
+        if (playerentity != null)
+        {
+            playerentity.addStat(Stats.ITEM_USED.get(this));
 
-      if (playerentity == null || !playerentity.abilities.instabuild) {
-         if (p_77654_1_.isEmpty()) {
-            return new ItemStack(Items.GLASS_BOTTLE);
-         }
-
-         if (playerentity != null) {
-            playerentity.inventory.add(new ItemStack(Items.GLASS_BOTTLE));
-         }
-      }
-
-      return p_77654_1_;
-   }
-
-   public int getUseDuration(ItemStack p_77626_1_) {
-      return 32;
-   }
-
-   public UseAction getUseAnimation(ItemStack p_77661_1_) {
-      return UseAction.DRINK;
-   }
-
-   public ActionResult<ItemStack> use(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-      return DrinkHelper.useDrink(p_77659_1_, p_77659_2_, p_77659_3_);
-   }
-
-   public String getDescriptionId(ItemStack p_77667_1_) {
-      return PotionUtils.getPotion(p_77667_1_).getName(this.getDescriptionId() + ".effect.");
-   }
-
-   @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(ItemStack p_77624_1_, @Nullable World p_77624_2_, List<ITextComponent> p_77624_3_, ITooltipFlag p_77624_4_) {
-      PotionUtils.addPotionTooltip(p_77624_1_, p_77624_3_, 1.0F);
-   }
-
-   public boolean isFoil(ItemStack p_77636_1_) {
-      return super.isFoil(p_77636_1_) || !PotionUtils.getMobEffects(p_77636_1_).isEmpty();
-   }
-
-   public void fillItemCategory(ItemGroup p_150895_1_, NonNullList<ItemStack> p_150895_2_) {
-      if (this.allowdedIn(p_150895_1_)) {
-         for(Potion potion : Registry.POTION) {
-            if (potion != Potions.EMPTY) {
-               p_150895_2_.add(PotionUtils.setPotion(new ItemStack(this), potion));
+            if (!playerentity.abilities.isCreativeMode)
+            {
+                stack.shrink(1);
             }
-         }
-      }
+        }
 
-   }
+        if (playerentity == null || !playerentity.abilities.isCreativeMode)
+        {
+            if (stack.isEmpty())
+            {
+                return new ItemStack(Items.GLASS_BOTTLE);
+            }
+
+            if (playerentity != null)
+            {
+                playerentity.inventory.addItemStackToInventory(new ItemStack(Items.GLASS_BOTTLE));
+            }
+        }
+
+        return stack;
+    }
+
+    /**
+     * How long it takes to use or consume an item
+     */
+    public int getUseDuration(ItemStack stack)
+    {
+        return 32;
+    }
+
+    /**
+     * returns the action that specifies what animation to play when the items is being used
+     */
+    public UseAction getUseAction(ItemStack stack)
+    {
+        return UseAction.DRINK;
+    }
+
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn)
+    {
+        return DrinkHelper.startDrinking(worldIn, playerIn, handIn);
+    }
+
+    /**
+     * Returns the unlocalized name of this item. This version accepts an ItemStack so different stacks can have
+     * different names based on their damage or NBT.
+     */
+    public String getTranslationKey(ItemStack stack)
+    {
+        return PotionUtils.getPotionFromItem(stack).getNamePrefixed(this.getTranslationKey() + ".effect.");
+    }
+
+    /**
+     * allows items to add custom lines of information to the mouseover description
+     */
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+    {
+        PotionUtils.addPotionTooltip(stack, tooltip, 1.0F);
+    }
+
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
+    public boolean hasEffect(ItemStack stack)
+    {
+        return super.hasEffect(stack) || !PotionUtils.getEffectsFromStack(stack).isEmpty();
+    }
+
+    /**
+     * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
+     */
+    public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items)
+    {
+        if (this.isInGroup(group))
+        {
+            for (Potion potion : Registry.POTION)
+            {
+                if (potion != Potions.EMPTY)
+                {
+                    items.add(PotionUtils.addPotionToItemStack(new ItemStack(this), potion));
+                }
+            }
+        }
+    }
 }

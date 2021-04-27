@@ -11,126 +11,159 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.event.ClickEvent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class DeathScreen extends Screen {
-   private int delayTicker;
-   private final ITextComponent causeOfDeath;
-   private final boolean hardcore;
-   private ITextComponent deathScore;
+public class DeathScreen extends Screen
+{
+    /**
+     * The integer value containing the number of ticks that have passed since the player's death
+     */
+    private int enableButtonsTimer;
+    private final ITextComponent causeOfDeath;
+    private final boolean isHardcoreMode;
+    private ITextComponent field_243285_p;
 
-   public DeathScreen(@Nullable ITextComponent p_i51118_1_, boolean p_i51118_2_) {
-      super(new TranslationTextComponent(p_i51118_2_ ? "deathScreen.title.hardcore" : "deathScreen.title"));
-      this.causeOfDeath = p_i51118_1_;
-      this.hardcore = p_i51118_2_;
-   }
+    public DeathScreen(@Nullable ITextComponent textComponent, boolean isHardcoreMode)
+    {
+        super(new TranslationTextComponent(isHardcoreMode ? "deathScreen.title.hardcore" : "deathScreen.title"));
+        this.causeOfDeath = textComponent;
+        this.isHardcoreMode = isHardcoreMode;
+    }
 
-   protected void init() {
-      this.delayTicker = 0;
-      this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 72, 200, 20, this.hardcore ? new TranslationTextComponent("deathScreen.spectate") : new TranslationTextComponent("deathScreen.respawn"), (p_213021_1_) -> {
-         this.minecraft.player.respawn();
-         this.minecraft.setScreen((Screen)null);
-      }));
-      Button button = this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 96, 200, 20, new TranslationTextComponent("deathScreen.titleScreen"), (p_213020_1_) -> {
-         if (this.hardcore) {
-            this.exitToTitleScreen();
-         } else {
-            ConfirmScreen confirmscreen = new ConfirmScreen(this::confirmResult, new TranslationTextComponent("deathScreen.quit.confirm"), StringTextComponent.EMPTY, new TranslationTextComponent("deathScreen.titleScreen"), new TranslationTextComponent("deathScreen.respawn"));
-            this.minecraft.setScreen(confirmscreen);
-            confirmscreen.setDelay(20);
-         }
-      }));
-      if (!this.hardcore && this.minecraft.getUser() == null) {
-         button.active = false;
-      }
+    protected void init()
+    {
+        this.enableButtonsTimer = 0;
+        this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 72, 200, 20, this.isHardcoreMode ? new TranslationTextComponent("deathScreen.spectate") : new TranslationTextComponent("deathScreen.respawn"), (p_213021_1_) ->
+        {
+            this.minecraft.player.respawnPlayer();
+            this.minecraft.displayGuiScreen((Screen)null);
+        }));
+        Button button = this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 96, 200, 20, new TranslationTextComponent("deathScreen.titleScreen"), (p_213020_1_) ->
+        {
+            if (this.isHardcoreMode)
+            {
+                this.func_228177_a_();
+            }
+            else {
+                ConfirmScreen confirmscreen = new ConfirmScreen(this::confirmCallback, new TranslationTextComponent("deathScreen.quit.confirm"), StringTextComponent.EMPTY, new TranslationTextComponent("deathScreen.titleScreen"), new TranslationTextComponent("deathScreen.respawn"));
+                this.minecraft.displayGuiScreen(confirmscreen);
+                confirmscreen.setButtonDelay(20);
+            }
+        }));
 
-      for(Widget widget : this.buttons) {
-         widget.active = false;
-      }
+        if (!this.isHardcoreMode && this.minecraft.getSession() == null)
+        {
+            button.active = false;
+        }
 
-      this.deathScore = (new TranslationTextComponent("deathScreen.score")).append(": ").append((new StringTextComponent(Integer.toString(this.minecraft.player.getScore()))).withStyle(TextFormatting.YELLOW));
-   }
+        for (Widget widget : this.buttons)
+        {
+            widget.active = false;
+        }
 
-   public boolean shouldCloseOnEsc() {
-      return false;
-   }
+        this.field_243285_p = (new TranslationTextComponent("deathScreen.score")).appendString(": ").append((new StringTextComponent(Integer.toString(this.minecraft.player.getScore()))).mergeStyle(TextFormatting.YELLOW));
+    }
 
-   private void confirmResult(boolean p_213022_1_) {
-      if (p_213022_1_) {
-         this.exitToTitleScreen();
-      } else {
-         this.minecraft.player.respawn();
-         this.minecraft.setScreen((Screen)null);
-      }
+    public boolean shouldCloseOnEsc()
+    {
+        return false;
+    }
 
-   }
+    private void confirmCallback(boolean p_213022_1_)
+    {
+        if (p_213022_1_)
+        {
+            this.func_228177_a_();
+        }
+        else
+        {
+            this.minecraft.player.respawnPlayer();
+            this.minecraft.displayGuiScreen((Screen)null);
+        }
+    }
 
-   private void exitToTitleScreen() {
-      if (this.minecraft.level != null) {
-         this.minecraft.level.disconnect();
-      }
+    private void func_228177_a_()
+    {
+        if (this.minecraft.world != null)
+        {
+            this.minecraft.world.sendQuittingDisconnectingPacket();
+        }
 
-      this.minecraft.clearLevel(new DirtMessageScreen(new TranslationTextComponent("menu.savingLevel")));
-      this.minecraft.setScreen(new MainMenuScreen());
-   }
+        this.minecraft.unloadWorld(new DirtMessageScreen(new TranslationTextComponent("menu.savingLevel")));
+        this.minecraft.displayGuiScreen(new MainMenuScreen());
+    }
 
-   public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-      this.fillGradient(p_230430_1_, 0, 0, this.width, this.height, 1615855616, -1602211792);
-      RenderSystem.pushMatrix();
-      RenderSystem.scalef(2.0F, 2.0F, 2.0F);
-      drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2 / 2, 30, 16777215);
-      RenderSystem.popMatrix();
-      if (this.causeOfDeath != null) {
-         drawCenteredString(p_230430_1_, this.font, this.causeOfDeath, this.width / 2, 85, 16777215);
-      }
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    {
+        this.fillGradient(matrixStack, 0, 0, this.width, this.height, 1615855616, -1602211792);
+        RenderSystem.pushMatrix();
+        RenderSystem.scalef(2.0F, 2.0F, 2.0F);
+        drawCenteredString(matrixStack, this.font, this.title, this.width / 2 / 2, 30, 16777215);
+        RenderSystem.popMatrix();
 
-      drawCenteredString(p_230430_1_, this.font, this.deathScore, this.width / 2, 100, 16777215);
-      if (this.causeOfDeath != null && p_230430_3_ > 85 && p_230430_3_ < 85 + 9) {
-         Style style = this.getClickedComponentStyleAt(p_230430_2_);
-         this.renderComponentHoverEffect(p_230430_1_, style, p_230430_2_, p_230430_3_);
-      }
+        if (this.causeOfDeath != null)
+        {
+            drawCenteredString(matrixStack, this.font, this.causeOfDeath, this.width / 2, 85, 16777215);
+        }
 
-      super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-   }
+        drawCenteredString(matrixStack, this.font, this.field_243285_p, this.width / 2, 100, 16777215);
 
-   @Nullable
-   private Style getClickedComponentStyleAt(int p_238623_1_) {
-      if (this.causeOfDeath == null) {
-         return null;
-      } else {
-         int i = this.minecraft.font.width(this.causeOfDeath);
-         int j = this.width / 2 - i / 2;
-         int k = this.width / 2 + i / 2;
-         return p_238623_1_ >= j && p_238623_1_ <= k ? this.minecraft.font.getSplitter().componentStyleAtWidth(this.causeOfDeath, p_238623_1_ - j) : null;
-      }
-   }
+        if (this.causeOfDeath != null && mouseY > 85 && mouseY < 85 + 9)
+        {
+            Style style = this.func_238623_a_(mouseX);
+            this.renderComponentHoverEffect(matrixStack, style, mouseX, mouseY);
+        }
 
-   public boolean mouseClicked(double p_231044_1_, double p_231044_3_, int p_231044_5_) {
-      if (this.causeOfDeath != null && p_231044_3_ > 85.0D && p_231044_3_ < (double)(85 + 9)) {
-         Style style = this.getClickedComponentStyleAt((int)p_231044_1_);
-         if (style != null && style.getClickEvent() != null && style.getClickEvent().getAction() == ClickEvent.Action.OPEN_URL) {
-            this.handleComponentClicked(style);
-            return false;
-         }
-      }
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
 
-      return super.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
-   }
+    @Nullable
+    private Style func_238623_a_(int p_238623_1_)
+    {
+        if (this.causeOfDeath == null)
+        {
+            return null;
+        }
+        else
+        {
+            int i = this.minecraft.fontRenderer.getStringPropertyWidth(this.causeOfDeath);
+            int j = this.width / 2 - i / 2;
+            int k = this.width / 2 + i / 2;
+            return p_238623_1_ >= j && p_238623_1_ <= k ? this.minecraft.fontRenderer.getCharacterManager().func_238357_a_(this.causeOfDeath, p_238623_1_ - j) : null;
+        }
+    }
 
-   public boolean isPauseScreen() {
-      return false;
-   }
+    public boolean mouseClicked(double mouseX, double mouseY, int button)
+    {
+        if (this.causeOfDeath != null && mouseY > 85.0D && mouseY < (double)(85 + 9))
+        {
+            Style style = this.func_238623_a_((int)mouseX);
 
-   public void tick() {
-      super.tick();
-      ++this.delayTicker;
-      if (this.delayTicker == 20) {
-         for(Widget widget : this.buttons) {
-            widget.active = true;
-         }
-      }
+            if (style != null && style.getClickEvent() != null && style.getClickEvent().getAction() == ClickEvent.Action.OPEN_URL)
+            {
+                this.handleComponentClicked(style);
+                return false;
+            }
+        }
 
-   }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    public boolean isPauseScreen()
+    {
+        return false;
+    }
+
+    public void tick()
+    {
+        super.tick();
+        ++this.enableButtonsTimer;
+
+        if (this.enableButtonsTimer == 20)
+        {
+            for (Widget widget : this.buttons)
+            {
+                widget.active = true;
+            }
+        }
+    }
 }

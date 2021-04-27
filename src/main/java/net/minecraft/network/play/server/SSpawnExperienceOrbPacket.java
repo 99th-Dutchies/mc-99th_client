@@ -5,69 +5,82 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.entity.item.ExperienceOrbEntity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SSpawnExperienceOrbPacket implements IPacket<IClientPlayNetHandler> {
-   private int id;
-   private double x;
-   private double y;
-   private double z;
-   private int value;
+public class SSpawnExperienceOrbPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityID;
+    private double posX;
+    private double posY;
+    private double posZ;
+    private int xpValue;
 
-   public SSpawnExperienceOrbPacket() {
-   }
+    public SSpawnExperienceOrbPacket()
+    {
+    }
 
-   public SSpawnExperienceOrbPacket(ExperienceOrbEntity p_i46975_1_) {
-      this.id = p_i46975_1_.getId();
-      this.x = p_i46975_1_.getX();
-      this.y = p_i46975_1_.getY();
-      this.z = p_i46975_1_.getZ();
-      this.value = p_i46975_1_.getValue();
-   }
+    public SSpawnExperienceOrbPacket(ExperienceOrbEntity orb)
+    {
+        this.entityID = orb.getEntityId();
+        this.posX = orb.getPosX();
+        this.posY = orb.getPosY();
+        this.posZ = orb.getPosZ();
+        this.xpValue = orb.getXpValue();
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.id = p_148837_1_.readVarInt();
-      this.x = p_148837_1_.readDouble();
-      this.y = p_148837_1_.readDouble();
-      this.z = p_148837_1_.readDouble();
-      this.value = p_148837_1_.readShort();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityID = buf.readVarInt();
+        this.posX = buf.readDouble();
+        this.posY = buf.readDouble();
+        this.posZ = buf.readDouble();
+        this.xpValue = buf.readShort();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.id);
-      p_148840_1_.writeDouble(this.x);
-      p_148840_1_.writeDouble(this.y);
-      p_148840_1_.writeDouble(this.z);
-      p_148840_1_.writeShort(this.value);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityID);
+        buf.writeDouble(this.posX);
+        buf.writeDouble(this.posY);
+        buf.writeDouble(this.posZ);
+        buf.writeShort(this.xpValue);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleAddExperienceOrb(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleSpawnExperienceOrb(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getId() {
-      return this.id;
-   }
+    public int getEntityID()
+    {
+        return this.entityID;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getX() {
-      return this.x;
-   }
+    public double getX()
+    {
+        return this.posX;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getY() {
-      return this.y;
-   }
+    public double getY()
+    {
+        return this.posY;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ()
+    {
+        return this.posZ;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getValue() {
-      return this.value;
-   }
+    public int getXPValue()
+    {
+        return this.xpValue;
+    }
 }

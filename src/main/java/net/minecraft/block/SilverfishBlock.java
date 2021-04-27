@@ -13,47 +13,62 @@ import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class SilverfishBlock extends Block {
-   private final Block hostBlock;
-   private static final Map<Block, Block> BLOCK_BY_HOST_BLOCK = Maps.newIdentityHashMap();
+public class SilverfishBlock extends Block
+{
+    private final Block mimickedBlock;
+    private static final Map<Block, Block> normalToInfectedMap = Maps.newIdentityHashMap();
 
-   public SilverfishBlock(Block p_i48374_1_, AbstractBlock.Properties p_i48374_2_) {
-      super(p_i48374_2_);
-      this.hostBlock = p_i48374_1_;
-      BLOCK_BY_HOST_BLOCK.put(p_i48374_1_, this);
-   }
+    public SilverfishBlock(Block blockIn, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.mimickedBlock = blockIn;
+        normalToInfectedMap.put(blockIn, this);
+    }
 
-   public Block getHostBlock() {
-      return this.hostBlock;
-   }
+    public Block getMimickedBlock()
+    {
+        return this.mimickedBlock;
+    }
 
-   public static boolean isCompatibleHostBlock(BlockState p_196466_0_) {
-      return BLOCK_BY_HOST_BLOCK.containsKey(p_196466_0_.getBlock());
-   }
+    public static boolean canContainSilverfish(BlockState state)
+    {
+        return normalToInfectedMap.containsKey(state.getBlock());
+    }
 
-   private void spawnInfestation(ServerWorld p_235505_1_, BlockPos p_235505_2_) {
-      SilverfishEntity silverfishentity = EntityType.SILVERFISH.create(p_235505_1_);
-      silverfishentity.moveTo((double)p_235505_2_.getX() + 0.5D, (double)p_235505_2_.getY(), (double)p_235505_2_.getZ() + 0.5D, 0.0F, 0.0F);
-      p_235505_1_.addFreshEntity(silverfishentity);
-      silverfishentity.spawnAnim();
-   }
+    private void spawnSilverFish(ServerWorld world, BlockPos pos)
+    {
+        SilverfishEntity silverfishentity = EntityType.SILVERFISH.create(world);
+        silverfishentity.setLocationAndAngles((double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, 0.0F, 0.0F);
+        world.addEntity(silverfishentity);
+        silverfishentity.spawnExplosionParticle();
+    }
 
-   public void spawnAfterBreak(BlockState p_220062_1_, ServerWorld p_220062_2_, BlockPos p_220062_3_, ItemStack p_220062_4_) {
-      super.spawnAfterBreak(p_220062_1_, p_220062_2_, p_220062_3_, p_220062_4_);
-      if (p_220062_2_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, p_220062_4_) == 0) {
-         this.spawnInfestation(p_220062_2_, p_220062_3_);
-      }
+    /**
+     * Perform side-effects from block dropping, such as creating silverfish
+     */
+    public void spawnAdditionalDrops(BlockState state, ServerWorld worldIn, BlockPos pos, ItemStack stack)
+    {
+        super.spawnAdditionalDrops(state, worldIn, pos, stack);
 
-   }
+        if (worldIn.getGameRules().getBoolean(GameRules.DO_TILE_DROPS) && EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0)
+        {
+            this.spawnSilverFish(worldIn, pos);
+        }
+    }
 
-   public void wasExploded(World p_180652_1_, BlockPos p_180652_2_, Explosion p_180652_3_) {
-      if (p_180652_1_ instanceof ServerWorld) {
-         this.spawnInfestation((ServerWorld)p_180652_1_, p_180652_2_);
-      }
+    /**
+     * Called when this Block is destroyed by an Explosion
+     */
+    public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn)
+    {
+        if (worldIn instanceof ServerWorld)
+        {
+            this.spawnSilverFish((ServerWorld)worldIn, pos);
+        }
+    }
 
-   }
-
-   public static BlockState stateByHostBlock(Block p_196467_0_) {
-      return BLOCK_BY_HOST_BLOCK.get(p_196467_0_).defaultBlockState();
-   }
+    public static BlockState infest(Block blockIn)
+    {
+        return normalToInfectedMap.get(blockIn).getDefaultState();
+    }
 }

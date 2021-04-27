@@ -7,34 +7,39 @@ import net.minecraft.client.renderer.entity.model.SlimeModel;
 import net.minecraft.entity.monster.SlimeEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class SlimeRenderer extends MobRenderer<SlimeEntity, SlimeModel<SlimeEntity>> {
-   private static final ResourceLocation SLIME_LOCATION = new ResourceLocation("textures/entity/slime/slime.png");
+public class SlimeRenderer extends MobRenderer<SlimeEntity, SlimeModel<SlimeEntity>>
+{
+    private static final ResourceLocation SLIME_TEXTURES = new ResourceLocation("textures/entity/slime/slime.png");
 
-   public SlimeRenderer(EntityRendererManager p_i47193_1_) {
-      super(p_i47193_1_, new SlimeModel<>(16), 0.25F);
-      this.addLayer(new SlimeGelLayer<>(this));
-   }
+    public SlimeRenderer(EntityRendererManager renderManagerIn)
+    {
+        super(renderManagerIn, new SlimeModel<>(16), 0.25F);
+        this.addLayer(new SlimeGelLayer<>(this));
+    }
 
-   public void render(SlimeEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
-      this.shadowRadius = 0.25F * (float)p_225623_1_.getSize();
-      super.render(p_225623_1_, p_225623_2_, p_225623_3_, p_225623_4_, p_225623_5_, p_225623_6_);
-   }
+    public void render(SlimeEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        this.shadowSize = 0.25F * (float)entityIn.getSlimeSize();
+        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+    }
 
-   protected void scale(SlimeEntity p_225620_1_, MatrixStack p_225620_2_, float p_225620_3_) {
-      float f = 0.999F;
-      p_225620_2_.scale(0.999F, 0.999F, 0.999F);
-      p_225620_2_.translate(0.0D, (double)0.001F, 0.0D);
-      float f1 = (float)p_225620_1_.getSize();
-      float f2 = MathHelper.lerp(p_225620_3_, p_225620_1_.oSquish, p_225620_1_.squish) / (f1 * 0.5F + 1.0F);
-      float f3 = 1.0F / (f2 + 1.0F);
-      p_225620_2_.scale(f3 * f1, 1.0F / f3 * f1, f3 * f1);
-   }
+    protected void preRenderCallback(SlimeEntity entitylivingbaseIn, MatrixStack matrixStackIn, float partialTickTime)
+    {
+        float f = 0.999F;
+        matrixStackIn.scale(0.999F, 0.999F, 0.999F);
+        matrixStackIn.translate(0.0D, (double)0.001F, 0.0D);
+        float f1 = (float)entitylivingbaseIn.getSlimeSize();
+        float f2 = MathHelper.lerp(partialTickTime, entitylivingbaseIn.prevSquishFactor, entitylivingbaseIn.squishFactor) / (f1 * 0.5F + 1.0F);
+        float f3 = 1.0F / (f2 + 1.0F);
+        matrixStackIn.scale(f3 * f1, 1.0F / f3 * f1, f3 * f1);
+    }
 
-   public ResourceLocation getTextureLocation(SlimeEntity p_110775_1_) {
-      return SLIME_LOCATION;
-   }
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getEntityTexture(SlimeEntity entity)
+    {
+        return SLIME_TEXTURES;
+    }
 }

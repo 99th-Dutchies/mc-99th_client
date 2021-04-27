@@ -17,97 +17,119 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.world.server.ServerWorld;
 
-public class ShareItemsTask extends Task<VillagerEntity> {
-   private Set<Item> trades = ImmutableSet.of();
+public class ShareItemsTask extends Task<VillagerEntity>
+{
+    private Set<Item> field_220588_a = ImmutableSet.of();
 
-   public ShareItemsTask() {
-      super(ImmutableMap.of(MemoryModuleType.INTERACTION_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.VALUE_PRESENT));
-   }
+    public ShareItemsTask()
+    {
+        super(ImmutableMap.of(MemoryModuleType.INTERACTION_TARGET, MemoryModuleStatus.VALUE_PRESENT, MemoryModuleType.VISIBLE_MOBS, MemoryModuleStatus.VALUE_PRESENT));
+    }
 
-   protected boolean checkExtraStartConditions(ServerWorld p_212832_1_, VillagerEntity p_212832_2_) {
-      return BrainUtil.targetIsValid(p_212832_2_.getBrain(), MemoryModuleType.INTERACTION_TARGET, EntityType.VILLAGER);
-   }
+    protected boolean shouldExecute(ServerWorld worldIn, VillagerEntity owner)
+    {
+        return BrainUtil.isCorrectVisibleType(owner.getBrain(), MemoryModuleType.INTERACTION_TARGET, EntityType.VILLAGER);
+    }
 
-   protected boolean canStillUse(ServerWorld p_212834_1_, VillagerEntity p_212834_2_, long p_212834_3_) {
-      return this.checkExtraStartConditions(p_212834_1_, p_212834_2_);
-   }
+    protected boolean shouldContinueExecuting(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        return this.shouldExecute(worldIn, entityIn);
+    }
 
-   protected void start(ServerWorld p_212831_1_, VillagerEntity p_212831_2_, long p_212831_3_) {
-      VillagerEntity villagerentity = (VillagerEntity)p_212831_2_.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
-      BrainUtil.lockGazeAndWalkToEachOther(p_212831_2_, villagerentity, 0.5F);
-      this.trades = figureOutWhatIAmWillingToTrade(p_212831_2_, villagerentity);
-   }
+    protected void startExecuting(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        VillagerEntity villagerentity = (VillagerEntity)entityIn.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
+        BrainUtil.lookApproachEachOther(entityIn, villagerentity, 0.5F);
+        this.field_220588_a = func_220585_a(entityIn, villagerentity);
+    }
 
-   protected void tick(ServerWorld p_212833_1_, VillagerEntity p_212833_2_, long p_212833_3_) {
-      VillagerEntity villagerentity = (VillagerEntity)p_212833_2_.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
-      if (!(p_212833_2_.distanceToSqr(villagerentity) > 5.0D)) {
-         BrainUtil.lockGazeAndWalkToEachOther(p_212833_2_, villagerentity, 0.5F);
-         p_212833_2_.gossip(p_212833_1_, villagerentity, p_212833_3_);
-         if (p_212833_2_.hasExcessFood() && (p_212833_2_.getVillagerData().getProfession() == VillagerProfession.FARMER || villagerentity.wantsMoreFood())) {
-            throwHalfStack(p_212833_2_, VillagerEntity.FOOD_POINTS.keySet(), villagerentity);
-         }
+    protected void updateTask(ServerWorld worldIn, VillagerEntity owner, long gameTime)
+    {
+        VillagerEntity villagerentity = (VillagerEntity)owner.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
 
-         if (villagerentity.getVillagerData().getProfession() == VillagerProfession.FARMER && p_212833_2_.getInventory().countItem(Items.WHEAT) > Items.WHEAT.getMaxStackSize() / 2) {
-            throwHalfStack(p_212833_2_, ImmutableSet.of(Items.WHEAT), villagerentity);
-         }
+        if (!(owner.getDistanceSq(villagerentity) > 5.0D))
+        {
+            BrainUtil.lookApproachEachOther(owner, villagerentity, 0.5F);
+            owner.func_242368_a(worldIn, villagerentity, gameTime);
 
-         if (!this.trades.isEmpty() && p_212833_2_.getInventory().hasAnyOf(this.trades)) {
-            throwHalfStack(p_212833_2_, this.trades, villagerentity);
-         }
-
-      }
-   }
-
-   protected void stop(ServerWorld p_212835_1_, VillagerEntity p_212835_2_, long p_212835_3_) {
-      p_212835_2_.getBrain().eraseMemory(MemoryModuleType.INTERACTION_TARGET);
-   }
-
-   private static Set<Item> figureOutWhatIAmWillingToTrade(VillagerEntity p_220585_0_, VillagerEntity p_220585_1_) {
-      ImmutableSet<Item> immutableset = p_220585_1_.getVillagerData().getProfession().getRequestedItems();
-      ImmutableSet<Item> immutableset1 = p_220585_0_.getVillagerData().getProfession().getRequestedItems();
-      return immutableset.stream().filter((p_220587_1_) -> {
-         return !immutableset1.contains(p_220587_1_);
-      }).collect(Collectors.toSet());
-   }
-
-   private static void throwHalfStack(VillagerEntity p_220586_0_, Set<Item> p_220586_1_, LivingEntity p_220586_2_) {
-      Inventory inventory = p_220586_0_.getInventory();
-      ItemStack itemstack = ItemStack.EMPTY;
-      int i = 0;
-
-      while(i < inventory.getContainerSize()) {
-         ItemStack itemstack1;
-         Item item;
-         int j;
-         label28: {
-            itemstack1 = inventory.getItem(i);
-            if (!itemstack1.isEmpty()) {
-               item = itemstack1.getItem();
-               if (p_220586_1_.contains(item)) {
-                  if (itemstack1.getCount() > itemstack1.getMaxStackSize() / 2) {
-                     j = itemstack1.getCount() / 2;
-                     break label28;
-                  }
-
-                  if (itemstack1.getCount() > 24) {
-                     j = itemstack1.getCount() - 24;
-                     break label28;
-                  }
-               }
+            if (owner.canAbondonItems() && (owner.getVillagerData().getProfession() == VillagerProfession.FARMER || villagerentity.wantsMoreFood()))
+            {
+                func_220586_a(owner, VillagerEntity.FOOD_VALUES.keySet(), villagerentity);
             }
 
-            ++i;
-            continue;
-         }
+            if (villagerentity.getVillagerData().getProfession() == VillagerProfession.FARMER && owner.getVillagerInventory().count(Items.WHEAT) > Items.WHEAT.getMaxStackSize() / 2)
+            {
+                func_220586_a(owner, ImmutableSet.of(Items.WHEAT), villagerentity);
+            }
 
-         itemstack1.shrink(j);
-         itemstack = new ItemStack(item, j);
-         break;
-      }
+            if (!this.field_220588_a.isEmpty() && owner.getVillagerInventory().hasAny(this.field_220588_a))
+            {
+                func_220586_a(owner, this.field_220588_a, villagerentity);
+            }
+        }
+    }
 
-      if (!itemstack.isEmpty()) {
-         BrainUtil.throwItem(p_220586_0_, itemstack, p_220586_2_.position());
-      }
+    protected void resetTask(ServerWorld worldIn, VillagerEntity entityIn, long gameTimeIn)
+    {
+        entityIn.getBrain().removeMemory(MemoryModuleType.INTERACTION_TARGET);
+    }
 
-   }
+    private static Set<Item> func_220585_a(VillagerEntity p_220585_0_, VillagerEntity p_220585_1_)
+    {
+        ImmutableSet<Item> immutableset = p_220585_1_.getVillagerData().getProfession().getSpecificItems();
+        ImmutableSet<Item> immutableset1 = p_220585_0_.getVillagerData().getProfession().getSpecificItems();
+        return immutableset.stream().filter((p_220587_1_) ->
+        {
+            return !immutableset1.contains(p_220587_1_);
+        }).collect(Collectors.toSet());
+    }
+
+    private static void func_220586_a(VillagerEntity p_220586_0_, Set<Item> p_220586_1_, LivingEntity p_220586_2_)
+    {
+        Inventory inventory = p_220586_0_.getVillagerInventory();
+        ItemStack itemstack = ItemStack.EMPTY;
+        int i = 0;
+
+        while (i < inventory.getSizeInventory())
+        {
+            ItemStack itemstack1;
+            Item item;
+            int j;
+            label28:
+            {
+                itemstack1 = inventory.getStackInSlot(i);
+
+                if (!itemstack1.isEmpty())
+                {
+                    item = itemstack1.getItem();
+
+                    if (p_220586_1_.contains(item))
+                    {
+                        if (itemstack1.getCount() > itemstack1.getMaxStackSize() / 2)
+                        {
+                            j = itemstack1.getCount() / 2;
+                            break label28;
+                        }
+
+                        if (itemstack1.getCount() > 24)
+                        {
+                            j = itemstack1.getCount() - 24;
+                            break label28;
+                        }
+                    }
+                }
+
+                ++i;
+                continue;
+            }
+            itemstack1.shrink(j);
+            itemstack = new ItemStack(item, j);
+            break;
+        }
+
+        if (!itemstack.isEmpty())
+        {
+            BrainUtil.spawnItemNearEntity(p_220586_0_, itemstack, p_220586_2_.getPositionVec());
+        }
+    }
 }

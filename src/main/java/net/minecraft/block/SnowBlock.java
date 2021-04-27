@@ -18,98 +18,143 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.server.ServerWorld;
 
-public class SnowBlock extends Block {
-   public static final IntegerProperty LAYERS = BlockStateProperties.LAYERS;
-   protected static final VoxelShape[] SHAPE_BY_LAYER = new VoxelShape[]{VoxelShapes.empty(), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 4.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 6.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 10.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 14.0D, 16.0D), Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D)};
+public class SnowBlock extends Block
+{
+    public static final IntegerProperty LAYERS = BlockStateProperties.LAYERS_1_8;
+    protected static final VoxelShape[] SHAPES = new VoxelShape[] {VoxelShapes.empty(), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 4.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 6.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 10.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 12.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 14.0D, 16.0D), Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D)};
 
-   protected SnowBlock(AbstractBlock.Properties p_i48328_1_) {
-      super(p_i48328_1_);
-      this.registerDefaultState(this.stateDefinition.any().setValue(LAYERS, Integer.valueOf(1)));
-   }
+    protected SnowBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.setDefaultState(this.stateContainer.getBaseState().with(LAYERS, Integer.valueOf(1)));
+    }
 
-   public boolean isPathfindable(BlockState p_196266_1_, IBlockReader p_196266_2_, BlockPos p_196266_3_, PathType p_196266_4_) {
-      switch(p_196266_4_) {
-      case LAND:
-         return p_196266_1_.getValue(LAYERS) < 5;
-      case WATER:
-         return false;
-      case AIR:
-         return false;
-      default:
-         return false;
-      }
-   }
+    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type)
+    {
+        switch (type)
+        {
+            case LAND:
+                return state.get(LAYERS) < 5;
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE_BY_LAYER[p_220053_1_.getValue(LAYERS)];
-   }
+            case WATER:
+                return false;
 
-   public VoxelShape getCollisionShape(BlockState p_220071_1_, IBlockReader p_220071_2_, BlockPos p_220071_3_, ISelectionContext p_220071_4_) {
-      return SHAPE_BY_LAYER[p_220071_1_.getValue(LAYERS) - 1];
-   }
+            case AIR:
+                return false;
 
-   public VoxelShape getBlockSupportShape(BlockState p_230335_1_, IBlockReader p_230335_2_, BlockPos p_230335_3_) {
-      return SHAPE_BY_LAYER[p_230335_1_.getValue(LAYERS)];
-   }
+            default:
+                return false;
+        }
+    }
 
-   public VoxelShape getVisualShape(BlockState p_230322_1_, IBlockReader p_230322_2_, BlockPos p_230322_3_, ISelectionContext p_230322_4_) {
-      return SHAPE_BY_LAYER[p_230322_1_.getValue(LAYERS)];
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPES[state.get(LAYERS)];
+    }
 
-   public boolean useShapeForLightOcclusion(BlockState p_220074_1_) {
-      return true;
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPES[state.get(LAYERS) - 1];
+    }
 
-   public boolean canSurvive(BlockState p_196260_1_, IWorldReader p_196260_2_, BlockPos p_196260_3_) {
-      BlockState blockstate = p_196260_2_.getBlockState(p_196260_3_.below());
-      if (!blockstate.is(Blocks.ICE) && !blockstate.is(Blocks.PACKED_ICE) && !blockstate.is(Blocks.BARRIER)) {
-         if (!blockstate.is(Blocks.HONEY_BLOCK) && !blockstate.is(Blocks.SOUL_SAND)) {
-            return Block.isFaceFull(blockstate.getCollisionShape(p_196260_2_, p_196260_3_.below()), Direction.UP) || blockstate.getBlock() == this && blockstate.getValue(LAYERS) == 8;
-         } else {
-            return true;
-         }
-      } else {
-         return false;
-      }
-   }
+    public VoxelShape getCollisionShape(BlockState state, IBlockReader reader, BlockPos pos)
+    {
+        return SHAPES[state.get(LAYERS)];
+    }
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      return !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_) ? Blocks.AIR.defaultBlockState() : super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-   }
+    public VoxelShape getRayTraceShape(BlockState state, IBlockReader reader, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPES[state.get(LAYERS)];
+    }
 
-   public void randomTick(BlockState p_225542_1_, ServerWorld p_225542_2_, BlockPos p_225542_3_, Random p_225542_4_) {
-      if (p_225542_2_.getBrightness(LightType.BLOCK, p_225542_3_) > 11) {
-         dropResources(p_225542_1_, p_225542_2_, p_225542_3_);
-         p_225542_2_.removeBlock(p_225542_3_, false);
-      }
+    public boolean isTransparent(BlockState state)
+    {
+        return true;
+    }
 
-   }
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos)
+    {
+        BlockState blockstate = worldIn.getBlockState(pos.down());
 
-   public boolean canBeReplaced(BlockState p_196253_1_, BlockItemUseContext p_196253_2_) {
-      int i = p_196253_1_.getValue(LAYERS);
-      if (p_196253_2_.getItemInHand().getItem() == this.asItem() && i < 8) {
-         if (p_196253_2_.replacingClickedOnBlock()) {
-            return p_196253_2_.getClickedFace() == Direction.UP;
-         } else {
-            return true;
-         }
-      } else {
-         return i == 1;
-      }
-   }
+        if (!blockstate.isIn(Blocks.ICE) && !blockstate.isIn(Blocks.PACKED_ICE) && !blockstate.isIn(Blocks.BARRIER))
+        {
+            if (!blockstate.isIn(Blocks.HONEY_BLOCK) && !blockstate.isIn(Blocks.SOUL_SAND))
+            {
+                return Block.doesSideFillSquare(blockstate.getCollisionShape(worldIn, pos.down()), Direction.UP) || blockstate.getBlock() == this && blockstate.get(LAYERS) == 8;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   @Nullable
-   public BlockState getStateForPlacement(BlockItemUseContext p_196258_1_) {
-      BlockState blockstate = p_196258_1_.getLevel().getBlockState(p_196258_1_.getClickedPos());
-      if (blockstate.is(this)) {
-         int i = blockstate.getValue(LAYERS);
-         return blockstate.setValue(LAYERS, Integer.valueOf(Math.min(8, i + 1)));
-      } else {
-         return super.getStateForPlacement(p_196258_1_);
-      }
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        return !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
 
-   protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> p_206840_1_) {
-      p_206840_1_.add(LAYERS);
-   }
+    /**
+     * Performs a random tick on a block.
+     */
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random)
+    {
+        if (worldIn.getLightFor(LightType.BLOCK, pos) > 11)
+        {
+            spawnDrops(state, worldIn, pos);
+            worldIn.removeBlock(pos, false);
+        }
+    }
+
+    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext)
+    {
+        int i = state.get(LAYERS);
+
+        if (useContext.getItem().getItem() == this.asItem() && i < 8)
+        {
+            if (useContext.replacingClickedOnBlock())
+            {
+                return useContext.getFace() == Direction.UP;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else
+        {
+            return i == 1;
+        }
+    }
+
+    @Nullable
+    public BlockState getStateForPlacement(BlockItemUseContext context)
+    {
+        BlockState blockstate = context.getWorld().getBlockState(context.getPos());
+
+        if (blockstate.isIn(this))
+        {
+            int i = blockstate.get(LAYERS);
+            return blockstate.with(LAYERS, Integer.valueOf(Math.min(8, i + 1)));
+        }
+        else
+        {
+            return super.getStateForPlacement(context);
+        }
+    }
+
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+    {
+        builder.add(LAYERS);
+    }
 }

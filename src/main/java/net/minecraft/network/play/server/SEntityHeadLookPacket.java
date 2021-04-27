@@ -6,42 +6,55 @@ import net.minecraft.entity.Entity;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SEntityHeadLookPacket implements IPacket<IClientPlayNetHandler> {
-   private int entityId;
-   private byte yHeadRot;
+public class SEntityHeadLookPacket implements IPacket<IClientPlayNetHandler>
+{
+    private int entityId;
+    private byte yaw;
 
-   public SEntityHeadLookPacket() {
-   }
+    public SEntityHeadLookPacket()
+    {
+    }
 
-   public SEntityHeadLookPacket(Entity p_i46922_1_, byte p_i46922_2_) {
-      this.entityId = p_i46922_1_.getId();
-      this.yHeadRot = p_i46922_2_;
-   }
+    public SEntityHeadLookPacket(Entity entityIn, byte yawIn)
+    {
+        this.entityId = entityIn.getEntityId();
+        this.yaw = yawIn;
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.entityId = p_148837_1_.readVarInt();
-      this.yHeadRot = p_148837_1_.readByte();
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.entityId = buf.readVarInt();
+        this.yaw = buf.readByte();
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeVarInt(this.entityId);
-      p_148840_1_.writeByte(this.yHeadRot);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeVarInt(this.entityId);
+        buf.writeByte(this.yaw);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleRotateMob(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleEntityHeadLook(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public Entity getEntity(World p_149381_1_) {
-      return p_149381_1_.getEntity(this.entityId);
-   }
+    public Entity getEntity(World worldIn)
+    {
+        return worldIn.getEntityByID(this.entityId);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public byte getYHeadRot() {
-      return this.yHeadRot;
-   }
+    public byte getYaw()
+    {
+        return this.yaw;
+    }
 }

@@ -11,40 +11,57 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
-public class CoralPlantBlock extends AbstractCoralPlantBlock {
-   private final Block deadBlock;
-   protected static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 15.0D, 14.0D);
+public class CoralPlantBlock extends AbstractCoralPlantBlock
+{
+    private final Block deadBlock;
+    protected static final VoxelShape SHAPE = Block.makeCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 15.0D, 14.0D);
 
-   protected CoralPlantBlock(Block p_i49809_1_, AbstractBlock.Properties p_i49809_2_) {
-      super(p_i49809_2_);
-      this.deadBlock = p_i49809_1_;
-   }
+    protected CoralPlantBlock(Block deadBlock, AbstractBlock.Properties properties)
+    {
+        super(properties);
+        this.deadBlock = deadBlock;
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      this.tryScheduleDieTick(p_220082_1_, p_220082_2_, p_220082_3_);
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        this.updateIfDry(state, worldIn, pos);
+    }
 
-   public void tick(BlockState p_225534_1_, ServerWorld p_225534_2_, BlockPos p_225534_3_, Random p_225534_4_) {
-      if (!scanForWater(p_225534_1_, p_225534_2_, p_225534_3_)) {
-         p_225534_2_.setBlock(p_225534_3_, this.deadBlock.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(false)), 2);
-      }
+    public void tick(BlockState state, ServerWorld worldIn, BlockPos pos, Random rand)
+    {
+        if (!isInWater(state, worldIn, pos))
+        {
+            worldIn.setBlockState(pos, this.deadBlock.getDefaultState().with(WATERLOGGED, Boolean.valueOf(false)), 2);
+        }
+    }
 
-   }
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder
+     * immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
+    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos)
+    {
+        if (facing == Direction.DOWN && !stateIn.isValidPosition(worldIn, currentPos))
+        {
+            return Blocks.AIR.getDefaultState();
+        }
+        else
+        {
+            this.updateIfDry(stateIn, worldIn, currentPos);
 
-   public BlockState updateShape(BlockState p_196271_1_, Direction p_196271_2_, BlockState p_196271_3_, IWorld p_196271_4_, BlockPos p_196271_5_, BlockPos p_196271_6_) {
-      if (p_196271_2_ == Direction.DOWN && !p_196271_1_.canSurvive(p_196271_4_, p_196271_5_)) {
-         return Blocks.AIR.defaultBlockState();
-      } else {
-         this.tryScheduleDieTick(p_196271_1_, p_196271_4_, p_196271_5_);
-         if (p_196271_1_.getValue(WATERLOGGED)) {
-            p_196271_4_.getLiquidTicks().scheduleTick(p_196271_5_, Fluids.WATER, Fluids.WATER.getTickDelay(p_196271_4_));
-         }
+            if (stateIn.get(WATERLOGGED))
+            {
+                worldIn.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+            }
 
-         return super.updateShape(p_196271_1_, p_196271_2_, p_196271_3_, p_196271_4_, p_196271_5_, p_196271_6_);
-      }
-   }
+            return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+        }
+    }
 
-   public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_) {
-      return SHAPE;
-   }
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+    {
+        return SHAPE;
+    }
 }

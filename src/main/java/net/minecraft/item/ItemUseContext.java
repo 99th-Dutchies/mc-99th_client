@@ -9,72 +9,87 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 
-public class ItemUseContext {
-   @Nullable
-   private final PlayerEntity player;
-   private final Hand hand;
-   private final BlockRayTraceResult hitResult;
-   private final World level;
-   private final ItemStack itemStack;
+public class ItemUseContext
+{
+    @Nullable
+    private final PlayerEntity player;
+    private final Hand hand;
+    private final BlockRayTraceResult rayTraceResult;
+    private final World world;
+    private final ItemStack item;
 
-   public ItemUseContext(PlayerEntity p_i50033_1_, Hand p_i50033_2_, BlockRayTraceResult p_i50033_3_) {
-      this(p_i50033_1_.level, p_i50033_1_, p_i50033_2_, p_i50033_1_.getItemInHand(p_i50033_2_), p_i50033_3_);
-   }
+    public ItemUseContext(PlayerEntity player, Hand handIn, BlockRayTraceResult rayTraceResultIn)
+    {
+        this(player.world, player, handIn, player.getHeldItem(handIn), rayTraceResultIn);
+    }
 
-   protected ItemUseContext(World p_i50034_1_, @Nullable PlayerEntity p_i50034_2_, Hand p_i50034_3_, ItemStack p_i50034_4_, BlockRayTraceResult p_i50034_5_) {
-      this.player = p_i50034_2_;
-      this.hand = p_i50034_3_;
-      this.hitResult = p_i50034_5_;
-      this.itemStack = p_i50034_4_;
-      this.level = p_i50034_1_;
-   }
+    protected ItemUseContext(World worldIn, @Nullable PlayerEntity player, Hand handIn, ItemStack heldItem, BlockRayTraceResult rayTraceResultIn)
+    {
+        this.player = player;
+        this.hand = handIn;
+        this.rayTraceResult = rayTraceResultIn;
+        this.item = heldItem;
+        this.world = worldIn;
+    }
 
-   protected final BlockRayTraceResult getHitResult() {
-      return this.hitResult;
-   }
+    protected final BlockRayTraceResult func_242401_i()
+    {
+        return this.rayTraceResult;
+    }
 
-   public BlockPos getClickedPos() {
-      return this.hitResult.getBlockPos();
-   }
+    public BlockPos getPos()
+    {
+        return this.rayTraceResult.getPos();
+    }
 
-   public Direction getClickedFace() {
-      return this.hitResult.getDirection();
-   }
+    public Direction getFace()
+    {
+        return this.rayTraceResult.getFace();
+    }
 
-   public Vector3d getClickLocation() {
-      return this.hitResult.getLocation();
-   }
+    public Vector3d getHitVec()
+    {
+        return this.rayTraceResult.getHitVec();
+    }
 
-   public boolean isInside() {
-      return this.hitResult.isInside();
-   }
+    public boolean isInside()
+    {
+        return this.rayTraceResult.isInside();
+    }
 
-   public ItemStack getItemInHand() {
-      return this.itemStack;
-   }
+    public ItemStack getItem()
+    {
+        return this.item;
+    }
 
-   @Nullable
-   public PlayerEntity getPlayer() {
-      return this.player;
-   }
+    @Nullable
+    public PlayerEntity getPlayer()
+    {
+        return this.player;
+    }
 
-   public Hand getHand() {
-      return this.hand;
-   }
+    public Hand getHand()
+    {
+        return this.hand;
+    }
 
-   public World getLevel() {
-      return this.level;
-   }
+    public World getWorld()
+    {
+        return this.world;
+    }
 
-   public Direction getHorizontalDirection() {
-      return this.player == null ? Direction.NORTH : this.player.getDirection();
-   }
+    public Direction getPlacementHorizontalFacing()
+    {
+        return this.player == null ? Direction.NORTH : this.player.getHorizontalFacing();
+    }
 
-   public boolean isSecondaryUseActive() {
-      return this.player != null && this.player.isSecondaryUseActive();
-   }
+    public boolean hasSecondaryUseForPlayer()
+    {
+        return this.player != null && this.player.isSecondaryUseActive();
+    }
 
-   public float getRotation() {
-      return this.player == null ? 0.0F : this.player.yRot;
-   }
+    public float getPlacementYaw()
+    {
+        return this.player == null ? 0.0F : this.player.rotationYaw;
+    }
 }

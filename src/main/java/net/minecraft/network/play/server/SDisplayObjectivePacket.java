@@ -7,48 +7,64 @@ import net.minecraft.client.network.play.IClientPlayNetHandler;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.scoreboard.ScoreObjective;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class SDisplayObjectivePacket implements IPacket<IClientPlayNetHandler> {
-   private int slot;
-   private String objectiveName;
+public class SDisplayObjectivePacket implements IPacket<IClientPlayNetHandler>
+{
+    private int position;
+    private String scoreName;
 
-   public SDisplayObjectivePacket() {
-   }
+    public SDisplayObjectivePacket()
+    {
+    }
 
-   public SDisplayObjectivePacket(int p_i46918_1_, @Nullable ScoreObjective p_i46918_2_) {
-      this.slot = p_i46918_1_;
-      if (p_i46918_2_ == null) {
-         this.objectiveName = "";
-      } else {
-         this.objectiveName = p_i46918_2_.getName();
-      }
+    public SDisplayObjectivePacket(int positionIn, @Nullable ScoreObjective objective)
+    {
+        this.position = positionIn;
 
-   }
+        if (objective == null)
+        {
+            this.scoreName = "";
+        }
+        else
+        {
+            this.scoreName = objective.getName();
+        }
+    }
 
-   public void read(PacketBuffer p_148837_1_) throws IOException {
-      this.slot = p_148837_1_.readByte();
-      this.objectiveName = p_148837_1_.readUtf(16);
-   }
+    /**
+     * Reads the raw packet data from the data stream.
+     */
+    public void readPacketData(PacketBuffer buf) throws IOException
+    {
+        this.position = buf.readByte();
+        this.scoreName = buf.readString(16);
+    }
 
-   public void write(PacketBuffer p_148840_1_) throws IOException {
-      p_148840_1_.writeByte(this.slot);
-      p_148840_1_.writeUtf(this.objectiveName);
-   }
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    public void writePacketData(PacketBuffer buf) throws IOException
+    {
+        buf.writeByte(this.position);
+        buf.writeString(this.scoreName);
+    }
 
-   public void handle(IClientPlayNetHandler p_148833_1_) {
-      p_148833_1_.handleSetDisplayObjective(this);
-   }
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void processPacket(IClientPlayNetHandler handler)
+    {
+        handler.handleDisplayObjective(this);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getSlot() {
-      return this.slot;
-   }
+    public int getPosition()
+    {
+        return this.position;
+    }
 
-   @Nullable
-   @OnlyIn(Dist.CLIENT)
-   public String getObjectiveName() {
-      return Objects.equals(this.objectiveName, "") ? null : this.objectiveName;
-   }
+    @Nullable
+    public String getName()
+    {
+        return Objects.equals(this.scoreName, "") ? null : this.scoreName;
+    }
 }

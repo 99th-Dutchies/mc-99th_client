@@ -46,247 +46,326 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class OcelotEntity extends AnimalEntity {
-   private static final Ingredient TEMPT_INGREDIENT = Ingredient.of(Items.COD, Items.SALMON);
-   private static final DataParameter<Boolean> DATA_TRUSTING = EntityDataManager.defineId(OcelotEntity.class, DataSerializers.BOOLEAN);
-   private OcelotEntity.AvoidEntityGoal<PlayerEntity> ocelotAvoidPlayersGoal;
-   private OcelotEntity.TemptGoal temptGoal;
+public class OcelotEntity extends AnimalEntity
+{
+    private static final Ingredient BREEDING_ITEMS = Ingredient.fromItems(Items.COD, Items.SALMON);
+    private static final DataParameter<Boolean> IS_TRUSTING = EntityDataManager.createKey(OcelotEntity.class, DataSerializers.BOOLEAN);
+    private OcelotEntity.AvoidEntityGoal<PlayerEntity> field_213531_bB;
+    private OcelotEntity.TemptGoal aiTempt;
 
-   public OcelotEntity(EntityType<? extends OcelotEntity> p_i50254_1_, World p_i50254_2_) {
-      super(p_i50254_1_, p_i50254_2_);
-      this.reassessTrustingGoals();
-   }
+    public OcelotEntity(EntityType <? extends OcelotEntity > type, World worldIn)
+    {
+        super(type, worldIn);
+        this.func_213529_dV();
+    }
 
-   private boolean isTrusting() {
-      return this.entityData.get(DATA_TRUSTING);
-   }
+    private boolean isTrusting()
+    {
+        return this.dataManager.get(IS_TRUSTING);
+    }
 
-   private void setTrusting(boolean p_213528_1_) {
-      this.entityData.set(DATA_TRUSTING, p_213528_1_);
-      this.reassessTrustingGoals();
-   }
+    private void setTrusting(boolean trusting)
+    {
+        this.dataManager.set(IS_TRUSTING, trusting);
+        this.func_213529_dV();
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      p_213281_1_.putBoolean("Trusting", this.isTrusting());
-   }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
+        compound.putBoolean("Trusting", this.isTrusting());
+    }
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.setTrusting(p_70037_1_.getBoolean("Trusting"));
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.setTrusting(compound.getBoolean("Trusting"));
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_TRUSTING, false);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(IS_TRUSTING, false);
+    }
 
-   protected void registerGoals() {
-      this.temptGoal = new OcelotEntity.TemptGoal(this, 0.6D, TEMPT_INGREDIENT, true);
-      this.goalSelector.addGoal(1, new SwimGoal(this));
-      this.goalSelector.addGoal(3, this.temptGoal);
-      this.goalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3F));
-      this.goalSelector.addGoal(8, new OcelotAttackGoal(this));
-      this.goalSelector.addGoal(9, new BreedGoal(this, 0.8D));
-      this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 0.8D, 1.0000001E-5F));
-      this.goalSelector.addGoal(11, new LookAtGoal(this, PlayerEntity.class, 10.0F));
-      this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, ChickenEntity.class, false));
-      this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, TurtleEntity.class, 10, false, false, TurtleEntity.BABY_ON_LAND_SELECTOR));
-   }
+    protected void registerGoals()
+    {
+        this.aiTempt = new OcelotEntity.TemptGoal(this, 0.6D, BREEDING_ITEMS, true);
+        this.goalSelector.addGoal(1, new SwimGoal(this));
+        this.goalSelector.addGoal(3, this.aiTempt);
+        this.goalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3F));
+        this.goalSelector.addGoal(8, new OcelotAttackGoal(this));
+        this.goalSelector.addGoal(9, new BreedGoal(this, 0.8D));
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 0.8D, 1.0000001E-5F));
+        this.goalSelector.addGoal(11, new LookAtGoal(this, PlayerEntity.class, 10.0F));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, ChickenEntity.class, false));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, TurtleEntity.class, 10, false, false, TurtleEntity.TARGET_DRY_BABY));
+    }
 
-   public void customServerAiStep() {
-      if (this.getMoveControl().hasWanted()) {
-         double d0 = this.getMoveControl().getSpeedModifier();
-         if (d0 == 0.6D) {
-            this.setPose(Pose.CROUCHING);
-            this.setSprinting(false);
-         } else if (d0 == 1.33D) {
-            this.setPose(Pose.STANDING);
-            this.setSprinting(true);
-         } else {
-            this.setPose(Pose.STANDING);
-            this.setSprinting(false);
-         }
-      } else {
-         this.setPose(Pose.STANDING);
-         this.setSprinting(false);
-      }
+    public void updateAITasks()
+    {
+        if (this.getMoveHelper().isUpdating())
+        {
+            double d0 = this.getMoveHelper().getSpeed();
 
-   }
-
-   public boolean removeWhenFarAway(double p_213397_1_) {
-      return !this.isTrusting() && this.tickCount > 2400;
-   }
-
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MobEntity.createMobAttributes().add(Attributes.MAX_HEALTH, 10.0D).add(Attributes.MOVEMENT_SPEED, (double)0.3F).add(Attributes.ATTACK_DAMAGE, 3.0D);
-   }
-
-   public boolean causeFallDamage(float p_225503_1_, float p_225503_2_) {
-      return false;
-   }
-
-   @Nullable
-   protected SoundEvent getAmbientSound() {
-      return SoundEvents.OCELOT_AMBIENT;
-   }
-
-   public int getAmbientSoundInterval() {
-      return 900;
-   }
-
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.OCELOT_HURT;
-   }
-
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.OCELOT_DEATH;
-   }
-
-   private float getAttackDamage() {
-      return (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-   }
-
-   public boolean doHurtTarget(Entity p_70652_1_) {
-      return p_70652_1_.hurt(DamageSource.mobAttack(this), this.getAttackDamage());
-   }
-
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      return this.isInvulnerableTo(p_70097_1_) ? false : super.hurt(p_70097_1_, p_70097_2_);
-   }
-
-   public ActionResultType mobInteract(PlayerEntity p_230254_1_, Hand p_230254_2_) {
-      ItemStack itemstack = p_230254_1_.getItemInHand(p_230254_2_);
-      if ((this.temptGoal == null || this.temptGoal.isRunning()) && !this.isTrusting() && this.isFood(itemstack) && p_230254_1_.distanceToSqr(this) < 9.0D) {
-         this.usePlayerItem(p_230254_1_, itemstack);
-         if (!this.level.isClientSide) {
-            if (this.random.nextInt(3) == 0) {
-               this.setTrusting(true);
-               this.spawnTrustingParticles(true);
-               this.level.broadcastEntityEvent(this, (byte)41);
-            } else {
-               this.spawnTrustingParticles(false);
-               this.level.broadcastEntityEvent(this, (byte)40);
+            if (d0 == 0.6D)
+            {
+                this.setPose(Pose.CROUCHING);
+                this.setSprinting(false);
             }
-         }
+            else if (d0 == 1.33D)
+            {
+                this.setPose(Pose.STANDING);
+                this.setSprinting(true);
+            }
+            else
+            {
+                this.setPose(Pose.STANDING);
+                this.setSprinting(false);
+            }
+        }
+        else
+        {
+            this.setPose(Pose.STANDING);
+            this.setSprinting(false);
+        }
+    }
 
-         return ActionResultType.sidedSuccess(this.level.isClientSide);
-      } else {
-         return super.mobInteract(p_230254_1_, p_230254_2_);
-      }
-   }
+    public boolean canDespawn(double distanceToClosestPlayer)
+    {
+        return !this.isTrusting() && this.ticksExisted > 2400;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public void handleEntityEvent(byte p_70103_1_) {
-      if (p_70103_1_ == 41) {
-         this.spawnTrustingParticles(true);
-      } else if (p_70103_1_ == 40) {
-         this.spawnTrustingParticles(false);
-      } else {
-         super.handleEntityEvent(p_70103_1_);
-      }
+    public static AttributeModifierMap.MutableAttribute func_234201_eI_()
+    {
+        return MobEntity.func_233666_p_().createMutableAttribute(Attributes.MAX_HEALTH, 10.0D).createMutableAttribute(Attributes.MOVEMENT_SPEED, (double)0.3F).createMutableAttribute(Attributes.ATTACK_DAMAGE, 3.0D);
+    }
 
-   }
+    public boolean onLivingFall(float distance, float damageMultiplier)
+    {
+        return false;
+    }
 
-   private void spawnTrustingParticles(boolean p_213527_1_) {
-      IParticleData iparticledata = ParticleTypes.HEART;
-      if (!p_213527_1_) {
-         iparticledata = ParticleTypes.SMOKE;
-      }
+    @Nullable
+    protected SoundEvent getAmbientSound()
+    {
+        return SoundEvents.ENTITY_OCELOT_AMBIENT;
+    }
 
-      for(int i = 0; i < 7; ++i) {
-         double d0 = this.random.nextGaussian() * 0.02D;
-         double d1 = this.random.nextGaussian() * 0.02D;
-         double d2 = this.random.nextGaussian() * 0.02D;
-         this.level.addParticle(iparticledata, this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), d0, d1, d2);
-      }
+    /**
+     * Get number of ticks, at least during which the living entity will be silent.
+     */
+    public int getTalkInterval()
+    {
+        return 900;
+    }
 
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_OCELOT_HURT;
+    }
 
-   protected void reassessTrustingGoals() {
-      if (this.ocelotAvoidPlayersGoal == null) {
-         this.ocelotAvoidPlayersGoal = new OcelotEntity.AvoidEntityGoal<>(this, PlayerEntity.class, 16.0F, 0.8D, 1.33D);
-      }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_OCELOT_DEATH;
+    }
 
-      this.goalSelector.removeGoal(this.ocelotAvoidPlayersGoal);
-      if (!this.isTrusting()) {
-         this.goalSelector.addGoal(4, this.ocelotAvoidPlayersGoal);
-      }
+    private float func_226517_es_()
+    {
+        return (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    }
 
-   }
+    public boolean attackEntityAsMob(Entity entityIn)
+    {
+        return entityIn.attackEntityFrom(DamageSource.causeMobDamage(this), this.func_226517_es_());
+    }
 
-   public OcelotEntity getBreedOffspring(ServerWorld p_241840_1_, AgeableEntity p_241840_2_) {
-      return EntityType.OCELOT.create(p_241840_1_);
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        return this.isInvulnerableTo(source) ? false : super.attackEntityFrom(source, amount);
+    }
 
-   public boolean isFood(ItemStack p_70877_1_) {
-      return TEMPT_INGREDIENT.test(p_70877_1_);
-   }
+    public ActionResultType func_230254_b_(PlayerEntity p_230254_1_, Hand p_230254_2_)
+    {
+        ItemStack itemstack = p_230254_1_.getHeldItem(p_230254_2_);
 
-   public static boolean checkOcelotSpawnRules(EntityType<OcelotEntity> p_223319_0_, IWorld p_223319_1_, SpawnReason p_223319_2_, BlockPos p_223319_3_, Random p_223319_4_) {
-      return p_223319_4_.nextInt(3) != 0;
-   }
+        if ((this.aiTempt == null || this.aiTempt.isRunning()) && !this.isTrusting() && this.isBreedingItem(itemstack) && p_230254_1_.getDistanceSq(this) < 9.0D)
+        {
+            this.consumeItemFromStack(p_230254_1_, itemstack);
 
-   public boolean checkSpawnObstruction(IWorldReader p_205019_1_) {
-      if (p_205019_1_.isUnobstructed(this) && !p_205019_1_.containsAnyLiquid(this.getBoundingBox())) {
-         BlockPos blockpos = this.blockPosition();
-         if (blockpos.getY() < p_205019_1_.getSeaLevel()) {
-            return false;
-         }
+            if (!this.world.isRemote)
+            {
+                if (this.rand.nextInt(3) == 0)
+                {
+                    this.setTrusting(true);
+                    this.func_213527_s(true);
+                    this.world.setEntityState(this, (byte)41);
+                }
+                else
+                {
+                    this.func_213527_s(false);
+                    this.world.setEntityState(this, (byte)40);
+                }
+            }
 
-         BlockState blockstate = p_205019_1_.getBlockState(blockpos.below());
-         if (blockstate.is(Blocks.GRASS_BLOCK) || blockstate.is(BlockTags.LEAVES)) {
-            return true;
-         }
-      }
+            return ActionResultType.func_233537_a_(this.world.isRemote);
+        }
+        else
+        {
+            return super.func_230254_b_(p_230254_1_, p_230254_2_);
+        }
+    }
 
-      return false;
-   }
+    /**
+     * Handler for {@link World#setEntityState}
+     */
+    public void handleStatusUpdate(byte id)
+    {
+        if (id == 41)
+        {
+            this.func_213527_s(true);
+        }
+        else if (id == 40)
+        {
+            this.func_213527_s(false);
+        }
+        else
+        {
+            super.handleStatusUpdate(id);
+        }
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      if (p_213386_4_ == null) {
-         p_213386_4_ = new AgeableEntity.AgeableData(1.0F);
-      }
+    private void func_213527_s(boolean p_213527_1_)
+    {
+        IParticleData iparticledata = ParticleTypes.HEART;
 
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
+        if (!p_213527_1_)
+        {
+            iparticledata = ParticleTypes.SMOKE;
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public Vector3d getLeashOffset() {
-      return new Vector3d(0.0D, (double)(0.5F * this.getEyeHeight()), (double)(this.getBbWidth() * 0.4F));
-   }
+        for (int i = 0; i < 7; ++i)
+        {
+            double d0 = this.rand.nextGaussian() * 0.02D;
+            double d1 = this.rand.nextGaussian() * 0.02D;
+            double d2 = this.rand.nextGaussian() * 0.02D;
+            this.world.addParticle(iparticledata, this.getPosXRandom(1.0D), this.getPosYRandom() + 0.5D, this.getPosZRandom(1.0D), d0, d1, d2);
+        }
+    }
 
-   static class AvoidEntityGoal<T extends LivingEntity> extends net.minecraft.entity.ai.goal.AvoidEntityGoal<T> {
-      private final OcelotEntity ocelot;
+    protected void func_213529_dV()
+    {
+        if (this.field_213531_bB == null)
+        {
+            this.field_213531_bB = new OcelotEntity.AvoidEntityGoal<>(this, PlayerEntity.class, 16.0F, 0.8D, 1.33D);
+        }
 
-      public AvoidEntityGoal(OcelotEntity p_i50037_1_, Class<T> p_i50037_2_, float p_i50037_3_, double p_i50037_4_, double p_i50037_6_) {
-         super(p_i50037_1_, p_i50037_2_, p_i50037_3_, p_i50037_4_, p_i50037_6_, EntityPredicates.NO_CREATIVE_OR_SPECTATOR::test);
-         this.ocelot = p_i50037_1_;
-      }
+        this.goalSelector.removeGoal(this.field_213531_bB);
 
-      public boolean canUse() {
-         return !this.ocelot.isTrusting() && super.canUse();
-      }
+        if (!this.isTrusting())
+        {
+            this.goalSelector.addGoal(4, this.field_213531_bB);
+        }
+    }
 
-      public boolean canContinueToUse() {
-         return !this.ocelot.isTrusting() && super.canContinueToUse();
-      }
-   }
+    public OcelotEntity func_241840_a(ServerWorld p_241840_1_, AgeableEntity p_241840_2_)
+    {
+        return EntityType.OCELOT.create(p_241840_1_);
+    }
 
-   static class TemptGoal extends net.minecraft.entity.ai.goal.TemptGoal {
-      private final OcelotEntity ocelot;
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on
+     * the animal type)
+     */
+    public boolean isBreedingItem(ItemStack stack)
+    {
+        return BREEDING_ITEMS.test(stack);
+    }
 
-      public TemptGoal(OcelotEntity p_i50036_1_, double p_i50036_2_, Ingredient p_i50036_4_, boolean p_i50036_5_) {
-         super(p_i50036_1_, p_i50036_2_, p_i50036_4_, p_i50036_5_);
-         this.ocelot = p_i50036_1_;
-      }
+    public static boolean func_223319_c(EntityType<OcelotEntity> p_223319_0_, IWorld p_223319_1_, SpawnReason p_223319_2_, BlockPos p_223319_3_, Random p_223319_4_)
+    {
+        return p_223319_4_.nextInt(3) != 0;
+    }
 
-      protected boolean canScare() {
-         return super.canScare() && !this.ocelot.isTrusting();
-      }
-   }
+    public boolean isNotColliding(IWorldReader worldIn)
+    {
+        if (worldIn.checkNoEntityCollision(this) && !worldIn.containsAnyLiquid(this.getBoundingBox()))
+        {
+            BlockPos blockpos = this.getPosition();
+
+            if (blockpos.getY() < worldIn.getSeaLevel())
+            {
+                return false;
+            }
+
+            BlockState blockstate = worldIn.getBlockState(blockpos.down());
+
+            if (blockstate.isIn(Blocks.GRASS_BLOCK) || blockstate.isIn(BlockTags.LEAVES))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        if (spawnDataIn == null)
+        {
+            spawnDataIn = new AgeableEntity.AgeableData(1.0F);
+        }
+
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
+
+    public Vector3d func_241205_ce_()
+    {
+        return new Vector3d(0.0D, (double)(0.5F * this.getEyeHeight()), (double)(this.getWidth() * 0.4F));
+    }
+
+    static class AvoidEntityGoal<T extends LivingEntity> extends net.minecraft.entity.ai.goal.AvoidEntityGoal<T>
+    {
+        private final OcelotEntity ocelot;
+
+        public AvoidEntityGoal(OcelotEntity ocelotIn, Class<T> p_i50037_2_, float p_i50037_3_, double p_i50037_4_, double p_i50037_6_)
+        {
+            super(ocelotIn, p_i50037_2_, p_i50037_3_, p_i50037_4_, p_i50037_6_, EntityPredicates.CAN_AI_TARGET::test);
+            this.ocelot = ocelotIn;
+        }
+
+        public boolean shouldExecute()
+        {
+            return !this.ocelot.isTrusting() && super.shouldExecute();
+        }
+
+        public boolean shouldContinueExecuting()
+        {
+            return !this.ocelot.isTrusting() && super.shouldContinueExecuting();
+        }
+    }
+
+    static class TemptGoal extends net.minecraft.entity.ai.goal.TemptGoal
+    {
+        private final OcelotEntity ocelot;
+
+        public TemptGoal(OcelotEntity ocelotIn, double speedIn, Ingredient temptItemsIn, boolean p_i50036_5_)
+        {
+            super(ocelotIn, speedIn, temptItemsIn, p_i50036_5_);
+            this.ocelot = ocelotIn;
+        }
+
+        protected boolean isScaredByPlayerMovement()
+        {
+            return super.isScaredByPlayerMovement() && !this.ocelot.isTrusting();
+        }
+    }
 }

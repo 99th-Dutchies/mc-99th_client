@@ -3,69 +3,110 @@ package net.minecraft.entity.ai.goal;
 import java.util.List;
 import net.minecraft.entity.passive.AnimalEntity;
 
-public class FollowParentGoal extends Goal {
-   private final AnimalEntity animal;
-   private AnimalEntity parent;
-   private final double speedModifier;
-   private int timeToRecalcPath;
+public class FollowParentGoal extends Goal
+{
+    private final AnimalEntity childAnimal;
+    private AnimalEntity parentAnimal;
+    private final double moveSpeed;
+    private int delayCounter;
 
-   public FollowParentGoal(AnimalEntity p_i1626_1_, double p_i1626_2_) {
-      this.animal = p_i1626_1_;
-      this.speedModifier = p_i1626_2_;
-   }
+    public FollowParentGoal(AnimalEntity animal, double speed)
+    {
+        this.childAnimal = animal;
+        this.moveSpeed = speed;
+    }
 
-   public boolean canUse() {
-      if (this.animal.getAge() >= 0) {
-         return false;
-      } else {
-         List<AnimalEntity> list = this.animal.level.getEntitiesOfClass(this.animal.getClass(), this.animal.getBoundingBox().inflate(8.0D, 4.0D, 8.0D));
-         AnimalEntity animalentity = null;
-         double d0 = Double.MAX_VALUE;
+    /**
+     * Returns whether execution should begin. You can also read and cache any state necessary for execution in this
+     * method as well.
+     */
+    public boolean shouldExecute()
+    {
+        if (this.childAnimal.getGrowingAge() >= 0)
+        {
+            return false;
+        }
+        else
+        {
+            List<AnimalEntity> list = this.childAnimal.world.getEntitiesWithinAABB(this.childAnimal.getClass(), this.childAnimal.getBoundingBox().grow(8.0D, 4.0D, 8.0D));
+            AnimalEntity animalentity = null;
+            double d0 = Double.MAX_VALUE;
 
-         for(AnimalEntity animalentity1 : list) {
-            if (animalentity1.getAge() >= 0) {
-               double d1 = this.animal.distanceToSqr(animalentity1);
-               if (!(d1 > d0)) {
-                  d0 = d1;
-                  animalentity = animalentity1;
-               }
+            for (AnimalEntity animalentity1 : list)
+            {
+                if (animalentity1.getGrowingAge() >= 0)
+                {
+                    double d1 = this.childAnimal.getDistanceSq(animalentity1);
+
+                    if (!(d1 > d0))
+                    {
+                        d0 = d1;
+                        animalentity = animalentity1;
+                    }
+                }
             }
-         }
 
-         if (animalentity == null) {
+            if (animalentity == null)
+            {
+                return false;
+            }
+            else if (d0 < 9.0D)
+            {
+                return false;
+            }
+            else
+            {
+                this.parentAnimal = animalentity;
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Returns whether an in-progress EntityAIBase should continue executing
+     */
+    public boolean shouldContinueExecuting()
+    {
+        if (this.childAnimal.getGrowingAge() >= 0)
+        {
             return false;
-         } else if (d0 < 9.0D) {
+        }
+        else if (!this.parentAnimal.isAlive())
+        {
             return false;
-         } else {
-            this.parent = animalentity;
-            return true;
-         }
-      }
-   }
+        }
+        else
+        {
+            double d0 = this.childAnimal.getDistanceSq(this.parentAnimal);
+            return !(d0 < 9.0D) && !(d0 > 256.0D);
+        }
+    }
 
-   public boolean canContinueToUse() {
-      if (this.animal.getAge() >= 0) {
-         return false;
-      } else if (!this.parent.isAlive()) {
-         return false;
-      } else {
-         double d0 = this.animal.distanceToSqr(this.parent);
-         return !(d0 < 9.0D) && !(d0 > 256.0D);
-      }
-   }
+    /**
+     * Execute a one shot task or start executing a continuous task
+     */
+    public void startExecuting()
+    {
+        this.delayCounter = 0;
+    }
 
-   public void start() {
-      this.timeToRecalcPath = 0;
-   }
+    /**
+     * Reset the task's internal state. Called when this task is interrupted by another one
+     */
+    public void resetTask()
+    {
+        this.parentAnimal = null;
+    }
 
-   public void stop() {
-      this.parent = null;
-   }
-
-   public void tick() {
-      if (--this.timeToRecalcPath <= 0) {
-         this.timeToRecalcPath = 10;
-         this.animal.getNavigation().moveTo(this.parent, this.speedModifier);
-      }
-   }
+    /**
+     * Keep ticking a continuous task that has already been started
+     */
+    public void tick()
+    {
+        if (--this.delayCounter <= 0)
+        {
+            this.delayCounter = 10;
+            this.childAnimal.getNavigator().tryMoveToEntityLiving(this.parentAnimal, this.moveSpeed);
+        }
+    }
 }

@@ -6,29 +6,43 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraft.world.World;
 
-public abstract class ProjectileDispenseBehavior extends DefaultDispenseItemBehavior {
-   public ItemStack execute(IBlockSource p_82487_1_, ItemStack p_82487_2_) {
-      World world = p_82487_1_.getLevel();
-      IPosition iposition = DispenserBlock.getDispensePosition(p_82487_1_);
-      Direction direction = p_82487_1_.getBlockState().getValue(DispenserBlock.FACING);
-      ProjectileEntity projectileentity = this.getProjectile(world, iposition, p_82487_2_);
-      projectileentity.shoot((double)direction.getStepX(), (double)((float)direction.getStepY() + 0.1F), (double)direction.getStepZ(), this.getPower(), this.getUncertainty());
-      world.addFreshEntity(projectileentity);
-      p_82487_2_.shrink(1);
-      return p_82487_2_;
-   }
+public abstract class ProjectileDispenseBehavior extends DefaultDispenseItemBehavior
+{
+    /**
+     * Dispense the specified stack, play the dispense sound and spawn particles.
+     */
+    public ItemStack dispenseStack(IBlockSource source, ItemStack stack)
+    {
+        World world = source.getWorld();
+        IPosition iposition = DispenserBlock.getDispensePosition(source);
+        Direction direction = source.getBlockState().get(DispenserBlock.FACING);
+        ProjectileEntity projectileentity = this.getProjectileEntity(world, iposition, stack);
+        projectileentity.shoot((double)direction.getXOffset(), (double)((float)direction.getYOffset() + 0.1F), (double)direction.getZOffset(), this.getProjectileVelocity(), this.getProjectileInaccuracy());
+        world.addEntity(projectileentity);
+        stack.shrink(1);
+        return stack;
+    }
 
-   protected void playSound(IBlockSource p_82485_1_) {
-      p_82485_1_.getLevel().levelEvent(1002, p_82485_1_.getPos(), 0);
-   }
+    /**
+     * Play the dispense sound from the specified block.
+     */
+    protected void playDispenseSound(IBlockSource source)
+    {
+        source.getWorld().playEvent(1002, source.getBlockPos(), 0);
+    }
 
-   protected abstract ProjectileEntity getProjectile(World p_82499_1_, IPosition p_82499_2_, ItemStack p_82499_3_);
+    /**
+     * Return the projectile entity spawned by this dispense behavior.
+     */
+    protected abstract ProjectileEntity getProjectileEntity(World worldIn, IPosition position, ItemStack stackIn);
 
-   protected float getUncertainty() {
-      return 6.0F;
-   }
+    protected float getProjectileInaccuracy()
+    {
+        return 6.0F;
+    }
 
-   protected float getPower() {
-      return 1.1F;
-   }
+    protected float getProjectileVelocity()
+    {
+        return 1.1F;
+    }
 }

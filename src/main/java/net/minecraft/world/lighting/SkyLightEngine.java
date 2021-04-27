@@ -9,223 +9,309 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.LightType;
 import net.minecraft.world.chunk.IChunkLightProvider;
 import net.minecraft.world.chunk.NibbleArray;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.mutable.MutableInt;
 
-public final class SkyLightEngine extends LightEngine<SkyLightStorage.StorageMap, SkyLightStorage> {
-   private static final Direction[] DIRECTIONS = Direction.values();
-   private static final Direction[] HORIZONTALS = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
+public final class SkyLightEngine extends LightEngine<SkyLightStorage.StorageMap, SkyLightStorage>
+{
+    private static final Direction[] DIRECTIONS = Direction.values();
+    private static final Direction[] CARDINALS = new Direction[] {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
 
-   public SkyLightEngine(IChunkLightProvider p_i51289_1_) {
-      super(p_i51289_1_, LightType.SKY, new SkyLightStorage(p_i51289_1_));
-   }
+    public SkyLightEngine(IChunkLightProvider p_i51289_1_)
+    {
+        super(p_i51289_1_, LightType.SKY, new SkyLightStorage(p_i51289_1_));
+    }
 
-   protected int computeLevelFromNeighbor(long p_215480_1_, long p_215480_3_, int p_215480_5_) {
-      if (p_215480_3_ == Long.MAX_VALUE) {
-         return 15;
-      } else {
-         if (p_215480_1_ == Long.MAX_VALUE) {
-            if (!this.storage.hasLightSource(p_215480_3_)) {
-               return 15;
+    /**
+     * Returns level propagated from start position with specified level to the neighboring end position.
+     */
+    protected int getEdgeLevel(long startPos, long endPos, int startLevel)
+    {
+        if (endPos == Long.MAX_VALUE)
+        {
+            return 15;
+        }
+        else
+        {
+            if (startPos == Long.MAX_VALUE)
+            {
+                if (!this.storage.func_215551_l(endPos))
+                {
+                    return 15;
+                }
+
+                startLevel = 0;
             }
 
-            p_215480_5_ = 0;
-         }
-
-         if (p_215480_5_ >= 15) {
-            return p_215480_5_;
-         } else {
-            MutableInt mutableint = new MutableInt();
-            BlockState blockstate = this.getStateAndOpacity(p_215480_3_, mutableint);
-            if (mutableint.getValue() >= 15) {
-               return 15;
-            } else {
-               int i = BlockPos.getX(p_215480_1_);
-               int j = BlockPos.getY(p_215480_1_);
-               int k = BlockPos.getZ(p_215480_1_);
-               int l = BlockPos.getX(p_215480_3_);
-               int i1 = BlockPos.getY(p_215480_3_);
-               int j1 = BlockPos.getZ(p_215480_3_);
-               boolean flag = i == l && k == j1;
-               int k1 = Integer.signum(l - i);
-               int l1 = Integer.signum(i1 - j);
-               int i2 = Integer.signum(j1 - k);
-               Direction direction;
-               if (p_215480_1_ == Long.MAX_VALUE) {
-                  direction = Direction.DOWN;
-               } else {
-                  direction = Direction.fromNormal(k1, l1, i2);
-               }
-
-               BlockState blockstate1 = this.getStateAndOpacity(p_215480_1_, (MutableInt)null);
-               if (direction != null) {
-                  VoxelShape voxelshape = this.getShape(blockstate1, p_215480_1_, direction);
-                  VoxelShape voxelshape1 = this.getShape(blockstate, p_215480_3_, direction.getOpposite());
-                  if (VoxelShapes.faceShapeOccludes(voxelshape, voxelshape1)) {
-                     return 15;
-                  }
-               } else {
-                  VoxelShape voxelshape3 = this.getShape(blockstate1, p_215480_1_, Direction.DOWN);
-                  if (VoxelShapes.faceShapeOccludes(voxelshape3, VoxelShapes.empty())) {
-                     return 15;
-                  }
-
-                  int j2 = flag ? -1 : 0;
-                  Direction direction1 = Direction.fromNormal(k1, j2, i2);
-                  if (direction1 == null) {
-                     return 15;
-                  }
-
-                  VoxelShape voxelshape2 = this.getShape(blockstate, p_215480_3_, direction1.getOpposite());
-                  if (VoxelShapes.faceShapeOccludes(VoxelShapes.empty(), voxelshape2)) {
-                     return 15;
-                  }
-               }
-
-               boolean flag1 = p_215480_1_ == Long.MAX_VALUE || flag && j > i1;
-               return flag1 && p_215480_5_ == 0 && mutableint.getValue() == 0 ? 0 : p_215480_5_ + Math.max(1, mutableint.getValue());
+            if (startLevel >= 15)
+            {
+                return startLevel;
             }
-         }
-      }
-   }
+            else
+            {
+                MutableInt mutableint = new MutableInt();
+                BlockState blockstate = this.getBlockAndOpacity(endPos, mutableint);
 
-   protected void checkNeighborsAfterUpdate(long p_215478_1_, int p_215478_3_, boolean p_215478_4_) {
-      long i = SectionPos.blockToSection(p_215478_1_);
-      int j = BlockPos.getY(p_215478_1_);
-      int k = SectionPos.sectionRelative(j);
-      int l = SectionPos.blockToSectionCoord(j);
-      int i1;
-      if (k != 0) {
-         i1 = 0;
-      } else {
-         int j1;
-         for(j1 = 0; !this.storage.storingLightForSection(SectionPos.offset(i, 0, -j1 - 1, 0)) && this.storage.hasSectionsBelow(l - j1 - 1); ++j1) {
-         }
+                if (mutableint.getValue() >= 15)
+                {
+                    return 15;
+                }
+                else
+                {
+                    int i = BlockPos.unpackX(startPos);
+                    int j = BlockPos.unpackY(startPos);
+                    int k = BlockPos.unpackZ(startPos);
+                    int l = BlockPos.unpackX(endPos);
+                    int i1 = BlockPos.unpackY(endPos);
+                    int j1 = BlockPos.unpackZ(endPos);
+                    boolean flag = i == l && k == j1;
+                    int k1 = Integer.signum(l - i);
+                    int l1 = Integer.signum(i1 - j);
+                    int i2 = Integer.signum(j1 - k);
+                    Direction direction;
 
-         i1 = j1;
-      }
+                    if (startPos == Long.MAX_VALUE)
+                    {
+                        direction = Direction.DOWN;
+                    }
+                    else
+                    {
+                        direction = Direction.byLong(k1, l1, i2);
+                    }
 
-      long i3 = BlockPos.offset(p_215478_1_, 0, -1 - i1 * 16, 0);
-      long k1 = SectionPos.blockToSection(i3);
-      if (i == k1 || this.storage.storingLightForSection(k1)) {
-         this.checkNeighbor(p_215478_1_, i3, p_215478_3_, p_215478_4_);
-      }
+                    BlockState blockstate1 = this.getBlockAndOpacity(startPos, (MutableInt)null);
 
-      long l1 = BlockPos.offset(p_215478_1_, Direction.UP);
-      long i2 = SectionPos.blockToSection(l1);
-      if (i == i2 || this.storage.storingLightForSection(i2)) {
-         this.checkNeighbor(p_215478_1_, l1, p_215478_3_, p_215478_4_);
-      }
+                    if (direction != null)
+                    {
+                        VoxelShape voxelshape = this.getVoxelShape(blockstate1, startPos, direction);
+                        VoxelShape voxelshape1 = this.getVoxelShape(blockstate, endPos, direction.getOpposite());
 
-      for(Direction direction : HORIZONTALS) {
-         int j2 = 0;
+                        if (VoxelShapes.faceShapeCovers(voxelshape, voxelshape1))
+                        {
+                            return 15;
+                        }
+                    }
+                    else
+                    {
+                        VoxelShape voxelshape3 = this.getVoxelShape(blockstate1, startPos, Direction.DOWN);
 
-         while(true) {
-            long k2 = BlockPos.offset(p_215478_1_, direction.getStepX(), -j2, direction.getStepZ());
-            long l2 = SectionPos.blockToSection(k2);
-            if (i == l2) {
-               this.checkNeighbor(p_215478_1_, k2, p_215478_3_, p_215478_4_);
-               break;
+                        if (VoxelShapes.faceShapeCovers(voxelshape3, VoxelShapes.empty()))
+                        {
+                            return 15;
+                        }
+
+                        int j2 = flag ? -1 : 0;
+                        Direction direction1 = Direction.byLong(k1, j2, i2);
+
+                        if (direction1 == null)
+                        {
+                            return 15;
+                        }
+
+                        VoxelShape voxelshape2 = this.getVoxelShape(blockstate, endPos, direction1.getOpposite());
+
+                        if (VoxelShapes.faceShapeCovers(VoxelShapes.empty(), voxelshape2))
+                        {
+                            return 15;
+                        }
+                    }
+
+                    boolean flag1 = startPos == Long.MAX_VALUE || flag && j > i1;
+                    return flag1 && startLevel == 0 && mutableint.getValue() == 0 ? 0 : startLevel + Math.max(1, mutableint.getValue());
+                }
             }
+        }
+    }
 
-            if (this.storage.storingLightForSection(l2)) {
-               this.checkNeighbor(p_215478_1_, k2, p_215478_3_, p_215478_4_);
+    protected void notifyNeighbors(long pos, int level, boolean isDecreasing)
+    {
+        long i = SectionPos.worldToSection(pos);
+        int j = BlockPos.unpackY(pos);
+        int k = SectionPos.mask(j);
+        int l = SectionPos.toChunk(j);
+        int i1;
+
+        if (k != 0)
+        {
+            i1 = 0;
+        }
+        else
+        {
+            int j1;
+
+            for (j1 = 0; !this.storage.hasSection(SectionPos.withOffset(i, 0, -j1 - 1, 0)) && this.storage.isAboveBottom(l - j1 - 1); ++j1)
+            {
             }
 
-            ++j2;
-            if (j2 > i1 * 16) {
-               break;
+            i1 = j1;
+        }
+
+        long i3 = BlockPos.offset(pos, 0, -1 - i1 * 16, 0);
+        long k1 = SectionPos.worldToSection(i3);
+
+        if (i == k1 || this.storage.hasSection(k1))
+        {
+            this.propagateLevel(pos, i3, level, isDecreasing);
+        }
+
+        long l1 = BlockPos.offset(pos, Direction.UP);
+        long i2 = SectionPos.worldToSection(l1);
+
+        if (i == i2 || this.storage.hasSection(i2))
+        {
+            this.propagateLevel(pos, l1, level, isDecreasing);
+        }
+
+        for (Direction direction : CARDINALS)
+        {
+            int j2 = 0;
+
+            while (true)
+            {
+                long k2 = BlockPos.offset(pos, direction.getXOffset(), -j2, direction.getZOffset());
+                long l2 = SectionPos.worldToSection(k2);
+
+                if (i == l2)
+                {
+                    this.propagateLevel(pos, k2, level, isDecreasing);
+                    break;
+                }
+
+                if (this.storage.hasSection(l2))
+                {
+                    this.propagateLevel(pos, k2, level, isDecreasing);
+                }
+
+                ++j2;
+
+                if (j2 > i1 * 16)
+                {
+                    break;
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
+    /**
+     * Computes level propagated from neighbors of specified position with given existing level, excluding the given
+     * source position.
+     */
+    protected int computeLevel(long pos, long excludedSourcePos, int level)
+    {
+        int i = level;
 
-   protected int getComputedLevel(long p_215477_1_, long p_215477_3_, int p_215477_5_) {
-      int i = p_215477_5_;
-      if (Long.MAX_VALUE != p_215477_3_) {
-         int j = this.computeLevelFromNeighbor(Long.MAX_VALUE, p_215477_1_, 0);
-         if (p_215477_5_ > j) {
-            i = j;
-         }
+        if (Long.MAX_VALUE != excludedSourcePos)
+        {
+            int j = this.getEdgeLevel(Long.MAX_VALUE, pos, 0);
 
-         if (i == 0) {
-            return i;
-         }
-      }
-
-      long j1 = SectionPos.blockToSection(p_215477_1_);
-      NibbleArray nibblearray = this.storage.getDataLayer(j1, true);
-
-      for(Direction direction : DIRECTIONS) {
-         long k = BlockPos.offset(p_215477_1_, direction);
-         long l = SectionPos.blockToSection(k);
-         NibbleArray nibblearray1;
-         if (j1 == l) {
-            nibblearray1 = nibblearray;
-         } else {
-            nibblearray1 = this.storage.getDataLayer(l, true);
-         }
-
-         if (nibblearray1 != null) {
-            if (k != p_215477_3_) {
-               int k1 = this.computeLevelFromNeighbor(k, p_215477_1_, this.getLevel(nibblearray1, k));
-               if (i > k1) {
-                  i = k1;
-               }
-
-               if (i == 0) {
-                  return i;
-               }
-            }
-         } else if (direction != Direction.DOWN) {
-            for(k = BlockPos.getFlatIndex(k); !this.storage.storingLightForSection(l) && !this.storage.isAboveData(l); k = BlockPos.offset(k, 0, 16, 0)) {
-               l = SectionPos.offset(l, Direction.UP);
+            if (level > j)
+            {
+                i = j;
             }
 
-            NibbleArray nibblearray2 = this.storage.getDataLayer(l, true);
-            if (k != p_215477_3_) {
-               int i1;
-               if (nibblearray2 != null) {
-                  i1 = this.computeLevelFromNeighbor(k, p_215477_1_, this.getLevel(nibblearray2, k));
-               } else {
-                  i1 = this.storage.lightOnInSection(l) ? 0 : 15;
-               }
-
-               if (i > i1) {
-                  i = i1;
-               }
-
-               if (i == 0) {
-                  return i;
-               }
+            if (i == 0)
+            {
+                return i;
             }
-         }
-      }
+        }
 
-      return i;
-   }
+        long j1 = SectionPos.worldToSection(pos);
+        NibbleArray nibblearray = this.storage.getArray(j1, true);
 
-   protected void checkNode(long p_215473_1_) {
-      this.storage.runAllUpdates();
-      long i = SectionPos.blockToSection(p_215473_1_);
-      if (this.storage.storingLightForSection(i)) {
-         super.checkNode(p_215473_1_);
-      } else {
-         for(p_215473_1_ = BlockPos.getFlatIndex(p_215473_1_); !this.storage.storingLightForSection(i) && !this.storage.isAboveData(i); p_215473_1_ = BlockPos.offset(p_215473_1_, 0, 16, 0)) {
-            i = SectionPos.offset(i, Direction.UP);
-         }
+        for (Direction direction : DIRECTIONS)
+        {
+            long k = BlockPos.offset(pos, direction);
+            long l = SectionPos.worldToSection(k);
+            NibbleArray nibblearray1;
 
-         if (this.storage.storingLightForSection(i)) {
-            super.checkNode(p_215473_1_);
-         }
-      }
+            if (j1 == l)
+            {
+                nibblearray1 = nibblearray;
+            }
+            else
+            {
+                nibblearray1 = this.storage.getArray(l, true);
+            }
 
-   }
+            if (nibblearray1 != null)
+            {
+                if (k != excludedSourcePos)
+                {
+                    int k1 = this.getEdgeLevel(k, pos, this.getLevelFromArray(nibblearray1, k));
 
-   @OnlyIn(Dist.CLIENT)
-   public String getDebugData(long p_215614_1_) {
-      return super.getDebugData(p_215614_1_) + (this.storage.isAboveData(p_215614_1_) ? "*" : "");
-   }
+                    if (i > k1)
+                    {
+                        i = k1;
+                    }
+
+                    if (i == 0)
+                    {
+                        return i;
+                    }
+                }
+            }
+            else if (direction != Direction.DOWN)
+            {
+                for (k = BlockPos.atSectionBottomY(k); !this.storage.hasSection(l) && !this.storage.isAboveWorld(l); k = BlockPos.offset(k, 0, 16, 0))
+                {
+                    l = SectionPos.withOffset(l, Direction.UP);
+                }
+
+                NibbleArray nibblearray2 = this.storage.getArray(l, true);
+
+                if (k != excludedSourcePos)
+                {
+                    int i1;
+
+                    if (nibblearray2 != null)
+                    {
+                        i1 = this.getEdgeLevel(k, pos, this.getLevelFromArray(nibblearray2, k));
+                    }
+                    else
+                    {
+                        i1 = this.storage.isSectionEnabled(l) ? 0 : 15;
+                    }
+
+                    if (i > i1)
+                    {
+                        i = i1;
+                    }
+
+                    if (i == 0)
+                    {
+                        return i;
+                    }
+                }
+            }
+        }
+
+        return i;
+    }
+
+    protected void scheduleUpdate(long worldPos)
+    {
+        this.storage.processAllLevelUpdates();
+        long i = SectionPos.worldToSection(worldPos);
+
+        if (this.storage.hasSection(i))
+        {
+            super.scheduleUpdate(worldPos);
+        }
+        else
+        {
+            for (worldPos = BlockPos.atSectionBottomY(worldPos); !this.storage.hasSection(i) && !this.storage.isAboveWorld(i); worldPos = BlockPos.offset(worldPos, 0, 16, 0))
+            {
+                i = SectionPos.withOffset(i, Direction.UP);
+            }
+
+            if (this.storage.hasSection(i))
+            {
+                super.scheduleUpdate(worldPos);
+            }
+        }
+    }
+
+    public String getDebugString(long sectionPosIn)
+    {
+        return super.getDebugString(sectionPosIn) + (this.storage.isAboveWorld(sectionPosIn) ? "*" : "");
+    }
 }

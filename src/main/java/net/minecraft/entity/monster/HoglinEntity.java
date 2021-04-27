@@ -42,281 +42,382 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class HoglinEntity extends AnimalEntity implements IMob, IFlinging {
-   private static final DataParameter<Boolean> DATA_IMMUNE_TO_ZOMBIFICATION = EntityDataManager.defineId(HoglinEntity.class, DataSerializers.BOOLEAN);
-   private int attackAnimationRemainingTicks;
-   private int timeInOverworld = 0;
-   private boolean cannotBeHunted = false;
-   protected static final ImmutableList<? extends SensorType<? extends Sensor<? super HoglinEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ADULT, SensorType.HOGLIN_SPECIFIC_SENSOR);
-   protected static final ImmutableList<? extends MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.BREED_TARGET, MemoryModuleType.LIVING_ENTITIES, MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.LOOK_TARGET, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.PATH, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLIN, MemoryModuleType.AVOID_TARGET, MemoryModuleType.VISIBLE_ADULT_PIGLIN_COUNT, MemoryModuleType.VISIBLE_ADULT_HOGLIN_COUNT, MemoryModuleType.NEAREST_VISIBLE_ADULT_HOGLINS, MemoryModuleType.NEAREST_VISIBLE_ADULT, MemoryModuleType.NEAREST_REPELLENT, MemoryModuleType.PACIFIED);
+public class HoglinEntity extends AnimalEntity implements IMob, IFlinging
+{
+    private static final DataParameter<Boolean> field_234356_bw_ = EntityDataManager.createKey(HoglinEntity.class, DataSerializers.BOOLEAN);
+    private int field_234357_bx_;
+    private int field_234358_by_ = 0;
+    private boolean field_234359_bz_ = false;
+    protected static final ImmutableList <? extends SensorType <? extends Sensor <? super HoglinEntity >>> field_234354_bu_ = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.NEAREST_ADULT, SensorType.HOGLIN_SPECIFIC_SENSOR);
+    protected static final ImmutableList <? extends MemoryModuleType<? >> field_234355_bv_ = ImmutableList.of(MemoryModuleType.BREED_TARGET, MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.LOOK_TARGET, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.PATH, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLIN, MemoryModuleType.AVOID_TARGET, MemoryModuleType.VISIBLE_ADULT_PIGLIN_COUNT, MemoryModuleType.VISIBLE_ADULT_HOGLIN_COUNT, MemoryModuleType.NEAREST_VISIBLE_ADULT_HOGLINS, MemoryModuleType.NEAREST_VISIBLE_ADULT, MemoryModuleType.NEAREST_REPELLENT, MemoryModuleType.PACIFIED);
 
-   public HoglinEntity(EntityType<? extends HoglinEntity> p_i231569_1_, World p_i231569_2_) {
-      super(p_i231569_1_, p_i231569_2_);
-      this.xpReward = 5;
-   }
+    public HoglinEntity(EntityType <? extends HoglinEntity > p_i231569_1_, World p_i231569_2_)
+    {
+        super(p_i231569_1_, p_i231569_2_);
+        this.experienceValue = 5;
+    }
 
-   public boolean canBeLeashed(PlayerEntity p_184652_1_) {
-      return !this.isLeashed();
-   }
+    public boolean canBeLeashedTo(PlayerEntity player)
+    {
+        return !this.getLeashed();
+    }
 
-   public static AttributeModifierMap.MutableAttribute createAttributes() {
-      return MonsterEntity.createMonsterAttributes().add(Attributes.MAX_HEALTH, 40.0D).add(Attributes.MOVEMENT_SPEED, (double)0.3F).add(Attributes.KNOCKBACK_RESISTANCE, (double)0.6F).add(Attributes.ATTACK_KNOCKBACK, 1.0D).add(Attributes.ATTACK_DAMAGE, 6.0D);
-   }
+    public static AttributeModifierMap.MutableAttribute func_234362_eI_()
+    {
+        return MonsterEntity.func_234295_eP_().createMutableAttribute(Attributes.MAX_HEALTH, 40.0D).createMutableAttribute(Attributes.MOVEMENT_SPEED, (double)0.3F).createMutableAttribute(Attributes.KNOCKBACK_RESISTANCE, (double)0.6F).createMutableAttribute(Attributes.ATTACK_KNOCKBACK, 1.0D).createMutableAttribute(Attributes.ATTACK_DAMAGE, 6.0D);
+    }
 
-   public boolean doHurtTarget(Entity p_70652_1_) {
-      if (!(p_70652_1_ instanceof LivingEntity)) {
-         return false;
-      } else {
-         this.attackAnimationRemainingTicks = 10;
-         this.level.broadcastEntityEvent(this, (byte)4);
-         this.playSound(SoundEvents.HOGLIN_ATTACK, 1.0F, this.getVoicePitch());
-         HoglinTasks.onHitTarget(this, (LivingEntity)p_70652_1_);
-         return IFlinging.hurtAndThrowTarget(this, (LivingEntity)p_70652_1_);
-      }
-   }
+    public boolean attackEntityAsMob(Entity entityIn)
+    {
+        if (!(entityIn instanceof LivingEntity))
+        {
+            return false;
+        }
+        else
+        {
+            this.field_234357_bx_ = 10;
+            this.world.setEntityState(this, (byte)4);
+            this.playSound(SoundEvents.ENTITY_HOGLIN_ATTACK, 1.0F, this.getSoundPitch());
+            HoglinTasks.func_234378_a_(this, (LivingEntity)entityIn);
+            return IFlinging.func_234403_a_(this, (LivingEntity)entityIn);
+        }
+    }
 
-   protected void blockedByShield(LivingEntity p_213371_1_) {
-      if (this.isAdult()) {
-         IFlinging.throwTarget(this, p_213371_1_);
-      }
+    protected void constructKnockBackVector(LivingEntity entityIn)
+    {
+        if (this.func_234363_eJ_())
+        {
+            IFlinging.func_234404_b_(this, entityIn);
+        }
+    }
 
-   }
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean attackEntityFrom(DamageSource source, float amount)
+    {
+        boolean flag = super.attackEntityFrom(source, amount);
 
-   public boolean hurt(DamageSource p_70097_1_, float p_70097_2_) {
-      boolean flag = super.hurt(p_70097_1_, p_70097_2_);
-      if (this.level.isClientSide) {
-         return false;
-      } else {
-         if (flag && p_70097_1_.getEntity() instanceof LivingEntity) {
-            HoglinTasks.wasHurtBy(this, (LivingEntity)p_70097_1_.getEntity());
-         }
+        if (this.world.isRemote)
+        {
+            return false;
+        }
+        else
+        {
+            if (flag && source.getTrueSource() instanceof LivingEntity)
+            {
+                HoglinTasks.func_234384_b_(this, (LivingEntity)source.getTrueSource());
+            }
 
-         return flag;
-      }
-   }
+            return flag;
+        }
+    }
 
-   protected Brain.BrainCodec<HoglinEntity> brainProvider() {
-      return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
-   }
+    protected Brain.BrainCodec<HoglinEntity> getBrainCodec()
+    {
+        return Brain.createCodec(field_234355_bv_, field_234354_bu_);
+    }
 
-   protected Brain<?> makeBrain(Dynamic<?> p_213364_1_) {
-      return HoglinTasks.makeBrain(this.brainProvider().makeBrain(p_213364_1_));
-   }
+    protected Brain<?> createBrain(Dynamic<?> dynamicIn)
+    {
+        return HoglinTasks.func_234376_a_(this.getBrainCodec().deserialize(dynamicIn));
+    }
 
-   public Brain<HoglinEntity> getBrain() {
-      return (Brain<HoglinEntity>) super.getBrain();
-   }
+    public Brain<HoglinEntity> getBrain()
+    {
+        return (Brain<HoglinEntity>) super.getBrain();
+    }
 
-   protected void customServerAiStep() {
-      this.level.getProfiler().push("hoglinBrain");
-      this.getBrain().tick((ServerWorld)this.level, this);
-      this.level.getProfiler().pop();
-      HoglinTasks.updateActivity(this);
-      if (this.isConverting()) {
-         ++this.timeInOverworld;
-         if (this.timeInOverworld > 300) {
-            this.playSound(SoundEvents.HOGLIN_CONVERTED_TO_ZOMBIFIED);
-            this.finishConversion((ServerWorld)this.level);
-         }
-      } else {
-         this.timeInOverworld = 0;
-      }
+    protected void updateAITasks()
+    {
+        this.world.getProfiler().startSection("hoglinBrain");
+        this.getBrain().tick((ServerWorld)this.world, this);
+        this.world.getProfiler().endSection();
+        HoglinTasks.func_234377_a_(this);
 
-   }
+        if (this.func_234364_eK_())
+        {
+            ++this.field_234358_by_;
 
-   public void aiStep() {
-      if (this.attackAnimationRemainingTicks > 0) {
-         --this.attackAnimationRemainingTicks;
-      }
+            if (this.field_234358_by_ > 300)
+            {
+                this.func_241412_a_(SoundEvents.ENTITY_HOGLIN_CONVERTED_TO_ZOMBIFIED);
+                this.func_234360_a_((ServerWorld)this.world);
+            }
+        }
+        else
+        {
+            this.field_234358_by_ = 0;
+        }
+    }
 
-      super.aiStep();
-   }
+    /**
+     * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
+     * use this to react to sunlight and start to burn.
+     */
+    public void livingTick()
+    {
+        if (this.field_234357_bx_ > 0)
+        {
+            --this.field_234357_bx_;
+        }
 
-   protected void ageBoundaryReached() {
-      if (this.isBaby()) {
-         this.xpReward = 3;
-         this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(0.5D);
-      } else {
-         this.xpReward = 5;
-         this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(6.0D);
-      }
+        super.livingTick();
+    }
 
-   }
+    /**
+     * This is called when Entity's growing age timer reaches 0 (negative values are considered as a child, positive as
+     * an adult)
+     */
+    protected void onGrowingAdult()
+    {
+        if (this.isChild())
+        {
+            this.experienceValue = 3;
+            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(0.5D);
+        }
+        else
+        {
+            this.experienceValue = 5;
+            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(6.0D);
+        }
+    }
 
-   public static boolean checkHoglinSpawnRules(EntityType<HoglinEntity> p_234361_0_, IWorld p_234361_1_, SpawnReason p_234361_2_, BlockPos p_234361_3_, Random p_234361_4_) {
-      return !p_234361_1_.getBlockState(p_234361_3_.below()).is(Blocks.NETHER_WART_BLOCK);
-   }
+    public static boolean func_234361_c_(EntityType<HoglinEntity> p_234361_0_, IWorld p_234361_1_, SpawnReason p_234361_2_, BlockPos p_234361_3_, Random p_234361_4_)
+    {
+        return !p_234361_1_.getBlockState(p_234361_3_.down()).isIn(Blocks.NETHER_WART_BLOCK);
+    }
 
-   @Nullable
-   public ILivingEntityData finalizeSpawn(IServerWorld p_213386_1_, DifficultyInstance p_213386_2_, SpawnReason p_213386_3_, @Nullable ILivingEntityData p_213386_4_, @Nullable CompoundNBT p_213386_5_) {
-      if (p_213386_1_.getRandom().nextFloat() < 0.2F) {
-         this.setBaby(true);
-      }
+    @Nullable
+    public ILivingEntityData onInitialSpawn(IServerWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason, @Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag)
+    {
+        if (worldIn.getRandom().nextFloat() < 0.2F)
+        {
+            this.setChild(true);
+        }
 
-      return super.finalizeSpawn(p_213386_1_, p_213386_2_, p_213386_3_, p_213386_4_, p_213386_5_);
-   }
+        return super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
 
-   public boolean removeWhenFarAway(double p_213397_1_) {
-      return !this.isPersistenceRequired();
-   }
+    public boolean canDespawn(double distanceToClosestPlayer)
+    {
+        return !this.isNoDespawnRequired();
+    }
 
-   public float getWalkTargetValue(BlockPos p_205022_1_, IWorldReader p_205022_2_) {
-      if (HoglinTasks.isPosNearNearestRepellent(this, p_205022_1_)) {
-         return -1.0F;
-      } else {
-         return p_205022_2_.getBlockState(p_205022_1_.below()).is(Blocks.CRIMSON_NYLIUM) ? 10.0F : 0.0F;
-      }
-   }
+    public float getBlockPathWeight(BlockPos pos, IWorldReader worldIn)
+    {
+        if (HoglinTasks.func_234380_a_(this, pos))
+        {
+            return -1.0F;
+        }
+        else
+        {
+            return worldIn.getBlockState(pos.down()).isIn(Blocks.CRIMSON_NYLIUM) ? 10.0F : 0.0F;
+        }
+    }
 
-   public double getPassengersRidingOffset() {
-      return (double)this.getBbHeight() - (this.isBaby() ? 0.2D : 0.15D);
-   }
+    /**
+     * Returns the Y offset from the entity's position for any entity riding this one.
+     */
+    public double getMountedYOffset()
+    {
+        return (double)this.getHeight() - (this.isChild() ? 0.2D : 0.15D);
+    }
 
-   public ActionResultType mobInteract(PlayerEntity p_230254_1_, Hand p_230254_2_) {
-      ActionResultType actionresulttype = super.mobInteract(p_230254_1_, p_230254_2_);
-      if (actionresulttype.consumesAction()) {
-         this.setPersistenceRequired();
-      }
+    public ActionResultType func_230254_b_(PlayerEntity p_230254_1_, Hand p_230254_2_)
+    {
+        ActionResultType actionresulttype = super.func_230254_b_(p_230254_1_, p_230254_2_);
 
-      return actionresulttype;
-   }
+        if (actionresulttype.isSuccessOrConsume())
+        {
+            this.enablePersistence();
+        }
 
-   @OnlyIn(Dist.CLIENT)
-   public void handleEntityEvent(byte p_70103_1_) {
-      if (p_70103_1_ == 4) {
-         this.attackAnimationRemainingTicks = 10;
-         this.playSound(SoundEvents.HOGLIN_ATTACK, 1.0F, this.getVoicePitch());
-      } else {
-         super.handleEntityEvent(p_70103_1_);
-      }
+        return actionresulttype;
+    }
 
-   }
+    /**
+     * Handler for {@link World#setEntityState}
+     */
+    public void handleStatusUpdate(byte id)
+    {
+        if (id == 4)
+        {
+            this.field_234357_bx_ = 10;
+            this.playSound(SoundEvents.ENTITY_HOGLIN_ATTACK, 1.0F, this.getSoundPitch());
+        }
+        else
+        {
+            super.handleStatusUpdate(id);
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public int getAttackAnimationRemainingTicks() {
-      return this.attackAnimationRemainingTicks;
-   }
+    public int func_230290_eL_()
+    {
+        return this.field_234357_bx_;
+    }
 
-   protected boolean shouldDropExperience() {
-      return true;
-   }
+    /**
+     * Entity won't drop items or experience points if this returns false
+     */
+    protected boolean canDropLoot()
+    {
+        return true;
+    }
 
-   protected int getExperienceReward(PlayerEntity p_70693_1_) {
-      return this.xpReward;
-   }
+    /**
+     * Get the experience points the entity currently has.
+     */
+    protected int getExperiencePoints(PlayerEntity player)
+    {
+        return this.experienceValue;
+    }
 
-   private void finishConversion(ServerWorld p_234360_1_) {
-      ZoglinEntity zoglinentity = this.convertTo(EntityType.ZOGLIN, true);
-      if (zoglinentity != null) {
-         zoglinentity.addEffect(new EffectInstance(Effects.CONFUSION, 200, 0));
-      }
+    private void func_234360_a_(ServerWorld p_234360_1_)
+    {
+        ZoglinEntity zoglinentity = this.func_233656_b_(EntityType.ZOGLIN, true);
 
-   }
+        if (zoglinentity != null)
+        {
+            zoglinentity.addPotionEffect(new EffectInstance(Effects.NAUSEA, 200, 0));
+        }
+    }
 
-   public boolean isFood(ItemStack p_70877_1_) {
-      return p_70877_1_.getItem() == Items.CRIMSON_FUNGUS;
-   }
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on
+     * the animal type)
+     */
+    public boolean isBreedingItem(ItemStack stack)
+    {
+        return stack.getItem() == Items.CRIMSON_FUNGUS;
+    }
 
-   public boolean isAdult() {
-      return !this.isBaby();
-   }
+    public boolean func_234363_eJ_()
+    {
+        return !this.isChild();
+    }
 
-   protected void defineSynchedData() {
-      super.defineSynchedData();
-      this.entityData.define(DATA_IMMUNE_TO_ZOMBIFICATION, false);
-   }
+    protected void registerData()
+    {
+        super.registerData();
+        this.dataManager.register(field_234356_bw_, false);
+    }
 
-   public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
-      super.addAdditionalSaveData(p_213281_1_);
-      if (this.isImmuneToZombification()) {
-         p_213281_1_.putBoolean("IsImmuneToZombification", true);
-      }
+    public void writeAdditional(CompoundNBT compound)
+    {
+        super.writeAdditional(compound);
 
-      p_213281_1_.putInt("TimeInOverworld", this.timeInOverworld);
-      if (this.cannotBeHunted) {
-         p_213281_1_.putBoolean("CannotBeHunted", true);
-      }
+        if (this.func_234368_eV_())
+        {
+            compound.putBoolean("IsImmuneToZombification", true);
+        }
 
-   }
+        compound.putInt("TimeInOverworld", this.field_234358_by_);
 
-   public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-      super.readAdditionalSaveData(p_70037_1_);
-      this.setImmuneToZombification(p_70037_1_.getBoolean("IsImmuneToZombification"));
-      this.timeInOverworld = p_70037_1_.getInt("TimeInOverworld");
-      this.setCannotBeHunted(p_70037_1_.getBoolean("CannotBeHunted"));
-   }
+        if (this.field_234359_bz_)
+        {
+            compound.putBoolean("CannotBeHunted", true);
+        }
+    }
 
-   public void setImmuneToZombification(boolean p_234370_1_) {
-      this.getEntityData().set(DATA_IMMUNE_TO_ZOMBIFICATION, p_234370_1_);
-   }
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    public void readAdditional(CompoundNBT compound)
+    {
+        super.readAdditional(compound);
+        this.func_234370_t_(compound.getBoolean("IsImmuneToZombification"));
+        this.field_234358_by_ = compound.getInt("TimeInOverworld");
+        this.func_234371_u_(compound.getBoolean("CannotBeHunted"));
+    }
 
-   private boolean isImmuneToZombification() {
-      return this.getEntityData().get(DATA_IMMUNE_TO_ZOMBIFICATION);
-   }
+    public void func_234370_t_(boolean p_234370_1_)
+    {
+        this.getDataManager().set(field_234356_bw_, p_234370_1_);
+    }
 
-   public boolean isConverting() {
-      return !this.level.dimensionType().piglinSafe() && !this.isImmuneToZombification() && !this.isNoAi();
-   }
+    private boolean func_234368_eV_()
+    {
+        return this.getDataManager().get(field_234356_bw_);
+    }
 
-   private void setCannotBeHunted(boolean p_234371_1_) {
-      this.cannotBeHunted = p_234371_1_;
-   }
+    public boolean func_234364_eK_()
+    {
+        return !this.world.getDimensionType().isPiglinSafe() && !this.func_234368_eV_() && !this.isAIDisabled();
+    }
 
-   public boolean canBeHunted() {
-      return this.isAdult() && !this.cannotBeHunted;
-   }
+    private void func_234371_u_(boolean p_234371_1_)
+    {
+        this.field_234359_bz_ = p_234371_1_;
+    }
 
-   @Nullable
-   public AgeableEntity getBreedOffspring(ServerWorld p_241840_1_, AgeableEntity p_241840_2_) {
-      HoglinEntity hoglinentity = EntityType.HOGLIN.create(p_241840_1_);
-      if (hoglinentity != null) {
-         hoglinentity.setPersistenceRequired();
-      }
+    public boolean func_234365_eM_()
+    {
+        return this.func_234363_eJ_() && !this.field_234359_bz_;
+    }
 
-      return hoglinentity;
-   }
+    @Nullable
+    public AgeableEntity func_241840_a(ServerWorld p_241840_1_, AgeableEntity p_241840_2_)
+    {
+        HoglinEntity hoglinentity = EntityType.HOGLIN.create(p_241840_1_);
 
-   public boolean canFallInLove() {
-      return !HoglinTasks.isPacified(this) && super.canFallInLove();
-   }
+        if (hoglinentity != null)
+        {
+            hoglinentity.enablePersistence();
+        }
 
-   public SoundCategory getSoundSource() {
-      return SoundCategory.HOSTILE;
-   }
+        return hoglinentity;
+    }
 
-   protected SoundEvent getAmbientSound() {
-      return this.level.isClientSide ? null : HoglinTasks.getSoundForCurrentActivity(this).orElse((SoundEvent)null);
-   }
+    public boolean canFallInLove()
+    {
+        return !HoglinTasks.func_234386_c_(this) && super.canFallInLove();
+    }
 
-   protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-      return SoundEvents.HOGLIN_HURT;
-   }
+    public SoundCategory getSoundCategory()
+    {
+        return SoundCategory.HOSTILE;
+    }
 
-   protected SoundEvent getDeathSound() {
-      return SoundEvents.HOGLIN_DEATH;
-   }
+    protected SoundEvent getAmbientSound()
+    {
+        return this.world.isRemote ? null : HoglinTasks.func_234398_h_(this).orElse((SoundEvent)null);
+    }
 
-   protected SoundEvent getSwimSound() {
-      return SoundEvents.HOSTILE_SWIM;
-   }
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
+    {
+        return SoundEvents.ENTITY_HOGLIN_HURT;
+    }
 
-   protected SoundEvent getSwimSplashSound() {
-      return SoundEvents.HOSTILE_SPLASH;
-   }
+    protected SoundEvent getDeathSound()
+    {
+        return SoundEvents.ENTITY_HOGLIN_DEATH;
+    }
 
-   protected void playStepSound(BlockPos p_180429_1_, BlockState p_180429_2_) {
-      this.playSound(SoundEvents.HOGLIN_STEP, 0.15F, 1.0F);
-   }
+    protected SoundEvent getSwimSound()
+    {
+        return SoundEvents.ENTITY_HOSTILE_SWIM;
+    }
 
-   protected void playSound(SoundEvent p_241412_1_) {
-      this.playSound(p_241412_1_, this.getSoundVolume(), this.getVoicePitch());
-   }
+    protected SoundEvent getSplashSound()
+    {
+        return SoundEvents.ENTITY_HOSTILE_SPLASH;
+    }
 
-   protected void sendDebugPackets() {
-      super.sendDebugPackets();
-      DebugPacketSender.sendEntityBrain(this);
-   }
+    protected void playStepSound(BlockPos pos, BlockState blockIn)
+    {
+        this.playSound(SoundEvents.ENTITY_HOGLIN_STEP, 0.15F, 1.0F);
+    }
+
+    protected void func_241412_a_(SoundEvent p_241412_1_)
+    {
+        this.playSound(p_241412_1_, this.getSoundVolume(), this.getSoundPitch());
+    }
+
+    protected void sendDebugPackets()
+    {
+        super.sendDebugPackets();
+        DebugPacketSender.sendLivingEntity(this);
+    }
 }

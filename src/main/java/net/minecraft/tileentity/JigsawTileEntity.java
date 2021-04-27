@@ -25,136 +25,162 @@ import net.minecraft.world.gen.feature.structure.StructureManager;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class JigsawTileEntity extends TileEntity {
-   private ResourceLocation name = new ResourceLocation("empty");
-   private ResourceLocation target = new ResourceLocation("empty");
-   private ResourceLocation pool = new ResourceLocation("empty");
-   private JigsawTileEntity.OrientationType joint = JigsawTileEntity.OrientationType.ROLLABLE;
-   private String finalState = "minecraft:air";
+public class JigsawTileEntity extends TileEntity
+{
+    private ResourceLocation field_235658_a_ = new ResourceLocation("empty");
+    private ResourceLocation field_235659_b_ = new ResourceLocation("empty");
+    private ResourceLocation field_235660_c_ = new ResourceLocation("empty");
+    private JigsawTileEntity.OrientationType field_235661_g_ = JigsawTileEntity.OrientationType.ROLLABLE;
+    private String finalState = "minecraft:air";
 
-   public JigsawTileEntity(TileEntityType<?> p_i49960_1_) {
-      super(p_i49960_1_);
-   }
+    public JigsawTileEntity(TileEntityType<?> type)
+    {
+        super(type);
+    }
 
-   public JigsawTileEntity() {
-      this(TileEntityType.JIGSAW);
-   }
+    public JigsawTileEntity()
+    {
+        this(TileEntityType.JIGSAW);
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ResourceLocation getName() {
-      return this.name;
-   }
+    public ResourceLocation func_235668_d_()
+    {
+        return this.field_235658_a_;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ResourceLocation getTarget() {
-      return this.target;
-   }
+    public ResourceLocation func_235669_f_()
+    {
+        return this.field_235659_b_;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public ResourceLocation getPool() {
-      return this.pool;
-   }
+    public ResourceLocation func_235670_g_()
+    {
+        return this.field_235660_c_;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public String getFinalState() {
-      return this.finalState;
-   }
+    public String getFinalState()
+    {
+        return this.finalState;
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public JigsawTileEntity.OrientationType getJoint() {
-      return this.joint;
-   }
+    public JigsawTileEntity.OrientationType func_235671_j_()
+    {
+        return this.field_235661_g_;
+    }
 
-   public void setName(ResourceLocation p_235664_1_) {
-      this.name = p_235664_1_;
-   }
+    public void func_235664_a_(ResourceLocation p_235664_1_)
+    {
+        this.field_235658_a_ = p_235664_1_;
+    }
 
-   public void setTarget(ResourceLocation p_235666_1_) {
-      this.target = p_235666_1_;
-   }
+    public void func_235666_b_(ResourceLocation p_235666_1_)
+    {
+        this.field_235659_b_ = p_235666_1_;
+    }
 
-   public void setPool(ResourceLocation p_235667_1_) {
-      this.pool = p_235667_1_;
-   }
+    public void func_235667_c_(ResourceLocation p_235667_1_)
+    {
+        this.field_235660_c_ = p_235667_1_;
+    }
 
-   public void setFinalState(String p_214055_1_) {
-      this.finalState = p_214055_1_;
-   }
+    public void setFinalState(String blockName)
+    {
+        this.finalState = blockName;
+    }
 
-   public void setJoint(JigsawTileEntity.OrientationType p_235662_1_) {
-      this.joint = p_235662_1_;
-   }
+    public void func_235662_a_(JigsawTileEntity.OrientationType p_235662_1_)
+    {
+        this.field_235661_g_ = p_235662_1_;
+    }
 
-   public CompoundNBT save(CompoundNBT p_189515_1_) {
-      super.save(p_189515_1_);
-      p_189515_1_.putString("name", this.name.toString());
-      p_189515_1_.putString("target", this.target.toString());
-      p_189515_1_.putString("pool", this.pool.toString());
-      p_189515_1_.putString("final_state", this.finalState);
-      p_189515_1_.putString("joint", this.joint.getSerializedName());
-      return p_189515_1_;
-   }
+    public CompoundNBT write(CompoundNBT compound)
+    {
+        super.write(compound);
+        compound.putString("name", this.field_235658_a_.toString());
+        compound.putString("target", this.field_235659_b_.toString());
+        compound.putString("pool", this.field_235660_c_.toString());
+        compound.putString("final_state", this.finalState);
+        compound.putString("joint", this.field_235661_g_.getString());
+        return compound;
+    }
 
-   public void load(BlockState p_230337_1_, CompoundNBT p_230337_2_) {
-      super.load(p_230337_1_, p_230337_2_);
-      this.name = new ResourceLocation(p_230337_2_.getString("name"));
-      this.target = new ResourceLocation(p_230337_2_.getString("target"));
-      this.pool = new ResourceLocation(p_230337_2_.getString("pool"));
-      this.finalState = p_230337_2_.getString("final_state");
-      this.joint = JigsawTileEntity.OrientationType.byName(p_230337_2_.getString("joint")).orElseGet(() -> {
-         return JigsawBlock.getFrontFacing(p_230337_1_).getAxis().isHorizontal() ? JigsawTileEntity.OrientationType.ALIGNED : JigsawTileEntity.OrientationType.ROLLABLE;
-      });
-   }
+    public void read(BlockState state, CompoundNBT nbt)
+    {
+        super.read(state, nbt);
+        this.field_235658_a_ = new ResourceLocation(nbt.getString("name"));
+        this.field_235659_b_ = new ResourceLocation(nbt.getString("target"));
+        this.field_235660_c_ = new ResourceLocation(nbt.getString("pool"));
+        this.finalState = nbt.getString("final_state");
+        this.field_235661_g_ = JigsawTileEntity.OrientationType.func_235673_a_(nbt.getString("joint")).orElseGet(() ->
+        {
+            return JigsawBlock.getConnectingDirection(state).getAxis().isHorizontal() ? JigsawTileEntity.OrientationType.ALIGNED : JigsawTileEntity.OrientationType.ROLLABLE;
+        });
+    }
 
-   @Nullable
-   public SUpdateTileEntityPacket getUpdatePacket() {
-      return new SUpdateTileEntityPacket(this.worldPosition, 12, this.getUpdateTag());
-   }
+    @Nullable
 
-   public CompoundNBT getUpdateTag() {
-      return this.save(new CompoundNBT());
-   }
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate. For
+     * modded TE's, this packet comes back to you clientside in {@link #onDataPacket}
+     */
+    public SUpdateTileEntityPacket getUpdatePacket()
+    {
+        return new SUpdateTileEntityPacket(this.pos, 12, this.getUpdateTag());
+    }
 
-   public void generate(ServerWorld p_235665_1_, int p_235665_2_, boolean p_235665_3_) {
-      ChunkGenerator chunkgenerator = p_235665_1_.getChunkSource().getGenerator();
-      TemplateManager templatemanager = p_235665_1_.getStructureManager();
-      StructureManager structuremanager = p_235665_1_.structureFeatureManager();
-      Random random = p_235665_1_.getRandom();
-      BlockPos blockpos = this.getBlockPos();
-      List<AbstractVillagePiece> list = Lists.newArrayList();
-      Template template = new Template();
-      template.fillFromWorld(p_235665_1_, blockpos, new BlockPos(1, 1, 1), false, (Block)null);
-      JigsawPiece jigsawpiece = new SingleJigsawPiece(template);
-      AbstractVillagePiece abstractvillagepiece = new AbstractVillagePiece(templatemanager, jigsawpiece, blockpos, 1, Rotation.NONE, new MutableBoundingBox(blockpos, blockpos));
-      JigsawManager.addPieces(p_235665_1_.registryAccess(), abstractvillagepiece, p_235665_2_, AbstractVillagePiece::new, chunkgenerator, templatemanager, list, random);
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to you clientside in {@link handleUpdateTag}
+     */
+    public CompoundNBT getUpdateTag()
+    {
+        return this.write(new CompoundNBT());
+    }
 
-      for(AbstractVillagePiece abstractvillagepiece1 : list) {
-         abstractvillagepiece1.place(p_235665_1_, structuremanager, chunkgenerator, random, MutableBoundingBox.infinite(), blockpos, p_235665_3_);
-      }
+    public void func_235665_a_(ServerWorld p_235665_1_, int p_235665_2_, boolean p_235665_3_)
+    {
+        ChunkGenerator chunkgenerator = p_235665_1_.getChunkProvider().getChunkGenerator();
+        TemplateManager templatemanager = p_235665_1_.getStructureTemplateManager();
+        StructureManager structuremanager = p_235665_1_.func_241112_a_();
+        Random random = p_235665_1_.getRandom();
+        BlockPos blockpos = this.getPos();
+        List<AbstractVillagePiece> list = Lists.newArrayList();
+        Template template = new Template();
+        template.takeBlocksFromWorld(p_235665_1_, blockpos, new BlockPos(1, 1, 1), false, (Block)null);
+        JigsawPiece jigsawpiece = new SingleJigsawPiece(template);
+        AbstractVillagePiece abstractvillagepiece = new AbstractVillagePiece(templatemanager, jigsawpiece, blockpos, 1, Rotation.NONE, new MutableBoundingBox(blockpos, blockpos));
+        JigsawManager.func_242838_a(p_235665_1_.func_241828_r(), abstractvillagepiece, p_235665_2_, AbstractVillagePiece::new, chunkgenerator, templatemanager, list, random);
 
-   }
+        for (AbstractVillagePiece abstractvillagepiece1 : list)
+        {
+            abstractvillagepiece1.func_237001_a_(p_235665_1_, structuremanager, chunkgenerator, random, MutableBoundingBox.func_236990_b_(), blockpos, p_235665_3_);
+        }
+    }
 
-   public static enum OrientationType implements IStringSerializable {
-      ROLLABLE("rollable"),
-      ALIGNED("aligned");
+    public static enum OrientationType implements IStringSerializable
+    {
+        ROLLABLE("rollable"),
+        ALIGNED("aligned");
 
-      private final String name;
+        private final String field_235672_c_;
 
-      private OrientationType(String p_i231862_3_) {
-         this.name = p_i231862_3_;
-      }
+        private OrientationType(String p_i231862_3_)
+        {
+            this.field_235672_c_ = p_i231862_3_;
+        }
 
-      public String getSerializedName() {
-         return this.name;
-      }
+        public String getString()
+        {
+            return this.field_235672_c_;
+        }
 
-      public static Optional<JigsawTileEntity.OrientationType> byName(String p_235673_0_) {
-         return Arrays.stream(values()).filter((p_235674_1_) -> {
-            return p_235674_1_.getSerializedName().equals(p_235673_0_);
-         }).findFirst();
-      }
-   }
+        public static Optional<JigsawTileEntity.OrientationType> func_235673_a_(String p_235673_0_)
+        {
+            return Arrays.stream(values()).filter((p_235674_1_) ->
+            {
+                return p_235674_1_.getString().equals(p_235673_0_);
+            }).findFirst();
+        }
+    }
 }

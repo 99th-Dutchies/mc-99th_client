@@ -9,65 +9,74 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class Session {
-   private final String name;
-   private final String uuid;
-   private final String accessToken;
-   private final Session.Type type;
+public class Session
+{
+    private final String username;
+    private final String playerID;
+    private final String token;
+    private final Session.Type sessionType;
 
-   public Session(String p_i1098_1_, String p_i1098_2_, String p_i1098_3_, String p_i1098_4_) {
-      this.name = p_i1098_1_;
-      this.uuid = p_i1098_2_;
-      this.accessToken = p_i1098_3_;
-      this.type = Session.Type.byName(p_i1098_4_);
-   }
+    public Session(String usernameIn, String playerIDIn, String tokenIn, String sessionTypeIn)
+    {
+        this.username = usernameIn;
+        this.playerID = playerIDIn;
+        this.token = tokenIn;
+        this.sessionType = Session.Type.setSessionType(sessionTypeIn);
+    }
 
-   public String getSessionId() {
-      return "token:" + this.accessToken + ":" + this.uuid;
-   }
+    public String getSessionID()
+    {
+        return "token:" + this.token + ":" + this.playerID;
+    }
 
-   public String getUuid() {
-      return this.uuid;
-   }
+    public String getPlayerID()
+    {
+        return this.playerID;
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getUsername()
+    {
+        return this.username;
+    }
 
-   public String getAccessToken() {
-      return this.accessToken;
-   }
+    public String getToken()
+    {
+        return this.token;
+    }
 
-   public GameProfile getGameProfile() {
-      try {
-         UUID uuid = UUIDTypeAdapter.fromString(this.getUuid());
-         return new GameProfile(uuid, this.getName());
-      } catch (IllegalArgumentException illegalargumentexception) {
-         return new GameProfile((UUID)null, this.getName());
-      }
-   }
+    public GameProfile getProfile()
+    {
+        try
+        {
+            UUID uuid = UUIDTypeAdapter.fromString(this.getPlayerID());
+            return new GameProfile(uuid, this.getUsername());
+        }
+        catch (IllegalArgumentException illegalargumentexception)
+        {
+            return new GameProfile((UUID)null, this.getUsername());
+        }
+    }
 
-   @OnlyIn(Dist.CLIENT)
-   public static enum Type {
-      LEGACY("legacy"),
-      MOJANG("mojang");
+    public static enum Type
+    {
+        LEGACY("legacy"),
+        MOJANG("mojang");
 
-      private static final Map<String, Session.Type> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap((p_199876_0_) -> {
-         return p_199876_0_.name;
-      }, Function.identity()));
-      private final String name;
+        private static final Map<String, Session.Type> SESSION_TYPES = Arrays.stream(values()).collect(Collectors.toMap((type) -> {
+            return type.sessionType;
+        }, Function.identity()));
+        private final String sessionType;
 
-      private Type(String p_i1096_3_) {
-         this.name = p_i1096_3_;
-      }
+        private Type(String sessionTypeIn)
+        {
+            this.sessionType = sessionTypeIn;
+        }
 
-      @Nullable
-      public static Session.Type byName(String p_152421_0_) {
-         return BY_NAME.get(p_152421_0_.toLowerCase(Locale.ROOT));
-      }
-   }
+        @Nullable
+        public static Session.Type setSessionType(String sessionTypeIn)
+        {
+            return SESSION_TYPES.get(sessionTypeIn.toLowerCase(Locale.ROOT));
+        }
+    }
 }

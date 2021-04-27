@@ -30,450 +30,621 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.gen.ChunkGenerator;
 import net.minecraft.world.gen.Heightmap;
 
-public abstract class StructurePiece {
-   protected static final BlockState CAVE_AIR = Blocks.CAVE_AIR.defaultBlockState();
-   protected MutableBoundingBox boundingBox;
-   @Nullable
-   private Direction orientation;
-   private Mirror mirror;
-   private Rotation rotation;
-   protected int genDepth;
-   private final IStructurePieceType type;
-   private static final Set<Block> SHAPE_CHECK_BLOCKS = ImmutableSet.<Block>builder().add(Blocks.NETHER_BRICK_FENCE).add(Blocks.TORCH).add(Blocks.WALL_TORCH).add(Blocks.OAK_FENCE).add(Blocks.SPRUCE_FENCE).add(Blocks.DARK_OAK_FENCE).add(Blocks.ACACIA_FENCE).add(Blocks.BIRCH_FENCE).add(Blocks.JUNGLE_FENCE).add(Blocks.LADDER).add(Blocks.IRON_BARS).build();
+public abstract class StructurePiece
+{
+    protected static final BlockState CAVE_AIR = Blocks.CAVE_AIR.getDefaultState();
+    protected MutableBoundingBox boundingBox;
+    @Nullable
+    private Direction coordBaseMode;
+    private Mirror mirror;
+    private Rotation rotation;
+    protected int componentType;
+    private final IStructurePieceType structurePieceType;
+    private static final Set<Block> BLOCKS_NEEDING_POSTPROCESSING = ImmutableSet.<Block>builder().add(Blocks.NETHER_BRICK_FENCE).add(Blocks.TORCH).add(Blocks.WALL_TORCH).add(Blocks.OAK_FENCE).add(Blocks.SPRUCE_FENCE).add(Blocks.DARK_OAK_FENCE).add(Blocks.ACACIA_FENCE).add(Blocks.BIRCH_FENCE).add(Blocks.JUNGLE_FENCE).add(Blocks.LADDER).add(Blocks.IRON_BARS).build();
 
-   protected StructurePiece(IStructurePieceType p_i51342_1_, int p_i51342_2_) {
-      this.type = p_i51342_1_;
-      this.genDepth = p_i51342_2_;
-   }
+    protected StructurePiece(IStructurePieceType structurePieceTypeIn, int componentTypeIn)
+    {
+        this.structurePieceType = structurePieceTypeIn;
+        this.componentType = componentTypeIn;
+    }
 
-   public StructurePiece(IStructurePieceType p_i51343_1_, CompoundNBT p_i51343_2_) {
-      this(p_i51343_1_, p_i51343_2_.getInt("GD"));
-      if (p_i51343_2_.contains("BB")) {
-         this.boundingBox = new MutableBoundingBox(p_i51343_2_.getIntArray("BB"));
-      }
+    public StructurePiece(IStructurePieceType structurePierceTypeIn, CompoundNBT nbt)
+    {
+        this(structurePierceTypeIn, nbt.getInt("GD"));
 
-      int i = p_i51343_2_.getInt("O");
-      this.setOrientation(i == -1 ? null : Direction.from2DDataValue(i));
-   }
+        if (nbt.contains("BB"))
+        {
+            this.boundingBox = new MutableBoundingBox(nbt.getIntArray("BB"));
+        }
 
-   public final CompoundNBT createTag() {
-      CompoundNBT compoundnbt = new CompoundNBT();
-      compoundnbt.putString("id", Registry.STRUCTURE_PIECE.getKey(this.getType()).toString());
-      compoundnbt.put("BB", this.boundingBox.createTag());
-      Direction direction = this.getOrientation();
-      compoundnbt.putInt("O", direction == null ? -1 : direction.get2DDataValue());
-      compoundnbt.putInt("GD", this.genDepth);
-      this.addAdditionalSaveData(compoundnbt);
-      return compoundnbt;
-   }
+        int i = nbt.getInt("O");
+        this.setCoordBaseMode(i == -1 ? null : Direction.byHorizontalIndex(i));
+    }
 
-   protected abstract void addAdditionalSaveData(CompoundNBT p_143011_1_);
+    /**
+     * Writes structure base data (id, boundingbox, {@link
+     * net.minecraft.world.gen.structure.StructureComponent#coordBaseMode coordBase} and {@link
+     * net.minecraft.world.gen.structure.StructureComponent#componentType componentType}) to new NBTTagCompound and
+     * returns it.
+     */
+    public final CompoundNBT write()
+    {
+        CompoundNBT compoundnbt = new CompoundNBT();
+        compoundnbt.putString("id", Registry.STRUCTURE_PIECE.getKey(this.getStructurePieceType()).toString());
+        compoundnbt.put("BB", this.boundingBox.toNBTTagIntArray());
+        Direction direction = this.getCoordBaseMode();
+        compoundnbt.putInt("O", direction == null ? -1 : direction.getHorizontalIndex());
+        compoundnbt.putInt("GD", this.componentType);
+        this.readAdditional(compoundnbt);
+        return compoundnbt;
+    }
 
-   public void addChildren(StructurePiece p_74861_1_, List<StructurePiece> p_74861_2_, Random p_74861_3_) {
-   }
+    /**
+     * (abstract) Helper method to read subclass data from NBT
+     */
+    protected abstract void readAdditional(CompoundNBT tagCompound);
 
-   public abstract boolean postProcess(ISeedReader p_230383_1_, StructureManager p_230383_2_, ChunkGenerator p_230383_3_, Random p_230383_4_, MutableBoundingBox p_230383_5_, ChunkPos p_230383_6_, BlockPos p_230383_7_);
+    /**
+     * Initiates construction of the Structure Component picked, at the current Location of StructGen
+     */
+    public void buildComponent(StructurePiece componentIn, List<StructurePiece> listIn, Random rand)
+    {
+    }
 
-   public MutableBoundingBox getBoundingBox() {
-      return this.boundingBox;
-   }
+    public abstract boolean func_230383_a_(ISeedReader p_230383_1_, StructureManager p_230383_2_, ChunkGenerator p_230383_3_, Random p_230383_4_, MutableBoundingBox p_230383_5_, ChunkPos p_230383_6_, BlockPos p_230383_7_);
 
-   public int getGenDepth() {
-      return this.genDepth;
-   }
+    public MutableBoundingBox getBoundingBox()
+    {
+        return this.boundingBox;
+    }
 
-   public boolean isCloseToChunk(ChunkPos p_214810_1_, int p_214810_2_) {
-      int i = p_214810_1_.x << 4;
-      int j = p_214810_1_.z << 4;
-      return this.boundingBox.intersects(i - p_214810_2_, j - p_214810_2_, i + 15 + p_214810_2_, j + 15 + p_214810_2_);
-   }
+    /**
+     * Returns the component type ID of this component.
+     */
+    public int getComponentType()
+    {
+        return this.componentType;
+    }
 
-   public static StructurePiece findCollisionPiece(List<StructurePiece> p_74883_0_, MutableBoundingBox p_74883_1_) {
-      for(StructurePiece structurepiece : p_74883_0_) {
-         if (structurepiece.getBoundingBox() != null && structurepiece.getBoundingBox().intersects(p_74883_1_)) {
-            return structurepiece;
-         }
-      }
+    public boolean func_214810_a(ChunkPos p_214810_1_, int p_214810_2_)
+    {
+        int i = p_214810_1_.x << 4;
+        int j = p_214810_1_.z << 4;
+        return this.boundingBox.intersectsWith(i - p_214810_2_, j - p_214810_2_, i + 15 + p_214810_2_, j + 15 + p_214810_2_);
+    }
 
-      return null;
-   }
+    /**
+     * Discover if bounding box can fit within the current bounding box object.
+     */
+    public static StructurePiece findIntersecting(List<StructurePiece> listIn, MutableBoundingBox boundingboxIn)
+    {
+        for (StructurePiece structurepiece : listIn)
+        {
+            if (structurepiece.getBoundingBox() != null && structurepiece.getBoundingBox().intersectsWith(boundingboxIn))
+            {
+                return structurepiece;
+            }
+        }
 
-   protected boolean edgesLiquid(IBlockReader p_74860_1_, MutableBoundingBox p_74860_2_) {
-      int i = Math.max(this.boundingBox.x0 - 1, p_74860_2_.x0);
-      int j = Math.max(this.boundingBox.y0 - 1, p_74860_2_.y0);
-      int k = Math.max(this.boundingBox.z0 - 1, p_74860_2_.z0);
-      int l = Math.min(this.boundingBox.x1 + 1, p_74860_2_.x1);
-      int i1 = Math.min(this.boundingBox.y1 + 1, p_74860_2_.y1);
-      int j1 = Math.min(this.boundingBox.z1 + 1, p_74860_2_.z1);
-      BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+        return null;
+    }
 
-      for(int k1 = i; k1 <= l; ++k1) {
-         for(int l1 = k; l1 <= j1; ++l1) {
-            if (p_74860_1_.getBlockState(blockpos$mutable.set(k1, j, l1)).getMaterial().isLiquid()) {
-               return true;
+    /**
+     * checks the entire StructureBoundingBox for Liquids
+     */
+    protected boolean isLiquidInStructureBoundingBox(IBlockReader worldIn, MutableBoundingBox boundingboxIn)
+    {
+        int i = Math.max(this.boundingBox.minX - 1, boundingboxIn.minX);
+        int j = Math.max(this.boundingBox.minY - 1, boundingboxIn.minY);
+        int k = Math.max(this.boundingBox.minZ - 1, boundingboxIn.minZ);
+        int l = Math.min(this.boundingBox.maxX + 1, boundingboxIn.maxX);
+        int i1 = Math.min(this.boundingBox.maxY + 1, boundingboxIn.maxY);
+        int j1 = Math.min(this.boundingBox.maxZ + 1, boundingboxIn.maxZ);
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+
+        for (int k1 = i; k1 <= l; ++k1)
+        {
+            for (int l1 = k; l1 <= j1; ++l1)
+            {
+                if (worldIn.getBlockState(blockpos$mutable.setPos(k1, j, l1)).getMaterial().isLiquid())
+                {
+                    return true;
+                }
+
+                if (worldIn.getBlockState(blockpos$mutable.setPos(k1, i1, l1)).getMaterial().isLiquid())
+                {
+                    return true;
+                }
+            }
+        }
+
+        for (int i2 = i; i2 <= l; ++i2)
+        {
+            for (int k2 = j; k2 <= i1; ++k2)
+            {
+                if (worldIn.getBlockState(blockpos$mutable.setPos(i2, k2, k)).getMaterial().isLiquid())
+                {
+                    return true;
+                }
+
+                if (worldIn.getBlockState(blockpos$mutable.setPos(i2, k2, j1)).getMaterial().isLiquid())
+                {
+                    return true;
+                }
+            }
+        }
+
+        for (int j2 = k; j2 <= j1; ++j2)
+        {
+            for (int l2 = j; l2 <= i1; ++l2)
+            {
+                if (worldIn.getBlockState(blockpos$mutable.setPos(i, l2, j2)).getMaterial().isLiquid())
+                {
+                    return true;
+                }
+
+                if (worldIn.getBlockState(blockpos$mutable.setPos(l, l2, j2)).getMaterial().isLiquid())
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    protected int getXWithOffset(int x, int z)
+    {
+        Direction direction = this.getCoordBaseMode();
+
+        if (direction == null)
+        {
+            return x;
+        }
+        else
+        {
+            switch (direction)
+            {
+                case NORTH:
+                case SOUTH:
+                    return this.boundingBox.minX + x;
+
+                case WEST:
+                    return this.boundingBox.maxX - z;
+
+                case EAST:
+                    return this.boundingBox.minX + z;
+
+                default:
+                    return x;
+            }
+        }
+    }
+
+    protected int getYWithOffset(int y)
+    {
+        return this.getCoordBaseMode() == null ? y : y + this.boundingBox.minY;
+    }
+
+    protected int getZWithOffset(int x, int z)
+    {
+        Direction direction = this.getCoordBaseMode();
+
+        if (direction == null)
+        {
+            return z;
+        }
+        else
+        {
+            switch (direction)
+            {
+                case NORTH:
+                    return this.boundingBox.maxZ - z;
+
+                case SOUTH:
+                    return this.boundingBox.minZ + z;
+
+                case WEST:
+                case EAST:
+                    return this.boundingBox.minZ + x;
+
+                default:
+                    return z;
+            }
+        }
+    }
+
+    protected void setBlockState(ISeedReader worldIn, BlockState blockstateIn, int x, int y, int z, MutableBoundingBox boundingboxIn)
+    {
+        BlockPos blockpos = new BlockPos(this.getXWithOffset(x, z), this.getYWithOffset(y), this.getZWithOffset(x, z));
+
+        if (boundingboxIn.isVecInside(blockpos))
+        {
+            if (this.mirror != Mirror.NONE)
+            {
+                blockstateIn = blockstateIn.mirror(this.mirror);
             }
 
-            if (p_74860_1_.getBlockState(blockpos$mutable.set(k1, i1, l1)).getMaterial().isLiquid()) {
-               return true;
-            }
-         }
-      }
-
-      for(int i2 = i; i2 <= l; ++i2) {
-         for(int k2 = j; k2 <= i1; ++k2) {
-            if (p_74860_1_.getBlockState(blockpos$mutable.set(i2, k2, k)).getMaterial().isLiquid()) {
-               return true;
+            if (this.rotation != Rotation.NONE)
+            {
+                blockstateIn = blockstateIn.rotate(this.rotation);
             }
 
-            if (p_74860_1_.getBlockState(blockpos$mutable.set(i2, k2, j1)).getMaterial().isLiquid()) {
-               return true;
-            }
-         }
-      }
+            worldIn.setBlockState(blockpos, blockstateIn, 2);
+            FluidState fluidstate = worldIn.getFluidState(blockpos);
 
-      for(int j2 = k; j2 <= j1; ++j2) {
-         for(int l2 = j; l2 <= i1; ++l2) {
-            if (p_74860_1_.getBlockState(blockpos$mutable.set(i, l2, j2)).getMaterial().isLiquid()) {
-               return true;
+            if (!fluidstate.isEmpty())
+            {
+                worldIn.getPendingFluidTicks().scheduleTick(blockpos, fluidstate.getFluid(), 0);
             }
 
-            if (p_74860_1_.getBlockState(blockpos$mutable.set(l, l2, j2)).getMaterial().isLiquid()) {
-               return true;
+            if (BLOCKS_NEEDING_POSTPROCESSING.contains(blockstateIn.getBlock()))
+            {
+                worldIn.getChunk(blockpos).markBlockForPostprocessing(blockpos);
             }
-         }
-      }
+        }
+    }
 
-      return false;
-   }
+    protected BlockState getBlockStateFromPos(IBlockReader worldIn, int x, int y, int z, MutableBoundingBox boundingboxIn)
+    {
+        int i = this.getXWithOffset(x, z);
+        int j = this.getYWithOffset(y);
+        int k = this.getZWithOffset(x, z);
+        BlockPos blockpos = new BlockPos(i, j, k);
+        return !boundingboxIn.isVecInside(blockpos) ? Blocks.AIR.getDefaultState() : worldIn.getBlockState(blockpos);
+    }
 
-   protected int getWorldX(int p_74865_1_, int p_74865_2_) {
-      Direction direction = this.getOrientation();
-      if (direction == null) {
-         return p_74865_1_;
-      } else {
-         switch(direction) {
-         case NORTH:
-         case SOUTH:
-            return this.boundingBox.x0 + p_74865_1_;
-         case WEST:
-            return this.boundingBox.x1 - p_74865_2_;
-         case EAST:
-            return this.boundingBox.x0 + p_74865_2_;
-         default:
-            return p_74865_1_;
-         }
-      }
-   }
+    protected boolean getSkyBrightness(IWorldReader worldIn, int x, int y, int z, MutableBoundingBox boundingboxIn)
+    {
+        int i = this.getXWithOffset(x, z);
+        int j = this.getYWithOffset(y + 1);
+        int k = this.getZWithOffset(x, z);
+        BlockPos blockpos = new BlockPos(i, j, k);
 
-   protected int getWorldY(int p_74862_1_) {
-      return this.getOrientation() == null ? p_74862_1_ : p_74862_1_ + this.boundingBox.y0;
-   }
+        if (!boundingboxIn.isVecInside(blockpos))
+        {
+            return false;
+        }
+        else
+        {
+            return j < worldIn.getHeight(Heightmap.Type.OCEAN_FLOOR_WG, i, k);
+        }
+    }
 
-   protected int getWorldZ(int p_74873_1_, int p_74873_2_) {
-      Direction direction = this.getOrientation();
-      if (direction == null) {
-         return p_74873_2_;
-      } else {
-         switch(direction) {
-         case NORTH:
-            return this.boundingBox.z1 - p_74873_2_;
-         case SOUTH:
-            return this.boundingBox.z0 + p_74873_2_;
-         case WEST:
-         case EAST:
-            return this.boundingBox.z0 + p_74873_1_;
-         default:
-            return p_74873_2_;
-         }
-      }
-   }
-
-   protected void placeBlock(ISeedReader p_175811_1_, BlockState p_175811_2_, int p_175811_3_, int p_175811_4_, int p_175811_5_, MutableBoundingBox p_175811_6_) {
-      BlockPos blockpos = new BlockPos(this.getWorldX(p_175811_3_, p_175811_5_), this.getWorldY(p_175811_4_), this.getWorldZ(p_175811_3_, p_175811_5_));
-      if (p_175811_6_.isInside(blockpos)) {
-         if (this.mirror != Mirror.NONE) {
-            p_175811_2_ = p_175811_2_.mirror(this.mirror);
-         }
-
-         if (this.rotation != Rotation.NONE) {
-            p_175811_2_ = p_175811_2_.rotate(this.rotation);
-         }
-
-         p_175811_1_.setBlock(blockpos, p_175811_2_, 2);
-         FluidState fluidstate = p_175811_1_.getFluidState(blockpos);
-         if (!fluidstate.isEmpty()) {
-            p_175811_1_.getLiquidTicks().scheduleTick(blockpos, fluidstate.getType(), 0);
-         }
-
-         if (SHAPE_CHECK_BLOCKS.contains(p_175811_2_.getBlock())) {
-            p_175811_1_.getChunk(blockpos).markPosForPostprocessing(blockpos);
-         }
-
-      }
-   }
-
-   protected BlockState getBlock(IBlockReader p_175807_1_, int p_175807_2_, int p_175807_3_, int p_175807_4_, MutableBoundingBox p_175807_5_) {
-      int i = this.getWorldX(p_175807_2_, p_175807_4_);
-      int j = this.getWorldY(p_175807_3_);
-      int k = this.getWorldZ(p_175807_2_, p_175807_4_);
-      BlockPos blockpos = new BlockPos(i, j, k);
-      return !p_175807_5_.isInside(blockpos) ? Blocks.AIR.defaultBlockState() : p_175807_1_.getBlockState(blockpos);
-   }
-
-   protected boolean isInterior(IWorldReader p_189916_1_, int p_189916_2_, int p_189916_3_, int p_189916_4_, MutableBoundingBox p_189916_5_) {
-      int i = this.getWorldX(p_189916_2_, p_189916_4_);
-      int j = this.getWorldY(p_189916_3_ + 1);
-      int k = this.getWorldZ(p_189916_2_, p_189916_4_);
-      BlockPos blockpos = new BlockPos(i, j, k);
-      if (!p_189916_5_.isInside(blockpos)) {
-         return false;
-      } else {
-         return j < p_189916_1_.getHeight(Heightmap.Type.OCEAN_FLOOR_WG, i, k);
-      }
-   }
-
-   protected void generateAirBox(ISeedReader p_74878_1_, MutableBoundingBox p_74878_2_, int p_74878_3_, int p_74878_4_, int p_74878_5_, int p_74878_6_, int p_74878_7_, int p_74878_8_) {
-      for(int i = p_74878_4_; i <= p_74878_7_; ++i) {
-         for(int j = p_74878_3_; j <= p_74878_6_; ++j) {
-            for(int k = p_74878_5_; k <= p_74878_8_; ++k) {
-               this.placeBlock(p_74878_1_, Blocks.AIR.defaultBlockState(), j, i, k, p_74878_2_);
+    /**
+     * arguments: (World worldObj, StructureBoundingBox structBB, int minX, int minY, int minZ, int maxX, int maxY, int
+     * maxZ)
+     */
+    protected void fillWithAir(ISeedReader worldIn, MutableBoundingBox structurebb, int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
+    {
+        for (int i = minY; i <= maxY; ++i)
+        {
+            for (int j = minX; j <= maxX; ++j)
+            {
+                for (int k = minZ; k <= maxZ; ++k)
+                {
+                    this.setBlockState(worldIn, Blocks.AIR.getDefaultState(), j, i, k, structurebb);
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
-
-   protected void generateBox(ISeedReader p_175804_1_, MutableBoundingBox p_175804_2_, int p_175804_3_, int p_175804_4_, int p_175804_5_, int p_175804_6_, int p_175804_7_, int p_175804_8_, BlockState p_175804_9_, BlockState p_175804_10_, boolean p_175804_11_) {
-      for(int i = p_175804_4_; i <= p_175804_7_; ++i) {
-         for(int j = p_175804_3_; j <= p_175804_6_; ++j) {
-            for(int k = p_175804_5_; k <= p_175804_8_; ++k) {
-               if (!p_175804_11_ || !this.getBlock(p_175804_1_, j, i, k, p_175804_2_).isAir()) {
-                  if (i != p_175804_4_ && i != p_175804_7_ && j != p_175804_3_ && j != p_175804_6_ && k != p_175804_5_ && k != p_175804_8_) {
-                     this.placeBlock(p_175804_1_, p_175804_10_, j, i, k, p_175804_2_);
-                  } else {
-                     this.placeBlock(p_175804_1_, p_175804_9_, j, i, k, p_175804_2_);
-                  }
-               }
+    /**
+     * Fill the given area with the selected blocks
+     */
+    protected void fillWithBlocks(ISeedReader worldIn, MutableBoundingBox boundingboxIn, int xMin, int yMin, int zMin, int xMax, int yMax, int zMax, BlockState boundaryBlockState, BlockState insideBlockState, boolean existingOnly)
+    {
+        for (int i = yMin; i <= yMax; ++i)
+        {
+            for (int j = xMin; j <= xMax; ++j)
+            {
+                for (int k = zMin; k <= zMax; ++k)
+                {
+                    if (!existingOnly || !this.getBlockStateFromPos(worldIn, j, i, k, boundingboxIn).isAir())
+                    {
+                        if (i != yMin && i != yMax && j != xMin && j != xMax && k != zMin && k != zMax)
+                        {
+                            this.setBlockState(worldIn, insideBlockState, j, i, k, boundingboxIn);
+                        }
+                        else
+                        {
+                            this.setBlockState(worldIn, boundaryBlockState, j, i, k, boundingboxIn);
+                        }
+                    }
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
-
-   protected void generateBox(ISeedReader p_74882_1_, MutableBoundingBox p_74882_2_, int p_74882_3_, int p_74882_4_, int p_74882_5_, int p_74882_6_, int p_74882_7_, int p_74882_8_, boolean p_74882_9_, Random p_74882_10_, StructurePiece.BlockSelector p_74882_11_) {
-      for(int i = p_74882_4_; i <= p_74882_7_; ++i) {
-         for(int j = p_74882_3_; j <= p_74882_6_; ++j) {
-            for(int k = p_74882_5_; k <= p_74882_8_; ++k) {
-               if (!p_74882_9_ || !this.getBlock(p_74882_1_, j, i, k, p_74882_2_).isAir()) {
-                  p_74882_11_.next(p_74882_10_, j, i, k, i == p_74882_4_ || i == p_74882_7_ || j == p_74882_3_ || j == p_74882_6_ || k == p_74882_5_ || k == p_74882_8_);
-                  this.placeBlock(p_74882_1_, p_74882_11_.getNext(), j, i, k, p_74882_2_);
-               }
+    /**
+     * arguments: World worldObj, StructureBoundingBox structBB, int minX, int minY, int minZ, int maxX, int maxY, int
+     * maxZ, boolean alwaysreplace, Random rand, StructurePieceBlockSelector blockselector
+     */
+    protected void fillWithRandomizedBlocks(ISeedReader worldIn, MutableBoundingBox boundingboxIn, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean alwaysReplace, Random rand, StructurePiece.BlockSelector blockselector)
+    {
+        for (int i = minY; i <= maxY; ++i)
+        {
+            for (int j = minX; j <= maxX; ++j)
+            {
+                for (int k = minZ; k <= maxZ; ++k)
+                {
+                    if (!alwaysReplace || !this.getBlockStateFromPos(worldIn, j, i, k, boundingboxIn).isAir())
+                    {
+                        blockselector.selectBlocks(rand, j, i, k, i == minY || i == maxY || j == minX || j == maxX || k == minZ || k == maxZ);
+                        this.setBlockState(worldIn, blockselector.getBlockState(), j, i, k, boundingboxIn);
+                    }
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
-
-   protected void generateMaybeBox(ISeedReader p_189914_1_, MutableBoundingBox p_189914_2_, Random p_189914_3_, float p_189914_4_, int p_189914_5_, int p_189914_6_, int p_189914_7_, int p_189914_8_, int p_189914_9_, int p_189914_10_, BlockState p_189914_11_, BlockState p_189914_12_, boolean p_189914_13_, boolean p_189914_14_) {
-      for(int i = p_189914_6_; i <= p_189914_9_; ++i) {
-         for(int j = p_189914_5_; j <= p_189914_8_; ++j) {
-            for(int k = p_189914_7_; k <= p_189914_10_; ++k) {
-               if (!(p_189914_3_.nextFloat() > p_189914_4_) && (!p_189914_13_ || !this.getBlock(p_189914_1_, j, i, k, p_189914_2_).isAir()) && (!p_189914_14_ || this.isInterior(p_189914_1_, j, i, k, p_189914_2_))) {
-                  if (i != p_189914_6_ && i != p_189914_9_ && j != p_189914_5_ && j != p_189914_8_ && k != p_189914_7_ && k != p_189914_10_) {
-                     this.placeBlock(p_189914_1_, p_189914_12_, j, i, k, p_189914_2_);
-                  } else {
-                     this.placeBlock(p_189914_1_, p_189914_11_, j, i, k, p_189914_2_);
-                  }
-               }
+    protected void generateMaybeBox(ISeedReader worldIn, MutableBoundingBox sbb, Random rand, float chance, int x1, int y1, int z1, int x2, int y2, int z2, BlockState edgeState, BlockState state, boolean requireNonAir, boolean requiredSkylight)
+    {
+        for (int i = y1; i <= y2; ++i)
+        {
+            for (int j = x1; j <= x2; ++j)
+            {
+                for (int k = z1; k <= z2; ++k)
+                {
+                    if (!(rand.nextFloat() > chance) && (!requireNonAir || !this.getBlockStateFromPos(worldIn, j, i, k, sbb).isAir()) && (!requiredSkylight || this.getSkyBrightness(worldIn, j, i, k, sbb)))
+                    {
+                        if (i != y1 && i != y2 && j != x1 && j != x2 && k != z1 && k != z2)
+                        {
+                            this.setBlockState(worldIn, state, j, i, k, sbb);
+                        }
+                        else
+                        {
+                            this.setBlockState(worldIn, edgeState, j, i, k, sbb);
+                        }
+                    }
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
+    protected void randomlyPlaceBlock(ISeedReader worldIn, MutableBoundingBox boundingboxIn, Random rand, float chance, int x, int y, int z, BlockState blockstateIn)
+    {
+        if (rand.nextFloat() < chance)
+        {
+            this.setBlockState(worldIn, blockstateIn, x, y, z, boundingboxIn);
+        }
+    }
 
-   protected void maybeGenerateBlock(ISeedReader p_175809_1_, MutableBoundingBox p_175809_2_, Random p_175809_3_, float p_175809_4_, int p_175809_5_, int p_175809_6_, int p_175809_7_, BlockState p_175809_8_) {
-      if (p_175809_3_.nextFloat() < p_175809_4_) {
-         this.placeBlock(p_175809_1_, p_175809_8_, p_175809_5_, p_175809_6_, p_175809_7_, p_175809_2_);
-      }
+    protected void randomlyRareFillWithBlocks(ISeedReader worldIn, MutableBoundingBox boundingboxIn, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockState blockstateIn, boolean excludeAir)
+    {
+        float f = (float)(maxX - minX + 1);
+        float f1 = (float)(maxY - minY + 1);
+        float f2 = (float)(maxZ - minZ + 1);
+        float f3 = (float)minX + f / 2.0F;
+        float f4 = (float)minZ + f2 / 2.0F;
 
-   }
+        for (int i = minY; i <= maxY; ++i)
+        {
+            float f5 = (float)(i - minY) / f1;
 
-   protected void generateUpperHalfSphere(ISeedReader p_180777_1_, MutableBoundingBox p_180777_2_, int p_180777_3_, int p_180777_4_, int p_180777_5_, int p_180777_6_, int p_180777_7_, int p_180777_8_, BlockState p_180777_9_, boolean p_180777_10_) {
-      float f = (float)(p_180777_6_ - p_180777_3_ + 1);
-      float f1 = (float)(p_180777_7_ - p_180777_4_ + 1);
-      float f2 = (float)(p_180777_8_ - p_180777_5_ + 1);
-      float f3 = (float)p_180777_3_ + f / 2.0F;
-      float f4 = (float)p_180777_5_ + f2 / 2.0F;
+            for (int j = minX; j <= maxX; ++j)
+            {
+                float f6 = ((float)j - f3) / (f * 0.5F);
 
-      for(int i = p_180777_4_; i <= p_180777_7_; ++i) {
-         float f5 = (float)(i - p_180777_4_) / f1;
+                for (int k = minZ; k <= maxZ; ++k)
+                {
+                    float f7 = ((float)k - f4) / (f2 * 0.5F);
 
-         for(int j = p_180777_3_; j <= p_180777_6_; ++j) {
-            float f6 = ((float)j - f3) / (f * 0.5F);
+                    if (!excludeAir || !this.getBlockStateFromPos(worldIn, j, i, k, boundingboxIn).isAir())
+                    {
+                        float f8 = f6 * f6 + f5 * f5 + f7 * f7;
 
-            for(int k = p_180777_5_; k <= p_180777_8_; ++k) {
-               float f7 = ((float)k - f4) / (f2 * 0.5F);
-               if (!p_180777_10_ || !this.getBlock(p_180777_1_, j, i, k, p_180777_2_).isAir()) {
-                  float f8 = f6 * f6 + f5 * f5 + f7 * f7;
-                  if (f8 <= 1.05F) {
-                     this.placeBlock(p_180777_1_, p_180777_9_, j, i, k, p_180777_2_);
-                  }
-               }
+                        if (f8 <= 1.05F)
+                        {
+                            this.setBlockState(worldIn, blockstateIn, j, i, k, boundingboxIn);
+                        }
+                    }
+                }
             }
-         }
-      }
+        }
+    }
 
-   }
+    /**
+     * Replaces air and liquid from given position downwards. Stops when hitting anything else than air or liquid
+     */
+    protected void replaceAirAndLiquidDownwards(ISeedReader worldIn, BlockState blockstateIn, int x, int y, int z, MutableBoundingBox boundingboxIn)
+    {
+        int i = this.getXWithOffset(x, z);
+        int j = this.getYWithOffset(y);
+        int k = this.getZWithOffset(x, z);
 
-   protected void fillColumnDown(ISeedReader p_175808_1_, BlockState p_175808_2_, int p_175808_3_, int p_175808_4_, int p_175808_5_, MutableBoundingBox p_175808_6_) {
-      int i = this.getWorldX(p_175808_3_, p_175808_5_);
-      int j = this.getWorldY(p_175808_4_);
-      int k = this.getWorldZ(p_175808_3_, p_175808_5_);
-      if (p_175808_6_.isInside(new BlockPos(i, j, k))) {
-         while((p_175808_1_.isEmptyBlock(new BlockPos(i, j, k)) || p_175808_1_.getBlockState(new BlockPos(i, j, k)).getMaterial().isLiquid()) && j > 1) {
-            p_175808_1_.setBlock(new BlockPos(i, j, k), p_175808_2_, 2);
-            --j;
-         }
+        if (boundingboxIn.isVecInside(new BlockPos(i, j, k)))
+        {
+            while ((worldIn.isAirBlock(new BlockPos(i, j, k)) || worldIn.getBlockState(new BlockPos(i, j, k)).getMaterial().isLiquid()) && j > 1)
+            {
+                worldIn.setBlockState(new BlockPos(i, j, k), blockstateIn, 2);
+                --j;
+            }
+        }
+    }
 
-      }
-   }
+    /**
+     * Adds chest to the structure and sets its contents
+     */
+    protected boolean generateChest(ISeedReader worldIn, MutableBoundingBox structurebb, Random randomIn, int x, int y, int z, ResourceLocation loot)
+    {
+        BlockPos blockpos = new BlockPos(this.getXWithOffset(x, z), this.getYWithOffset(y), this.getZWithOffset(x, z));
+        return this.generateChest(worldIn, structurebb, randomIn, blockpos, loot, (BlockState)null);
+    }
 
-   protected boolean createChest(ISeedReader p_186167_1_, MutableBoundingBox p_186167_2_, Random p_186167_3_, int p_186167_4_, int p_186167_5_, int p_186167_6_, ResourceLocation p_186167_7_) {
-      BlockPos blockpos = new BlockPos(this.getWorldX(p_186167_4_, p_186167_6_), this.getWorldY(p_186167_5_), this.getWorldZ(p_186167_4_, p_186167_6_));
-      return this.createChest(p_186167_1_, p_186167_2_, p_186167_3_, blockpos, p_186167_7_, (BlockState)null);
-   }
+    public static BlockState correctFacing(IBlockReader worldIn, BlockPos posIn, BlockState blockStateIn)
+    {
+        Direction direction = null;
 
-   public static BlockState reorient(IBlockReader p_197528_0_, BlockPos p_197528_1_, BlockState p_197528_2_) {
-      Direction direction = null;
+        for (Direction direction1 : Direction.Plane.HORIZONTAL)
+        {
+            BlockPos blockpos = posIn.offset(direction1);
+            BlockState blockstate = worldIn.getBlockState(blockpos);
 
-      for(Direction direction1 : Direction.Plane.HORIZONTAL) {
-         BlockPos blockpos = p_197528_1_.relative(direction1);
-         BlockState blockstate = p_197528_0_.getBlockState(blockpos);
-         if (blockstate.is(Blocks.CHEST)) {
-            return p_197528_2_;
-         }
-
-         if (blockstate.isSolidRender(p_197528_0_, blockpos)) {
-            if (direction != null) {
-               direction = null;
-               break;
+            if (blockstate.isIn(Blocks.CHEST))
+            {
+                return blockStateIn;
             }
 
-            direction = direction1;
-         }
-      }
+            if (blockstate.isOpaqueCube(worldIn, blockpos))
+            {
+                if (direction != null)
+                {
+                    direction = null;
+                    break;
+                }
 
-      if (direction != null) {
-         return p_197528_2_.setValue(HorizontalBlock.FACING, direction.getOpposite());
-      } else {
-         Direction direction2 = p_197528_2_.getValue(HorizontalBlock.FACING);
-         BlockPos blockpos1 = p_197528_1_.relative(direction2);
-         if (p_197528_0_.getBlockState(blockpos1).isSolidRender(p_197528_0_, blockpos1)) {
-            direction2 = direction2.getOpposite();
-            blockpos1 = p_197528_1_.relative(direction2);
-         }
+                direction = direction1;
+            }
+        }
 
-         if (p_197528_0_.getBlockState(blockpos1).isSolidRender(p_197528_0_, blockpos1)) {
-            direction2 = direction2.getClockWise();
-            blockpos1 = p_197528_1_.relative(direction2);
-         }
+        if (direction != null)
+        {
+            return blockStateIn.with(HorizontalBlock.HORIZONTAL_FACING, direction.getOpposite());
+        }
+        else
+        {
+            Direction direction2 = blockStateIn.get(HorizontalBlock.HORIZONTAL_FACING);
+            BlockPos blockpos1 = posIn.offset(direction2);
 
-         if (p_197528_0_.getBlockState(blockpos1).isSolidRender(p_197528_0_, blockpos1)) {
-            direction2 = direction2.getOpposite();
-            p_197528_1_.relative(direction2);
-         }
+            if (worldIn.getBlockState(blockpos1).isOpaqueCube(worldIn, blockpos1))
+            {
+                direction2 = direction2.getOpposite();
+                blockpos1 = posIn.offset(direction2);
+            }
 
-         return p_197528_2_.setValue(HorizontalBlock.FACING, direction2);
-      }
-   }
+            if (worldIn.getBlockState(blockpos1).isOpaqueCube(worldIn, blockpos1))
+            {
+                direction2 = direction2.rotateY();
+                blockpos1 = posIn.offset(direction2);
+            }
 
-   protected boolean createChest(IServerWorld p_191080_1_, MutableBoundingBox p_191080_2_, Random p_191080_3_, BlockPos p_191080_4_, ResourceLocation p_191080_5_, @Nullable BlockState p_191080_6_) {
-      if (p_191080_2_.isInside(p_191080_4_) && !p_191080_1_.getBlockState(p_191080_4_).is(Blocks.CHEST)) {
-         if (p_191080_6_ == null) {
-            p_191080_6_ = reorient(p_191080_1_, p_191080_4_, Blocks.CHEST.defaultBlockState());
-         }
+            if (worldIn.getBlockState(blockpos1).isOpaqueCube(worldIn, blockpos1))
+            {
+                direction2 = direction2.getOpposite();
+                posIn.offset(direction2);
+            }
 
-         p_191080_1_.setBlock(p_191080_4_, p_191080_6_, 2);
-         TileEntity tileentity = p_191080_1_.getBlockEntity(p_191080_4_);
-         if (tileentity instanceof ChestTileEntity) {
-            ((ChestTileEntity)tileentity).setLootTable(p_191080_5_, p_191080_3_.nextLong());
-         }
+            return blockStateIn.with(HorizontalBlock.HORIZONTAL_FACING, direction2);
+        }
+    }
 
-         return true;
-      } else {
-         return false;
-      }
-   }
+    protected boolean generateChest(IServerWorld worldIn, MutableBoundingBox boundsIn, Random rand, BlockPos posIn, ResourceLocation resourceLocationIn, @Nullable BlockState p_191080_6_)
+    {
+        if (boundsIn.isVecInside(posIn) && !worldIn.getBlockState(posIn).isIn(Blocks.CHEST))
+        {
+            if (p_191080_6_ == null)
+            {
+                p_191080_6_ = correctFacing(worldIn, posIn, Blocks.CHEST.getDefaultState());
+            }
 
-   protected boolean createDispenser(ISeedReader p_189419_1_, MutableBoundingBox p_189419_2_, Random p_189419_3_, int p_189419_4_, int p_189419_5_, int p_189419_6_, Direction p_189419_7_, ResourceLocation p_189419_8_) {
-      BlockPos blockpos = new BlockPos(this.getWorldX(p_189419_4_, p_189419_6_), this.getWorldY(p_189419_5_), this.getWorldZ(p_189419_4_, p_189419_6_));
-      if (p_189419_2_.isInside(blockpos) && !p_189419_1_.getBlockState(blockpos).is(Blocks.DISPENSER)) {
-         this.placeBlock(p_189419_1_, Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, p_189419_7_), p_189419_4_, p_189419_5_, p_189419_6_, p_189419_2_);
-         TileEntity tileentity = p_189419_1_.getBlockEntity(blockpos);
-         if (tileentity instanceof DispenserTileEntity) {
-            ((DispenserTileEntity)tileentity).setLootTable(p_189419_8_, p_189419_3_.nextLong());
-         }
+            worldIn.setBlockState(posIn, p_191080_6_, 2);
+            TileEntity tileentity = worldIn.getTileEntity(posIn);
 
-         return true;
-      } else {
-         return false;
-      }
-   }
+            if (tileentity instanceof ChestTileEntity)
+            {
+                ((ChestTileEntity)tileentity).setLootTable(resourceLocationIn, rand.nextLong());
+            }
 
-   public void move(int p_181138_1_, int p_181138_2_, int p_181138_3_) {
-      this.boundingBox.move(p_181138_1_, p_181138_2_, p_181138_3_);
-   }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
-   @Nullable
-   public Direction getOrientation() {
-      return this.orientation;
-   }
+    protected boolean createDispenser(ISeedReader worldIn, MutableBoundingBox sbb, Random rand, int x, int y, int z, Direction facing, ResourceLocation lootTableIn)
+    {
+        BlockPos blockpos = new BlockPos(this.getXWithOffset(x, z), this.getYWithOffset(y), this.getZWithOffset(x, z));
 
-   public void setOrientation(@Nullable Direction p_186164_1_) {
-      this.orientation = p_186164_1_;
-      if (p_186164_1_ == null) {
-         this.rotation = Rotation.NONE;
-         this.mirror = Mirror.NONE;
-      } else {
-         switch(p_186164_1_) {
-         case SOUTH:
-            this.mirror = Mirror.LEFT_RIGHT;
+        if (sbb.isVecInside(blockpos) && !worldIn.getBlockState(blockpos).isIn(Blocks.DISPENSER))
+        {
+            this.setBlockState(worldIn, Blocks.DISPENSER.getDefaultState().with(DispenserBlock.FACING, facing), x, y, z, sbb);
+            TileEntity tileentity = worldIn.getTileEntity(blockpos);
+
+            if (tileentity instanceof DispenserTileEntity)
+            {
+                ((DispenserTileEntity)tileentity).setLootTable(lootTableIn, rand.nextLong());
+            }
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public void offset(int x, int y, int z)
+    {
+        this.boundingBox.offset(x, y, z);
+    }
+
+    @Nullable
+    public Direction getCoordBaseMode()
+    {
+        return this.coordBaseMode;
+    }
+
+    public void setCoordBaseMode(@Nullable Direction facing)
+    {
+        this.coordBaseMode = facing;
+
+        if (facing == null)
+        {
             this.rotation = Rotation.NONE;
-            break;
-         case WEST:
-            this.mirror = Mirror.LEFT_RIGHT;
-            this.rotation = Rotation.CLOCKWISE_90;
-            break;
-         case EAST:
             this.mirror = Mirror.NONE;
-            this.rotation = Rotation.CLOCKWISE_90;
-            break;
-         default:
-            this.mirror = Mirror.NONE;
-            this.rotation = Rotation.NONE;
-         }
-      }
+        }
+        else
+        {
+            switch (facing)
+            {
+                case SOUTH:
+                    this.mirror = Mirror.LEFT_RIGHT;
+                    this.rotation = Rotation.NONE;
+                    break;
 
-   }
+                case WEST:
+                    this.mirror = Mirror.LEFT_RIGHT;
+                    this.rotation = Rotation.CLOCKWISE_90;
+                    break;
 
-   public Rotation getRotation() {
-      return this.rotation;
-   }
+                case EAST:
+                    this.mirror = Mirror.NONE;
+                    this.rotation = Rotation.CLOCKWISE_90;
+                    break;
 
-   public IStructurePieceType getType() {
-      return this.type;
-   }
+                default:
+                    this.mirror = Mirror.NONE;
+                    this.rotation = Rotation.NONE;
+            }
+        }
+    }
 
-   public abstract static class BlockSelector {
-      protected BlockState next = Blocks.AIR.defaultBlockState();
+    public Rotation getRotation()
+    {
+        return this.rotation;
+    }
 
-      protected BlockSelector() {
-      }
+    public IStructurePieceType getStructurePieceType()
+    {
+        return this.structurePieceType;
+    }
 
-      public abstract void next(Random p_75062_1_, int p_75062_2_, int p_75062_3_, int p_75062_4_, boolean p_75062_5_);
+    public abstract static class BlockSelector
+    {
+        protected BlockState blockstate = Blocks.AIR.getDefaultState();
 
-      public BlockState getNext() {
-         return this.next;
-      }
-   }
+        protected BlockSelector()
+        {
+        }
+
+        public abstract void selectBlocks(Random rand, int x, int y, int z, boolean wall);
+
+        public BlockState getBlockState()
+        {
+            return this.blockstate;
+        }
+    }
 }

@@ -9,42 +9,50 @@ import net.minecraft.world.chunk.ChunkStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class LoggingChunkStatusListener implements IChunkStatusListener {
-   private static final Logger LOGGER = LogManager.getLogger();
-   private final int maxCount;
-   private int count;
-   private long startTime;
-   private long nextTickTime = Long.MAX_VALUE;
+public class LoggingChunkStatusListener implements IChunkStatusListener
+{
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final int totalChunks;
+    private int loadedChunks;
+    private long startTime;
+    private long nextLogTime = Long.MAX_VALUE;
 
-   public LoggingChunkStatusListener(int p_i50697_1_) {
-      int i = p_i50697_1_ * 2 + 1;
-      this.maxCount = i * i;
-   }
+    public LoggingChunkStatusListener(int radius)
+    {
+        int i = radius * 2 + 1;
+        this.totalChunks = i * i;
+    }
 
-   public void updateSpawnPos(ChunkPos p_219509_1_) {
-      this.nextTickTime = Util.getMillis();
-      this.startTime = this.nextTickTime;
-   }
+    public void start(ChunkPos center)
+    {
+        this.nextLogTime = Util.milliTime();
+        this.startTime = this.nextLogTime;
+    }
 
-   public void onStatusChange(ChunkPos p_219508_1_, @Nullable ChunkStatus p_219508_2_) {
-      if (p_219508_2_ == ChunkStatus.FULL) {
-         ++this.count;
-      }
+    public void statusChanged(ChunkPos chunkPosition, @Nullable ChunkStatus newStatus)
+    {
+        if (newStatus == ChunkStatus.FULL)
+        {
+            ++this.loadedChunks;
+        }
 
-      int i = this.getProgress();
-      if (Util.getMillis() > this.nextTickTime) {
-         this.nextTickTime += 500L;
-         LOGGER.info((new TranslationTextComponent("menu.preparingSpawn", MathHelper.clamp(i, 0, 100))).getString());
-      }
+        int i = this.getPercentDone();
 
-   }
+        if (Util.milliTime() > this.nextLogTime)
+        {
+            this.nextLogTime += 500L;
+            LOGGER.info((new TranslationTextComponent("menu.preparingSpawn", MathHelper.clamp(i, 0, 100))).getString());
+        }
+    }
 
-   public void stop() {
-      LOGGER.info("Time elapsed: {} ms", (long)(Util.getMillis() - this.startTime));
-      this.nextTickTime = Long.MAX_VALUE;
-   }
+    public void stop()
+    {
+        LOGGER.info("Time elapsed: {} ms", (long)(Util.milliTime() - this.startTime));
+        this.nextLogTime = Long.MAX_VALUE;
+    }
 
-   public int getProgress() {
-      return MathHelper.floor((float)this.count * 100.0F / (float)this.maxCount);
-   }
+    public int getPercentDone()
+    {
+        return MathHelper.floor((float)this.loadedChunks * 100.0F / (float)this.totalChunks);
+    }
 }

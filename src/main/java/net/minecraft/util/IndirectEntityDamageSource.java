@@ -7,29 +7,46 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class IndirectEntityDamageSource extends EntityDamageSource {
-   private final Entity owner;
+public class IndirectEntityDamageSource extends EntityDamageSource
+{
+    private final Entity indirectEntity;
 
-   public IndirectEntityDamageSource(String p_i1568_1_, Entity p_i1568_2_, @Nullable Entity p_i1568_3_) {
-      super(p_i1568_1_, p_i1568_2_);
-      this.owner = p_i1568_3_;
-   }
+    public IndirectEntityDamageSource(String damageTypeIn, Entity source, @Nullable Entity indirectEntityIn)
+    {
+        super(damageTypeIn, source);
+        this.indirectEntity = indirectEntityIn;
+    }
 
-   @Nullable
-   public Entity getDirectEntity() {
-      return this.entity;
-   }
+    @Nullable
 
-   @Nullable
-   public Entity getEntity() {
-      return this.owner;
-   }
+    /**
+     * Retrieves the immediate causer of the damage, e.g. the arrow entity, not its shooter
+     */
+    public Entity getImmediateSource()
+    {
+        return this.damageSourceEntity;
+    }
 
-   public ITextComponent getLocalizedDeathMessage(LivingEntity p_151519_1_) {
-      ITextComponent itextcomponent = this.owner == null ? this.entity.getDisplayName() : this.owner.getDisplayName();
-      ItemStack itemstack = this.owner instanceof LivingEntity ? ((LivingEntity)this.owner).getMainHandItem() : ItemStack.EMPTY;
-      String s = "death.attack." + this.msgId;
-      String s1 = s + ".item";
-      return !itemstack.isEmpty() && itemstack.hasCustomHoverName() ? new TranslationTextComponent(s1, p_151519_1_.getDisplayName(), itextcomponent, itemstack.getDisplayName()) : new TranslationTextComponent(s, p_151519_1_.getDisplayName(), itextcomponent);
-   }
+    @Nullable
+
+    /**
+     * Retrieves the true causer of the damage, e.g. the player who fired an arrow, the shulker who fired the bullet,
+     * etc.
+     */
+    public Entity getTrueSource()
+    {
+        return this.indirectEntity;
+    }
+
+    /**
+     * Gets the death message that is displayed when the player dies
+     */
+    public ITextComponent getDeathMessage(LivingEntity entityLivingBaseIn)
+    {
+        ITextComponent itextcomponent = this.indirectEntity == null ? this.damageSourceEntity.getDisplayName() : this.indirectEntity.getDisplayName();
+        ItemStack itemstack = this.indirectEntity instanceof LivingEntity ? ((LivingEntity)this.indirectEntity).getHeldItemMainhand() : ItemStack.EMPTY;
+        String s = "death.attack." + this.damageType;
+        String s1 = s + ".item";
+        return !itemstack.isEmpty() && itemstack.hasDisplayName() ? new TranslationTextComponent(s1, entityLivingBaseIn.getDisplayName(), itextcomponent, itemstack.getTextComponent()) : new TranslationTextComponent(s, entityLivingBaseIn.getDisplayName(), itextcomponent);
+    }
 }

@@ -12,74 +12,97 @@ import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class SpongeBlock extends Block {
-   protected SpongeBlock(AbstractBlock.Properties p_i48325_1_) {
-      super(p_i48325_1_);
-   }
+public class SpongeBlock extends Block
+{
+    protected SpongeBlock(AbstractBlock.Properties properties)
+    {
+        super(properties);
+    }
 
-   public void onPlace(BlockState p_220082_1_, World p_220082_2_, BlockPos p_220082_3_, BlockState p_220082_4_, boolean p_220082_5_) {
-      if (!p_220082_4_.is(p_220082_1_.getBlock())) {
-         this.tryAbsorbWater(p_220082_2_, p_220082_3_);
-      }
-   }
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving)
+    {
+        if (!oldState.isIn(state.getBlock()))
+        {
+            this.tryAbsorb(worldIn, pos);
+        }
+    }
 
-   public void neighborChanged(BlockState p_220069_1_, World p_220069_2_, BlockPos p_220069_3_, Block p_220069_4_, BlockPos p_220069_5_, boolean p_220069_6_) {
-      this.tryAbsorbWater(p_220069_2_, p_220069_3_);
-      super.neighborChanged(p_220069_1_, p_220069_2_, p_220069_3_, p_220069_4_, p_220069_5_, p_220069_6_);
-   }
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving)
+    {
+        this.tryAbsorb(worldIn, pos);
+        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
+    }
 
-   protected void tryAbsorbWater(World p_196510_1_, BlockPos p_196510_2_) {
-      if (this.removeWaterBreadthFirstSearch(p_196510_1_, p_196510_2_)) {
-         p_196510_1_.setBlock(p_196510_2_, Blocks.WET_SPONGE.defaultBlockState(), 2);
-         p_196510_1_.levelEvent(2001, p_196510_2_, Block.getId(Blocks.WATER.defaultBlockState()));
-      }
+    protected void tryAbsorb(World worldIn, BlockPos pos)
+    {
+        if (this.absorb(worldIn, pos))
+        {
+            worldIn.setBlockState(pos, Blocks.WET_SPONGE.getDefaultState(), 2);
+            worldIn.playEvent(2001, pos, Block.getStateId(Blocks.WATER.getDefaultState()));
+        }
+    }
 
-   }
+    private boolean absorb(World worldIn, BlockPos pos)
+    {
+        Queue<Tuple<BlockPos, Integer>> queue = Lists.newLinkedList();
+        queue.add(new Tuple<>(pos, 0));
+        int i = 0;
 
-   private boolean removeWaterBreadthFirstSearch(World p_176312_1_, BlockPos p_176312_2_) {
-      Queue<Tuple<BlockPos, Integer>> queue = Lists.newLinkedList();
-      queue.add(new Tuple<>(p_176312_2_, 0));
-      int i = 0;
+        while (!queue.isEmpty())
+        {
+            Tuple<BlockPos, Integer> tuple = queue.poll();
+            BlockPos blockpos = tuple.getA();
+            int j = tuple.getB();
 
-      while(!queue.isEmpty()) {
-         Tuple<BlockPos, Integer> tuple = queue.poll();
-         BlockPos blockpos = tuple.getA();
-         int j = tuple.getB();
+            for (Direction direction : Direction.values())
+            {
+                BlockPos blockpos1 = blockpos.offset(direction);
+                BlockState blockstate = worldIn.getBlockState(blockpos1);
+                FluidState fluidstate = worldIn.getFluidState(blockpos1);
+                Material material = blockstate.getMaterial();
 
-         for(Direction direction : Direction.values()) {
-            BlockPos blockpos1 = blockpos.relative(direction);
-            BlockState blockstate = p_176312_1_.getBlockState(blockpos1);
-            FluidState fluidstate = p_176312_1_.getFluidState(blockpos1);
-            Material material = blockstate.getMaterial();
-            if (fluidstate.is(FluidTags.WATER)) {
-               if (blockstate.getBlock() instanceof IBucketPickupHandler && ((IBucketPickupHandler)blockstate.getBlock()).takeLiquid(p_176312_1_, blockpos1, blockstate) != Fluids.EMPTY) {
-                  ++i;
-                  if (j < 6) {
-                     queue.add(new Tuple<>(blockpos1, j + 1));
-                  }
-               } else if (blockstate.getBlock() instanceof FlowingFluidBlock) {
-                  p_176312_1_.setBlock(blockpos1, Blocks.AIR.defaultBlockState(), 3);
-                  ++i;
-                  if (j < 6) {
-                     queue.add(new Tuple<>(blockpos1, j + 1));
-                  }
-               } else if (material == Material.WATER_PLANT || material == Material.REPLACEABLE_WATER_PLANT) {
-                  TileEntity tileentity = blockstate.getBlock().isEntityBlock() ? p_176312_1_.getBlockEntity(blockpos1) : null;
-                  dropResources(blockstate, p_176312_1_, blockpos1, tileentity);
-                  p_176312_1_.setBlock(blockpos1, Blocks.AIR.defaultBlockState(), 3);
-                  ++i;
-                  if (j < 6) {
-                     queue.add(new Tuple<>(blockpos1, j + 1));
-                  }
-               }
+                if (fluidstate.isTagged(FluidTags.WATER))
+                {
+                    if (blockstate.getBlock() instanceof IBucketPickupHandler && ((IBucketPickupHandler)blockstate.getBlock()).pickupFluid(worldIn, blockpos1, blockstate) != Fluids.EMPTY)
+                    {
+                        ++i;
+
+                        if (j < 6)
+                        {
+                            queue.add(new Tuple<>(blockpos1, j + 1));
+                        }
+                    }
+                    else if (blockstate.getBlock() instanceof FlowingFluidBlock)
+                    {
+                        worldIn.setBlockState(blockpos1, Blocks.AIR.getDefaultState(), 3);
+                        ++i;
+
+                        if (j < 6)
+                        {
+                            queue.add(new Tuple<>(blockpos1, j + 1));
+                        }
+                    }
+                    else if (material == Material.OCEAN_PLANT || material == Material.SEA_GRASS)
+                    {
+                        TileEntity tileentity = blockstate.getBlock().isTileEntityProvider() ? worldIn.getTileEntity(blockpos1) : null;
+                        spawnDrops(blockstate, worldIn, blockpos1, tileentity);
+                        worldIn.setBlockState(blockpos1, Blocks.AIR.getDefaultState(), 3);
+                        ++i;
+
+                        if (j < 6)
+                        {
+                            queue.add(new Tuple<>(blockpos1, j + 1));
+                        }
+                    }
+                }
             }
-         }
 
-         if (i > 64) {
-            break;
-         }
-      }
+            if (i > 64)
+            {
+                break;
+            }
+        }
 
-      return i > 0;
-   }
+        return i > 0;
+    }
 }

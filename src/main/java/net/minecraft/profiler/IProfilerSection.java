@@ -2,10 +2,11 @@ package net.minecraft.profiler;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 
-public interface IProfilerSection {
-   long getDuration();
+public interface IProfilerSection
+{
+    long func_230037_a_();
 
-   long getCount();
+    long func_230038_b_();
 
-   Object2LongMap<String> getCounters();
+    Object2LongMap<String> func_230039_c_();
 }

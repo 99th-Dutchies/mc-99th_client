@@ -4,70 +4,82 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import javax.annotation.Nullable;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
-public class TrackingChunkStatusListener implements IChunkStatusListener {
-   private final LoggingChunkStatusListener delegate;
-   private final Long2ObjectOpenHashMap<ChunkStatus> statuses;
-   private ChunkPos spawnPos = new ChunkPos(0, 0);
-   private final int fullDiameter;
-   private final int radius;
-   private final int diameter;
-   private boolean started;
+public class TrackingChunkStatusListener implements IChunkStatusListener
+{
+    private final LoggingChunkStatusListener loggingListener;
+    private final Long2ObjectOpenHashMap<ChunkStatus> statuses;
+    private ChunkPos center = new ChunkPos(0, 0);
+    private final int diameter;
+    private final int positionOffset;
+    private final int field_219531_f;
+    private boolean tracking;
 
-   public TrackingChunkStatusListener(int p_i50695_1_) {
-      this.delegate = new LoggingChunkStatusListener(p_i50695_1_);
-      this.fullDiameter = p_i50695_1_ * 2 + 1;
-      this.radius = p_i50695_1_ + ChunkStatus.maxDistance();
-      this.diameter = this.radius * 2 + 1;
-      this.statuses = new Long2ObjectOpenHashMap<>();
-   }
+    public TrackingChunkStatusListener(int radius)
+    {
+        this.loggingListener = new LoggingChunkStatusListener(radius);
+        this.diameter = radius * 2 + 1;
+        this.positionOffset = radius + ChunkStatus.maxDistance();
+        this.field_219531_f = this.positionOffset * 2 + 1;
+        this.statuses = new Long2ObjectOpenHashMap<>();
+    }
 
-   public void updateSpawnPos(ChunkPos p_219509_1_) {
-      if (this.started) {
-         this.delegate.updateSpawnPos(p_219509_1_);
-         this.spawnPos = p_219509_1_;
-      }
-   }
+    public void start(ChunkPos center)
+    {
+        if (this.tracking)
+        {
+            this.loggingListener.start(center);
+            this.center = center;
+        }
+    }
 
-   public void onStatusChange(ChunkPos p_219508_1_, @Nullable ChunkStatus p_219508_2_) {
-      if (this.started) {
-         this.delegate.onStatusChange(p_219508_1_, p_219508_2_);
-         if (p_219508_2_ == null) {
-            this.statuses.remove(p_219508_1_.toLong());
-         } else {
-            this.statuses.put(p_219508_1_.toLong(), p_219508_2_);
-         }
+    public void statusChanged(ChunkPos chunkPosition, @Nullable ChunkStatus newStatus)
+    {
+        if (this.tracking)
+        {
+            this.loggingListener.statusChanged(chunkPosition, newStatus);
 
-      }
-   }
+            if (newStatus == null)
+            {
+                this.statuses.remove(chunkPosition.asLong());
+            }
+            else
+            {
+                this.statuses.put(chunkPosition.asLong(), newStatus);
+            }
+        }
+    }
 
-   public void start() {
-      this.started = true;
-      this.statuses.clear();
-   }
+    public void startTracking()
+    {
+        this.tracking = true;
+        this.statuses.clear();
+    }
 
-   public void stop() {
-      this.started = false;
-      this.delegate.stop();
-   }
+    public void stop()
+    {
+        this.tracking = false;
+        this.loggingListener.stop();
+    }
 
-   public int getFullDiameter() {
-      return this.fullDiameter;
-   }
+    public int getDiameter()
+    {
+        return this.diameter;
+    }
 
-   public int getDiameter() {
-      return this.diameter;
-   }
+    public int func_219523_d()
+    {
+        return this.field_219531_f;
+    }
 
-   public int getProgress() {
-      return this.delegate.getProgress();
-   }
+    public int getPercentDone()
+    {
+        return this.loggingListener.getPercentDone();
+    }
 
-   @Nullable
-   public ChunkStatus getStatus(int p_219525_1_, int p_219525_2_) {
-      return this.statuses.get(ChunkPos.asLong(p_219525_1_ + this.spawnPos.x - this.radius, p_219525_2_ + this.spawnPos.z - this.radius));
-   }
+    @Nullable
+    public ChunkStatus getStatus(int x, int z)
+    {
+        return this.statuses.get(ChunkPos.asLong(x + this.center.x - this.positionOffset, z + this.center.z - this.positionOffset));
+    }
 }
