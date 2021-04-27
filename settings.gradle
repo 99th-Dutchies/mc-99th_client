@@ -1,4 +1,4 @@
-rootProject.name = 'mcp-reborn'
+rootProject.name = '99th_DutchClient'
 
 include ':mcp'
 project(":mcp").projectDir = file("projects/mcp")
