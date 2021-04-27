@@ -550,7 +550,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
 
     private String getWindowTitle()
     {
-        StringBuilder stringbuilder = new StringBuilder("Minecraft");
+        StringBuilder stringbuilder = new StringBuilder("99th_DutchClient | Minecraft");
 
         if (this.isModdedClient())
         {
