@@ -12,7 +12,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{6C8248FB-206D-4B32-B7C4-48C8BC6731CD}
+AppId={{C97C1B40-F02C-4F78-BE10-900D694BDBC3}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -20,7 +20,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={userappdata}\.minecraft\versions\
+DefaultDirName={userappdata}\.minecraft\versions\{#MCVersion}-{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users.)
@@ -34,13 +34,11 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "{app}\{#MCVersion}\*"; DestDir: "{app}\{#MCVersion}-{#MyAppName}"; Flags: external recursesubdirs
-Source: "C:\sources\99th_dutchiesclient\installers\jar.bat"; DestDir: "{app}\{#MCVersion}-{#MyAppName}"; DestName: "jar.bat"; Flags: ignoreversion
-Source: "C:\sources\99th_dutchiesclient\build\libs\99th_DutchClient-0.0.1.jar"; DestDir: "{app}\{#MCVersion}-{#MyAppName}"; DestName: "{#MCVersion}-{#MyAppName}.pre.jar"; AfterInstall: AfterDuplicate; Flags: ignoreversion
+Source: "{app}\..\{#MCVersion}\*"; DestDir: "{app}"; Flags: external recursesubdirs
+Source: "C:\sources\99th_dutchclient\installers\{#MyAppName}-{#MyAppVersion}.jar"; DestDir: "{app}"; DestName: "{#MCVersion}-{#MyAppName}.jar"; AfterInstall: AfterDuplicate; Flags: ignoreversion
 
 [Code]
 procedure AfterDuplicate();
-var batchresult: Integer;
 var jsonnewfilename: String;
 var jsoncontent: AnsiString;
 var jsoncontentuni: String;
@@ -49,26 +47,17 @@ var profilecontent: AnsiString;
 var profilecontentuni: String;
 var profilepos: Integer;
 begin
-  { Clean before start }
-  DeleteFile(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\{#MCVersion}-{#MyAppName}.jar'));  
-  DeleteFile(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\{#MCVersion}-{#MyAppName}.json'));  
-
-  { Update .jar }
-  Exec(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\jar.bat'), '{#MCVersion} {#MCVersion}-{#MyAppName}', '', SW_SHOW, ewWaitUntilTerminated, batchresult);
-
   { Remove old .jar files }
-  DeleteFile(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\{#MCVersion}.jar'));  
-  DeleteFile(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\{#MCVersion}-{#MyAppName}.pre.jar'));  
-  DeleteFile(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\jar.bat'));  
+  DeleteFile(ExpandConstant('{app}\{#MCVersion}.jar'));  
 
   { Rename .json file }
-  jsonnewfilename := ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\{#MCVersion}-{#MyAppName}.json');
-  RenameFile(ExpandConstant('{app}\{#MCVersion}-{#MyAppName}\{#MCVersion}.json'), jsonnewfilename);
+  jsonnewfilename := ExpandConstant('{app}\{#MCVersion}-{#MyAppName}.json');
+  RenameFile(ExpandConstant('{app}\{#MCVersion}.json'), jsonnewfilename);
 
   { Read json file }
   LoadStringFromFile(jsonnewfilename, jsoncontent);
   jsoncontentuni := String(jsoncontent);
-
+  
   { Remove downloads to prevent vanilla loading }
   StringChangeEx(jsoncontentuni, ', "downloads": {"client": {"sha1": "37fd3c903861eeff3bc24b71eed48f828b5269c8", "size": 17547153, "url": "https://launcher.mojang.com/v1/objects/37fd3c903861eeff3bc24b71eed48f828b5269c8/client.jar"}, "client_mappings": {"sha1": "374c6b789574afbdc901371207155661e0509e17", "size": 5746047, "url": "https://launcher.mojang.com/v1/objects/374c6b789574afbdc901371207155661e0509e17/client.txt"}, "server": {"sha1": "1b557e7b033b583cd9f66746b7a9ab1ec1673ced", "size": 37962360, "url": "https://launcher.mojang.com/v1/objects/1b557e7b033b583cd9f66746b7a9ab1ec1673ced/server.jar"}, "server_mappings": {"sha1": "41285beda6d251d190f2bf33beadd4fee187df7a", "size": 4400926, "url": "https://launcher.mojang.com/v1/objects/41285beda6d251d190f2bf33beadd4fee187df7a/server.txt"}}', '', True);
   { Update ID }
@@ -78,11 +67,13 @@ begin
   SaveStringToFile(jsonnewfilename, AnsiString(jsoncontentuni), False);
 
   { Add profile }
-  profilefilename := ExpandConstant('{app}\..\launcher_profiles.json');
+  profilefilename := ExpandConstant('{app}\..\..\launcher_profiles.json');
   LoadStringFromFile(profilefilename, profilecontent);
   profilecontentuni := String(profilecontent);
   profilepos := Pos('"lastVersionId" : "{#MCVersion}-{#MyAppName}"', profilecontentuni);
-  if profilepos > 0 then
+  if profilepos = 0 then
+  begin
     StringChangeEx(profilecontentuni, '"profiles" : {', '"profiles" : {"{#MyDateTimeString}" : {"created" : "{#BigDateTimeString}","icon" : "Furnace","lastUsed" : "1970-01-01T00:00:00.000Z","lastVersionId" : "{#MCVersion}-{#MyAppName}","name" : "{#MCVersion}-{#MyAppName}","type" : "custom"},', True);
     SaveStringToFile(profilefilename, AnsiString(profilecontentuni), False);
+  end;
 end;
