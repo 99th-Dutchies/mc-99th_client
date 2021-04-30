@@ -19,6 +19,7 @@ public class Coordinates
         // Determine direction based on rotation
         String dir = "";
         float rot = mc.player.rotationYaw % 360.0F;
+		rot = rot < 0 ? rot * -1 : rot;
 
         if (rot < 0) {
             dir = "?";
