@@ -8,13 +8,13 @@ public class LocationInfo
 {
     public static void render(Minecraft mc, MatrixStack ms) {
         // Draw X coordinate
-        mc.fontRenderer.drawString(ms, "[X] " + (int) mc.player.getPosX(), 0, 0, -1);
+        mc.fontRenderer.drawString(ms, "[X] " + (int) mc.player.getPosX(), 1, 1, -1);
 
         // Draw Y coordinate
-        mc.fontRenderer.drawString(ms, "[Y] " + (int) mc.player.getPosY(), 0, 10, -1);
+        mc.fontRenderer.drawString(ms, "[Y] " + (int) mc.player.getPosY(), 1, 11, -1);
 
         // Draw Z coordinate
-        mc.fontRenderer.drawString(ms, "[Z] " + (int) mc.player.getPosZ(), 0, 20, -1);
+        mc.fontRenderer.drawString(ms, "[Z] " + (int) mc.player.getPosZ(), 1, 21, -1);
 
         // Determine direction based on rotation
         String dir = "";
@@ -37,11 +37,11 @@ public class LocationInfo
             dir = "?";
         }
         // Draw orientation/direction
-        mc.fontRenderer.drawString(ms, "[" + dir + "] " + (int) rot, 0, 30, -1);
+        mc.fontRenderer.drawString(ms, "[" + dir + "] " + (int) rot, 1, 31, -1);
 
         // Draw biome
         String biomeName = mc.player.world.getBiome(mc.player.getPosition()).getCategory().getName();
-        mc.fontRenderer.drawString(ms, "[B] " + biomeName, 0, 40, -1);
+        mc.fontRenderer.drawString(ms, "[B] " + biomeName, 1, 41, -1);
     }
 
     private static void renderX(Minecraft mc, MatrixStack ms) {
