@@ -77,7 +77,7 @@ import net.optifine.CustomColors;
 import net.optifine.CustomItems;
 import net.optifine.TextureAnimations;
 import net.optifine.reflect.Reflector;
-import nl._99th_dutchclient.hud.Coordinates;
+import nl._99th_dutchclient.hud.LocationInfo;
 
 public class IngameGui extends AbstractGui
 {
@@ -188,7 +188,7 @@ public class IngameGui extends AbstractGui
             RenderSystem.defaultBlendFunc();
         }
 
-        Coordinates.render(this.mc, matrixStack);
+        LocationInfo.render(this.mc, matrixStack);
 
         ItemStack itemstack = this.mc.player.inventory.armorItemInSlot(3);
 

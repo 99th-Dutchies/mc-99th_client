@@ -4,7 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 
-public class Coordinates
+public class LocationInfo
 {
     public static void render(Minecraft mc, MatrixStack ms) {
         // Draw X coordinate
