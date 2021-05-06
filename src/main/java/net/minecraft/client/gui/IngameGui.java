@@ -78,6 +78,7 @@ import net.optifine.CustomItems;
 import net.optifine.TextureAnimations;
 import net.optifine.reflect.Reflector;
 import nl._99th_dutchclient.hud.LocationInfo;
+import nl._99th_dutchclient.hud.InventoryInfo;
 
 public class IngameGui extends AbstractGui
 {
@@ -189,6 +190,7 @@ public class IngameGui extends AbstractGui
         }
 
         LocationInfo.render(this.mc, matrixStack);
+        InventoryInfo.render(this.mc, matrixStack);
 
         ItemStack itemstack = this.mc.player.inventory.armorItemInSlot(3);
 
