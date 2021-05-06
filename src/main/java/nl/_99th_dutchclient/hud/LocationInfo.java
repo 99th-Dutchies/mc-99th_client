@@ -24,15 +24,15 @@ public class LocationInfo
         if (rot < 0) {
             dir = "?";
         } else if (rot <= 45) {
-            dir = "N";
-        } else if (rot <= 135) {
-            dir = "E";
-        } else if (rot <= 225) {
             dir = "S";
-        } else if (rot <= 315) {
+        } else if (rot <= 135) {
             dir = "W";
-        } else if (rot < 360) {
+        } else if (rot <= 225) {
             dir = "N";
+        } else if (rot <= 315) {
+            dir = "E";
+        } else if (rot < 360) {
+            dir = "S";
         } else {
             dir = "?";
         }
