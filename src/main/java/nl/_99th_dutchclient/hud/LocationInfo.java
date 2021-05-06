@@ -43,20 +43,4 @@ public class LocationInfo
         String biomeName = mc.player.world.getBiome(mc.player.getPosition()).getCategory().getName();
         mc.fontRenderer.drawString(ms, "[B] " + biomeName, 1, 41, -1);
     }
-
-    private static void renderX(Minecraft mc, MatrixStack ms) {
-
-    }
-
-    private static void renderY(Minecraft mc, MatrixStack ms) {
-
-    }
-
-    private static void renderZ(Minecraft mc, MatrixStack ms) {
-
-    }
-
-    private static void renderOrientation(Minecraft mc, MatrixStack ms) {
-
-    }
 }
