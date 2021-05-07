@@ -33,12 +33,16 @@ public class LocationInfo
 
     private static void renderDir(Minecraft mc, MatrixStack ms) {
         // Determine direction based on rotation
-        float rot = mc.player.rotationYaw % 360.0F;
-        rot = rot < 0 ? rot * -1 : rot;
+        float rot = ((mc.player.rotationYaw % 360.0F) + 360.0F) % 360.0F;
+
         String dir = rotationToDirection(rot);
+        String deltaX = rotationToDeltaX(rot);
+        String deltaY = rotationToDeltaZ(rot);
 
         // Draw orientation/direction
+        mc.fontRenderer.drawStringWithShadow(ms, deltaX, 61, 1, -1);
         mc.fontRenderer.drawStringWithShadow(ms, dir, 61, 11, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, deltaY, 61, 21, -1);
     }
 
     private static String rotationToDirection(float rotation) {
@@ -54,6 +58,58 @@ public class LocationInfo
             return "E";
         } else if (rotation < 360) {
             return "S";
+        } else {
+            return "?";
+        }
+    }
+
+    private static String rotationToDeltaX(float rotation) {
+        if (rotation < 0) {
+            return "?";
+        } else if (rotation <= 22.5) {
+            return "";
+        } else if (rotation <= 67.5) {
+            return "-";
+        } else if (rotation <= 112.5) {
+            return "--";
+        } else if (rotation <= 157.5) {
+            return "-";
+        } else if (rotation <= 202.5) {
+            return "";
+        } else if (rotation <= 247.5) {
+            return "+";
+        } else if (rotation <= 292.5) {
+            return "++";
+        } else if (rotation <= 337.5) {
+            return "+";
+        } else if (rotation < 360) {
+            return "";
+        } else {
+            return "?";
+        }
+    }
+
+    private static String rotationToDeltaZ(float rotation) {
+        if (rotation < 0) {
+            return "?";
+        } else if (rotation <= 22.5) {
+            return "++";
+        } else if (rotation <= 67.5) {
+            return "+";
+        } else if (rotation <= 112.5) {
+            return "";
+        } else if (rotation <= 157.5) {
+            return "-";
+        } else if (rotation <= 202.5) {
+            return "--";
+        } else if (rotation <= 247.5) {
+            return "-";
+        } else if (rotation <= 292.5) {
+            return "";
+        } else if (rotation <= 337.5) {
+            return "+";
+        } else if (rotation < 360) {
+            return "++";
         } else {
             return "?";
         }
