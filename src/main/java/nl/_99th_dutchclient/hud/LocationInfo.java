@@ -20,15 +20,15 @@ public class LocationInfo
     }
 
     private static void renderX(Minecraft mc, MatrixStack ms) {
-        mc.fontRenderer.drawString(ms, "[X] " + (int) mc.player.getPosX(), 1, 1, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, "[X] " + (int) mc.player.getPosX(), 1, 1, -1);
     }
 
     private static void renderY(Minecraft mc, MatrixStack ms) {
-        mc.fontRenderer.drawString(ms, "[Y] " + (int) mc.player.getPosY(), 1, 11, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, "[Y] " + (int) mc.player.getPosY(), 1, 11, -1);
     }
 
     private static void renderZ(Minecraft mc, MatrixStack ms) {
-        mc.fontRenderer.drawString(ms, "[Z] " + (int) mc.player.getPosZ(), 1, 21, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, "[Z] " + (int) mc.player.getPosZ(), 1, 21, -1);
     }
 
     private static void renderDir(Minecraft mc, MatrixStack ms) {
@@ -38,7 +38,7 @@ public class LocationInfo
         String dir = rotationToDirection(rot);
 
         // Draw orientation/direction
-        mc.fontRenderer.drawString(ms, "[" + dir + "] " + (int) rot, 1, 31, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, dir, 61, 11, -1);
     }
 
     private static String rotationToDirection(float rotation) {
@@ -60,7 +60,8 @@ public class LocationInfo
     }
 
     private static void renderBiome(Minecraft mc, MatrixStack ms) {
-        String biomeName = mc.player.world.getBiome(mc.player.getPosition()).getCategory().getName();
-        mc.fontRenderer.drawString(ms, "[B] " + biomeName, 1, 41, -1);
+        String biomeName = mc.player.world.getBiome(mc.player.getPosition()).getCategory().getName().replaceAll("_", " ");
+        biomeName = biomeName.substring(0, 1).toUpperCase() + biomeName.substring(1);
+        mc.fontRenderer.drawStringWithShadow(ms, biomeName, 1, 31, -1);
     }
 }
