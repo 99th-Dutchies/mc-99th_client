@@ -281,6 +281,7 @@ public class GameSettings
     private File optionsFile99thdc;
     public static boolean showLocationHUD = true;
     public static boolean showInventoryHUD = true;
+    public static boolean fullBrightness = false;
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
@@ -1672,6 +1673,11 @@ public class GameSettings
         {
             this.showLocationHUD = !this.showInventoryHUD;
         }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.FULL_BRIGHTNESS)
+        {
+            this.fullBrightness = !this.fullBrightness;
+        }
     }
 
     public ITextComponent getKeyComponentOF(AbstractOption p_getKeyComponentOF_1_)
@@ -2755,6 +2761,11 @@ public class GameSettings
                     {
                         this.showInventoryHUD = Boolean.valueOf(astring[1]);
                     }
+
+                    if (astring[0].equals("fullBrightness") && astring.length >= 2)
+                    {
+                        this.fullBrightness = Boolean.valueOf(astring[1]);
+                    }
                 }
                 catch (Exception exception1)
                 {
@@ -2781,6 +2792,7 @@ public class GameSettings
             PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile99thdc), StandardCharsets.UTF_8));
             printwriter.println("showLocationHUD:" + this.showLocationHUD);
             printwriter.println("showInventoryHUD:" + this.showInventoryHUD);
+            printwriter.println("fullBrightness:" + this.fullBrightness);
             printwriter.close();
         }
         catch (Exception exception1)
@@ -2924,6 +2936,7 @@ public class GameSettings
         this.ofAnimatedTextures = true;
         this.showLocationHUD = true;
         this.showInventoryHUD = true;
+        this.fullBrightness = false;
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

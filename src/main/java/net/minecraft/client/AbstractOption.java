@@ -692,6 +692,14 @@ public abstract class AbstractOption
         p_lambda$static$122_0_.showInventoryHUD = p_lambda$static$122_1_;
     });
 
+    public static final BooleanOption FULL_BRIGHTNESS = new BooleanOption("99thdc.options.FULL_BRIGHTNESS", (p_lambda$static$123_0_) ->
+    {
+        return p_lambda$static$123_0_.fullBrightness;
+    }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
+    {
+        p_lambda$static$124_0_.fullBrightness = p_lambda$static$124_1_;
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);

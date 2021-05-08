@@ -201,7 +201,7 @@ public class LightTexture implements AutoCloseable
                             }
                         }
 
-                        float f11 = (float)this.client.gameSettings.gamma;
+                        float f11 = (float) (this.client.gameSettings.fullBrightness ? 100.0D : this.client.gameSettings.gamma);
                         Vector3f vector3f4 = this.getTempCopy(vector3f1);
                         vector3f4.apply(this::invGamma);
                         vector3f1.lerp(vector3f4, f11);
