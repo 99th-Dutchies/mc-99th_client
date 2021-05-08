@@ -1,0 +1,14 @@
+# General
+99thdc.title=99th_DutchClient
+
+# Settings
+99thdc.options.title=99th_DutchClient Instellingen
+
+99thdc.options.SHOW_LOCATION_HUD=Toon Locatie HUD
+99thdc.options.SHOW_LOCATION_HUD.tooltip.1=Toon Locatie HUD
+
+99thdc.options.SHOW_INVENTORY_HUD=Toon Inventory HUD
+99thdc.options.SHOW_INVENTORY_HUD.tooltip.1=Toon Inventory HUD
+
+99thdc.options.FULL_BRIGHTNESS=Maximale Helderheid
+99thdc.options.FULL_BRIGHTNESS.tooltip.1=Maximale Helderheid

@@ -14,7 +14,6 @@ import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.LanguageMap;
-import net.optifine.Lang;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,7 +45,8 @@ public class ClientLanguageMap extends LanguageMap
                 {
                     ResourceLocation resourcelocation = new ResourceLocation(s1, s);
                     func_239498_a_(p_239497_0_.getAllResources(resourcelocation), map);
-                    Lang.loadResources(p_239497_0_, language.getCode(), map);
+                    net.optifine.Lang.loadResources(p_239497_0_, language.getCode(), map);
+                    nl._99th_dutchclient.Lang.loadResources(p_239497_0_, language.getCode(), map);
                 }
                 catch (FileNotFoundException filenotfoundexception)
                 {
