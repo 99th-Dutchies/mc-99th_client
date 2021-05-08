@@ -676,6 +676,22 @@ public abstract class AbstractOption
     public static final IteratableOption CHAT_BACKGROUND = new IteratableOptionOF("of.options.CHAT_BACKGROUND");
     public static final IteratableOption CHAT_SHADOW = new IteratableOptionOF("of.options.CHAT_SHADOW");
 
+    public static final BooleanOption SHOW_LOCATION_HUD = new BooleanOption("99thdc.options.SHOW_LOCATION_HUD", (p_lambda$static$119_0_) ->
+    {
+        return p_lambda$static$119_0_.showLocationHUD;
+    }, (p_lambda$static$120_0_, p_lambda$static$120_1_) ->
+    {
+        p_lambda$static$120_0_.showLocationHUD = p_lambda$static$120_1_;
+    });
+
+    public static final BooleanOption SHOW_INVENTORY_HUD = new BooleanOption("99thdc.options.SHOW_INVENTORY_HUD", (p_lambda$static$121_0_) ->
+    {
+        return p_lambda$static$121_0_.showInventoryHUD;
+    }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
+    {
+        p_lambda$static$122_0_.showInventoryHUD = p_lambda$static$122_1_;
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);

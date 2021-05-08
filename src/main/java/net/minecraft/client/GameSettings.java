@@ -278,6 +278,10 @@ public class GameSettings
     public KeyBinding ofKeyBindZoom;
     private File optionsFileOF;
 
+    private File optionsFile99thdc;
+    public static boolean showLocationHUD = true;
+    public static boolean showInventoryHUD = true;
+
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
         this.setForgeKeybindProperties();
@@ -307,6 +311,7 @@ public class GameSettings
         this.renderDistanceChunks = mcIn.isJava64bit() ? 12 : 8;
         this.syncChunkWrites = Util.getOSType() == Util.OS.WINDOWS;
         this.optionsFileOF = new File(mcDataDir, "optionsof.txt");
+        this.optionsFile99thdc = new File(mcDataDir, "options99th_dutchclient.txt");
         this.framerateLimit = (int)AbstractOption.FRAMERATE_LIMIT.getMaxValue();
         this.ofKeyBindZoom = new KeyBinding("of.key.zoom", 67, "key.categories.misc");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this.ofKeyBindZoom);
@@ -838,6 +843,7 @@ public class GameSettings
         }
 
         this.loadOfOptions();
+        this.load99thdcOptions();
     }
 
     private CompoundNBT dataFix(CompoundNBT nbt)
@@ -999,6 +1005,7 @@ public class GameSettings
             }
 
             this.saveOfOptions();
+            this.save99thdcOptions();
             this.sendSettingsToServer();
         }
     }
@@ -1651,6 +1658,19 @@ public class GameSettings
         if (p_setOptionValueOF_1_ == AbstractOption.CHAT_SHADOW)
         {
             this.ofChatShadow = !this.ofChatShadow;
+        }
+    }
+
+    public void setOptionValue99thdc(AbstractOption p_setOptionValueOF_1_, int p_setOptionValueOF_2_)
+    {
+        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_LOCATION_HUD)
+        {
+            this.showLocationHUD = !this.showLocationHUD;
+        }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_INVENTORY_HUD)
+        {
+            this.showLocationHUD = !this.showInventoryHUD;
         }
     }
 
@@ -2701,6 +2721,75 @@ public class GameSettings
         }
     }
 
+    public void load99thdcOptions()
+    {
+        try
+        {
+            File file1 = this.optionsFile99thdc;
+
+            if (!file1.exists())
+            {
+                file1 = this.optionsFile;
+            }
+
+            if (!file1.exists())
+            {
+                return;
+            }
+
+            BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(new FileInputStream(file1), StandardCharsets.UTF_8));
+            String s = "";
+
+            while ((s = bufferedreader.readLine()) != null)
+            {
+                try
+                {
+                    String[] astring = s.split(":");
+
+                    if (astring[0].equals("showLocationHUD") && astring.length >= 2)
+                    {
+                        this.showLocationHUD = Boolean.valueOf(astring[1]);
+                    }
+
+                    if (astring[0].equals("showInventoryHUD") && astring.length >= 2)
+                    {
+                        this.showInventoryHUD = Boolean.valueOf(astring[1]);
+                    }
+                }
+                catch (Exception exception1)
+                {
+                    Config.dbg("Skipping bad option: " + s);
+                    exception1.printStackTrace();
+                }
+            }
+
+            KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
+            KeyBinding.resetKeyBindingArrayAndHash();
+            bufferedreader.close();
+        }
+        catch (Exception exception11)
+        {
+            Config.warn("Failed to load options");
+            exception11.printStackTrace();
+        }
+    }
+
+    public void save99thdcOptions()
+    {
+        try
+        {
+            PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile99thdc), StandardCharsets.UTF_8));
+            printwriter.println("showLocationHUD:" + this.showLocationHUD);
+            printwriter.println("showInventoryHUD:" + this.showInventoryHUD);
+            printwriter.close();
+        }
+        catch (Exception exception1)
+        {
+            Config.warn("Failed to save options");
+            exception1.printStackTrace();
+        }
+    }
+
     public void updateRenderClouds()
     {
         switch (this.ofClouds)
@@ -2833,6 +2922,8 @@ public class GameSettings
         this.ofDrippingWaterLava = true;
         this.ofAnimatedTerrain = true;
         this.ofAnimatedTextures = true;
+        this.showLocationHUD = true;
+        this.showInventoryHUD = true;
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

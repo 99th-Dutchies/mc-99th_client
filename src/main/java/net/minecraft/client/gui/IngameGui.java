@@ -189,8 +189,12 @@ public class IngameGui extends AbstractGui
             RenderSystem.defaultBlendFunc();
         }
 
-        LocationInfo.render(this.mc, matrixStack);
-        InventoryInfo.render(this.mc, matrixStack);
+        if(this.mc.gameSettings.showLocationHUD) {
+            LocationInfo.render(this.mc, matrixStack);
+        }
+        if(this.mc.gameSettings.showInventoryHUD) {
+            InventoryInfo.render(this.mc, matrixStack);
+        }
 
         ItemStack itemstack = this.mc.player.inventory.armorItemInSlot(3);
 

@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourcePackList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Difficulty;
+import nl._99th_dutchclient.Lang;
 
 public class OptionsScreen extends Screen
 {
@@ -84,35 +85,39 @@ public class OptionsScreen extends Screen
             }));
         }
 
-        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 48 - 6, 150, 20, new TranslationTextComponent("options.skinCustomisation"), (p_213055_1_) ->
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 36 - 6, 310, 20, new TranslationTextComponent(Lang.get("99thdc.title")), (p_213055_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new Options99th_DutchClientScreen(this, this.settings));
+        }));
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 60 - 6, 150, 20, new TranslationTextComponent("options.skinCustomisation"), (p_213055_1_) ->
         {
             this.minecraft.displayGuiScreen(new CustomizeSkinScreen(this, this.settings));
         }));
-        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 48 - 6, 150, 20, new TranslationTextComponent("options.sounds"), (p_213061_1_) ->
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 60 - 6, 150, 20, new TranslationTextComponent("options.sounds"), (p_213061_1_) ->
         {
             this.minecraft.displayGuiScreen(new OptionsSoundsScreen(this, this.settings));
         }));
-        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 72 - 6, 150, 20, new TranslationTextComponent("options.video"), (p_213059_1_) ->
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 84 - 6, 150, 20, new TranslationTextComponent("options.video"), (p_213059_1_) ->
         {
             this.minecraft.displayGuiScreen(new VideoSettingsScreen(this, this.settings));
         }));
-        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 72 - 6, 150, 20, new TranslationTextComponent("options.controls"), (p_213052_1_) ->
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 84 - 6, 150, 20, new TranslationTextComponent("options.controls"), (p_213052_1_) ->
         {
             this.minecraft.displayGuiScreen(new ControlsScreen(this, this.settings));
         }));
-        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 96 - 6, 150, 20, new TranslationTextComponent("options.language"), (p_213053_1_) ->
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 108 - 6, 150, 20, new TranslationTextComponent("options.language"), (p_213053_1_) ->
         {
             this.minecraft.displayGuiScreen(new LanguageScreen(this, this.settings, this.minecraft.getLanguageManager()));
         }));
-        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 96 - 6, 150, 20, new TranslationTextComponent("options.chat.title"), (p_213049_1_) ->
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 108 - 6, 150, 20, new TranslationTextComponent("options.chat.title"), (p_213049_1_) ->
         {
             this.minecraft.displayGuiScreen(new ChatOptionsScreen(this, this.settings));
         }));
-        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 120 - 6, 150, 20, new TranslationTextComponent("options.resourcepack"), (p_213060_1_) ->
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 132 - 6, 150, 20, new TranslationTextComponent("options.resourcepack"), (p_213060_1_) ->
         {
             this.minecraft.displayGuiScreen(new PackScreen(this, this.minecraft.getResourcePackList(), this::func_241584_a_, this.minecraft.getFileResourcePacks(), new TranslationTextComponent("resourcePack.title")));
         }));
-        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 120 - 6, 150, 20, new TranslationTextComponent("options.accessibility.title"), (p_213058_1_) ->
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 132 - 6, 150, 20, new TranslationTextComponent("options.accessibility.title"), (p_213058_1_) ->
         {
             this.minecraft.displayGuiScreen(new AccessibilityScreen(this, this.settings));
         }));
