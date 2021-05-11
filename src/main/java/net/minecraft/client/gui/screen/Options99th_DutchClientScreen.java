@@ -15,7 +15,7 @@ import nl._99th_dutchclient.Lang;
 
 public class Options99th_DutchClientScreen extends SettingsScreen
 {
-    private static final AbstractOption[] OPTIONS = new AbstractOption[] {AbstractOption.SHOW_LOCATION_HUD,AbstractOption.SHOW_INVENTORY_HUD,AbstractOption.FULL_BRIGHTNESS};
+    private static final AbstractOption[] OPTIONS = new AbstractOption[] {AbstractOption.SHOW_LOCATION_HUD,AbstractOption.SHOW_INVENTORY_HUD,AbstractOption.FULL_BRIGHTNESS,AbstractOption.INFINITE_CHAT};
 
     public Options99th_DutchClientScreen(Screen parentScreenIn, GameSettings gameSettingsIn)
     {
@@ -42,6 +42,13 @@ public class Options99th_DutchClientScreen extends SettingsScreen
         {
             AbstractOption.FULL_BRIGHTNESS.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.FULL_BRIGHTNESS.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 24, 150, 20, AbstractOption.INFINITE_CHAT, AbstractOption.INFINITE_CHAT.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.INFINITE_CHAT.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.INFINITE_CHAT.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
         }));
 

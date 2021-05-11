@@ -282,6 +282,7 @@ public class GameSettings
     public static boolean showLocationHUD = true;
     public static boolean showInventoryHUD = true;
     public static boolean fullBrightness = false;
+    public boolean infiniteChat = true;
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
@@ -1678,6 +1679,11 @@ public class GameSettings
         {
             this.fullBrightness = !this.fullBrightness;
         }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.INFINITE_CHAT)
+        {
+            this.infiniteChat = !this.infiniteChat;
+        }
     }
 
     public ITextComponent getKeyComponentOF(AbstractOption p_getKeyComponentOF_1_)
@@ -2766,6 +2772,11 @@ public class GameSettings
                     {
                         this.fullBrightness = Boolean.valueOf(astring[1]);
                     }
+
+                    if (astring[0].equals("infiniteChat") && astring.length >= 2)
+                    {
+                        this.infiniteChat = Boolean.valueOf(astring[1]);
+                    }
                 }
                 catch (Exception exception1)
                 {
@@ -2937,6 +2948,7 @@ public class GameSettings
         this.showLocationHUD = true;
         this.showInventoryHUD = true;
         this.fullBrightness = false;
+        this.infiniteChat = true;
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

@@ -230,7 +230,7 @@ public class NewChatGui extends AbstractGui
             this.drawnChatLines.add(0, new ChatLine<>(p_238493_3_, ireorderingprocessor, p_238493_2_));
         }
 
-        while (this.drawnChatLines.size() > 100)
+        while (this.drawnChatLines.size() > 100 && !mc.gameSettings.infiniteChat)
         {
             this.drawnChatLines.remove(this.drawnChatLines.size() - 1);
         }
@@ -239,7 +239,7 @@ public class NewChatGui extends AbstractGui
         {
             this.chatLines.add(0, new ChatLine<>(p_238493_3_, p_238493_1_, p_238493_2_));
 
-            while (this.chatLines.size() > 100)
+            while (this.chatLines.size() > 100 && !mc.gameSettings.infiniteChat)
             {
                 this.chatLines.remove(this.chatLines.size() - 1);
             }

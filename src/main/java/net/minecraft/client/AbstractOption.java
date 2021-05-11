@@ -700,6 +700,14 @@ public abstract class AbstractOption
         p_lambda$static$124_0_.fullBrightness = p_lambda$static$124_1_;
     });
 
+    public static final BooleanOption INFINITE_CHAT = new BooleanOption("99thdc.options.INFINITE_CHAT", (p_lambda$static$125_0_) ->
+    {
+        return p_lambda$static$125_0_.infiniteChat;
+    }, (p_lambda$static$126_0_, p_lambda$static$126_1_) ->
+    {
+        p_lambda$static$126_0_.fullBrightness = p_lambda$static$126_1_;
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);

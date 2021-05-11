@@ -12,3 +12,6 @@
 
 99thdc.options.FULL_BRIGHTNESS=Full Brightness
 99thdc.options.FULL_BRIGHTNESS.tooltip.1=Full Brightness
+
+99thdc.options.INFINITE_CHAT=Infinite Chat
+99thdc.options.INFINITE_CHAT.tooltip.1=Infinite Chat
