@@ -79,6 +79,7 @@ import net.optifine.TextureAnimations;
 import net.optifine.reflect.Reflector;
 import nl._99th_dutchclient.hud.LocationInfo;
 import nl._99th_dutchclient.hud.InventoryInfo;
+import nl._99th_dutchclient.chat.ChatTriggerListener;
 
 public class IngameGui extends AbstractGui
 {
@@ -156,6 +157,7 @@ public class IngameGui extends AbstractGui
         IChatListener ichatlistener = NarratorChatListener.INSTANCE;
         this.chatListeners.get(ChatType.CHAT).add(new NormalChatListener(mcIn));
         this.chatListeners.get(ChatType.CHAT).add(ichatlistener);
+        this.chatListeners.get(ChatType.CHAT).add(new ChatTriggerListener(mcIn));
         this.chatListeners.get(ChatType.SYSTEM).add(new NormalChatListener(mcIn));
         this.chatListeners.get(ChatType.SYSTEM).add(ichatlistener);
         this.chatListeners.get(ChatType.GAME_INFO).add(new OverlayChatListener(mcIn));

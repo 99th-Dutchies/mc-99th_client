@@ -67,6 +67,7 @@ import net.optifine.reflect.Reflector;
 import net.optifine.shaders.Shaders;
 import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
+import nl._99th_dutchclient.chat.ChatTrigger;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -283,6 +284,10 @@ public class GameSettings
     public boolean showInventoryHUD = true;
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
+    public List<ChatTrigger> chatTriggers = Lists.newArrayList(
+        new ChatTrigger("Hoi", "Hallo", true),
+        new ChatTrigger("Do survival", "/gamemode survival", true)
+    );
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
