@@ -279,9 +279,9 @@ public class GameSettings
     private File optionsFileOF;
 
     private File optionsFile99thdc;
-    public static boolean showLocationHUD = true;
-    public static boolean showInventoryHUD = true;
-    public static boolean fullBrightness = false;
+    public boolean showLocationHUD = true;
+    public boolean showInventoryHUD = true;
+    public boolean fullBrightness = false;
     public boolean infiniteChat = true;
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
@@ -2804,6 +2804,7 @@ public class GameSettings
             printwriter.println("showLocationHUD:" + this.showLocationHUD);
             printwriter.println("showInventoryHUD:" + this.showInventoryHUD);
             printwriter.println("fullBrightness:" + this.fullBrightness);
+            printwriter.println("infiniteChat:" + this.infiniteChat);
             printwriter.close();
         }
         catch (Exception exception1)
