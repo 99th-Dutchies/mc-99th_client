@@ -705,7 +705,7 @@ public abstract class AbstractOption
         return p_lambda$static$125_0_.infiniteChat;
     }, (p_lambda$static$126_0_, p_lambda$static$126_1_) ->
     {
-        p_lambda$static$126_0_.fullBrightness = p_lambda$static$126_1_;
+        p_lambda$static$126_0_.infiniteChat = p_lambda$static$126_1_;
     });
 
     public AbstractOption(String translationKeyIn)
