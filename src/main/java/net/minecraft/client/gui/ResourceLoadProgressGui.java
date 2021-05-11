@@ -27,7 +27,7 @@ import net.optifine.util.PropertiesOrdered;
 
 public class ResourceLoadProgressGui extends LoadingGui
 {
-    private static final ResourceLocation MOJANG_LOGO_TEXTURE = new ResourceLocation("textures/gui/title/mojangstudios.png");
+    private static final ResourceLocation LOGO_TEXTURE = new ResourceLocation("_99th_dutchclient/banner.jpeg");
     private static final int field_238627_b_ = ColorHelper.PackedColor.packColor(255, 239, 50, 61);
     private static final int field_238628_c_ = field_238627_b_ & 16777215;
     private final Minecraft mc;
@@ -39,8 +39,8 @@ public class ResourceLoadProgressGui extends LoadingGui
     private long fadeInStart = -1L;
     private int colorBackground = field_238628_c_;
     private int colorBar = field_238628_c_;
-    private int colorOutline = 16777215;
-    private int colorProgress = 16777215;
+    private int colorOutline = 2001387;
+    private int colorProgress = 16737792;
     private GlBlendState blendState = null;
     private boolean fadeOut = false;
 
@@ -54,7 +54,7 @@ public class ResourceLoadProgressGui extends LoadingGui
 
     public static void loadLogoTexture(Minecraft mc)
     {
-        mc.getTextureManager().loadTexture(MOJANG_LOGO_TEXTURE, new ResourceLoadProgressGui.MojangLogoTexture());
+        mc.getTextureManager().loadTexture(LOGO_TEXTURE, new ResourceLoadProgressGui.MojangLogoTexture());
     }
 
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
@@ -102,18 +102,14 @@ public class ResourceLoadProgressGui extends LoadingGui
             f2 = 1.0F;
         }
 
-        int j2 = (int)((double)this.mc.getMainWindow().getScaledWidth() * 0.5D);
-        int i1 = (int)((double)this.mc.getMainWindow().getScaledHeight() * 0.5D);
+        int j2 = (int)((double)this.mc.getMainWindow().getScaledWidth() * 1.0D);
+        int i1 = (int)((double)this.mc.getMainWindow().getScaledHeight() * 1.0D);
         double d0 = Math.min((double)this.mc.getMainWindow().getScaledWidth() * 0.75D, (double)this.mc.getMainWindow().getScaledHeight()) * 0.25D;
         int j1 = (int)(d0 * 0.5D);
         double d1 = d0 * 4.0D;
         int k1 = (int)(d1 * 0.5D);
-        this.mc.getTextureManager().bindTexture(MOJANG_LOGO_TEXTURE);
-        RenderSystem.enableBlend();
-        RenderSystem.blendEquation(32774);
-        RenderSystem.blendFunc(770, 1);
-        RenderSystem.alphaFunc(516, 0.0F);
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, f2);
+        this.mc.getTextureManager().bindTexture(LOGO_TEXTURE);
+
         boolean flag = true;
 
         if (this.blendState != null)
@@ -128,13 +124,9 @@ public class ResourceLoadProgressGui extends LoadingGui
 
         if (flag)
         {
-            blit(matrixStack, j2 - k1, i1 - j1, k1, (int)d0, -0.0625F, 0.0F, 120, 60, 120, 120);
-            blit(matrixStack, j2, i1 - j1, k1, (int)d0, 0.0625F, 60.0F, 120, 60, 120, 120);
+            blit(matrixStack, 0, 0, this.mc.getMainWindow().getScaledWidth(), this.mc.getMainWindow().getScaledHeight(), 0.0F, 0.0F, 120, 120, 120, 120);
         }
 
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.defaultAlphaFunc();
-        RenderSystem.disableBlend();
         int l1 = (int)((double)this.mc.getMainWindow().getScaledHeight() * 0.8325D);
         float f3 = this.asyncReloader.estimateExecutionSpeed();
         this.progress = MathHelper.clamp(this.progress * 0.95F + f3 * 0.050000012F, 0.0F, 1.0F);
@@ -209,8 +201,8 @@ public class ResourceLoadProgressGui extends LoadingGui
     {
         this.colorBackground = field_238628_c_;
         this.colorBar = field_238628_c_;
-        this.colorOutline = 16777215;
-        this.colorProgress = 16777215;
+        this.colorOutline = 2001387;
+        this.colorProgress = 16737792;
 
         if (Config.isCustomColors())
         {
@@ -298,7 +290,7 @@ public class ResourceLoadProgressGui extends LoadingGui
     {
         public MojangLogoTexture()
         {
-            super(ResourceLoadProgressGui.MOJANG_LOGO_TEXTURE);
+            super(ResourceLoadProgressGui.LOGO_TEXTURE);
         }
 
         protected SimpleTexture.TextureData getTextureData(IResourceManager resourceManager)
@@ -318,7 +310,7 @@ public class ResourceLoadProgressGui extends LoadingGui
 
         private static InputStream getLogoInputStream(IResourceManager p_getLogoInputStream_0_, VanillaPack p_getLogoInputStream_1_) throws IOException
         {
-            return p_getLogoInputStream_0_.hasResource(ResourceLoadProgressGui.MOJANG_LOGO_TEXTURE) ? p_getLogoInputStream_0_.getResource(ResourceLoadProgressGui.MOJANG_LOGO_TEXTURE).getInputStream() : p_getLogoInputStream_1_.getResourceStream(ResourcePackType.CLIENT_RESOURCES, ResourceLoadProgressGui.MOJANG_LOGO_TEXTURE);
+            return p_getLogoInputStream_0_.hasResource(ResourceLoadProgressGui.LOGO_TEXTURE) ? p_getLogoInputStream_0_.getResource(ResourceLoadProgressGui.LOGO_TEXTURE).getInputStream() : p_getLogoInputStream_1_.getResourceStream(ResourcePackType.CLIENT_RESOURCES, ResourceLoadProgressGui.LOGO_TEXTURE);
         }
     }
 }
