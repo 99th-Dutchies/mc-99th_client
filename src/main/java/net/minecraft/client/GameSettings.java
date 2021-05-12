@@ -285,8 +285,7 @@ public class GameSettings
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
-        new ChatTrigger("Hoi", "Hallo", true),
-        new ChatTrigger("Do survival", "/gamemode survival", true)
+        new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
     );
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
