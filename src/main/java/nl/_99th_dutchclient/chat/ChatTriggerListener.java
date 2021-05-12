@@ -25,16 +25,24 @@ public class ChatTriggerListener implements IChatListener
     {
         if(this.mc.player == null) return;
 
+        String msg = message.getString();
+
         for(ChatTrigger trigger : this.mc.gameSettings.chatTriggers) {
+            if(!trigger.active) continue;
+
             Matcher matcher = trigger.match(message.getString());
+            
+            String resp = trigger.response;
+            int matches = 0;
 
-            if(matcher.matches()) {
-                String resp = trigger.response;
-
-                for(int i = 0; i < matcher.groupCount(); i++) {
-                    resp = resp.replace("$" + (i+1), matcher.group(i));
+            while(matcher.find()) {
+                matches++;
+                for (int i = 1; i <= matcher.groupCount(); i++) {
+                    resp = resp.replace("$" + i, matcher.group(i));
                 }
+            }
 
+            if(matches > 0) {
                 this.mc.ingameGUI.getChatGUI().addToSentMessages(resp);
                 this.mc.player.sendChatMessage(resp);
             }
