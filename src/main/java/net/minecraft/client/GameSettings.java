@@ -2739,6 +2739,7 @@ public class GameSettings
 
     public void load99thdcOptions()
     {
+        boolean didResetChatTriggers = false;
         try
         {
             File file1 = this.optionsFile99thdc;
@@ -2760,7 +2761,7 @@ public class GameSettings
             {
                 try
                 {
-                    String[] astring = s.split(":");
+                    String[] astring = s.split("<:>");
 
                     if (astring[0].equals("showLocationHUD") && astring.length >= 2)
                     {
@@ -2780,6 +2781,16 @@ public class GameSettings
                     if (astring[0].equals("infiniteChat") && astring.length >= 2)
                     {
                         this.infiniteChat = Boolean.valueOf(astring[1]);
+                    }
+
+                    if (astring[0].equals("chatTrigger") && astring.length >= 2)
+                    {
+                        if(!didResetChatTriggers){
+                            this.chatTriggers = Lists.newArrayList();
+                            didResetChatTriggers = true;
+                        }
+
+                        this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], Boolean.valueOf(astring[3])));
                     }
                 }
                 catch (Exception exception1)
@@ -2805,10 +2816,13 @@ public class GameSettings
         try
         {
             PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile99thdc), StandardCharsets.UTF_8));
-            printwriter.println("showLocationHUD:" + this.showLocationHUD);
-            printwriter.println("showInventoryHUD:" + this.showInventoryHUD);
-            printwriter.println("fullBrightness:" + this.fullBrightness);
-            printwriter.println("infiniteChat:" + this.infiniteChat);
+            printwriter.println("showLocationHUD<:>" + this.showLocationHUD);
+            printwriter.println("showInventoryHUD<:>" + this.showInventoryHUD);
+            printwriter.println("fullBrightness<:>" + this.fullBrightness);
+            printwriter.println("infiniteChat<:>" + this.infiniteChat);
+            for(ChatTrigger trigger : this.chatTriggers) {
+                printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
+            }
             printwriter.close();
         }
         catch (Exception exception1)
@@ -2954,6 +2968,9 @@ public class GameSettings
         this.showInventoryHUD = true;
         this.fullBrightness = false;
         this.infiniteChat = true;
+        this.chatTriggers = Lists.newArrayList(
+                new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
+        );
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();
