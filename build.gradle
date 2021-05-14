@@ -20,7 +20,7 @@ configurations {
 }
 
 group = 'nl._99th_dutchies'
-version = '0.0.1'
+version = '0.0.2'
 
 ext {
     minecraft_version = '1.16.5'
