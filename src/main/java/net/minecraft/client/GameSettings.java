@@ -348,6 +348,12 @@ public class GameSettings
         this.saveOptions();
     }
 
+    public void setChatTrigger(int index, ChatTrigger chatTrigger)
+    {
+        this.chatTriggers.set(index, chatTrigger);
+        this.saveOptions();
+    }
+
     /**
      * Loads the options from the options file. It appears that this has replaced the previous 'loadOptions'
      */
