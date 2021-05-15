@@ -114,7 +114,7 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
         this.minecraft.displayGuiScreen((Screen)null);
     }
 
-    protected <T extends Widget> T addButton(T button)
+    public <T extends Widget> T addButton(T button)
     {
         this.buttons.add(button);
         return this.addListener(button);

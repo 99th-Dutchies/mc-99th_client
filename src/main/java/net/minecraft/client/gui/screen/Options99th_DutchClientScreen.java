@@ -52,6 +52,14 @@ public class Options99th_DutchClientScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
+        this.addButton(new Button(this.width / 2 + 5, this.height - 51, 150, 20, new TranslationTextComponent("99thdc.options.chattriggers.title"), (p_213052_1_) ->
+        {
+            this.minecraft.displayGuiScreen(
+                    new ChatTriggersScreen(
+                            this,
+                            this.minecraft.gameSettings));
+        }));
+
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
         {
             this.minecraft.displayGuiScreen(this.parentScreen);

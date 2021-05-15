@@ -490,7 +490,7 @@ public class CreateWorldScreen extends Screen
         return super.addListener(listener);
     }
 
-    protected <T extends Widget> T addButton(T button)
+    public <T extends Widget> T addButton(T button)
     {
         return super.addButton(button);
     }
