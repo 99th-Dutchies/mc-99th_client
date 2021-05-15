@@ -1,11 +1,13 @@
 buildscript {
     repositories {
+        jcenter()
         mavenLocal()
         maven { url = 'http://files.minecraftforge.net/maven' }
         mavenCentral()
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:4.1.+'
+        classpath 'club.minnced:java-discord-rpc:2.0.1'
     }
 }
 
@@ -32,15 +34,12 @@ ext {
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
     shade 'net.minecraftforge:forgespi:' + spi_version
-//    Use the shade to add the lib to the jar
-//    or use compile if you want to load the lib from the version.json
-//    from a maven repo
-//    shade 'package-here'
-//    compile 'package-here'
+    compile 'club.minnced:java-discord-rpc:2.0.1'
 }
 
 project(':mcp') {
