@@ -39,7 +39,7 @@ repositories {
 
 dependencies {
     shade 'net.minecraftforge:forgespi:' + spi_version
-    compile 'club.minnced:java-discord-rpc:2.0.1'
+    shade 'club.minnced:java-discord-rpc:2.0.1'
 }
 
 project(':mcp') {
