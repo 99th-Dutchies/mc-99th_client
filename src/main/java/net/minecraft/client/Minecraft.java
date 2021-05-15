@@ -629,7 +629,11 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             else if (this.integratedServer == null && (this.currentServerData == null || !this.currentServerData.isOnLAN()))
             {
                 stringbuilder.append(I18n.format("title.multiplayer.other"));
-                this.updateDiscordRPC("Playing on " + this.currentServerData.serverName, "");
+                if(this.gameSettings.discordrpcShowServer) {
+                    this.updateDiscordRPC("Playing on " + this.currentServerData.serverName, "");
+                } else {
+                    this.updateDiscordRPC("Playing multiplayer", "");
+                }
             }
             else
             {

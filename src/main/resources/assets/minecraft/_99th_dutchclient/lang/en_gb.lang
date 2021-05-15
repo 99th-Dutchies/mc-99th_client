@@ -16,3 +16,6 @@
 
 99thdc.options.INFINITE_CHAT=Infinite Chat
 99thdc.options.INFINITE_CHAT.tooltip.1=Infinite Chat
+
+99thdc.options.DISCORDRPC_SHOW_SERVER=Show Current Server in Discord
+99thdc.options.DISCORDRPC_SHOW_SERVER.tooltip.1=Show Current Server in Discord

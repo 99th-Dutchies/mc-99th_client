@@ -708,6 +708,14 @@ public abstract class AbstractOption
         p_lambda$static$126_0_.infiniteChat = p_lambda$static$126_1_;
     });
 
+    public static final BooleanOption DISCORDRPC_SHOW_SERVER = new BooleanOption("99thdc.options.DISCORDRPC_SHOW_SERVER", (p_lambda$static$127_0_) ->
+    {
+        return p_lambda$static$127_0_.discordrpcShowServer;
+    }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
+    {
+        p_lambda$static$128_0_.discordrpcShowServer = p_lambda$static$128_1_;
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);

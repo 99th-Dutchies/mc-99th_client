@@ -52,6 +52,13 @@ public class Options99th_DutchClientScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 48, 150, 20, AbstractOption.DISCORDRPC_SHOW_SERVER, AbstractOption.DISCORDRPC_SHOW_SERVER.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.DISCORDRPC_SHOW_SERVER.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.DISCORDRPC_SHOW_SERVER.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
         this.addButton(new Button(this.width / 2 + 5, this.height - 51, 150, 20, new TranslationTextComponent("99thdc.options.chattriggers.title"), (p_213052_1_) ->
         {
             this.minecraft.displayGuiScreen(
