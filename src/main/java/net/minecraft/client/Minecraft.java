@@ -30,12 +30,7 @@ import java.nio.ByteOrder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -191,6 +186,9 @@ import net.minecraft.resources.ResourcePackType;
 import net.minecraft.resources.ServerPackFinder;
 import net.minecraft.resources.SimpleReloadableResourceManager;
 import net.minecraft.resources.data.PackMetadataSection;
+import net.minecraft.scoreboard.Score;
+import net.minecraft.scoreboard.ScoreObjective;
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.server.management.PlayerProfileCache;
@@ -236,6 +234,8 @@ import net.minecraft.world.storage.FolderName;
 import net.minecraft.world.storage.IServerConfiguration;
 import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.ServerWorldInfo;
+import nl._99th_dutchclient.settings.DiscordShowRPC;
+import nl._99th_dutchclient.util.MCStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -580,7 +580,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         }, "RPC-Callback-Handler").start();
     }
 
-    public void updateDiscordRPC(String state, String details) {
+    public void updateDiscordRPC(String details, String state) {
         if(this.currentPresence == null) {
             return;
         }
@@ -588,15 +588,39 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         DiscordRPC lib = DiscordRPC.INSTANCE;
         DiscordRichPresence presence = this.currentPresence;
 
-        if(state != null) {
-            presence.state = state;
-        }
         if(details != null) {
             presence.details = details;
+        }
+        if(state != null) {
+            presence.state = state;
         }
 
         this.currentPresence = presence;
         lib.Discord_UpdatePresence(presence);
+    }
+
+    private String getDiscordStateString(ScoreObjective sidebar) {
+        Scoreboard scoreboard = sidebar.getScoreboard();
+        Collection<Score> collection = scoreboard.getSortedScores(sidebar);
+
+        Optional<Score> server = collection.stream().findFirst();
+
+        // Scoreboard header is not in the footer, so we return the header.
+        if(!(server.isPresent() && server.get().getPlayerName().toLowerCase().contains(MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText()).toLowerCase()))) {
+            return "Playing " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+        }
+
+        Optional<Score> lobby = collection.stream().skip(3).findFirst();
+
+        if(lobby.isPresent() && lobby.get().getPlayerName().contains("Lobby")) {
+            if(this.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
+                return "In a lobby";
+            } else {
+                return "In lobby " + MCStringUtils.strip(lobby.get().getPlayerName()).replaceAll("Lobby:?\\s?", "");
+            }
+        }
+
+        return "";
     }
 
     private String getWindowTitle()
@@ -629,8 +653,15 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             else if (this.integratedServer == null && (this.currentServerData == null || !this.currentServerData.isOnLAN()))
             {
                 stringbuilder.append(I18n.format("title.multiplayer.other"));
-                if(this.gameSettings.discordrpcShowServer) {
-                    this.updateDiscordRPC("Playing on " + this.currentServerData.serverName, "");
+
+                if(this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF && this.world != null && this.world.getScoreboard() != null && this.world.getScoreboard().getObjectiveInDisplaySlot(1) != null) {
+                    ScoreObjective sidebar = this.world.getScoreboard().getObjectiveInDisplaySlot(1);
+
+                    if(sidebar == null || this.gameSettings.discordrpcShowServer == DiscordShowRPC.SERVER) {
+                        this.updateDiscordRPC("Online on " + this.currentServerData.serverName, "");
+                    } else {
+                        this.updateDiscordRPC("Online on " + this.currentServerData.serverName, this.getDiscordStateString(sidebar));
+                    }
                 } else {
                     this.updateDiscordRPC("Playing multiplayer", "");
                 }

@@ -31,6 +31,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.optifine.Config;
 import net.optifine.config.IteratableOptionOF;
 import net.optifine.config.SliderPercentageOptionOF;
+import nl._99th_dutchclient.settings.DiscordShowRPC;
 
 public abstract class AbstractOption
 {
@@ -708,12 +709,35 @@ public abstract class AbstractOption
         p_lambda$static$126_0_.infiniteChat = p_lambda$static$126_1_;
     });
 
-    public static final BooleanOption DISCORDRPC_SHOW_SERVER = new BooleanOption("99thdc.options.DISCORDRPC_SHOW_SERVER", (p_lambda$static$127_0_) ->
+    private static final ITextComponent DISCORDRPC_SHOW_SERVER_OFF = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip");
+    private static final ITextComponent DISCORDRPC_SHOW_SERVER_SERVER = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip", (new TranslationTextComponent("options.graphics.fabulous")).mergeStyle(TextFormatting.ITALIC));
+    private static final ITextComponent DISCORDRPC_SHOW_SERVER_GAME = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip");
+    private static final ITextComponent DISCORDRPC_SHOW_SERVER_MAP = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip");
+    public static final IteratableOption DISCORDRPC_SHOW_SERVER = new IteratableOption("99thdc.options.DISCORDRPC_SHOW_SERVER", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
     {
-        return p_lambda$static$127_0_.discordrpcShowServer;
+        p_lambda$static$127_0_.discordrpcShowServer = p_lambda$static$127_0_.discordrpcShowServer.func_238166_c_();
     }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
     {
-        p_lambda$static$128_0_.discordrpcShowServer = p_lambda$static$128_1_;
+        switch (p_lambda$static$128_0_.discordrpcShowServer)
+        {
+            case OFF:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_OFF, 200));
+                break;
+
+            case SERVER:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_SERVER, 200));
+                break;
+
+            case GAME:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_GAME, 200));
+                break;
+
+            case MAP:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_MAP, 200));
+        }
+
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.discordrpcShowServer.func_238164_b_());
+        return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 
     public static final BooleanOption TABLIST_PING = new BooleanOption("99thdc.options.TABLIST_PING", (p_lambda$static$129_0_) ->

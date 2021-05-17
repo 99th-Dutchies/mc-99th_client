@@ -68,6 +68,7 @@ import net.optifine.shaders.Shaders;
 import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
 import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.settings.DiscordShowRPC;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -284,7 +285,7 @@ public class GameSettings
     public boolean showInventoryHUD = true;
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
-    public boolean discordrpcShowServer = true;
+    public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
     public boolean tablistPing = false;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
@@ -1699,7 +1700,21 @@ public class GameSettings
 
         if (p_setOptionValueOF_1_ == AbstractOption.DISCORDRPC_SHOW_SERVER)
         {
-            this.discordrpcShowServer = !this.discordrpcShowServer;
+            switch(this.discordrpcShowServer){
+                case SERVER:
+                    this.discordrpcShowServer = DiscordShowRPC.GAME;
+                    break;
+                case GAME:
+                    this.discordrpcShowServer = DiscordShowRPC.MAP;
+                    break;
+                case MAP:
+                    this.discordrpcShowServer = DiscordShowRPC.OFF;
+                    break;
+                case OFF:
+                default:
+                    this.discordrpcShowServer = DiscordShowRPC.SERVER;
+                    break;
+            }
         }
 
         if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
@@ -2803,7 +2818,21 @@ public class GameSettings
 
                     if (astring[0].equals("discordrpcShowServer") && astring.length >= 2)
                     {
-                        this.discordrpcShowServer = Boolean.valueOf(astring[1]);
+                        switch(astring[1]){
+                            case "0":
+                                this.discordrpcShowServer = DiscordShowRPC.OFF;
+                                break;
+                                case "2":
+                                this.discordrpcShowServer = DiscordShowRPC.GAME;
+                                break;
+                                case "3":
+                                this.discordrpcShowServer = DiscordShowRPC.MAP;
+                                break;
+                            case "1":
+                            default:
+                                this.discordrpcShowServer = DiscordShowRPC.SERVER;
+                                break;
+                        }
                     }
 
                     if (astring[0].equals("tablistPing") && astring.length >= 2)
@@ -2848,7 +2877,7 @@ public class GameSettings
             printwriter.println("showInventoryHUD<:>" + this.showInventoryHUD);
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
-            printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer);
+            printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
             printwriter.println("tablistPing<:>" + this.tablistPing);
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
@@ -2998,7 +3027,7 @@ public class GameSettings
         this.showInventoryHUD = true;
         this.fullBrightness = false;
         this.infiniteChat = true;
-        this.discordrpcShowServer = true;
+        this.discordrpcShowServer = DiscordShowRPC.SERVER;
         this.tablistPing = false;
         this.chatTriggers = Lists.newArrayList(
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)

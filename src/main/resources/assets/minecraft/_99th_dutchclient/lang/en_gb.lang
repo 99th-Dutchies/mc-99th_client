@@ -6,19 +6,16 @@
 99thdc.options.chattriggers.title=Chat Triggers
 
 99thdc.options.SHOW_LOCATION_HUD=Show Location HUD
-99thdc.options.SHOW_LOCATION_HUD.tooltip.1=Show Location HUD
-
 99thdc.options.SHOW_INVENTORY_HUD=Show Inventory HUD
-99thdc.options.SHOW_INVENTORY_HUD.tooltip.1=Show Inventory HUD
-
 99thdc.options.FULL_BRIGHTNESS=Full Brightness
-99thdc.options.FULL_BRIGHTNESS.tooltip.1=Full Brightness
-
 99thdc.options.INFINITE_CHAT=Infinite Chat
-99thdc.options.INFINITE_CHAT.tooltip.1=Infinite Chat
-
-99thdc.options.DISCORDRPC_SHOW_SERVER=Show Current Server in Discord
-99thdc.options.DISCORDRPC_SHOW_SERVER.tooltip.1=Show Current Server in Discord
-
 99thdc.options.TABLIST_PING=Ping in Tablist
-99thdc.options.TABLIST_PING.tooltip.1=Ping in Tablist
+99thdc.options.DISCORDRPC_SHOW_SERVER=Show in Discord
+99thdc.options.DISCORDRPC_SHOW_SERVER.off=Off
+99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Off
+99thdc.options.DISCORDRPC_SHOW_SERVER.server=Server Only
+99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=Server Only
+99thdc.options.DISCORDRPC_SHOW_SERVER.game=Server and Minigame
+99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=Server and Minigame
+99thdc.options.DISCORDRPC_SHOW_SERVER.map=Server, Minigame and Map
+99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Server, Minigame and Map

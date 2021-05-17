@@ -52,14 +52,9 @@ public class Options99th_DutchClientScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 48, 150, 20, AbstractOption.DISCORDRPC_SHOW_SERVER, AbstractOption.DISCORDRPC_SHOW_SERVER.func_238152_c_(this.gameSettings), (p_213105_1_) ->
-        {
-            AbstractOption.DISCORDRPC_SHOW_SERVER.nextValue(this.minecraft.gameSettings);
-            p_213105_1_.setMessage(AbstractOption.DISCORDRPC_SHOW_SERVER.func_238152_c_(this.minecraft.gameSettings));
-            this.minecraft.gameSettings.saveOptions();
-        }));
+        this.addButton(AbstractOption.DISCORDRPC_SHOW_SERVER.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 48, 310));
 
-        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 48, 150, 20, AbstractOption.TABLIST_PING, AbstractOption.TABLIST_PING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 72, 150, 20, AbstractOption.TABLIST_PING, AbstractOption.TABLIST_PING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.TABLIST_PING.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.TABLIST_PING.func_238152_c_(this.minecraft.gameSettings));
