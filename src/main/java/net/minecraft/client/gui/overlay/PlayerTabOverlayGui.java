@@ -246,9 +246,25 @@ public class PlayerTabOverlayGui extends AbstractGui
     protected void func_238522_a_(MatrixStack p_238522_1_, int p_238522_2_, int p_238522_3_, int p_238522_4_, NetworkPlayerInfo p_238522_5_)
     {
         if(this.mc.gameSettings.tablistPing) {
+            int j;
+
+            if (p_238522_5_.getResponseTime() <= 0) {
+                j = 11141120;
+            } else if (p_238522_5_.getResponseTime() <= 50) {
+                j = 5635925;
+            } else if (p_238522_5_.getResponseTime() <= 100) {
+                j = 16777045;
+            } else if (p_238522_5_.getResponseTime() <= 250) {
+                j = 16755200;
+            } else if (p_238522_5_.getResponseTime() <= 1000) {
+                j = 16733525;
+            } else {
+                j = 11141120;
+            }
+
             IFormattableTextComponent s = new StringTextComponent(p_238522_5_.getResponseTime() + "").mergeStyle(TextFormatting.ITALIC);
             int sw = this.mc.fontRenderer.getStringPropertyWidth(s);
-            this.mc.fontRenderer.func_243246_a(p_238522_1_, s, p_238522_3_ + p_238522_2_ - sw - 2, p_238522_4_, 2001387);
+            this.mc.fontRenderer.func_243246_a(p_238522_1_, s, p_238522_3_ + p_238522_2_ - sw - 2, p_238522_4_, j);
         } else {
             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             this.mc.getTextureManager().bindTexture(GUI_ICONS_LOCATION);
