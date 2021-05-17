@@ -716,6 +716,14 @@ public abstract class AbstractOption
         p_lambda$static$128_0_.discordrpcShowServer = p_lambda$static$128_1_;
     });
 
+    public static final BooleanOption TABLIST_PING = new BooleanOption("99thdc.options.TABLIST_PING", (p_lambda$static$129_0_) ->
+    {
+        return p_lambda$static$129_0_.tablistPing;
+    }, (p_lambda$static$130_0_, p_lambda$static$130_1_) ->
+    {
+        p_lambda$static$130_0_.tablistPing = p_lambda$static$130_1_;
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);

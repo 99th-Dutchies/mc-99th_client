@@ -19,3 +19,6 @@
 
 99thdc.options.DISCORDRPC_SHOW_SERVER=Toon Huidige Server in Discord
 99thdc.options.DISCORDRPC_SHOW_SERVER.tooltip.1=Toon Huidige Server in Discord
+
+99thdc.options.TABLIST_PING=Ping in Tablist
+99thdc.options.TABLIST_PING.tooltip.1=Ping in Tablist

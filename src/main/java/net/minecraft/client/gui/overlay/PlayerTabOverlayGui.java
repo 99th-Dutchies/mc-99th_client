@@ -78,6 +78,7 @@ public class PlayerTabOverlayGui extends AbstractGui
     {
         ClientPlayNetHandler clientplaynethandler = this.mc.player.connection;
         List<NetworkPlayerInfo> list = ENTRY_ORDERING.sortedCopy(clientplaynethandler.getPlayerInfoMap());
+        int h = 0;
         int i = 0;
         int j = 0;
 
@@ -91,6 +92,14 @@ public class PlayerTabOverlayGui extends AbstractGui
                 k = this.mc.fontRenderer.getStringWidth(" " + p_238523_3_.getOrCreateScore(networkplayerinfo.getGameProfile().getName(), p_238523_4_).getScorePoints());
                 j = Math.max(j, k);
             }
+
+            IFormattableTextComponent s = new StringTextComponent(networkplayerinfo.getResponseTime() + "").mergeStyle(TextFormatting.ITALIC);
+            int sw = this.mc.fontRenderer.getStringPropertyWidth(s);
+            h = Math.max(h, sw);
+        }
+
+        if(this.mc.gameSettings.tablistPing) {
+            i += h;
         }
 
         list = list.subList(0, Math.min(list.size(), 80));
@@ -114,7 +123,7 @@ public class PlayerTabOverlayGui extends AbstractGui
             }
             else
             {
-                l = j;
+                l = j + h;
             }
         }
         else
@@ -236,39 +245,34 @@ public class PlayerTabOverlayGui extends AbstractGui
 
     protected void func_238522_a_(MatrixStack p_238522_1_, int p_238522_2_, int p_238522_3_, int p_238522_4_, NetworkPlayerInfo p_238522_5_)
     {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.mc.getTextureManager().bindTexture(GUI_ICONS_LOCATION);
-        int i = 0;
-        int j;
+        if(this.mc.gameSettings.tablistPing) {
+            IFormattableTextComponent s = new StringTextComponent(p_238522_5_.getResponseTime() + "").mergeStyle(TextFormatting.ITALIC);
+            int sw = this.mc.fontRenderer.getStringPropertyWidth(s);
+            this.mc.fontRenderer.func_243246_a(p_238522_1_, s, p_238522_3_ + p_238522_2_ - sw - 2, p_238522_4_, 2001387);
+        } else {
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            this.mc.getTextureManager().bindTexture(GUI_ICONS_LOCATION);
+            int i = 0;
+            int j;
 
-        if (p_238522_5_.getResponseTime() < 0)
-        {
-            j = 5;
-        }
-        else if (p_238522_5_.getResponseTime() < 150)
-        {
-            j = 0;
-        }
-        else if (p_238522_5_.getResponseTime() < 300)
-        {
-            j = 1;
-        }
-        else if (p_238522_5_.getResponseTime() < 600)
-        {
-            j = 2;
-        }
-        else if (p_238522_5_.getResponseTime() < 1000)
-        {
-            j = 3;
-        }
-        else
-        {
-            j = 4;
-        }
+            if (p_238522_5_.getResponseTime() < 0) {
+                j = 5;
+            } else if (p_238522_5_.getResponseTime() < 150) {
+                j = 0;
+            } else if (p_238522_5_.getResponseTime() < 300) {
+                j = 1;
+            } else if (p_238522_5_.getResponseTime() < 600) {
+                j = 2;
+            } else if (p_238522_5_.getResponseTime() < 1000) {
+                j = 3;
+            } else {
+                j = 4;
+            }
 
-        this.setBlitOffset(this.getBlitOffset() + 100);
-        this.blit(p_238522_1_, p_238522_3_ + p_238522_2_ - 11, p_238522_4_, 0, 176 + j * 8, 10, 8);
-        this.setBlitOffset(this.getBlitOffset() - 100);
+            this.setBlitOffset(this.getBlitOffset() + 100);
+            this.blit(p_238522_1_, p_238522_3_ + p_238522_2_ - 11, p_238522_4_, 0, 176 + j * 8, 10, 8);
+            this.setBlitOffset(this.getBlitOffset() - 100);
+        }
     }
 
     private void func_175247_a_(ScoreObjective objective, int p_175247_2_, String name, int p_175247_4_, int p_175247_5_, NetworkPlayerInfo info, MatrixStack p_175247_7_)
@@ -363,8 +367,13 @@ public class PlayerTabOverlayGui extends AbstractGui
         }
         else
         {
+            int sw = 0;
+            if(this.mc.gameSettings.tablistPing) {
+                IFormattableTextComponent s = new StringTextComponent(info.getResponseTime() + "").mergeStyle(TextFormatting.ITALIC);
+                sw = this.mc.fontRenderer.getStringPropertyWidth(s);
+            }
             String s1 = TextFormatting.YELLOW + "" + i;
-            this.mc.fontRenderer.drawStringWithShadow(p_175247_7_, s1, (float)(p_175247_5_ - this.mc.fontRenderer.getStringWidth(s1)), (float)p_175247_2_, 16777215);
+            this.mc.fontRenderer.drawStringWithShadow(p_175247_7_, s1, (float)(p_175247_5_ - sw - this.mc.fontRenderer.getStringWidth(s1)), (float)p_175247_2_, 16777215);
         }
     }
 

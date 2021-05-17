@@ -285,6 +285,7 @@ public class GameSettings
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
     public boolean discordrpcShowServer = true;
+    public boolean tablistPing = false;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
     );
@@ -1700,6 +1701,11 @@ public class GameSettings
         {
             this.discordrpcShowServer = !this.discordrpcShowServer;
         }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
+        {
+            this.tablistPing = !this.tablistPing;
+        }
     }
 
     public ITextComponent getKeyComponentOF(AbstractOption p_getKeyComponentOF_1_)
@@ -2800,6 +2806,11 @@ public class GameSettings
                         this.discordrpcShowServer = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("tablistPing") && astring.length >= 2)
+                    {
+                        this.tablistPing = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("chatTrigger") && astring.length >= 2)
                     {
                         if(!didResetChatTriggers){
@@ -2838,6 +2849,7 @@ public class GameSettings
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer);
+            printwriter.println("tablistPing<:>" + this.tablistPing);
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
             }
@@ -2987,6 +2999,7 @@ public class GameSettings
         this.fullBrightness = false;
         this.infiniteChat = true;
         this.discordrpcShowServer = true;
+        this.tablistPing = false;
         this.chatTriggers = Lists.newArrayList(
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
         );
