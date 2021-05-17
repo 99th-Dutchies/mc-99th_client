@@ -221,7 +221,7 @@ public class PlayerTabOverlayGui extends AbstractGui
 
                     if (i6 - l5 > 5)
                     {
-                        this.func_175247_a_(p_238523_4_, l2, gameprofile.getName(), l5, i6, networkplayerinfo1, p_238523_1_);
+                        this.func_175247_a_(p_238523_4_, l2, gameprofile.getName(), l5, i6, networkplayerinfo1, h, p_238523_1_);
                     }
                 }
 
@@ -291,7 +291,7 @@ public class PlayerTabOverlayGui extends AbstractGui
         }
     }
 
-    private void func_175247_a_(ScoreObjective objective, int p_175247_2_, String name, int p_175247_4_, int p_175247_5_, NetworkPlayerInfo info, MatrixStack p_175247_7_)
+    private void func_175247_a_(ScoreObjective objective, int p_175247_2_, String name, int p_175247_4_, int p_175247_5_, NetworkPlayerInfo info, int maxPingWidth, MatrixStack p_175247_7_)
     {
         int i = objective.getScoreboard().getOrCreateScore(name, objective).getScorePoints();
 
@@ -383,13 +383,8 @@ public class PlayerTabOverlayGui extends AbstractGui
         }
         else
         {
-            int sw = 0;
-            if(this.mc.gameSettings.tablistPing) {
-                IFormattableTextComponent s = new StringTextComponent(info.getResponseTime() + "").mergeStyle(TextFormatting.ITALIC);
-                sw = this.mc.fontRenderer.getStringPropertyWidth(s);
-            }
             String s1 = TextFormatting.YELLOW + "" + i;
-            this.mc.fontRenderer.drawStringWithShadow(p_175247_7_, s1, (float)(p_175247_5_ - sw - this.mc.fontRenderer.getStringWidth(s1)), (float)p_175247_2_, 16777215);
+            this.mc.fontRenderer.drawStringWithShadow(p_175247_7_, s1, (float)(p_175247_5_ - maxPingWidth - this.mc.fontRenderer.getStringWidth(s1)), (float)p_175247_2_, 16777215);
         }
     }
 
