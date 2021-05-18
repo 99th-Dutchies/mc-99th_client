@@ -42,6 +42,4 @@ echo Cleaning up
 cd ../
 rmdir /s /q "extr"
 rmdir /s /q "fullmodpack"
-
-pause;
 exit;

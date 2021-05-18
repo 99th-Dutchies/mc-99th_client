@@ -22,7 +22,7 @@ configurations {
 }
 
 group = 'nl._99th_dutchies'
-version = '0.2.0'
+version = '0.2.1'
 
 ext {
     minecraft_version = '1.16.5'
@@ -102,5 +102,16 @@ task copyAssets {
     copy {
         from downloadAssets.output.path
         into 'run/assets'
+    }
+}
+
+task createFullJar(type:Exec) {
+    group = "MCP"
+    description = "Build and create the full .jar file"
+    dependsOn ':build'
+
+    doFirst {
+        workingDir = file('./installers/')
+        commandLine = ['cmd', '/C', 'start', 'builder.bat', minecraft_version, '99th_DutchClient-' + version]
     }
 }
