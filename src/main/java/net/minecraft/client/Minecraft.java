@@ -479,6 +479,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         this.musicTicker = new MusicTicker(this);
         this.fontResourceMananger = new FontResourceManager(this.textureManager);
         this.fontRenderer = this.fontResourceMananger.func_238548_a_();
+        this.fontRenderer.setDecodeChatMagic(this.gameSettings.decodeChatMagic);
         this.resourceManager.addReloadListener(this.fontResourceMananger.getReloadListener());
         this.forceUnicodeFont(this.getForceUnicodeFont());
         this.resourceManager.addReloadListener(new GrassColorReloadListener());
