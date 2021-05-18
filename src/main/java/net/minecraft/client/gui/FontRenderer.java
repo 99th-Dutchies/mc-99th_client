@@ -38,6 +38,7 @@ import net.optifine.util.GuiPoint;
 public class FontRenderer
 {
     private static final Vector3f field_238401_c_ = new Vector3f(0.0F, 0.0F, 0.03F);
+    public boolean decodeChatMagic = false;
     public final int FONT_HEIGHT = 9;
     public final Random random = new Random();
     private final Function<ResourceLocation, Font> font;
@@ -53,6 +54,10 @@ public class FontRenderer
         {
             return this.getFont(p_lambda$new$0_2_.getFontId()).func_238557_a_(p_lambda$new$0_1_).getAdvance(p_lambda$new$0_2_.getBold());
         });
+    }
+
+    public void setDecodeChatMagic (boolean in) {
+        this.decodeChatMagic = in;
     }
 
     private Font getFont(ResourceLocation fontLocation)
@@ -368,7 +373,7 @@ public class FontRenderer
         {
             Font font = this.getFont(p_accept_2_);
             IGlyph iglyph = font.func_238557_a_(p_accept_3_);
-            TexturedGlyph texturedglyph = p_accept_2_.getObfuscated() && p_accept_3_ != 32 ? font.obfuscate(iglyph) : font.func_238559_b_(p_accept_3_);
+            TexturedGlyph texturedglyph = p_accept_2_.getObfuscated() && p_accept_3_ != 32 && !FontRenderer.this.decodeChatMagic ? font.obfuscate(iglyph) : font.func_238559_b_(p_accept_3_);
             boolean flag = p_accept_2_.getBold();
             float f = this.field_238434_h_;
             Color color = p_accept_2_.getColor();

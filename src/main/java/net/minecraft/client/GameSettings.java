@@ -287,6 +287,7 @@ public class GameSettings
     public boolean infiniteChat = true;
     public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
     public boolean tablistPing = false;
+    public boolean decodeChatMagic = false;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
     );
@@ -1721,6 +1722,12 @@ public class GameSettings
         {
             this.tablistPing = !this.tablistPing;
         }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.DECODE_CHAT_MAGIC)
+        {
+            this.decodeChatMagic = !this.decodeChatMagic;
+            this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
+        }
     }
 
     public ITextComponent getKeyComponentOF(AbstractOption p_getKeyComponentOF_1_)
@@ -2840,6 +2847,12 @@ public class GameSettings
                         this.tablistPing = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("decodeChatMagic") && astring.length >= 2)
+                    {
+                        this.decodeChatMagic = Boolean.valueOf(astring[1]);
+                        this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
+                    }
+
                     if (astring[0].equals("chatTrigger") && astring.length >= 2)
                     {
                         if(!didResetChatTriggers){
@@ -2879,6 +2892,7 @@ public class GameSettings
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
             printwriter.println("tablistPing<:>" + this.tablistPing);
+            printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
             }
@@ -3029,6 +3043,8 @@ public class GameSettings
         this.infiniteChat = true;
         this.discordrpcShowServer = DiscordShowRPC.SERVER;
         this.tablistPing = false;
+        this.decodeChatMagic = false;
+        this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
         this.chatTriggers = Lists.newArrayList(
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
         );

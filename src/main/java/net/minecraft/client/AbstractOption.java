@@ -748,6 +748,15 @@ public abstract class AbstractOption
         p_lambda$static$130_0_.tablistPing = p_lambda$static$130_1_;
     });
 
+    public static final BooleanOption DECODE_CHAT_MAGIC = new BooleanOption("99thdc.options.DECODE_CHAT_MAGIC", (p_lambda$static$131_0_) ->
+    {
+        return p_lambda$static$131_0_.decodeChatMagic;
+    }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
+    {
+        p_lambda$static$132_0_.decodeChatMagic = p_lambda$static$132_1_;
+        p_lambda$static$132_0_.mc.fontRenderer.setDecodeChatMagic(p_lambda$static$132_1_);
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);

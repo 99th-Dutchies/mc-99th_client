@@ -10,6 +10,7 @@
 99thdc.options.FULL_BRIGHTNESS=Full Brightness
 99thdc.options.INFINITE_CHAT=Infinite Chat
 99thdc.options.TABLIST_PING=Ping in Tablist
+99thdc.options.DECODE_CHAT_MAGIC=Decode Chat Magic
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show in Discord
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=Off
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Off
