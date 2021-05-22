@@ -46,7 +46,7 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Set<String> ALLOWED_PROTOCOLS = Sets.newHashSet("http", "https");
     protected final ITextComponent title;
-    protected final List<IGuiEventListener> children = Lists.newArrayList();
+    public final List<IGuiEventListener> children = Lists.newArrayList();
     @Nullable
     protected Minecraft minecraft;
     protected ItemRenderer itemRenderer;

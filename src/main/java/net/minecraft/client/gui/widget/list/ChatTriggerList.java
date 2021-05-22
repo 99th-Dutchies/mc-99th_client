@@ -6,9 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.ChatTriggersScreen;
+import net.minecraft.client.gui.screen.CreateWorldScreen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.OptionButton;
 import net.minecraft.util.text.IFormattableTextComponent;
@@ -24,20 +28,24 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
     private final ChatTriggersScreen chatTriggersScreen;
     private int maxListLabelWidth;
 
-
     public ChatTriggerList(ChatTriggersScreen chatTriggers, Minecraft mcIn)
     {
         super(mcIn, chatTriggers.width + 45, chatTriggers.height, 43, chatTriggers.height - 32, 20);
         this.chatTriggersScreen = chatTriggers;
-        ChatTrigger chattrigger;
+        this.loadTriggers();
+    }
 
-        for(int j = 0; j < mcIn.gameSettings.chatTriggers.size(); j++)
+    public void loadTriggers() {
+        ChatTrigger chattrigger;
+        this.clearEntries();
+
+        for(int j = 0; j < this.minecraft.gameSettings.chatTriggers.size(); j++)
         {
-            chattrigger = mcIn.gameSettings.chatTriggers.get(j);
+            chattrigger = this.minecraft.gameSettings.chatTriggers.get(j);
             ITextComponent pattern = new TranslationTextComponent(chattrigger.pattern.pattern());
             ITextComponent response = new TranslationTextComponent(chattrigger.response);
-            int ip = mcIn.fontRenderer.getStringPropertyWidth(pattern);
-            int ir = mcIn.fontRenderer.getStringPropertyWidth(response);
+            int ip = this.minecraft.fontRenderer.getStringPropertyWidth(pattern);
+            int ir = this.minecraft.fontRenderer.getStringPropertyWidth(response);
 
             if (ip > this.maxListLabelWidth)
             {
@@ -52,14 +60,11 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         }
     }
 
-    protected int getScrollbarPosition()
-    {
-        return super.getScrollbarPosition() + 15;
-    }
+    protected int getScrollbarPosition() { return this.chatTriggersScreen.width - 10; }
 
     public int getRowWidth()
     {
-        return super.getRowWidth() + 32;
+        return 400;
     }
 
     public abstract static class Entry extends AbstractOptionList.Entry<ChatTriggerList.Entry>
@@ -72,7 +77,10 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         private final int index;
         private final ITextComponent pattern;
         private final ITextComponent response;
+
         private final Button btnToggleActive;
+        private final TextFieldWidget patternField;
+        private final TextFieldWidget responseField;
 
         private ChatTriggerEntry(int index, final ChatTrigger chatTrigger, final ITextComponent pattern, final ITextComponent response)
         {
@@ -81,32 +89,63 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             this.pattern = pattern;
             this.response = response;
 
-            this.btnToggleActive = new Button(0, 0, 75, 20, this.chatTrigger.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
+            this.patternField = new TextFieldWidget(
+                    ChatTriggerList.this.minecraft.fontRenderer,
+                    ChatTriggerList.this.chatTriggersScreen.width / 2 - 180,
+                    65 + this.index * 25,
+                    150,
+                    20,
+                    new TranslationTextComponent("99thdc.options.chattriggers.regex"))
+            {
+                protected IFormattableTextComponent getNarrationMessage()
+                {
+                    return super.getNarrationMessage().appendString(". ");
+                }
+            };
+            this.patternField.setMaxStringLength(256);
+            this.patternField.setText(this.pattern.getString());
+            this.patternField.setResponder((p_214319_1_) ->
+            {
+                this.chatTrigger.pattern = Pattern.compile(p_214319_1_);
+            });
+            ChatTriggerList.this.chatTriggersScreen.children.add(this.patternField);
+
+            this.responseField = new TextFieldWidget(
+                    ChatTriggerList.this.minecraft.fontRenderer,
+                    ChatTriggerList.this.chatTriggersScreen.width / 2 - 25,
+                    65 + this.index * 25,
+                    150,
+                    20,
+                    new TranslationTextComponent("99thdc.options.chattriggers.response"))
+            {
+                protected IFormattableTextComponent getNarrationMessage()
+                {
+                    return super.getNarrationMessage().appendString(". ");
+                }
+            };
+            this.responseField.setMaxStringLength(256);
+            this.responseField.setText(this.chatTrigger.response);
+            this.responseField.setResponder((p_214319_1_) ->
+            {
+                this.chatTrigger.response = p_214319_1_;
+            });
+            ChatTriggerList.this.chatTriggersScreen.children.add(this.responseField);
+
+            this.btnToggleActive = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 130, 65 + this.index * 25, 75, 20, this.chatTrigger.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
                 this.chatTrigger.active = !this.chatTrigger.active;
                 button.setMessage(this.chatTrigger.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
                 ChatTriggerList.this.minecraft.gameSettings.setChatTrigger(this.index, this.chatTrigger);
             });
-
-            ChatTriggerList.this.chatTriggersScreen.addButton(this.btnToggleActive);
+            ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);
         }
 
         public void render(MatrixStack p_230432_1_, int p_230432_2_, int p_230432_3_, int p_230432_4_, int p_230432_5_, int p_230432_6_, int p_230432_7_, int p_230432_8_, boolean p_230432_9_, float p_230432_10_)
         {
-            ChatTriggerList.this.minecraft.fontRenderer.func_243248_b(
-                    p_230432_1_,
-                    this.pattern,
-                    (float)(p_230432_4_ + 40 - ChatTriggerList.this.maxListLabelWidth),
-                    (float)(p_230432_3_ + p_230432_6_ / 2 - 9 / 2),
-                    16777215);
-            ChatTriggerList.this.minecraft.fontRenderer.func_243248_b(
-                    p_230432_1_,
-                    this.response,
-                    (float)(p_230432_4_ + 90),
-                    (float)(p_230432_3_ + p_230432_6_ / 2 - 9 / 2),
-                    16777215);
-            this.btnToggleActive.x = p_230432_4_ + 50 + ChatTriggerList.this.maxListLabelWidth;
+            this.patternField.y = p_230432_3_;
+            this.patternField.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
+            this.responseField.y = p_230432_3_;
+            this.responseField.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
             this.btnToggleActive.y = p_230432_3_;
-
             this.btnToggleActive.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
         }
 

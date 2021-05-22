@@ -4,6 +4,9 @@
 # Settings
 99thdc.options.title=99th_DutchClient Settings
 99thdc.options.chattriggers.title=Chat Triggers
+99thdc.options.chattriggers.regex=Regex Match
+99thdc.options.chattriggers.response=Response
+99thdc.options.chattriggers.add=Add Trigger
 
 99thdc.options.SHOW_LOCATION_HUD=Show Location HUD
 99thdc.options.SHOW_INVENTORY_HUD=Show Inventory HUD

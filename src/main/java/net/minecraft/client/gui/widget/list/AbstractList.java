@@ -24,12 +24,12 @@ public abstract class AbstractList<E extends AbstractList.AbstractListEntry<E>> 
     protected final Minecraft minecraft;
     protected final int itemHeight;
     private final List<E> children = new AbstractList.SimpleArrayList();
-    protected int width;
-    protected int height;
-    protected int y0;
-    protected int y1;
-    protected int x1;
-    protected int x0;
+    public int width;
+    public int height;
+    public int y0;
+    public int y1;
+    public int x1;
+    public int x0;
     protected boolean centerListVertically = true;
     private double scrollAmount;
     private boolean renderSelection = true;
