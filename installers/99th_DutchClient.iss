@@ -35,6 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "{app}\..\{#MCVersion}\*"; DestDir: "{app}"; Flags: external recursesubdirs
+Source: "C:\sources\99th_dutchclient\installers\assets\panorama\*"; DestDir: "{app}\assets\minecraft\textures\gui\title\background"; Flags: recursesubdirs
 Source: "C:\sources\99th_dutchclient\installers\{#MyAppName}-{#MyAppVersion}.jar"; DestDir: "{app}"; DestName: "{#MCVersion}-{#MyAppName}.jar"; AfterInstall: AfterDuplicate; Flags: ignoreversion
 
 [Code]
