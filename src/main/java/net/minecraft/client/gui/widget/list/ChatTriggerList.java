@@ -30,7 +30,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 
     public ChatTriggerList(ChatTriggersScreen chatTriggers, Minecraft mcIn)
     {
-        super(mcIn, chatTriggers.width + 45, chatTriggers.height, 43, chatTriggers.height - 32, 20);
+        super(mcIn, chatTriggers.width + 45, chatTriggers.height, 43, chatTriggers.height - 43, 25);
         this.chatTriggersScreen = chatTriggers;
         this.loadTriggers();
     }
