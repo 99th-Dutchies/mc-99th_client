@@ -24,17 +24,24 @@ public class Options99th_DutchClientScreen extends SettingsScreen
 
     protected void init()
     {
-        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6, 150, 20, AbstractOption.SHOW_LOCATION_HUD, AbstractOption.SHOW_LOCATION_HUD.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6, 100, 20, AbstractOption.SHOW_LOCATION_HUD, AbstractOption.SHOW_LOCATION_HUD.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.SHOW_LOCATION_HUD.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.SHOW_LOCATION_HUD.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6, 150, 20, AbstractOption.SHOW_INVENTORY_HUD, AbstractOption.SHOW_INVENTORY_HUD.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        this.addButton(new OptionButton(this.width / 2 - 50, this.height / 6, 100, 20, AbstractOption.SHOW_INVENTORY_HUD, AbstractOption.SHOW_INVENTORY_HUD.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.SHOW_INVENTORY_HUD.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.SHOW_INVENTORY_HUD.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.addButton(new OptionButton(this.width / 2 + 55, this.height / 6, 100, 20, AbstractOption.SHOW_SYSTEM_HUD, AbstractOption.SHOW_SYSTEM_HUD.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.SHOW_SYSTEM_HUD.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.SHOW_SYSTEM_HUD.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
         }));
 
