@@ -10,7 +10,7 @@ public class ChatTrigger
     public boolean active;
 
     public ChatTrigger(String regex, String response, boolean active) {
-        this(Pattern.compile(regex), response, active);
+        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), response, active);
     }
 
     public ChatTrigger(Pattern pattern, String response, boolean active) {

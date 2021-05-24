@@ -103,7 +103,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             this.patternField.setText(this.pattern.getString());
             this.patternField.setResponder((p_214319_1_) ->
             {
-                this.chatTrigger.pattern = Pattern.compile(p_214319_1_);
+                this.chatTrigger.pattern = Pattern.compile(p_214319_1_, Pattern.CASE_INSENSITIVE);
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.patternField);
 
