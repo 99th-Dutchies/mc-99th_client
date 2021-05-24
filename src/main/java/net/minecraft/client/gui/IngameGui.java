@@ -80,6 +80,7 @@ import net.optifine.reflect.Reflector;
 import nl._99th_dutchclient.hud.LocationInfo;
 import nl._99th_dutchclient.hud.InventoryInfo;
 import nl._99th_dutchclient.chat.ChatTriggerListener;
+import nl._99th_dutchclient.hud.SystemInfo;
 
 public class IngameGui extends AbstractGui
 {
@@ -196,6 +197,9 @@ public class IngameGui extends AbstractGui
         }
         if(this.mc.gameSettings.showInventoryHUD && !this.mc.gameSettings.showDebugInfo) {
             InventoryInfo.render(this.mc, matrixStack);
+        }
+        if(this.mc.gameSettings.showSystemHUD && !this.mc.gameSettings.showDebugInfo) {
+            SystemInfo.render(this.mc, matrixStack);
         }
 
         ItemStack itemstack = this.mc.player.inventory.armorItemInSlot(3);
