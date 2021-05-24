@@ -345,6 +345,8 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     private long debugUpdateTime;
     private int fpsCounter;
     public boolean skipRenderWorld;
+    public List<Long> lastLeftClicks = new ArrayList<>();
+    public List<Long> lastRightClicks = new ArrayList<>();
     @Nullable
     public Screen currentScreen;
     @Nullable
@@ -1642,6 +1644,8 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
 
     private void clickMouse()
     {
+        this.lastLeftClicks.add(System.currentTimeMillis());
+
         if (this.leftClickCounter <= 0)
         {
             if (this.objectMouseOver == null)
@@ -1690,6 +1694,8 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
      */
     private void rightClickMouse()
     {
+        this.lastRightClicks.add(System.currentTimeMillis());
+
         if (!this.playerController.getIsHittingBlock())
         {
             this.rightClickDelayTimer = 4;
