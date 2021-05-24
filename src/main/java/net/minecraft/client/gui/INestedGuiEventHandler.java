@@ -26,8 +26,10 @@ default Optional<IGuiEventListener> getEventListenerForPos(double mouseX, double
 
 default boolean mouseClicked(double mouseX, double mouseY, int button)
     {
-        for (IGuiEventListener iguieventlistener : this.getEventListeners())
-        {
+        boolean clicked = false;
+
+        for(int i = 0; i < this.getEventListeners().size(); i++) {
+            IGuiEventListener iguieventlistener = this.getEventListeners().get(i);
             if (iguieventlistener.mouseClicked(mouseX, mouseY, button))
             {
                 this.setListener(iguieventlistener);
@@ -37,11 +39,11 @@ default boolean mouseClicked(double mouseX, double mouseY, int button)
                     this.setDragging(true);
                 }
 
-                return true;
+                clicked = true;
             }
         }
 
-        return false;
+        return clicked;
     }
 
 default boolean mouseReleased(double mouseX, double mouseY, int button)

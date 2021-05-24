@@ -522,7 +522,7 @@ public class TextFieldWidget extends Widget implements IRenderable, IGuiEventLis
 
                 String s = this.fontRenderer.func_238412_a_(this.text.substring(this.lineScrollOffset), this.getAdjustedWidth());
                 this.setCursorPosition(this.fontRenderer.func_238412_a_(s, i).length() + this.lineScrollOffset);
-                return false;
+                return true;
             }
             else
             {
