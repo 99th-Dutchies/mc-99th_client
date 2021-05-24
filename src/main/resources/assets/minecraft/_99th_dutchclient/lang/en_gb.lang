@@ -8,9 +8,10 @@
 99thdc.options.chattriggers.response=Response
 99thdc.options.chattriggers.add=Add Trigger
 
-99thdc.options.SHOW_LOCATION_HUD=Location HUD
-99thdc.options.SHOW_INVENTORY_HUD=Inventory HUD
-99thdc.options.SHOW_SYSTEM_HUD=System HUD
+99thdc.options.SHOW_LOCATION_HUD=Show Location HUD
+99thdc.options.SHOW_INVENTORY_HUD=Show Inventory HUD
+99thdc.options.SHOW_SYSTEM_HUD=Show System HUD
+99thdc.options.SHOW_CPS_HUD=Show CPS
 99thdc.options.FULL_BRIGHTNESS=Full Brightness
 99thdc.options.INFINITE_CHAT=Infinite Chat
 99thdc.options.TABLIST_PING=Ping in Tablist

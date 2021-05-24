@@ -8,9 +8,10 @@
 99thdc.options.chattriggers.response=Antwoord
 99thdc.options.chattriggers.add=Nieuwe Trigger
 
-99thdc.options.SHOW_LOCATION_HUD=Locatie HUD
-99thdc.options.SHOW_INVENTORY_HUD=Inventory HUD
-99thdc.options.SHOW_SYSTEM_HUD=Systeem HUD
+99thdc.options.SHOW_LOCATION_HUD=Toon Locatie HUD
+99thdc.options.SHOW_INVENTORY_HUD=Toon Inventory HUD
+99thdc.options.SHOW_SYSTEM_HUD=Toon Systeem HUD
+99thdc.options.SHOW_CPS_HUD=Toon CPS
 99thdc.options.FULL_BRIGHTNESS=Maximale Helderheid
 99thdc.options.INFINITE_CHAT=Oneindige Chat
 99thdc.options.TABLIST_PING=Ping in Tablist
