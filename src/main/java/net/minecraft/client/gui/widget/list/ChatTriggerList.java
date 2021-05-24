@@ -26,7 +26,7 @@ import org.apache.commons.lang3.ArrayUtils;
 public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 {
     private final ChatTriggersScreen chatTriggersScreen;
-    private int maxListLabelWidth;
+    private List<ChatTriggerEntry> entries = new ArrayList<>();
 
     public ChatTriggerList(ChatTriggersScreen chatTriggers, Minecraft mcIn)
     {
@@ -38,25 +38,22 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
     public void loadTriggers() {
         ChatTrigger chattrigger;
         this.clearEntries();
+        for(ChatTriggerList.ChatTriggerEntry entry : this.entries) {
+            this.chatTriggersScreen.children.remove(entry.btnToggleActive);
+            this.chatTriggersScreen.children.remove(entry.patternField);
+            this.chatTriggersScreen.children.remove(entry.responseField);
+        }
+        this.entries.clear();
 
         for(int j = 0; j < this.minecraft.gameSettings.chatTriggers.size(); j++)
         {
             chattrigger = this.minecraft.gameSettings.chatTriggers.get(j);
             ITextComponent pattern = new TranslationTextComponent(chattrigger.pattern.pattern());
             ITextComponent response = new TranslationTextComponent(chattrigger.response);
-            int ip = this.minecraft.fontRenderer.getStringPropertyWidth(pattern);
-            int ir = this.minecraft.fontRenderer.getStringPropertyWidth(response);
 
-            if (ip > this.maxListLabelWidth)
-            {
-                this.maxListLabelWidth = ip;
-            }
-            if (ir > this.maxListLabelWidth)
-            {
-                this.maxListLabelWidth = ir;
-            }
-
-            this.addEntry(new ChatTriggerList.ChatTriggerEntry(j, chattrigger, pattern, response));
+            ChatTriggerEntry entry = new ChatTriggerList.ChatTriggerEntry(j, chattrigger, pattern, response);
+            this.addEntry(entry);
+            this.entries.add(entry);
         }
     }
 
@@ -78,9 +75,9 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         private final ITextComponent pattern;
         private final ITextComponent response;
 
-        private final Button btnToggleActive;
-        private final TextFieldWidget patternField;
-        private final TextFieldWidget responseField;
+        protected final Button btnToggleActive;
+        protected final TextFieldWidget patternField;
+        protected final TextFieldWidget responseField;
 
         private ChatTriggerEntry(int index, final ChatTrigger chatTrigger, final ITextComponent pattern, final ITextComponent response)
         {
