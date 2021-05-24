@@ -191,10 +191,10 @@ public class IngameGui extends AbstractGui
             RenderSystem.defaultBlendFunc();
         }
 
-        if(this.mc.gameSettings.showLocationHUD) {
+        if(this.mc.gameSettings.showLocationHUD && !this.mc.gameSettings.showDebugInfo) {
             LocationInfo.render(this.mc, matrixStack);
         }
-        if(this.mc.gameSettings.showInventoryHUD) {
+        if(this.mc.gameSettings.showInventoryHUD && !this.mc.gameSettings.showDebugInfo) {
             InventoryInfo.render(this.mc, matrixStack);
         }
 
