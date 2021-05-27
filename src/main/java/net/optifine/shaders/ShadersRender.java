@@ -518,7 +518,7 @@ public class ShadersRender
 
     public static void updateActiveRenderInfo(ActiveRenderInfo activeRenderInfo, Minecraft mc, float partialTicks)
     {
-        activeRenderInfo.update(mc.world, (Entity)(mc.getRenderViewEntity() == null ? mc.player : mc.getRenderViewEntity()), !mc.gameSettings.getPointOfView().func_243192_a(), mc.gameSettings.getPointOfView().func_243193_b(), partialTicks);
+        activeRenderInfo.update(mc, mc.world, (Entity)(mc.getRenderViewEntity() == null ? mc.player : mc.getRenderViewEntity()), !mc.gameSettings.getPointOfView().func_243192_a(), mc.gameSettings.getPointOfView().func_243193_b(), partialTicks);
     }
 
     public static void preRenderChunkLayer(RenderType blockLayerIn)
