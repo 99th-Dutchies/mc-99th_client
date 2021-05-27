@@ -9,7 +9,6 @@ public class Freelook
     private Minecraft mc;
 
     public boolean active = false;
-    public boolean activeBefore = false;
     public float pitch;
     public float yaw;
     public float originalPitch;
@@ -30,14 +29,9 @@ public class Freelook
             this.originalPitch = ari.getPitch();
             this.originalYaw = ari.getYaw();
             this.originalpov = this.mc.gameSettings.getPointOfView();
-
-            if(!this.activeBefore) {
-                this.yaw = this.originalYaw;
-                this.pitch = this.originalPitch;
-            }
+            this.yaw = this.originalYaw;
+            this.pitch = this.originalPitch;
             this.mc.gameSettings.setPointOfView(PointOfView.THIRD_PERSON_BACK);
-
-            this.activeBefore = true;
         } else {
             ari.setDirection(this.originalPitch, this.originalYaw);
             this.mc.gameSettings.setPointOfView(originalpov);
