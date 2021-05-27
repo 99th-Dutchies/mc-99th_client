@@ -3,6 +3,7 @@ package nl._99th_dutchclient.hud;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.network.play.NetworkPlayerInfo;
 import net.optifine.Config;
 
 import java.util.ArrayList;
@@ -32,8 +33,12 @@ public class SystemInfo
     }
 
     private static void renderPing(Minecraft mc, MatrixStack ms) {
+        NetworkPlayerInfo playerInfo = mc.getConnection().getPlayerInfo(mc.player.getUniqueID());
         ServerData currentServer = mc.getCurrentServerData();
-        if(currentServer != null) {
+
+        if(playerInfo != null) {
+            mc.fontRenderer.drawStringWithShadow(ms, playerInfo.getResponseTime() + " ms", 91, 31, -1);
+        } else if(currentServer != null) {
             mc.fontRenderer.drawStringWithShadow(ms, currentServer.pingToServer + " ms", 91, 31, -1);
         }
     }
