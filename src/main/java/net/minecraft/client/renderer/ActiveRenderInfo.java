@@ -2,6 +2,7 @@ package net.minecraft.client.renderer;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.fluid.FluidState;
@@ -34,16 +35,21 @@ public class ActiveRenderInfo
     private boolean thirdPersonReverse;
     private float height;
     private float previousHeight;
+    private Minecraft mc;
 
-    public void update(IBlockReader worldIn, Entity renderViewEntity, boolean thirdPersonIn, boolean thirdPersonReverseIn, float partialTicks)
+    public void update(Minecraft mc, IBlockReader worldIn, Entity renderViewEntity, boolean thirdPersonIn, boolean thirdPersonReverseIn, float partialTicks)
     {
         this.valid = true;
         this.world = worldIn;
+        this.mc = mc;
         this.renderViewEntity = renderViewEntity;
         this.thirdPerson = thirdPersonIn;
         this.thirdPersonReverse = thirdPersonReverseIn;
-        this.setDirection(renderViewEntity.getYaw(partialTicks), renderViewEntity.getPitch(partialTicks));
         this.setPosition(MathHelper.lerp((double)partialTicks, renderViewEntity.prevPosX, renderViewEntity.getPosX()), MathHelper.lerp((double)partialTicks, renderViewEntity.prevPosY, renderViewEntity.getPosY()) + (double)MathHelper.lerp(partialTicks, this.previousHeight, this.height), MathHelper.lerp((double)partialTicks, renderViewEntity.prevPosZ, renderViewEntity.getPosZ()));
+
+        if(!this.mc.freelook.active) {
+            this.setDirection(renderViewEntity.getYaw(partialTicks), renderViewEntity.getPitch(partialTicks));
+        }
 
         if (thirdPersonIn)
         {
@@ -113,7 +119,7 @@ public class ActiveRenderInfo
         this.setPosition(new Vector3d(this.pos.x + d0, this.pos.y + d1, this.pos.z + d2));
     }
 
-    protected void setDirection(float pitchIn, float yawIn)
+    public void setDirection(float pitchIn, float yawIn)
     {
         this.pitch = yawIn;
         this.yaw = pitchIn;

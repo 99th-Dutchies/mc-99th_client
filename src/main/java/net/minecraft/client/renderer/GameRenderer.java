@@ -452,6 +452,8 @@ public class GameRenderer implements IResourceManagerReloadListener, AutoCloseab
                 this.mc.worldRenderer.setDisplayListEntitiesDirty();
             }
 
+            this.mc.freelook.setActive(this.mc.gameSettings._99thKeyBindFreelook.isKeyDown());
+
             if (activeRenderInfoIn.getRenderViewEntity() instanceof LivingEntity && ((LivingEntity)activeRenderInfoIn.getRenderViewEntity()).getShouldBeDead())
             {
                 float f = Math.min((float)((LivingEntity)activeRenderInfoIn.getRenderViewEntity()).deathTime + partialTicks, 20.0F);
@@ -962,7 +964,7 @@ public class GameRenderer implements IResourceManagerReloadListener, AutoCloseab
 
         Matrix4f matrix4f = matrixstack.getLast().getMatrix();
         this.resetProjectionMatrix(matrix4f);
-        activerenderinfo.update(this.mc.world, (Entity)(this.mc.getRenderViewEntity() == null ? this.mc.player : this.mc.getRenderViewEntity()), !this.mc.gameSettings.getPointOfView().func_243192_a(), this.mc.gameSettings.getPointOfView().func_243193_b(), partialTicks);
+        activerenderinfo.update(this.mc, this.mc.world, (Entity)(this.mc.getRenderViewEntity() == null ? this.mc.player : this.mc.getRenderViewEntity()), !this.mc.gameSettings.getPointOfView().func_243192_a(), this.mc.gameSettings.getPointOfView().func_243193_b(), partialTicks);
 
         if (Reflector.ForgeHooksClient_onCameraSetup.exists())
         {

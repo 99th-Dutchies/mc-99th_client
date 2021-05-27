@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.client.util.MouseSmoother;
@@ -349,7 +350,15 @@ public class MouseHelper
 
             if (this.minecraft.player != null)
             {
-                this.minecraft.player.rotateTowards(d2, d3 * (double)i);
+                if(this.minecraft.freelook.active) {
+                    this.minecraft.freelook.yaw += (float) d4 * d2;
+                    this.minecraft.freelook.pitch += (float) d4 * d3 * i;
+
+                    ActiveRenderInfo ari = this.minecraft.gameRenderer.getActiveRenderInfo();
+                    ari.setDirection(this.minecraft.freelook.yaw, this.minecraft.freelook.pitch);
+                } else {
+                    this.minecraft.player.rotateTowards(d2, d3 * (double) i);
+                }
             }
         }
         else

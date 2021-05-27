@@ -234,6 +234,7 @@ import net.minecraft.world.storage.FolderName;
 import net.minecraft.world.storage.IServerConfiguration;
 import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.ServerWorldInfo;
+import nl._99th_dutchclient.Freelook;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.util.MCStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -335,6 +336,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public Entity pointedEntity;
     @Nullable
     public RayTraceResult objectMouseOver;
+    public Freelook freelook = new Freelook(this);
     private int rightClickDelayTimer;
     protected int leftClickCounter;
     private boolean isGamePaused;

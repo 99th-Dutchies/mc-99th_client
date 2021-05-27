@@ -25,3 +25,5 @@
 99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=Server en Minigame
 99thdc.options.DISCORDRPC_SHOW_SERVER.map=Server, Minigame en Map
 99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Server, Minigame en Map
+
+99thdc.key.freelook=Freelook
