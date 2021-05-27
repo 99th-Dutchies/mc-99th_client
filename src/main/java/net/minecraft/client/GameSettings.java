@@ -279,7 +279,7 @@ public class GameSettings
     private static final String[] KEYS_DYNAMIC_LIGHTS = new String[] {"options.off", "options.graphics.fast", "options.graphics.fancy"};
     public KeyBinding ofKeyBindZoom;
     private File optionsFileOF;
-
+    public KeyBinding _99thKeyBindFreelook;
     private File optionsFile99thdc;
     public boolean showLocationHUD = true;
     public boolean showInventoryHUD = true;
@@ -326,6 +326,9 @@ public class GameSettings
         this.ofKeyBindZoom = new KeyBinding("of.key.zoom", 67, "key.categories.misc");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this.ofKeyBindZoom);
         KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
+        this._99thKeyBindFreelook = new KeyBinding("99thdc.key.freelook", 71, "key.categories.misc");
+        this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindFreelook);
+        KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook});
         this.renderDistanceChunks = 8;
         this.loadOptions();
         Config.initGameSettings(this);
@@ -2862,6 +2865,11 @@ public class GameSettings
 
                         this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], Boolean.valueOf(astring[3])));
                     }
+
+                    if (astring[0].equals("key_" + this._99thKeyBindFreelook.getKeyDescription()))
+                    {
+                        this._99thKeyBindFreelook.bind(InputMappings.getInputByName(astring[1]));
+                    }
                 }
                 catch (Exception exception1)
                 {
@@ -2870,7 +2878,7 @@ public class GameSettings
                 }
             }
 
-            KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
+            KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook});
             KeyBinding.resetKeyBindingArrayAndHash();
             bufferedreader.close();
         }
@@ -2896,6 +2904,7 @@ public class GameSettings
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
             }
+            printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + ":" + this._99thKeyBindFreelook.getTranslationKey());
             printwriter.close();
         }
         catch (Exception exception1)
