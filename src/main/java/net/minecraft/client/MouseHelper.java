@@ -351,9 +351,9 @@ public class MouseHelper
             if (this.minecraft.player != null)
             {
                 if(this.minecraft.freelook.active) {
-                    this.minecraft.freelook.yaw += (float) d4 * d2;
-                    this.minecraft.freelook.pitch += (float) d4 * d3 * i;
-                    
+                    this.minecraft.freelook.yaw += (float) d2 * 0.15D;
+                    this.minecraft.freelook.pitch += (float) d3 * i * 0.15D;
+
                     if(this.minecraft.freelook.pitch > 90) {
                         this.minecraft.freelook.pitch = 90;
                     }
