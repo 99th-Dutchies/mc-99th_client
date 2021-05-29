@@ -353,6 +353,13 @@ public class MouseHelper
                 if(this.minecraft.freelook.active) {
                     this.minecraft.freelook.yaw += (float) d4 * d2;
                     this.minecraft.freelook.pitch += (float) d4 * d3 * i;
+                    
+                    if(this.minecraft.freelook.pitch > 90) {
+                        this.minecraft.freelook.pitch = 90;
+                    }
+                    if(this.minecraft.freelook.pitch < -90) {
+                        this.minecraft.freelook.pitch = -90;
+                    }
 
                     ActiveRenderInfo ari = this.minecraft.gameRenderer.getActiveRenderInfo();
                     ari.setDirection(this.minecraft.freelook.yaw, this.minecraft.freelook.pitch);
