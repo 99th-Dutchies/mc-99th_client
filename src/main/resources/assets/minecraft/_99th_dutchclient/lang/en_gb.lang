@@ -25,5 +25,12 @@
 99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=Server and Minigame
 99thdc.options.DISCORDRPC_SHOW_SERVER.map=Server, Minigame and Map
 99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Server, Minigame and Map
+99thdc.options.SHOW_TOASTS=Toasts
+99thdc.options.SHOW_TOASTS.off=None
+99thdc.options.SHOW_TOASTS.off.tooltip=None
+99thdc.options.SHOW_TOASTS.system=System
+99thdc.options.SHOW_TOASTS.system.tooltip=System
+99thdc.options.SHOW_TOASTS.all=All
+99thdc.options.SHOW_TOASTS.all.tooltip=All
 
 99thdc.key.freelook=Freelook

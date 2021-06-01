@@ -32,6 +32,7 @@ import net.optifine.Config;
 import net.optifine.config.IteratableOptionOF;
 import net.optifine.config.SliderPercentageOptionOF;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
+import nl._99th_dutchclient.settings.ShowToasts;
 
 public abstract class AbstractOption
 {
@@ -753,6 +754,33 @@ public abstract class AbstractOption
         }
 
         IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.discordrpcShowServer.func_238164_b_());
+        return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
+    });
+
+    private static final ITextComponent SHOW_TOASTS_OFF = new TranslationTextComponent("99thdc.options.SHOW_TOASTS.off.tooltip");
+    private static final ITextComponent SHOW_TOASTS_SYSTEM = new TranslationTextComponent("99thdc.options.SHOW_TOASTS.system.tooltip");
+    private static final ITextComponent SHOW_TOASTS_ALL = new TranslationTextComponent("99thdc.options.SHOW_TOASTS.all.tooltip");
+    public static final IteratableOption SHOW_TOASTS = new IteratableOption("99thdc.options.SHOW_TOASTS", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
+    {
+        p_lambda$static$127_0_.showToasts = p_lambda$static$127_0_.showToasts.func_238166_c_();
+    }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
+    {
+        switch (p_lambda$static$128_0_.showToasts)
+        {
+            case OFF:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(SHOW_TOASTS_OFF, 200));
+                break;
+
+            case SYSTEM:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(SHOW_TOASTS_SYSTEM, 200));
+                break;
+
+            case ALL:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(SHOW_TOASTS_ALL, 200));
+                break;
+        }
+
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.showToasts.func_238164_b_());
         return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 

@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
+import nl._99th_dutchclient.settings.ShowToasts;
 
 public class ToastGui extends AbstractGui
 {
@@ -73,6 +74,9 @@ public class ToastGui extends AbstractGui
 
     public void add(IToast toastIn)
     {
+        if(this.mc.gameSettings.showToasts == ShowToasts.OFF ||
+                (this.mc.gameSettings.showToasts == ShowToasts.SYSTEM && !(toastIn instanceof SystemToast))) return;
+
         this.toastsQueue.add(toastIn);
     }
 

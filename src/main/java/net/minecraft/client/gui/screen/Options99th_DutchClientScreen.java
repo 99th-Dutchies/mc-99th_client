@@ -52,6 +52,8 @@ public class Options99th_DutchClientScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
+        this.addButton(AbstractOption.SHOW_TOASTS.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 48, 150));
+
         this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 48, 150, 20, AbstractOption.TABLIST_PING, AbstractOption.TABLIST_PING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.TABLIST_PING.nextValue(this.minecraft.gameSettings);

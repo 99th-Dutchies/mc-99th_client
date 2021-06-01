@@ -69,6 +69,7 @@ import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
 import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
+import nl._99th_dutchclient.settings.ShowToasts;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -288,6 +289,7 @@ public class GameSettings
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
     public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
+    public ShowToasts showToasts = ShowToasts.ALL;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
@@ -1733,6 +1735,22 @@ public class GameSettings
             }
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_TOASTS)
+        {
+            switch(this.showToasts){
+                case OFF:
+                    this.showToasts = ShowToasts.SYSTEM;
+                    break;
+                case SYSTEM:
+                    this.showToasts = ShowToasts.ALL;
+                    break;
+                case ALL:
+                default:
+                    this.showToasts = ShowToasts.OFF;
+                    break;
+            }
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
         {
             this.tablistPing = !this.tablistPing;
@@ -2867,6 +2885,22 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("showToasts") && astring.length >= 2)
+                    {
+                        switch(astring[1]){
+                            case "0":
+                                this.showToasts = ShowToasts.OFF;
+                                break;
+                                case "1":
+                                this.showToasts = ShowToasts.SYSTEM;
+                                break;
+                            case "2":
+                            default:
+                                this.showToasts = ShowToasts.ALL;
+                                break;
+                        }
+                    }
+
                     if (astring[0].equals("tablistPing") && astring.length >= 2)
                     {
                         this.tablistPing = Boolean.valueOf(astring[1]);
@@ -2923,6 +2957,7 @@ public class GameSettings
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
+            printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             for(ChatTrigger trigger : this.chatTriggers) {
@@ -3077,6 +3112,7 @@ public class GameSettings
         this.fullBrightness = false;
         this.infiniteChat = true;
         this.discordrpcShowServer = DiscordShowRPC.SERVER;
+        this.showToasts = ShowToasts.ALL;
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
