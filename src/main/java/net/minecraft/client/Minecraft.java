@@ -641,6 +641,11 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         stringbuilder.append(SharedConstants.getVersion().getName());
         ClientPlayNetHandler clientplaynethandler = this.getConnection();
 
+        if(this.session != null) {
+            stringbuilder.append(" | ");
+            stringbuilder.append(this.session.getUsername());
+        }
+
         if (clientplaynethandler != null && clientplaynethandler.getNetworkManager().isChannelOpen())
         {
             stringbuilder.append(" - ");
