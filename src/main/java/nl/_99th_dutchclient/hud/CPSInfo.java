@@ -14,7 +14,7 @@ import java.util.List;
 
 public class CPSInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms) {
+    public static void render(Minecraft mc, MatrixStack ms, float pt) {
         // Draw right clicks
         renderCPSright(mc, ms);
 

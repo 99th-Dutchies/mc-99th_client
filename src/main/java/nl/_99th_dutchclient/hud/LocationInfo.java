@@ -6,7 +6,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 
 public class LocationInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms) {
+    public static void render(Minecraft mc, MatrixStack ms, float pt) {
         // Draw X, Y and Z coordinates
         renderX(mc, ms);
         renderY(mc, ms);

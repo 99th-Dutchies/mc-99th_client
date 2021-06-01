@@ -286,6 +286,7 @@ public class GameSettings
     public boolean showInventoryHUD = true;
     public boolean showSystemHUD = true;
     public boolean showCPSHUD = true;
+    public boolean showLookingHUD = true;
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
     public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
@@ -1706,6 +1707,11 @@ public class GameSettings
             this.showCPSHUD = !this.showCPSHUD;
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_LOOKING_HUD)
+        {
+            this.showLookingHUD = !this.showLookingHUD;
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.FULL_BRIGHTNESS)
         {
             this.fullBrightness = !this.fullBrightness;
@@ -2856,6 +2862,11 @@ public class GameSettings
                         this.showCPSHUD = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("showLookingHUD") && astring.length >= 2)
+                    {
+                        this.showLookingHUD = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("fullBrightness") && astring.length >= 2)
                     {
                         this.fullBrightness = Boolean.valueOf(astring[1]);
@@ -2954,6 +2965,7 @@ public class GameSettings
             printwriter.println("showInventoryHUD<:>" + this.showInventoryHUD);
             printwriter.println("showSystemHUD<:>" + this.showSystemHUD);
             printwriter.println("showCPSHUD<:>" + this.showCPSHUD);
+            printwriter.println("showLookingHUD<:>" + this.showLookingHUD);
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
@@ -3109,6 +3121,7 @@ public class GameSettings
         this.showInventoryHUD = true;
         this.showSystemHUD = true;
         this.showCPSHUD = true;
+        this.showLookingHUD = true;
         this.fullBrightness = false;
         this.infiniteChat = true;
         this.discordrpcShowServer = DiscordShowRPC.SERVER;

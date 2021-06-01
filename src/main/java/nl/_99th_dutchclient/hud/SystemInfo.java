@@ -11,7 +11,7 @@ import java.util.List;
 
 public class SystemInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms) {
+    public static void render(Minecraft mc, MatrixStack ms, float pt) {
         // Draw FPS
         renderFPS(mc, ms);
 

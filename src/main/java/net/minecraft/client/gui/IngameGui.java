@@ -77,11 +77,8 @@ import net.optifine.CustomColors;
 import net.optifine.CustomItems;
 import net.optifine.TextureAnimations;
 import net.optifine.reflect.Reflector;
-import nl._99th_dutchclient.hud.LocationInfo;
-import nl._99th_dutchclient.hud.InventoryInfo;
+import nl._99th_dutchclient.hud.*;
 import nl._99th_dutchclient.chat.ChatTriggerListener;
-import nl._99th_dutchclient.hud.SystemInfo;
-import nl._99th_dutchclient.hud.CPSInfo;
 
 public class IngameGui extends AbstractGui
 {
@@ -194,16 +191,19 @@ public class IngameGui extends AbstractGui
         }
 
         if(this.mc.gameSettings.showLocationHUD && !this.mc.gameSettings.showDebugInfo) {
-            LocationInfo.render(this.mc, matrixStack);
+            LocationInfo.render(this.mc, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings.showInventoryHUD && !this.mc.gameSettings.showDebugInfo) {
-            InventoryInfo.render(this.mc, matrixStack);
+            InventoryInfo.render(this.mc, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings.showSystemHUD && !this.mc.gameSettings.showDebugInfo) {
-            SystemInfo.render(this.mc, matrixStack);
+            SystemInfo.render(this.mc, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings.showCPSHUD) {
-            CPSInfo.render(this.mc, matrixStack);
+            CPSInfo.render(this.mc, matrixStack, partialTicks);
+        }
+        if(this.mc.gameSettings.showLookingHUD && !this.mc.gameSettings.showDebugInfo) {
+            LookingInfo.render(this.mc, matrixStack, partialTicks);
         }
 
         ItemStack itemstack = this.mc.player.inventory.armorItemInSlot(3);

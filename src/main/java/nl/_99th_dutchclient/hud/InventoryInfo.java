@@ -10,7 +10,7 @@ import java.lang.Math;
 
 public class InventoryInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms) {
+    public static void render(Minecraft mc, MatrixStack ms, float pt) {
         // Draw main-hand item
         renderMainhand(mc, ms);
 

@@ -710,6 +710,14 @@ public abstract class AbstractOption
         p_lambda$static$122_0_.showCPSHUD = p_lambda$static$122_1_;
     });
 
+    public static final BooleanOption SHOW_LOOKING_HUD = new BooleanOption("99thdc.options.SHOW_LOOKING_HUD", (p_lambda$static$121_0_) ->
+    {
+        return p_lambda$static$121_0_.showLookingHUD;
+    }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
+    {
+        p_lambda$static$122_0_.showLookingHUD = p_lambda$static$122_1_;
+    });
+
     public static final BooleanOption FULL_BRIGHTNESS = new BooleanOption("99thdc.options.FULL_BRIGHTNESS", (p_lambda$static$123_0_) ->
     {
         return p_lambda$static$123_0_.fullBrightness;
