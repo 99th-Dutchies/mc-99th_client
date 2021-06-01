@@ -3,10 +3,7 @@ package nl._99th_dutchclient.hud;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
-import net.minecraft.item.AirItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import nl._99th_dutchclient.util.ColorGradient;
 import java.awt.Color;
 import java.lang.Math;
@@ -72,7 +69,13 @@ public class InventoryInfo
     }
 
     private static int ItemToColor(ItemStack itemStack) {
-        if(!itemStack.isDamageable()) return -1;
+        if(!itemStack.isDamageable()) {
+            if(itemStack.getItem() instanceof ArmorItem) {
+                return new Color(64, 192, 64).getRGB();
+            } else {
+                return -1;
+            }
+        }
 
         float dur = itemStack.getMaxDamage() - itemStack.getDamage();
         float per = (dur / itemStack.getMaxDamage()) * 100;
