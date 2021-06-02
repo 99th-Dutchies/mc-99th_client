@@ -234,6 +234,7 @@ import net.minecraft.world.storage.FolderName;
 import net.minecraft.world.storage.IServerConfiguration;
 import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.ServerWorldInfo;
+import nl._99th_dutchclient.DiscordStatus;
 import nl._99th_dutchclient.Freelook;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.util.MCStringUtils;
@@ -381,8 +382,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     private IProfileResult profilerResult;
     private String debugProfilerName = "root";
 
-    @Nullable
-    private DiscordRichPresence currentPresence;
+    private DiscordStatus discord = new DiscordStatus(this);
 
     public Minecraft(GameConfiguration gameConfig)
     {
@@ -456,8 +456,6 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         {
             LOGGER.error("Couldn't set icon", (Throwable)ioexception);
         }
-
-        initDiscord();
 
         this.mainWindow.setFramerateLimit(this.gameSettings.framerateLimit);
         this.mouseHelper = new MouseHelper(this);
@@ -559,75 +557,6 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         this.mainWindow.setWindowTitle(this.getWindowTitle());
     }
 
-    private void initDiscord() {
-        DiscordRPC lib = DiscordRPC.INSTANCE;
-        String applicationId = "843127466705027082";
-        String steamId = "";
-        DiscordEventHandlers handlers = new DiscordEventHandlers();
-        handlers.ready = (user) -> System.out.println("Ready!");
-        lib.Discord_Initialize(applicationId, handlers, true, "");
-
-        DiscordRichPresence presence = new DiscordRichPresence();
-        presence.startTimestamp = System.currentTimeMillis() / 1000; // epoch second
-        presence.largeImageKey = "icon";
-        presence.largeImageText = "99th_DutchClient";
-        this.currentPresence = presence;
-        lib.Discord_UpdatePresence(presence);
-
-        // in a worker thread
-        new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                lib.Discord_RunCallbacks();
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException ignored) {}
-            }
-        }, "RPC-Callback-Handler").start();
-    }
-
-    public void updateDiscordRPC(String details, String state) {
-        if(this.currentPresence == null) {
-            return;
-        }
-
-        DiscordRPC lib = DiscordRPC.INSTANCE;
-        DiscordRichPresence presence = this.currentPresence;
-
-        if(details != null) {
-            presence.details = details;
-        }
-        if(state != null) {
-            presence.state = state;
-        }
-
-        this.currentPresence = presence;
-        lib.Discord_UpdatePresence(presence);
-    }
-
-    private String getDiscordStateString(ScoreObjective sidebar) {
-        Scoreboard scoreboard = sidebar.getScoreboard();
-        Collection<Score> collection = scoreboard.getSortedScores(sidebar);
-
-        Optional<Score> server = collection.stream().findFirst();
-
-        // Scoreboard header is not in the footer, so we return the header.
-        if(!(server.isPresent() && server.get().getPlayerName().toLowerCase().contains(MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText()).toLowerCase()))) {
-            return "Playing " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
-        }
-
-        Optional<Score> lobby = collection.stream().skip(3).findFirst();
-
-        if(lobby.isPresent() && lobby.get().getPlayerName().contains("Lobby")) {
-            if(this.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
-                return "In a lobby";
-            } else {
-                return "In lobby " + MCStringUtils.strip(lobby.get().getPlayerName()).replaceAll("Lobby:?\\s?", "");
-            }
-        }
-
-        return "";
-    }
-
     private String getWindowTitle()
     {
         StringBuilder stringbuilder = new StringBuilder("99th_DutchClient | Minecraft");
@@ -653,36 +582,19 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             if (this.integratedServer != null && !this.integratedServer.getPublic())
             {
                 stringbuilder.append(I18n.format("title.singleplayer"));
-                this.updateDiscordRPC("Playing singleplayer", "");
             }
             else if (this.isConnectedToRealms())
             {
                 stringbuilder.append(I18n.format("title.multiplayer.realms"));
-                this.updateDiscordRPC("Playing realms", "");
             }
             else if (this.integratedServer == null && (this.currentServerData == null || !this.currentServerData.isOnLAN()))
             {
                 stringbuilder.append(I18n.format("title.multiplayer.other"));
-
-                if(this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF && this.world != null && this.world.getScoreboard() != null && this.world.getScoreboard().getObjectiveInDisplaySlot(1) != null) {
-                    ScoreObjective sidebar = this.world.getScoreboard().getObjectiveInDisplaySlot(1);
-
-                    if(sidebar == null || this.gameSettings.discordrpcShowServer == DiscordShowRPC.SERVER) {
-                        this.updateDiscordRPC("Online on " + this.currentServerData.serverName, "");
-                    } else {
-                        this.updateDiscordRPC("Online on " + this.currentServerData.serverName, this.getDiscordStateString(sidebar));
-                    }
-                } else {
-                    this.updateDiscordRPC("Playing multiplayer", "");
-                }
             }
             else
             {
                 stringbuilder.append(I18n.format("title.multiplayer.lan"));
-                this.updateDiscordRPC("Playing multiplayer", "");
             }
-        } else {
-            this.updateDiscordRPC("", "");
         }
 
         return stringbuilder.toString();
@@ -1176,7 +1088,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             this.paintingSprites.close();
             this.textureManager.close();
             this.resourceManager.close();
-            DiscordRPC.INSTANCE.Discord_Shutdown();
+            this.discord.close();
             Util.shutdown();
         }
         catch (Throwable throwable)
@@ -1313,6 +1225,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             this.debug = String.format("%d fps T: %s%s%s%s B: %d", debugFPS, (double)this.gameSettings.framerateLimit == AbstractOption.FRAMERATE_LIMIT.getMaxValue() ? "inf" : this.gameSettings.framerateLimit, this.gameSettings.vsync ? " vsync" : "", this.gameSettings.graphicFanciness.toString(), this.gameSettings.cloudOption == CloudOption.OFF ? "" : (this.gameSettings.cloudOption == CloudOption.FAST ? " fast-clouds" : " fancy-clouds"), this.gameSettings.biomeBlendRadius);
             this.debugUpdateTime += 1000L;
             this.fpsCounter = 0;
+            this.discord.update();
             this.snooper.addMemoryStatsToSnooper();
 
             if (!this.snooper.isSnooperRunning())
