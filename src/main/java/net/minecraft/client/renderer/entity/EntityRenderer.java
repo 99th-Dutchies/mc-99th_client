@@ -1,6 +1,8 @@
 package net.minecraft.client.renderer.entity;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -8,13 +10,17 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.culling.ClippingHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.*;
 import net.minecraft.world.LightType;
 import net.optifine.reflect.Reflector;
 import net.optifine.reflect.ReflectorForge;
@@ -79,11 +85,14 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
 
     public void render(T entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
     {
+        boolean isDeadmau5 = false;
+
         if (!Reflector.RenderNameplateEvent_Constructor.exists())
         {
             if (this.canRenderName(entityIn))
             {
                 this.renderName(entityIn, entityIn.getDisplayName(), matrixStackIn, bufferIn, packedLightIn);
+                isDeadmau5 = "deadmau5".equals(entityIn.getDisplayName().getString());
             }
         }
         else
@@ -96,8 +105,11 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
             {
                 ITextComponent itextcomponent = (ITextComponent)Reflector.call(object, Reflector.RenderNameplateEvent_getContent);
                 this.renderName(entityIn, itextcomponent, matrixStackIn, bufferIn, packedLightIn);
+                isDeadmau5 = "deadmau5".equals(itextcomponent.getString());
             }
         }
+
+        this.renderHealth(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
     }
 
     protected boolean canRenderName(T entity)
@@ -147,6 +159,70 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
             if (flag1)
             {
                 fontrenderer.func_243247_a(displayNameIn, f2, (float)i, -1, false, matrix4f, bufferIn, false, 0, packedLightIn);
+            }
+
+            matrixStackIn.pop();
+        }
+    }
+
+    protected void renderHealth(T entityIn, boolean isDeadmau5, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        if(entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead())) {
+            boolean flag1 = !entityIn.isDiscrete();
+
+            float f = entityIn.getHeight() + 0.5F;
+            int i = isDeadmau5 ? -10 : 0;
+            matrixStackIn.push();
+            matrixStackIn.translate(0.0D, (double)f, 0.0D);
+            matrixStackIn.rotate(this.renderManager.getCameraOrientation());
+            matrixStackIn.scale(-0.025F, -0.025F, 0.025F);
+            Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+            float f1 = Minecraft.getInstance().gameSettings.getTextBackgroundOpacity(0.25F);
+            int j = (int)(f1 * 255.0F) << 24;
+            FontRenderer fontrenderer = this.getFontRendererFromRenderManager();
+
+            float health = MathHelper.ceil(((LivingEntity) entityIn).getHealth()) / 2.0F;
+            float goldHealth = MathHelper.ceil(((LivingEntity) entityIn).getAbsorptionAmount()) / 2.0F;
+
+            IFormattableTextComponent healthText = new StringTextComponent(health + "").setStyle(Style.EMPTY.setColor(Color.fromHex("#FF0000")));
+
+            if(goldHealth > 0) {
+                healthText.append(new StringTextComponent(" | ").setStyle(Style.EMPTY.setColor(Color.fromInt(-1))));
+                healthText.append(new StringTextComponent(goldHealth + "").setStyle(Style.EMPTY.setColor(Color.fromHex("#FFAA00"))));
+            }
+
+            matrixStackIn.translate(0.0D, (double) -10.0D, 0.0D);
+            Matrix4f m4f = matrixStackIn.getLast().getMatrix();
+            float f3 = (float)(-fontrenderer.getStringPropertyWidth(healthText) / 2);
+            fontrenderer.func_243247_a(healthText, f3, (float) i, 553648127, false, m4f, bufferIn, flag1, j, packedLightIn);
+
+            if (flag1)
+            {
+                RenderSystem.disableCull();
+                RenderSystem.enableBlend();
+                RenderSystem.enableAlphaTest();
+                RenderSystem.enableDepthTest();
+                RenderSystem.defaultAlphaFunc();
+                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                RenderSystem.enableFog();
+                RenderSystem.depthMask(true);
+
+                Minecraft.getInstance().getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
+                Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.floor(f3 - 9) - 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
+                Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.floor(f3 - 9) - 1, -1, 16 + 4 * 9, 9 * 0, 9, 9);
+
+                if(goldHealth > 0) {
+                    Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
+                    Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 16 * 9, 9 * 0, 9, 9);
+                }
+
+                RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.disableAlphaTest();
+                RenderSystem.enableCull();
+                RenderSystem.disableBlend();
+                RenderSystem.disableFog();
+
+                fontrenderer.func_243247_a(healthText, f3, (float)i, -1, false, matrix4f, bufferIn, false, 0, packedLightIn);
             }
 
             matrixStackIn.pop();
