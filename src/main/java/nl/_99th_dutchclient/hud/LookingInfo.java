@@ -62,7 +62,11 @@ public class LookingInfo
                 double ticks = Math.ceil(1.0F / damage);
                 double seconds = ticks / 20;
 
-                mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString() + " (" + seconds + "s)", 1, 136, -1);
+                if(seconds < 0) {
+                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), 1, 136, -1);
+                } else {
+                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString() + " (" + seconds + "s)", 1, 136, -1);
+                }
             }
         }
     }
