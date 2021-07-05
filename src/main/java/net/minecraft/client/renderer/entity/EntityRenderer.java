@@ -25,6 +25,7 @@ import net.minecraft.world.LightType;
 import net.optifine.reflect.Reflector;
 import net.optifine.reflect.ReflectorForge;
 import net.optifine.util.Either;
+import nl._99th_dutchclient.settings.HealthIndicator;
 
 public abstract class EntityRenderer<T extends Entity> implements net.optifine.entity.model.IEntityRenderer
 {
@@ -109,7 +110,11 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
             }
         }
 
-        this.renderHealth(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
+        if(Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.NUMBERS) {
+            this.renderHealthNumbers(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
+        } else if(Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.ICONS) {
+
+        }
     }
 
     protected boolean canRenderName(T entity)
@@ -165,7 +170,7 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
         }
     }
 
-    protected void renderHealth(T entityIn, boolean isDeadmau5, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    protected void renderHealthNumbers(T entityIn, boolean isDeadmau5, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
     {
         if(entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead())) {
             boolean flag1 = !entityIn.isDiscrete();

@@ -69,6 +69,7 @@ import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
 import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
+import nl._99th_dutchclient.settings.HealthIndicator;
 import nl._99th_dutchclient.settings.ShowToasts;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
@@ -290,6 +291,7 @@ public class GameSettings
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
     public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
+    public HealthIndicator healthIndicator = HealthIndicator.OFF;
     public ShowToasts showToasts = ShowToasts.ALL;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
@@ -1741,6 +1743,22 @@ public class GameSettings
             }
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.HEALTH_INDICATOR)
+        {
+            switch(this.healthIndicator){
+                case OFF:
+                    this.healthIndicator = HealthIndicator.NUMBERS;
+                    break;
+                case NUMBERS:
+                    this.healthIndicator = HealthIndicator.ICONS;
+                    break;
+                case ICONS:
+                default:
+                    this.healthIndicator = healthIndicator.OFF;
+                    break;
+            }
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.SHOW_TOASTS)
         {
             switch(this.showToasts){
@@ -2896,6 +2914,22 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("healthIndicator") && astring.length >= 2)
+                    {
+                        switch(astring[1]){
+                            case "1":
+                                this.healthIndicator = HealthIndicator.NUMBERS;
+                                break;
+                                case "2":
+                                this.healthIndicator = HealthIndicator.ICONS;
+                                break;
+                            case "0":
+                            default:
+                                this.healthIndicator = HealthIndicator.OFF;
+                                break;
+                        }
+                    }
+
                     if (astring[0].equals("showToasts") && astring.length >= 2)
                     {
                         switch(astring[1]){
@@ -2969,6 +3003,7 @@ public class GameSettings
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
+            printwriter.println("healthIndicator<:>" + this.healthIndicator.func_238162_a_());
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
@@ -3125,6 +3160,7 @@ public class GameSettings
         this.fullBrightness = false;
         this.infiniteChat = true;
         this.discordrpcShowServer = DiscordShowRPC.SERVER;
+        this.healthIndicator = HealthIndicator.OFF;
         this.showToasts = ShowToasts.ALL;
         this.tablistPing = false;
         this.decodeChatMagic = false;

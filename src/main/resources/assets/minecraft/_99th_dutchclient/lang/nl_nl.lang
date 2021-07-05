@@ -33,5 +33,13 @@
 99thdc.options.SHOW_TOASTS.system.tooltip=Systeem
 99thdc.options.SHOW_TOASTS.all=Alle
 99thdc.options.SHOW_TOASTS.all.tooltip=Alle
+99thdc.options.HEALTH_INDICATOR=Health Indicator
+99thdc.options.HEALTH_INDICATOR.off=Uit
+99thdc.options.HEALTH_INDICATOR.off.tooltip=Uit
+99thdc.options.HEALTH_INDICATOR.numbers=Nummers
+99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Nummers
+99thdc.options.HEALTH_INDICATOR.icons=Icoontjes
+99thdc.options.HEALTH_INDICATOR.icons.tooltip=Icoontjes
+
 
 99thdc.key.freelook=Freelook
