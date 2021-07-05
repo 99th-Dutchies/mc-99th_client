@@ -183,7 +183,7 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
     {
         Minecraft mci = Minecraft.getInstance();
 
-    boolean flag1 = !entityIn.isDiscrete();
+        boolean flag1 = !entityIn.isDiscrete();
 
         float f = entityIn.getHeight() + 0.5F;
         int i = isDeadmau5 ? -10 : 0;
@@ -213,13 +213,6 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
 
         if (flag1)
         {
-            RenderSystem.disableCull();
-            RenderSystem.enableBlend();
-            RenderSystem.enableAlphaTest();
-            RenderSystem.enableDepthTest();
-            RenderSystem.defaultAlphaFunc();
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-            RenderSystem.enableFog();
             RenderSystem.depthMask(true);
 
             mci.getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
@@ -230,12 +223,6 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
                 mci.ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
                 mci.ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 16 * 9, 9 * 0, 9, 9);
             }
-
-            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.disableAlphaTest();
-            RenderSystem.enableCull();
-            RenderSystem.disableBlend();
-            RenderSystem.disableFog();
 
             fontrenderer.func_243247_a(healthText, f3, (float)i, -1, false, matrix4f, bufferIn, false, 0, packedLightIn);
         }
@@ -268,13 +255,6 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
 
         if (flag1)
         {
-            RenderSystem.disableCull();
-            RenderSystem.enableBlend();
-            RenderSystem.enableAlphaTest();
-            RenderSystem.enableDepthTest();
-            RenderSystem.defaultAlphaFunc();
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-            RenderSystem.enableFog();
             RenderSystem.depthMask(true);
 
             mci.getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
@@ -310,12 +290,6 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
                     }
                 }
             }
-
-            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.disableAlphaTest();
-            RenderSystem.enableCull();
-            RenderSystem.disableBlend();
-            RenderSystem.disableFog();
         }
 
         matrixStackIn.pop();
