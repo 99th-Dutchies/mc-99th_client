@@ -110,10 +110,19 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
             }
         }
 
-        if(Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.NUMBERS) {
-            this.renderHealthNumbers(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
-        } else if(Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.ICONS) {
+        if(entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead())) {
+            HealthIndicator hi = Minecraft.getInstance().gameSettings.healthIndicator;
 
+            if (hi != HealthIndicator.OFF) {
+                float playerHealth = MathHelper.ceil(((LivingEntity) entityIn).getHealth());
+                float playerGoldHealth = MathHelper.ceil(((LivingEntity) entityIn).getAbsorptionAmount());
+
+                if (Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.NUMBERS || playerHealth > 40 || playerGoldHealth > 20) {
+                    this.renderHealthNumbers(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
+                } else if (Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.ICONS) {
+                    this.renderHealthIcons(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
+                }
+            }
         }
     }
 
@@ -172,66 +181,144 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
 
     protected void renderHealthNumbers(T entityIn, boolean isDeadmau5, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
     {
-        if(entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead())) {
-            boolean flag1 = !entityIn.isDiscrete();
+        Minecraft mci = Minecraft.getInstance();
 
-            float f = entityIn.getHeight() + 0.5F;
-            int i = isDeadmau5 ? -10 : 0;
-            matrixStackIn.push();
-            matrixStackIn.translate(0.0D, (double)f, 0.0D);
-            matrixStackIn.rotate(this.renderManager.getCameraOrientation());
-            matrixStackIn.scale(-0.025F, -0.025F, 0.025F);
-            Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
-            float f1 = Minecraft.getInstance().gameSettings.getTextBackgroundOpacity(0.25F);
-            int j = (int)(f1 * 255.0F) << 24;
-            FontRenderer fontrenderer = this.getFontRendererFromRenderManager();
+    boolean flag1 = !entityIn.isDiscrete();
 
-            float health = MathHelper.ceil(((LivingEntity) entityIn).getHealth()) / 2.0F;
-            float goldHealth = MathHelper.ceil(((LivingEntity) entityIn).getAbsorptionAmount()) / 2.0F;
+        float f = entityIn.getHeight() + 0.5F;
+        int i = isDeadmau5 ? -10 : 0;
+        matrixStackIn.push();
+        matrixStackIn.translate(0.0D, (double)f, 0.0D);
+        matrixStackIn.rotate(this.renderManager.getCameraOrientation());
+        matrixStackIn.scale(-0.025F, -0.025F, 0.025F);
+        Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+        float f1 = mci.gameSettings.getTextBackgroundOpacity(0.25F);
+        int j = (int)(f1 * 255.0F) << 24;
+        FontRenderer fontrenderer = this.getFontRendererFromRenderManager();
 
-            IFormattableTextComponent healthText = new StringTextComponent(health + "").setStyle(Style.EMPTY.setColor(Color.fromHex("#FF0000")));
+        float health = MathHelper.ceil(((LivingEntity) entityIn).getHealth()) / 2.0F;
+        float goldHealth = MathHelper.ceil(((LivingEntity) entityIn).getAbsorptionAmount()) / 2.0F;
+
+        IFormattableTextComponent healthText = new StringTextComponent(health + "").setStyle(Style.EMPTY.setColor(Color.fromHex("#FF0000")));
+
+        if(goldHealth > 0) {
+            healthText.append(new StringTextComponent(" | ").setStyle(Style.EMPTY.setColor(Color.fromInt(-1))));
+            healthText.append(new StringTextComponent(goldHealth + "").setStyle(Style.EMPTY.setColor(Color.fromHex("#FFAA00"))));
+        }
+
+        matrixStackIn.translate(0.0D, (double) -10.0D, 0.0D);
+        Matrix4f m4f = matrixStackIn.getLast().getMatrix();
+        float f3 = (float)(-fontrenderer.getStringPropertyWidth(healthText) / 2);
+        fontrenderer.func_243247_a(healthText, f3, (float) i, 553648127, false, m4f, bufferIn, flag1, j, packedLightIn);
+
+        if (flag1)
+        {
+            RenderSystem.disableCull();
+            RenderSystem.enableBlend();
+            RenderSystem.enableAlphaTest();
+            RenderSystem.enableDepthTest();
+            RenderSystem.defaultAlphaFunc();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            RenderSystem.enableFog();
+            RenderSystem.depthMask(true);
+
+            mci.getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
+            mci.ingameGUI.blit(matrixStackIn, (int) Math.floor(f3 - 9) - 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
+            mci.ingameGUI.blit(matrixStackIn, (int) Math.floor(f3 - 9) - 1, -1, 16 + 4 * 9, 9 * 0, 9, 9);
 
             if(goldHealth > 0) {
-                healthText.append(new StringTextComponent(" | ").setStyle(Style.EMPTY.setColor(Color.fromInt(-1))));
-                healthText.append(new StringTextComponent(goldHealth + "").setStyle(Style.EMPTY.setColor(Color.fromHex("#FFAA00"))));
+                mci.ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
+                mci.ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 16 * 9, 9 * 0, 9, 9);
             }
 
-            matrixStackIn.translate(0.0D, (double) -10.0D, 0.0D);
-            Matrix4f m4f = matrixStackIn.getLast().getMatrix();
-            float f3 = (float)(-fontrenderer.getStringPropertyWidth(healthText) / 2);
-            fontrenderer.func_243247_a(healthText, f3, (float) i, 553648127, false, m4f, bufferIn, flag1, j, packedLightIn);
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.disableAlphaTest();
+            RenderSystem.enableCull();
+            RenderSystem.disableBlend();
+            RenderSystem.disableFog();
 
-            if (flag1)
-            {
-                RenderSystem.disableCull();
-                RenderSystem.enableBlend();
-                RenderSystem.enableAlphaTest();
-                RenderSystem.enableDepthTest();
-                RenderSystem.defaultAlphaFunc();
-                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                RenderSystem.enableFog();
-                RenderSystem.depthMask(true);
+            fontrenderer.func_243247_a(healthText, f3, (float)i, -1, false, matrix4f, bufferIn, false, 0, packedLightIn);
+        }
 
-                Minecraft.getInstance().getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
-                Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.floor(f3 - 9) - 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
-                Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.floor(f3 - 9) - 1, -1, 16 + 4 * 9, 9 * 0, 9, 9);
+        matrixStackIn.pop();
+    }
 
-                if(goldHealth > 0) {
-                    Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 0 * 9, 9 * 0, 9, 9);
-                    Minecraft.getInstance().ingameGUI.blit(matrixStackIn, (int) Math.ceil(-f3) + 1, -1, 16 + 16 * 9, 9 * 0, 9, 9);
+    protected void renderHealthIcons(T entityIn, boolean isDeadmau5, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn)
+    {
+        Minecraft mci = Minecraft.getInstance();
+
+        boolean flag1 = !entityIn.isDiscrete();
+
+        float f = entityIn.getHeight() + 0.5F;
+        int i = isDeadmau5 ? -10 : 0;
+        matrixStackIn.push();
+        matrixStackIn.translate(0.0D, (double)f, 0.0D);
+        matrixStackIn.rotate(this.renderManager.getCameraOrientation());
+        matrixStackIn.scale(-0.025F, -0.025F, 0.025F);
+        Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+        float f1 = mci.gameSettings.getTextBackgroundOpacity(0.25F);
+        int j = (int)(f1 * 255.0F) << 24;
+        FontRenderer fontrenderer = this.getFontRendererFromRenderManager();
+
+        float health = MathHelper.ceil(((LivingEntity) entityIn).getHealth());
+        float goldHealth = MathHelper.ceil(((LivingEntity) entityIn).getAbsorptionAmount());
+
+        matrixStackIn.translate(0.0D, (double) -10.0D, 0.0D);
+        Matrix4f m4f = matrixStackIn.getLast().getMatrix();
+
+        if (flag1)
+        {
+            RenderSystem.disableCull();
+            RenderSystem.enableBlend();
+            RenderSystem.enableAlphaTest();
+            RenderSystem.enableDepthTest();
+            RenderSystem.defaultAlphaFunc();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            RenderSystem.enableFog();
+            RenderSystem.depthMask(true);
+
+            mci.getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
+            int y = 0;
+
+            for(int k = 0; k < Math.ceil(health / 20) * 10; k++) {
+                y = (int) Math.floor(k / 10);
+                mci.ingameGUI.blit(matrixStackIn, (int) Math.floor((k%10) * 9) - 45, (y * -9) - 1, 16 + 0 * 9, 9 * 0, 9, 9);
+            }
+
+            for(int k = 0; k < health; k += 2) {
+                y = (int) Math.floor(k / 20);
+
+                if(health - k == 1) {
+                    mci.ingameGUI.blit(matrixStackIn, (int) Math.floor((k%20) * 4.5F) - 45, (y * -9) - 1, 16 + 5 * 9, 9 * 0, 9, 9);
+                } else {
+                    mci.ingameGUI.blit(matrixStackIn, (int) Math.floor((k%20) * 4.5F) - 45, (y * -9) - 1, 16 + 4 * 9, 9 * 0, 9, 9);
+                }
+            }
+
+            if(goldHealth > 0) {
+                y += 1;
+                
+                for(int k = 0; k < Math.ceil(goldHealth / 20) * 10; k++) {
+                    mci.ingameGUI.blit(matrixStackIn, (int) Math.floor((k%10) * 9) - 45, ((y + (int) Math.floor(k / 10)) * -9) - 1, 16 + 0 * 9, 9 * 0, 9, 9);
                 }
 
-                RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-                RenderSystem.disableAlphaTest();
-                RenderSystem.enableCull();
-                RenderSystem.disableBlend();
-                RenderSystem.disableFog();
-
-                fontrenderer.func_243247_a(healthText, f3, (float)i, -1, false, matrix4f, bufferIn, false, 0, packedLightIn);
+                for(int k = 0; k < goldHealth; k += 2) {
+                    if(goldHealth - k == 1) {
+                        mci.ingameGUI.blit(matrixStackIn, (int) Math.floor((k%20) * 4.5F) - 45, ((y + (int) Math.floor(k / 20)) * -9) - 1, 16 + 17 * 9, 9 * 0, 9, 9);
+                    } else {
+                        mci.ingameGUI.blit(matrixStackIn, (int) Math.floor((k%20) * 4.5F) - 45, ((y + (int) Math.floor(k / 20)) * -9) - 1, 16 + 16 * 9, 9 * 0, 9, 9);
+                    }
+                }
             }
 
-            matrixStackIn.pop();
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.disableAlphaTest();
+            RenderSystem.enableCull();
+            RenderSystem.disableBlend();
+            RenderSystem.disableFog();
         }
+
+        matrixStackIn.pop();
     }
 
     public EntityRendererManager getRenderManager()
