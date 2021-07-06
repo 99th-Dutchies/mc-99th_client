@@ -22,6 +22,7 @@ public class DiscordStatus
     public String lastMap = "";
     public String lastKit = "";
     public String lastProfile = "";
+    public String lastKills = "";
 
     public DiscordStatus(Minecraft mc) {
         this.mc = mc;
@@ -94,6 +95,7 @@ public class DiscordStatus
             this.lastMap = "";
             this.lastKit = "";
             this.lastProfile = "";
+            this.lastKills = "";
 
             if(this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
                 return "In a lobby";
@@ -111,6 +113,8 @@ public class DiscordStatus
         Optional<Score> isMap = collection.stream().skip(6).findFirst();
         Optional<Score> kit = collection.stream().skip(8).findFirst();
         Optional<Score> hasKit = collection.stream().skip(9).findFirst();
+        Optional<Score> killsFFA = collection.stream().skip(7).findFirst();
+        Optional<Score> killsASS = collection.stream().skip(8).findFirst();
 
         if(this.mc.player != null && map.isPresent() && isMap.isPresent() && isMap.get().getPlayerName().contains("Map:")) {
             boolean isTeam = this.mc.player.inventory.mainInventory.get(0).getDisplayName().getString().contains("Team Selection");
@@ -143,6 +147,12 @@ public class DiscordStatus
         if(this.mc.player != null && profile.isPresent() && hasProfile.isPresent() && hasProfile.get().getPlayerName().contains("Active Profile:")) {
             this.lastProfile = MCStringUtils.strip(kit.get().getPlayerName());
         }
+        if(this.mc.player != null && killsASS.isPresent() && killsASS.get().getPlayerName().contains("Kills: ")) {
+            this.lastKills = MCStringUtils.strip(killsASS.get().getPlayerName().substring(7));
+        }
+        if(this.mc.player != null && killsFFA.isPresent() && killsFFA.get().getPlayerName().contains("Kills: ")) {
+            this.lastKills = MCStringUtils.strip(killsFFA.get().getPlayerName().substring(7));
+        }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
             this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
@@ -159,6 +169,9 @@ public class DiscordStatus
             }
             if(!StringUtil.isNullOrEmpty(this.lastProfile)) {
                 return "Playing " + this.lastGamemode + " on " + this.lastProfile;
+            }
+            if(!StringUtil.isNullOrEmpty(this.lastKills)) {
+                return "Playing " + this.lastGamemode + " having killed " + this.lastKills;
             }
 
             return "Playing " + this.lastGamemode;
