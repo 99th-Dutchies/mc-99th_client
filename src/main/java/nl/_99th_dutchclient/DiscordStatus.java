@@ -20,6 +20,7 @@ public class DiscordStatus
     public DiscordRichPresence richPresence;
     public String lastGamemode = "";
     public String lastMap = "";
+    public String lastKit = "";
 
     public DiscordStatus(Minecraft mc) {
         this.mc = mc;
@@ -90,6 +91,7 @@ public class DiscordStatus
         if(lobby.isPresent() && lobby.get().getPlayerName().contains("Lobby")) {
             this.lastGamemode = "";
             this.lastMap = "";
+            this.lastKit = "";
 
             if(this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
                 return "In a lobby";
@@ -103,6 +105,8 @@ public class DiscordStatus
         Optional<Score> hasLevel = collection.stream().skip(3).findFirst();
         Optional<Score> map = collection.stream().skip(5).findFirst();
         Optional<Score> isMap = collection.stream().skip(6).findFirst();
+        Optional<Score> kit = collection.stream().skip(8).findFirst();
+        Optional<Score> hasKit = collection.stream().skip(9).findFirst();
 
         if(this.mc.player != null && map.isPresent() && isMap.isPresent() && isMap.get().getPlayerName().contains("Map:")) {
             boolean isTeam = this.mc.player.inventory.mainInventory.get(0).getDisplayName().getString().contains("Team Selection");
@@ -126,18 +130,28 @@ public class DiscordStatus
             this.lastMap = MCStringUtils.strip(map.get().getPlayerName());
 
             if(level.isPresent() && hasLevel.isPresent() && hasLevel.get().getPlayerName().contains("Level:")) {
-                this.lastMap += " (" + MCStringUtils.strip(level.get().getPlayerName()) + ")";
+                this.lastMap += " (level " + MCStringUtils.strip(level.get().getPlayerName()) + ")";
             }
+        }
+        if(this.mc.player != null && kit.isPresent() && hasKit.isPresent() && hasKit.get().getPlayerName().contains("Kit Name:")) {
+            this.lastKit = MCStringUtils.strip(kit.get().getPlayerName());
         }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
             this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
         }
 
-        if (this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME || StringUtil.isNullOrEmpty(this.lastMap)) {
+        if (this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
             return "Playing " + this.lastGamemode;
         } else {
-            return "Playing " + this.lastGamemode + " on map " + this.lastMap;
+            if(!StringUtil.isNullOrEmpty(this.lastMap)) {
+                return "Playing " + this.lastGamemode + " on map " + this.lastMap;
+            }
+            if(!StringUtil.isNullOrEmpty(this.lastKit)) {
+                return "Playing " + this.lastGamemode + " with kit " + this.lastKit;
+            }
+            
+            return "Playing " + this.lastGamemode;
         }
     }
 
