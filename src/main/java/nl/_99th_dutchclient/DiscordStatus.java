@@ -21,6 +21,7 @@ public class DiscordStatus
     public String lastGamemode = "";
     public String lastMap = "";
     public String lastKit = "";
+    public String lastProfile = "";
 
     public DiscordStatus(Minecraft mc) {
         this.mc = mc;
@@ -92,6 +93,7 @@ public class DiscordStatus
             this.lastGamemode = "";
             this.lastMap = "";
             this.lastKit = "";
+            this.lastProfile = "";
 
             if(this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
                 return "In a lobby";
@@ -103,6 +105,8 @@ public class DiscordStatus
         // If we are in a waiting lobby, we update lastGamemode and lastMap
         Optional<Score> level = collection.stream().skip(2).findFirst();
         Optional<Score> hasLevel = collection.stream().skip(3).findFirst();
+        Optional<Score> profile = collection.stream().skip(3).findFirst();
+        Optional<Score> hasProfile = collection.stream().skip(4).findFirst();
         Optional<Score> map = collection.stream().skip(5).findFirst();
         Optional<Score> isMap = collection.stream().skip(6).findFirst();
         Optional<Score> kit = collection.stream().skip(8).findFirst();
@@ -136,6 +140,9 @@ public class DiscordStatus
         if(this.mc.player != null && kit.isPresent() && hasKit.isPresent() && hasKit.get().getPlayerName().contains("Kit Name:")) {
             this.lastKit = MCStringUtils.strip(kit.get().getPlayerName());
         }
+        if(this.mc.player != null && profile.isPresent() && hasProfile.isPresent() && hasProfile.get().getPlayerName().contains("Active Profile:")) {
+            this.lastProfile = MCStringUtils.strip(kit.get().getPlayerName());
+        }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
             this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
@@ -150,7 +157,10 @@ public class DiscordStatus
             if(!StringUtil.isNullOrEmpty(this.lastKit)) {
                 return "Playing " + this.lastGamemode + " with kit " + this.lastKit;
             }
-            
+            if(!StringUtil.isNullOrEmpty(this.lastProfile)) {
+                return "Playing " + this.lastGamemode + " on " + this.lastProfile;
+            }
+
             return "Playing " + this.lastGamemode;
         }
     }
