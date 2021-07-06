@@ -99,8 +99,11 @@ public class DiscordStatus
         }
 
         // If we are in a waiting lobby, we update lastGamemode and lastMap
+        Optional<Score> level = collection.stream().skip(2).findFirst();
+        Optional<Score> hasLevel = collection.stream().skip(3).findFirst();
         Optional<Score> map = collection.stream().skip(5).findFirst();
         Optional<Score> isMap = collection.stream().skip(6).findFirst();
+
         if(this.mc.player != null && map.isPresent() && isMap.isPresent() && isMap.get().getPlayerName().contains("Map:")) {
             boolean isTeam = this.mc.player.inventory.mainInventory.get(0).getDisplayName().getString().contains("Team Selection");
 
@@ -121,6 +124,10 @@ public class DiscordStatus
                 this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
             }
             this.lastMap = MCStringUtils.strip(map.get().getPlayerName());
+
+            if(level.isPresent() && hasLevel.isPresent() && hasLevel.get().getPlayerName().contains("Level:")) {
+                this.lastMap += " (" + MCStringUtils.strip(level.get().getPlayerName()) + ")";
+            }
         }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
