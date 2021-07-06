@@ -113,7 +113,7 @@ public class DiscordStatus
         Optional<Score> isMap = collection.stream().skip(6).findFirst();
         Optional<Score> kit = collection.stream().skip(8).findFirst();
         Optional<Score> hasKit = collection.stream().skip(9).findFirst();
-        Optional<Score> killsFFA = collection.stream().skip(7).findFirst();
+        Optional<Score> killsFFA = collection.stream().skip(6).findFirst();
         Optional<Score> killsASS = collection.stream().skip(8).findFirst();
 
         if(this.mc.player != null && map.isPresent() && isMap.isPresent() && isMap.get().getPlayerName().contains("Map:")) {
@@ -122,7 +122,7 @@ public class DiscordStatus
             if(isTeam && !sidebar.getDisplayName().getString().contains("Team")) {
                 this.lastGamemode = "Team " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
             } else if(!isTeam) {
-                switch (sidebar.getDisplayName().getString()) {
+                switch (MCStringUtils.strip(sidebar.getDisplayName().getString())) {
                     case "SkyWars":
                     case "EggWars":
                     case "Lucky Islands":
@@ -145,13 +145,13 @@ public class DiscordStatus
             this.lastKit = MCStringUtils.strip(kit.get().getPlayerName());
         }
         if(this.mc.player != null && profile.isPresent() && hasProfile.isPresent() && hasProfile.get().getPlayerName().contains("Active Profile:")) {
-            this.lastProfile = MCStringUtils.strip(kit.get().getPlayerName());
+            this.lastProfile = MCStringUtils.strip(profile.get().getPlayerName());
         }
         if(this.mc.player != null && killsASS.isPresent() && killsASS.get().getPlayerName().contains("Kills: ")) {
-            this.lastKills = MCStringUtils.strip(killsASS.get().getPlayerName().substring(7));
+            this.lastKills = MCStringUtils.strip(killsASS.get().getPlayerName()).substring(7);
         }
         if(this.mc.player != null && killsFFA.isPresent() && killsFFA.get().getPlayerName().contains("Kills: ")) {
-            this.lastKills = MCStringUtils.strip(killsFFA.get().getPlayerName().substring(7));
+            this.lastKills = MCStringUtils.strip(killsFFA.get().getPlayerName()).substring(7);
         }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
