@@ -106,6 +106,17 @@ public class DiscordStatus
 
             if(isTeam && !sidebar.getDisplayName().getString().contains("Team")) {
                 this.lastGamemode = "Team " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+            } else if(!isTeam) {
+                switch (sidebar.getDisplayName().getString()) {
+                    case "SkyWars":
+                    case "EggWars":
+                    case "Lucky Islands":
+                        this.lastGamemode = "Solo " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+                        break;
+                    default:
+                        this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+                        break;
+                }
             } else {
                 this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
             }
