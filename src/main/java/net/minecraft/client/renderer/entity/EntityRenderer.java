@@ -110,7 +110,7 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
             }
         }
 
-        if(entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead())) {
+        if(canRenderName(entityIn) && (entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead()))) {
             HealthIndicator hi = Minecraft.getInstance().gameSettings.healthIndicator;
 
             if (hi != HealthIndicator.OFF) {
