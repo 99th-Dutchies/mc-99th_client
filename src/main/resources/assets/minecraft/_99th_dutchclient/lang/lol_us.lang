@@ -1,0 +1,44 @@
+# General
+99thdc.title=99th_DutchClient
+
+# Settings
+99thdc.options.title=99th_DUTCHCLIENT SETTINGZ
+99thdc.options.chattriggers.title=Chet Triggerz
+99thdc.options.chattriggers.regex=Reg-x Match
+99thdc.options.chattriggers.response=Respunz
+99thdc.options.chattriggers.add=At Triggr
+
+99thdc.options.SHOW_LOCATION_HUD=See Location HUD
+99thdc.options.SHOW_INVENTORY_HUD=Sow Invntorie HUD
+99thdc.options.SHOW_SYSTEM_HUD=Sow Computer Thingies
+99thdc.options.SHOW_CPS_HUD=Clicking Speeeeed
+99thdc.options.SHOW_LOOKING_HUD=Were you looking?
+99thdc.options.FULL_BRIGHTNESS=SUPER LIGHT
+99thdc.options.INFINITE_CHAT=UNLIMITED POWERRRR
+99thdc.options.TABLIST_PING=Other kitten's poing
+99thdc.options.DECODE_CHAT_MAGIC=Chat not goez brrr
+99thdc.options.DISCORDRPC_SHOW_SERVER=Show othr kittns
+99thdc.options.DISCORDRPC_SHOW_SERVER.off=No
+99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=No
+99thdc.options.DISCORDRPC_SHOW_SERVER.server=Only Servr
+99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=Only Servr
+99thdc.options.DISCORDRPC_SHOW_SERVER.game=Servr and Kittengame
+99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=Servr and Kittengame
+99thdc.options.DISCORDRPC_SHOW_SERVER.map=Yes
+99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Yes
+99thdc.options.SHOW_TOASTS=Taostz
+99thdc.options.SHOW_TOASTS.off=No
+99thdc.options.SHOW_TOASTS.off.tooltip=No
+99thdc.options.SHOW_TOASTS.system=Computr thingie
+99thdc.options.SHOW_TOASTS.system.tooltip=Computr thingie
+99thdc.options.SHOW_TOASTS.all=Evvythin
+99thdc.options.SHOW_TOASTS.all.tooltip=Evvythin
+99thdc.options.HEALTH_INDICATOR=Haelth Indiecatur
+99thdc.options.HEALTH_INDICATOR.off=No
+99thdc.options.HEALTH_INDICATOR.off.tooltip=No
+99thdc.options.HEALTH_INDICATOR.numbers=Numbrs
+99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Numbrs
+99thdc.options.HEALTH_INDICATOR.icons=Pics
+99thdc.options.HEALTH_INDICATOR.icons.tooltip=Pics
+
+99thdc.key.freelook=Cheatlookz
