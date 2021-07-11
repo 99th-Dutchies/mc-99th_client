@@ -1,0 +1,44 @@
+# General
+99thdc.title=99th_DutchClient
+
+# Settings
+99thdc.options.title=99th_DutchClient Scribble
+99thdc.options.chattriggers.title=Automated Postal
+99thdc.options.chattriggers.regex=Regex Matchin'
+99thdc.options.chattriggers.response=Postal to be sent
+99thdc.options.chattriggers.add=Add Activator
+
+99thdc.options.SHOW_LOCATION_HUD=Yer Position HUD
+99thdc.options.SHOW_INVENTORY_HUD=Loot Bag HUD
+99thdc.options.SHOW_SYSTEM_HUD=Boat Status HUD
+99thdc.options.SHOW_CPS_HUD=Show Cannon Speed
+99thdc.options.SHOW_LOOKING_HUD=Spyglass HUD
+99thdc.options.FULL_BRIGHTNESS=Full Sunshinin'
+99thdc.options.INFINITE_CHAT=Infinite Postal
+99thdc.options.TABLIST_PING=Ship Speed in Shiplist
+99thdc.options.DECODE_CHAT_MAGIC=Decode Postal Witchery
+99thdc.options.DISCORDRPC_SHOW_SERVER=Show yer mates
+99thdc.options.DISCORDRPC_SHOW_SERVER.off=Keep yer secret
+99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Keep yer secret
+99thdc.options.DISCORDRPC_SHOW_SERVER.server=Island Only
+99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=Island Only
+99thdc.options.DISCORDRPC_SHOW_SERVER.game=Island and What yer doin'
+99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=Island and What yer doin'
+99thdc.options.DISCORDRPC_SHOW_SERVER.map=Island, What yer doin' and Where
+99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Island, What yer doin' and Where
+99thdc.options.SHOW_TOASTS=Life Messages
+99thdc.options.SHOW_TOASTS.off=Nothin'
+99thdc.options.SHOW_TOASTS.off.tooltip=Nothin'
+99thdc.options.SHOW_TOASTS.system=Boat
+99thdc.options.SHOW_TOASTS.system.tooltip=Boat
+99thdc.options.SHOW_TOASTS.all=Everythin'
+99thdc.options.SHOW_TOASTS.all.tooltip=Everythin'
+99thdc.options.HEALTH_INDICATOR=Ship Status
+99thdc.options.HEALTH_INDICATOR.off=Nothin'
+99thdc.options.HEALTH_INDICATOR.off.tooltip=Nothin'
+99thdc.options.HEALTH_INDICATOR.numbers=Digits
+99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Digits
+99thdc.options.HEALTH_INDICATOR.icons=Pictures
+99thdc.options.HEALTH_INDICATOR.icons.tooltip=Pictures
+
+99thdc.key.freelook=Freelookin'
