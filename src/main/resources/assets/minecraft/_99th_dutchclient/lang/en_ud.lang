@@ -1,0 +1,44 @@
+# General
+99thdc.title=\u0287u\u01dd\u1d09\ua781\u0186\u0265\u0254\u0287\u2229\u15e1_\u0265\u028766
+
+# Settings
+99thdc.options.title=s\u1d77u\u1d09\u0287\u0287\u01ddS \u0287u\u01dd\u1d09\ua781\u0186\u0265\u0254\u0287\u2229\u15e1_\u0265\u028766
+99thdc.options.chattriggers.title=s\u0279\u01dd\u1d77\u1d77\u1d09\u0279\u27d8 \u0287\u0250\u0265\u0186
+99thdc.options.chattriggers.regex=\u0265\u0254\u0287\u0250W x\u01dd\u1d77\u01dd\u1d1a
+99thdc.options.chattriggers.response=\u01ddsuods\u01dd\u1d1a
+99thdc.options.chattriggers.add=\u0279\u01dd\u1d77\u1d77\u1d09\u0279\u27d8 pp\u2c6f
+
+99thdc.options.SHOW_LOCATION_HUD=\u15e1\u2229H uo\u1d09\u0287\u0250\u0254o\ua780 \u028do\u0265S
+99thdc.options.SHOW_INVENTORY_HUD=\u15e1\u2229H \u028e\u0279o\u0287u\u01dd\u028cuI \u028do\u0265S
+99thdc.options.SHOW_SYSTEM_HUD=\u15e1\u2229H \u026f\u01dd\u0287s\u028eS \u028do\u0265S
+99thdc.options.SHOW_CPS_HUD=S\u0500\u0186 \u028do\u0265S
+99thdc.options.SHOW_LOOKING_HUD=\u15e1\u2229H \u0287\u2c6f-\u1d77u\u1d09\u029eoo\ua780 \u028do\u0265S
+99thdc.options.FULL_BRIGHTNESS=ss\u01ddu\u0287\u0265\u1d77\u1d09\u0279\u15fa \ua781\ua781n\u2132
+99thdc.options.INFINITE_CHAT=\u0287\u0250\u0265\u0186 \u01dd\u0287\u1d09u\u1d09\u025fuI
+99thdc.options.TABLIST_PING=\u0287s\u1d09\ua781q\u0250\u27d8 u\u1d09 \u1d77u\u1d09\u0500
+99thdc.options.DECODE_CHAT_MAGIC=\u0254\u1d09\u1d77\u0250W \u0287\u0250\u0265\u0254 \u01ddpo\u0254\u01dd\u15e1
+99thdc.options.DISCORDRPC_SHOW_SERVER=p\u0279o\u0254s\u1d09\u15e1 u\u1d09 \u028do\u0265S
+99thdc.options.DISCORDRPC_SHOW_SERVER.off=\u025f\u025fO
+99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=\u025f\u025fO
+99thdc.options.DISCORDRPC_SHOW_SERVER.server=\u028e\ua781uO \u0279\u01dd\u028c\u0279\u01ddS
+99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=\u028e\ua781uO \u0279\u01dd\u028c\u0279\u01ddS
+99thdc.options.DISCORDRPC_SHOW_SERVER.game=\u01dd\u026f\u0250\u1d77\u1d09u\u1d09W pu\u0250 \u0279\u01dd\u028c\u0279\u01ddS
+99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=\u01dd\u026f\u0250\u1d77\u1d09u\u1d09W pu\u0250 \u0279\u01dd\u028c\u0279\u01ddS
+99thdc.options.DISCORDRPC_SHOW_SERVER.map=d\u0250W pu\u0250 \u01dd\u026f\u0250\u1d77\u1d09u\u1d09W '\u0279\u01dd\u028c\u0279\u01ddS
+99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=d\u0250W pu\u0250 \u01dd\u026f\u0250\u1d77\u1d09u\u1d09W '\u0279\u01dd\u028c\u0279\u01ddS
+99thdc.options.SHOW_TOASTS=s\u0287s\u0250o\u27d8
+99thdc.options.SHOW_TOASTS.off=\u01dduoN
+99thdc.options.SHOW_TOASTS.off.tooltip=\u01dduoN
+99thdc.options.SHOW_TOASTS.system=\u026f\u01dd\u0287s\u028eS
+99thdc.options.SHOW_TOASTS.system.tooltip=\u026f\u01dd\u0287s\u028eS
+99thdc.options.SHOW_TOASTS.all=\ua781\ua781\u2c6f
+99thdc.options.SHOW_TOASTS.all.tooltip=\ua781\ua781\u2c6f
+99thdc.options.HEALTH_INDICATOR=\u0279o\u0287\u0250\u0254\u1d09puI \u0265\u0287\ua781\u0250\u01ddH
+99thdc.options.HEALTH_INDICATOR.off=\u025f\u025fO
+99thdc.options.HEALTH_INDICATOR.off.tooltip=\u025f\u025fO
+99thdc.options.HEALTH_INDICATOR.numbers=s\u0279\u01ddq\u026fnN
+99thdc.options.HEALTH_INDICATOR.numbers.tooltip=s\u0279\u01ddq\u026fnN
+99thdc.options.HEALTH_INDICATOR.icons=suo\u0254I
+99thdc.options.HEALTH_INDICATOR.icons.tooltip=suo\u0254I
+
+99thdc.key.freelook=\u029eoo\ua781\u01dd\u01dd\u0279\u2132
