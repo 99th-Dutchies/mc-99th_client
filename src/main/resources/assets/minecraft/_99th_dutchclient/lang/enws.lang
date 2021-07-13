@@ -1,0 +1,44 @@
+# General
+99thdc.title=99th_DutchClient
+
+# Settings
+99thdc.options.title=99th_DutchClient Choices
+99thdc.options.chattriggers.title=Dialogue Activators
+99thdc.options.chattriggers.regex=Text to find
+99thdc.options.chattriggers.response=Your Speech
+99thdc.options.chattriggers.add=Add Activator
+
+99thdc.options.SHOW_LOCATION_HUD=Local Point HUD
+99thdc.options.SHOW_INVENTORY_HUD=Thy Inventory HUD
+99thdc.options.SHOW_SYSTEM_HUD=Show Machine HUD
+99thdc.options.SHOW_CPS_HUD=Show Clicking Speed
+99thdc.options.SHOW_LOOKING_HUD=Show Gaze-At HUD
+99thdc.options.FULL_BRIGHTNESS=Full Vision
+99thdc.options.INFINITE_CHAT=Immeasurable Text
+99thdc.options.TABLIST_PING=Connection on Tablist
+99thdc.options.DECODE_CHAT_MAGIC=Decode Illegible Text
+99thdc.options.DISCORDRPC_SHOW_SERVER=Show thy Friends
+99thdc.options.DISCORDRPC_SHOW_SERVER.off=Nothing
+99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Nothing
+99thdc.options.DISCORDRPC_SHOW_SERVER.server=Theatre Only
+99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=Theatre Only
+99thdc.options.DISCORDRPC_SHOW_SERVER.game=Theatre and Play
+99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip=Theatre and Play
+99thdc.options.DISCORDRPC_SHOW_SERVER.map=Theatre, Play and Scene
+99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Theatre, Play and Scene
+99thdc.options.SHOW_TOASTS=Prompter
+99thdc.options.SHOW_TOASTS.off=Nay
+99thdc.options.SHOW_TOASTS.off.tooltip=Nay
+99thdc.options.SHOW_TOASTS.system=Machine
+99thdc.options.SHOW_TOASTS.system.tooltip=Machine
+99thdc.options.SHOW_TOASTS.all=Everything
+99thdc.options.SHOW_TOASTS.all.tooltip=Everything
+99thdc.options.HEALTH_INDICATOR=Healthfulness Indicator
+99thdc.options.HEALTH_INDICATOR.off=Off
+99thdc.options.HEALTH_INDICATOR.off.tooltip=Off
+99thdc.options.HEALTH_INDICATOR.numbers=Cypher
+99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Cypher
+99thdc.options.HEALTH_INDICATOR.icons=Images
+99thdc.options.HEALTH_INDICATOR.icons.tooltip=Images
+
+99thdc.key.freelook=Freelook
