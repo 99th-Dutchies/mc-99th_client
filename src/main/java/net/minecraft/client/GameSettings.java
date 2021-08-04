@@ -1696,7 +1696,7 @@ public class GameSettings
 
         if (p_setOptionValueOF_1_ == AbstractOption.SHOW_INVENTORY_HUD)
         {
-            this.showLocationHUD = !this.showInventoryHUD;
+            this.showInventoryHUD = !this.showInventoryHUD;
         }
 
         if (p_setOptionValueOF_1_ == AbstractOption.SHOW_SYSTEM_HUD)
