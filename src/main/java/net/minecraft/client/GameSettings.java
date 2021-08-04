@@ -290,6 +290,7 @@ public class GameSettings
     public boolean showLookingHUD = true;
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
+    public boolean showChatTimestamp = false;
     public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
     public HealthIndicator healthIndicator = HealthIndicator.OFF;
     public ShowToasts showToasts = ShowToasts.ALL;
@@ -1724,6 +1725,11 @@ public class GameSettings
             this.infiniteChat = !this.infiniteChat;
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.CHAT_TIMESTAMP)
+        {
+            this.showChatTimestamp = !this.showChatTimestamp;
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.DISCORDRPC_SHOW_SERVER)
         {
             switch(this.discordrpcShowServer){
@@ -2895,6 +2901,11 @@ public class GameSettings
                         this.infiniteChat = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("showChatTimestamp") && astring.length >= 2)
+                    {
+                        this.showChatTimestamp = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("discordrpcShowServer") && astring.length >= 2)
                     {
                         switch(astring[1]){
@@ -3002,6 +3013,7 @@ public class GameSettings
             printwriter.println("showLookingHUD<:>" + this.showLookingHUD);
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
+            printwriter.println("showChatTimestamp<:>" + this.showChatTimestamp);
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
             printwriter.println("healthIndicator<:>" + this.healthIndicator.func_238162_a_());
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
@@ -3159,6 +3171,7 @@ public class GameSettings
         this.showLookingHUD = true;
         this.fullBrightness = false;
         this.infiniteChat = true;
+        this.showChatTimestamp = false;
         this.discordrpcShowServer = DiscordShowRPC.SERVER;
         this.healthIndicator = HealthIndicator.OFF;
         this.showToasts = ShowToasts.ALL;

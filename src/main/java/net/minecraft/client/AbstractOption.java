@@ -734,6 +734,15 @@ public abstract class AbstractOption
         p_lambda$static$126_0_.infiniteChat = p_lambda$static$126_1_;
     });
 
+    public static final BooleanOption CHAT_TIMESTAMP = new BooleanOption("99thdc.options.CHAT_TIMESTAMP", (p_lambda$static$125_0_) ->
+    {
+        return p_lambda$static$125_0_.showChatTimestamp;
+    }, (p_lambda$static$126_0_, p_lambda$static$126_1_) ->
+    {
+        p_lambda$static$126_0_.showChatTimestamp = p_lambda$static$126_1_;
+        Minecraft.getInstance().ingameGUI.getChatGUI().refreshChat();
+    });
+
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_OFF = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip");
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_SERVER = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip", (new TranslationTextComponent("options.graphics.fabulous")).mergeStyle(TextFormatting.ITALIC));
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_GAME = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip");

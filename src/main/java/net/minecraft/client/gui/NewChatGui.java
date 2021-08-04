@@ -220,7 +220,7 @@ public class NewChatGui extends AbstractGui
         int i = MathHelper.floor((double)this.getChatWidth() / this.getScale());
 
         ITextComponent text;
-        if(true) {
+        if(this.mc.gameSettings.showChatTimestamp) {
             text = new StringTextComponent("[" + DateTimeFormatter.ofPattern("HH:mm:ss").format(ldt) + "] ").append(p_238493_1_);
         } else {
             text = p_238493_1_;

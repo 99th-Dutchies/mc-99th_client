@@ -15,6 +15,7 @@
 99thdc.options.SHOW_LOOKING_HUD=Spyglass HUD
 99thdc.options.FULL_BRIGHTNESS=Full Sunshinin'
 99thdc.options.INFINITE_CHAT=Infinite Postal
+99thdc.options.CHAT_TIMESTAMP=Time o' Postal
 99thdc.options.TABLIST_PING=Ship Speed in Shiplist
 99thdc.options.DECODE_CHAT_MAGIC=Decode Postal Witchery
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show yer mates

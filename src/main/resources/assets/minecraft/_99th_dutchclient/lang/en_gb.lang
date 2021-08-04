@@ -15,6 +15,7 @@
 99thdc.options.SHOW_LOOKING_HUD=Show Looking-At HUD
 99thdc.options.FULL_BRIGHTNESS=Full Brightness
 99thdc.options.INFINITE_CHAT=Infinite Chat
+99thdc.options.CHAT_TIMESTAMP=Show Time in Chat
 99thdc.options.TABLIST_PING=Ping in Tablist
 99thdc.options.DECODE_CHAT_MAGIC=Decode Chat Magic
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show in Discord

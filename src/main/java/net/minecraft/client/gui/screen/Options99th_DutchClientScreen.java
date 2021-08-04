@@ -82,16 +82,23 @@ public class Options99th_DutchClientScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(AbstractOption.DISCORDRPC_SHOW_SERVER.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 120, 310));
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 120, 150, 20, AbstractOption.CHAT_TIMESTAMP, AbstractOption.CHAT_TIMESTAMP.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.CHAT_TIMESTAMP.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.CHAT_TIMESTAMP.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
 
-        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 144, 150, 20, AbstractOption.FULL_BRIGHTNESS, AbstractOption.FULL_BRIGHTNESS.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        this.addButton(AbstractOption.DISCORDRPC_SHOW_SERVER.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 144, 310));
+
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 168, 150, 20, AbstractOption.FULL_BRIGHTNESS, AbstractOption.FULL_BRIGHTNESS.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.FULL_BRIGHTNESS.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.FULL_BRIGHTNESS.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(AbstractOption.HEALTH_INDICATOR.createWidget(this.minecraft.gameSettings,this.width / 2 + 5, this.height / 6 + 144, 150));
+        this.addButton(AbstractOption.HEALTH_INDICATOR.createWidget(this.minecraft.gameSettings,this.width / 2 + 5, this.height / 6 + 168, 150));
 
         this.addButton(new Button(this.width / 2 + 5, this.height - 51, 150, 20, new TranslationTextComponent("99thdc.options.chattriggers.title"), (p_213052_1_) ->
         {
