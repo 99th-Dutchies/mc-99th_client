@@ -4,18 +4,20 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
+
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.entity.player.ChatVisibility;
 import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -204,11 +206,11 @@ public class NewChatGui extends AbstractGui
      */
     public void printChatMessageWithOptionalDeletion(ITextComponent chatComponent, int chatLineId)
     {
-        this.func_238493_a_(chatComponent, chatLineId, this.mc.ingameGUI.getTicks(), false);
+        this.func_238493_a_(chatComponent, LocalDateTime.now(), chatLineId, this.mc.ingameGUI.getTicks(), false);
         LOGGER.info("[CHAT] {}", (Object)chatComponent.getString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n"));
     }
 
-    private void func_238493_a_(ITextComponent p_238493_1_, int p_238493_2_, int p_238493_3_, boolean p_238493_4_)
+    private void func_238493_a_(ITextComponent p_238493_1_, LocalDateTime ldt, int p_238493_2_, int p_238493_3_, boolean p_238493_4_)
     {
         if (p_238493_2_ != 0)
         {
@@ -216,7 +218,14 @@ public class NewChatGui extends AbstractGui
         }
 
         int i = MathHelper.floor((double)this.getChatWidth() / this.getScale());
-        List<IReorderingProcessor> list = RenderComponentsUtil.func_238505_a_(p_238493_1_, i, this.mc.fontRenderer);
+
+        ITextComponent text;
+        if(true) {
+            text = new StringTextComponent("[" + DateTimeFormatter.ofPattern("HH:mm:ss").format(ldt) + "] ").append(p_238493_1_);
+        } else {
+            text = p_238493_1_;
+        }
+        List<IReorderingProcessor> list = RenderComponentsUtil.func_238505_a_(text, i, this.mc.fontRenderer);
         boolean flag = this.getChatOpen();
 
         for (IReorderingProcessor ireorderingprocessor : list)
@@ -254,7 +263,7 @@ public class NewChatGui extends AbstractGui
         for (int i = this.chatLines.size() - 1; i >= 0; --i)
         {
             ChatLine<ITextComponent> chatline = this.chatLines.get(i);
-            this.func_238493_a_(chatline.getLineString(), chatline.getChatLineID(), chatline.getUpdatedCounter(), true);
+            this.func_238493_a_(chatline.getLineString(), chatline.getTimestamp(), chatline.getChatLineID(), chatline.getUpdatedCounter(), true);
         }
     }
 
