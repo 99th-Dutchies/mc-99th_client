@@ -12,6 +12,7 @@ import net.minecraft.scoreboard.Scoreboard;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.util.MCStringUtils;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Optional;
 
 public class DiscordStatus
@@ -117,7 +118,7 @@ public class DiscordStatus
         Optional<Score> killsASS = collection.stream().skip(8).findFirst();
 
         if(this.mc.player != null && map.isPresent() && isMap.isPresent() && isMap.get().getPlayerName().contains("Map:")) {
-            boolean isTeam = this.mc.player.inventory.mainInventory.get(0).getDisplayName().getString().contains("Team Selection");
+            boolean isTeam = this.mc.player.inventory.mainInventory.get(0).getDisplayName().getString().toLowerCase().contains("team selection");
 
             if(isTeam && !sidebar.getDisplayName().getString().contains("Team")) {
                 this.lastGamemode = "Team " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
