@@ -3,6 +3,10 @@
 
 # Settings
 99thdc.options.title=99th_DUTCHCLIENT SETTINGZ
+99thdc.options.hudgui=HUD/GUI
+99thdc.options.hudgui.title=99th_DUTCHCLIENT SETTINGZ HUD/GUI
+99thdc.options.chat=CHET
+99thdc.options.chat.title=99th_DUTCHCLIENT SETTINGZ CHET
 99thdc.options.chattriggers.title=Chet Triggerz
 99thdc.options.chattriggers.regex=Reg-x Match
 99thdc.options.chattriggers.response=Respunz

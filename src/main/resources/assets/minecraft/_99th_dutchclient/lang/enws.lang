@@ -3,6 +3,10 @@
 
 # Settings
 99thdc.options.title=99th_DutchClient Choices
+99thdc.options.hudgui=HUD/GUI
+99thdc.options.hudgui.title=99th_DutchClient Choices HUD/GUI
+99thdc.options.chat=Dialogue
+99thdc.options.chat.title=99th_DutchClient Choices Dialogue
 99thdc.options.chattriggers.title=Dialogue Activators
 99thdc.options.chattriggers.regex=Text to find
 99thdc.options.chattriggers.response=Your Speech

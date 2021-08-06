@@ -18,6 +18,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Difficulty;
 import nl._99th_dutchclient.Lang;
+import nl._99th_dutchclient.screen.Options99th_DutchClientScreen;
 
 public class OptionsScreen extends Screen
 {

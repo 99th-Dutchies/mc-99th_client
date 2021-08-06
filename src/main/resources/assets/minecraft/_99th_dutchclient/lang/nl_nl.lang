@@ -3,6 +3,10 @@
 
 # Settings
 99thdc.options.title=99th_DutchClient Instellingen
+99thdc.options.hudgui=HUD/GUI
+99thdc.options.hudgui.title=99th_DutchClient Instellingen HUD/GUI
+99thdc.options.chat=Chat
+99thdc.options.chat.title=99th_DutchClient Instellingen Chat
 99thdc.options.chattriggers.title=Chat Triggers
 99thdc.options.chattriggers.regex=Regex Match
 99thdc.options.chattriggers.response=Antwoord
