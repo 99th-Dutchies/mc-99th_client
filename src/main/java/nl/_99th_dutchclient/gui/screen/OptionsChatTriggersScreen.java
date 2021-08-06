@@ -1,28 +1,23 @@
-package net.minecraft.client.gui.screen;
+package nl._99th_dutchclient.gui.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import io.netty.util.internal.StringUtil;
-import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.list.ChatTriggerList;
-import net.minecraft.client.util.InputMappings;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.gui.widget.ChatTriggerList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 
-public class ChatTriggersScreen extends SettingsScreen
+public class OptionsChatTriggersScreen extends SettingsScreen
 {
     private ChatTriggerList chatTriggerList;
 
-    public ChatTriggersScreen(Screen screen, GameSettings settings)
+    public OptionsChatTriggersScreen(Screen screen, GameSettings settings)
     {
         super(screen, settings, new TranslationTextComponent("99thdc.options.chattriggers.title"));
     }

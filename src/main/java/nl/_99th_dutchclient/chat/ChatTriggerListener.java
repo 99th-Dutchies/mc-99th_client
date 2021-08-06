@@ -3,12 +3,12 @@ package nl._99th_dutchclient.chat;
 import java.util.regex.Matcher;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.chat.IChatListener;
+import net.minecraft.client.gui.chat.AbstractChatListener;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 import nl._99th_dutchclient.chat.ChatTrigger;
 
-public class ChatTriggerListener implements IChatListener
+public class ChatTriggerListener extends AbstractChatListener
 {
     private final Minecraft mc;
 

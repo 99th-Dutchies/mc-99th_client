@@ -1,10 +1,9 @@
-package nl._99th_dutchclient.screen;
+package nl._99th_dutchclient.gui.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.ChatTriggersScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.button.Button;
@@ -41,9 +40,14 @@ public class OptionsChatScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 72, 310, 20, new TranslationTextComponent("99thdc.options.chattriggers.title"), (p_213052_1_) ->
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 72, 150, 20, new TranslationTextComponent("99thdc.options.chattriggers.title"), (p_213052_1_) ->
         {
-            this.minecraft.displayGuiScreen(new ChatTriggersScreen(this, this.gameSettings));
+            this.minecraft.displayGuiScreen(new OptionsChatTriggersScreen(this, this.gameSettings));
+        }));
+
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 72, 150, 20, new TranslationTextComponent("99thdc.options.chatfilters.title"), (p_213052_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new OptionsChatFiltersScreen(this, this.gameSettings));
         }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->

@@ -1,34 +1,27 @@
-package net.minecraft.client.gui.widget.list;
+package nl._99th_dutchclient.gui.widget;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.widget.list.AbstractOptionList;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.gui.screen.OptionsChatTriggersScreen;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.screen.ChatTriggersScreen;
-import net.minecraft.client.gui.screen.CreateWorldScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.OptionButton;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
-import nl._99th_dutchclient.chat.ChatTrigger;
-import org.apache.commons.lang3.ArrayUtils;
-
 public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 {
-    private final ChatTriggersScreen chatTriggersScreen;
+    private final OptionsChatTriggersScreen chatTriggersScreen;
     private List<ChatTriggerEntry> entries = new ArrayList<>();
 
-    public ChatTriggerList(ChatTriggersScreen chatTriggers, Minecraft mcIn)
+    public ChatTriggerList(OptionsChatTriggersScreen chatTriggers, Minecraft mcIn)
     {
         super(mcIn, chatTriggers.width + 45, chatTriggers.height, 43, chatTriggers.height - 43, 25);
         this.chatTriggersScreen = chatTriggers;
@@ -38,7 +31,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
     public void loadTriggers() {
         ChatTrigger chattrigger;
         this.clearEntries();
-        for(ChatTriggerList.ChatTriggerEntry entry : this.entries) {
+        for(ChatTriggerEntry entry : this.entries) {
             this.chatTriggersScreen.children.remove(entry.btnToggleActive);
             this.chatTriggersScreen.children.remove(entry.patternField);
             this.chatTriggersScreen.children.remove(entry.responseField);
@@ -51,7 +44,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             ITextComponent pattern = new TranslationTextComponent(chattrigger.pattern.pattern());
             ITextComponent response = new TranslationTextComponent(chattrigger.response);
 
-            ChatTriggerEntry entry = new ChatTriggerList.ChatTriggerEntry(j, chattrigger, pattern, response);
+            ChatTriggerEntry entry = new ChatTriggerEntry(j, chattrigger, pattern, response);
             this.addEntry(entry);
             this.entries.add(entry);
         }
@@ -64,11 +57,11 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         return 400;
     }
 
-    public abstract static class Entry extends AbstractOptionList.Entry<ChatTriggerList.Entry>
+    public abstract static class Entry extends AbstractOptionList.Entry<Entry>
     {
     }
 
-    public class ChatTriggerEntry extends ChatTriggerList.Entry
+    public class ChatTriggerEntry extends Entry
     {
         private final ChatTrigger chatTrigger;
         private final int index;

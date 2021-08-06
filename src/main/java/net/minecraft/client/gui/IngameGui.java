@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.chat.IChatListener;
+import net.minecraft.client.gui.chat.AbstractChatListener;
 import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.chat.NormalChatListener;
 import net.minecraft.client.gui.chat.OverlayChatListener;
@@ -77,6 +77,7 @@ import net.optifine.CustomColors;
 import net.optifine.CustomItems;
 import net.optifine.TextureAnimations;
 import net.optifine.reflect.Reflector;
+import nl._99th_dutchclient.chat.ChatFilterListener;
 import nl._99th_dutchclient.hud.*;
 import nl._99th_dutchclient.chat.ChatTriggerListener;
 
@@ -135,7 +136,7 @@ public class IngameGui extends AbstractGui
     private long healthUpdateCounter;
     private int scaledWidth;
     private int scaledHeight;
-    private final Map<ChatType, List<IChatListener>> chatListeners = Maps.newHashMap();
+    private final Map<ChatType, List<AbstractChatListener>> chatListeners = Maps.newHashMap();
 
     public IngameGui(Minecraft mcIn)
     {
@@ -153,12 +154,13 @@ public class IngameGui extends AbstractGui
             this.chatListeners.put(chattype, Lists.newArrayList());
         }
 
-        IChatListener ichatlistener = NarratorChatListener.INSTANCE;
+        AbstractChatListener chatlistener = NarratorChatListener.INSTANCE;
+        this.chatListeners.get(ChatType.CHAT).add(new ChatFilterListener(mcIn));
         this.chatListeners.get(ChatType.CHAT).add(new NormalChatListener(mcIn));
-        this.chatListeners.get(ChatType.CHAT).add(ichatlistener);
+        this.chatListeners.get(ChatType.CHAT).add(chatlistener);
         this.chatListeners.get(ChatType.CHAT).add(new ChatTriggerListener(mcIn));
         this.chatListeners.get(ChatType.SYSTEM).add(new NormalChatListener(mcIn));
-        this.chatListeners.get(ChatType.SYSTEM).add(ichatlistener);
+        this.chatListeners.get(ChatType.SYSTEM).add(chatlistener);
         this.chatListeners.get(ChatType.GAME_INFO).add(new OverlayChatListener(mcIn));
         this.setDefaultTitlesTimes();
     }
@@ -1523,9 +1525,11 @@ public class IngameGui extends AbstractGui
     {
         if (!this.mc.cannotSendChatMessages(p_238450_3_) && (!this.mc.gameSettings.field_244794_ae || !this.mc.cannotSendChatMessages(this.func_244795_b(p_238450_2_))))
         {
-            for (IChatListener ichatlistener : this.chatListeners.get(p_238450_1_))
+            for (AbstractChatListener chatlistener : this.chatListeners.get(p_238450_1_))
             {
-                ichatlistener.say(p_238450_1_, p_238450_2_, p_238450_3_);
+                if(chatlistener.shouldHide(p_238450_1_, p_238450_2_, p_238450_3_)) break;
+
+                chatlistener.say(p_238450_1_, p_238450_2_, p_238450_3_);
             }
         }
     }

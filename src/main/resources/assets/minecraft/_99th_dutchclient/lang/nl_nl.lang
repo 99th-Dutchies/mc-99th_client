@@ -11,6 +11,9 @@
 99thdc.options.chattriggers.regex=Regex Match
 99thdc.options.chattriggers.response=Antwoord
 99thdc.options.chattriggers.add=Nieuwe Trigger
+99thdc.options.chatfilters.title=Chat Filters
+99thdc.options.chatfilters.regex=Regex Match
+99thdc.options.chatfilters.add=Nieuw Filter
 
 99thdc.options.SHOW_LOCATION_HUD=Toon Locatie HUD
 99thdc.options.SHOW_INVENTORY_HUD=Toon Inventory HUD

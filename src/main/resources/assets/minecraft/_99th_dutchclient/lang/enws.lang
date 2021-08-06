@@ -11,6 +11,9 @@
 99thdc.options.chattriggers.regex=Text to find
 99thdc.options.chattriggers.response=Your Speech
 99thdc.options.chattriggers.add=Add Activator
+99thdc.options.chatfilters.title=Dialogue Filters
+99thdc.options.chatfilters.regex=Text to find
+99thdc.options.chatfilters.add=Add Filter
 
 99thdc.options.SHOW_LOCATION_HUD=Local Point HUD
 99thdc.options.SHOW_INVENTORY_HUD=Thy Inventory HUD

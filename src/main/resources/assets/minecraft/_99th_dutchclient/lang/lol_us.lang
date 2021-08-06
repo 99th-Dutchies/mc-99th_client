@@ -11,6 +11,9 @@
 99thdc.options.chattriggers.regex=Reg-x Match
 99thdc.options.chattriggers.response=Respunz
 99thdc.options.chattriggers.add=At Triggr
+99thdc.options.chatfilters.title=Chet Filterz
+99thdc.options.chatfilters.regex=Reg-x Match
+99thdc.options.chatfilters.add=At Filtr
 
 99thdc.options.SHOW_LOCATION_HUD=See Location HUD
 99thdc.options.SHOW_INVENTORY_HUD=Sow Invntorie HUD

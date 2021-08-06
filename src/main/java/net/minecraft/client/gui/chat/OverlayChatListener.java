@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 
-public class OverlayChatListener implements IChatListener
+public class OverlayChatListener extends AbstractChatListener
 {
     private final Minecraft mc;
 

@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 
-public class NormalChatListener implements IChatListener
+public class NormalChatListener extends AbstractChatListener
 {
     private final Minecraft mc;
 

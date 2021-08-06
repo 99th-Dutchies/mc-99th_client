@@ -14,7 +14,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class NarratorChatListener implements IChatListener
+public class NarratorChatListener extends AbstractChatListener
 {
     public static final ITextComponent EMPTY = StringTextComponent.EMPTY;
     private static final Logger LOGGER = LogManager.getLogger();

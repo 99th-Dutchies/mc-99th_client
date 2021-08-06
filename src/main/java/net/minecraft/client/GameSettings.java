@@ -67,6 +67,7 @@ import net.optifine.reflect.Reflector;
 import net.optifine.shaders.Shaders;
 import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
+import nl._99th_dutchclient.chat.ChatFilter;
 import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.settings.HealthIndicator;
@@ -299,6 +300,7 @@ public class GameSettings
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
     );
+    public List<ChatFilter> chatFilters = Lists.newArrayList();
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
@@ -366,6 +368,12 @@ public class GameSettings
     public void setChatTrigger(int index, ChatTrigger chatTrigger)
     {
         this.chatTriggers.set(index, chatTrigger);
+        this.saveOptions();
+    }
+
+    public void setChatFilter(int index, ChatFilter chatFilter)
+    {
+        this.chatFilters.set(index, chatFilter);
         this.saveOptions();
     }
 
@@ -2843,6 +2851,7 @@ public class GameSettings
     public void load99thdcOptions()
     {
         boolean didResetChatTriggers = false;
+        boolean didResetChatFilters = false;
         try
         {
             File file1 = this.optionsFile99thdc;
@@ -2978,6 +2987,16 @@ public class GameSettings
                         this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], Boolean.valueOf(astring[3])));
                     }
 
+                    if (astring[0].equals("chatFilter") && astring.length >= 2)
+                    {
+                        if(!didResetChatFilters){
+                            this.chatFilters = Lists.newArrayList();
+                            didResetChatFilters = true;
+                        }
+
+                        this.chatFilters.add(new ChatFilter(astring[1], Boolean.valueOf(astring[3])));
+                    }
+
                     if (astring[0].equals("key_" + this._99thKeyBindFreelook.getKeyDescription()))
                     {
                         this._99thKeyBindFreelook.bind(InputMappings.getInputByName(astring[1]));
@@ -3021,6 +3040,9 @@ public class GameSettings
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
+            }
+            for(ChatFilter filter : this.chatFilters) {
+                printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.active);
             }
             printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + ":" + this._99thKeyBindFreelook.getTranslationKey());
             printwriter.close();
@@ -3181,6 +3203,7 @@ public class GameSettings
         this.chatTriggers = Lists.newArrayList(
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
         );
+        this.chatFilters = Lists.newArrayList();
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

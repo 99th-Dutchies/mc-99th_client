@@ -11,6 +11,9 @@
 99thdc.options.chattriggers.regex=ɥɔʇɐW xǝᵷǝᴚ
 99thdc.options.chattriggers.response=ǝsuodsǝᴚ
 99thdc.options.chattriggers.add=ɹǝᵷᵷᴉɹ⟘ ppⱯ
+99thdc.options.chatfilters.title=sɹǝʇꞁᴉℲ ʇɐɥƆ
+99thdc.options.chatfilters.regex=ɥɔʇɐW xǝᵷǝᴚ
+99thdc.options.chatfilters.add=ɹǝʇꞁᴉℲ ppⱯ
 
 99thdc.options.SHOW_LOCATION_HUD=ᗡ∩H uoᴉʇɐɔoꞀ ʍoɥS
 99thdc.options.SHOW_INVENTORY_HUD=ᗡ∩H ʎɹoʇuǝʌuI ʍoɥS

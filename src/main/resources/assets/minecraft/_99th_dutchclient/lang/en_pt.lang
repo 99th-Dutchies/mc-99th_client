@@ -11,6 +11,9 @@
 99thdc.options.chattriggers.regex=Regex Matchin'
 99thdc.options.chattriggers.response=Postal to be sent
 99thdc.options.chattriggers.add=Add Activator
+99thdc.options.chatfilters.title=Postal Filter
+99thdc.options.chatfilters.regex=Regex Matchin'
+99thdc.options.chatfilters.add=Add Filter
 
 99thdc.options.SHOW_LOCATION_HUD=Yer Position HUD
 99thdc.options.SHOW_INVENTORY_HUD=Loot Bag HUD

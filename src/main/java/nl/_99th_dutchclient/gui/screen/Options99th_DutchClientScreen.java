@@ -1,14 +1,12 @@
-package nl._99th_dutchclient.screen;
+package nl._99th_dutchclient.gui.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.ChatTriggersScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.OptionButton;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_dutchclient.Lang;
 
