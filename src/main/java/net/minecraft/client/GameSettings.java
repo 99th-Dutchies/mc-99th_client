@@ -372,6 +372,12 @@ public class GameSettings
         this.saveOptions();
     }
 
+    public void removeChatTrigger(int index)
+    {
+        this.chatTriggers.remove(index);
+        this.saveOptions();
+    }
+
     public void setChatFilter(int index, ChatFilter chatFilter)
     {
         this.chatFilters.set(index, chatFilter);

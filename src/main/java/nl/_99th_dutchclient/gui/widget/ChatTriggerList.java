@@ -34,6 +34,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         this.clearEntries();
         for(ChatTriggerEntry entry : this.entries) {
             this.chatTriggersScreen.children.remove(entry.btnToggleActive);
+            this.chatTriggersScreen.children.remove(entry.btnRemove);
             this.chatTriggersScreen.children.remove(entry.patternField);
             this.chatTriggersScreen.children.remove(entry.responseField);
             this.chatTriggersScreen.children.remove(entry.delayField);
@@ -56,7 +57,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 
     public int getRowWidth()
     {
-        return 400;
+        return 420;
     }
 
     public abstract static class Entry extends AbstractOptionList.Entry<Entry>
@@ -71,6 +72,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         private final ITextComponent response;
 
         protected final Button btnToggleActive;
+        protected final Button btnRemove;
         protected final TextFieldWidget patternField;
         protected final TextFieldWidget responseField;
         protected final TextFieldWidget delayField;
@@ -151,6 +153,12 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
                 ChatTriggerList.this.minecraft.gameSettings.setChatTrigger(this.index, this.chatTrigger);
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);
+
+            this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
+                ChatTriggerList.this.minecraft.gameSettings.removeChatTrigger(this.index);
+                ChatTriggerList.this.loadTriggers();
+            });
+            ChatTriggerList.this.chatTriggersScreen.children.add(this.btnRemove);
         }
 
         public void render(MatrixStack p_230432_1_, int p_230432_2_, int p_230432_3_, int p_230432_4_, int p_230432_5_, int p_230432_6_, int p_230432_7_, int p_230432_8_, boolean p_230432_9_, float p_230432_10_)
@@ -163,6 +171,8 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             this.delayField.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
             this.btnToggleActive.y = p_230432_3_;
             this.btnToggleActive.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
+            this.btnRemove.y = p_230432_3_;
+            this.btnRemove.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
         }
 
         public List <? extends IGuiEventListener > getEventListeners()
