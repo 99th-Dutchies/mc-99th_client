@@ -32,7 +32,7 @@ public class OptionsChatTriggersScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thdc.options.chattriggers.add"), (p_223703_1_) ->
         {
-            this.minecraft.gameSettings.chatTriggers.add(new ChatTrigger("", "", false));
+            this.minecraft.gameSettings.chatTriggers.add(new ChatTrigger("", "", false, 0));
             this.chatTriggerList.loadTriggers();
         }));
         this.addButton(new Button(this.width / 2 + 5, this.height - 27, 150, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
@@ -62,8 +62,9 @@ public class OptionsChatTriggersScreen extends SettingsScreen
         this.renderBackground(matrixStack);
         this.chatTriggerList.render(matrixStack, mouseX, mouseY, partialTicks);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 8, 16777215);
-        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chattriggers.regex"), this.width / 2 - 105, 50, 16777215);
-        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chattriggers.response"), this.width / 2 + 50, 50, 16777215);
+        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chattriggers.regex"), this.width / 2 - 120, 50, 16777215);
+        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chattriggers.response"), this.width / 2 + 5, 50, 16777215);
+        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chattriggers.delay"), this.width / 2 + 95, 50, 16777215);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 }

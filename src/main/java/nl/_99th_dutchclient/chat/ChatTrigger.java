@@ -8,15 +8,17 @@ public class ChatTrigger
     public String response;
     public Pattern pattern;
     public boolean active;
+    public int delay;
 
-    public ChatTrigger(String regex, String response, boolean active) {
-        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), response, active);
+    public ChatTrigger(String regex, String response, boolean active, int delay) {
+        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), response, active, delay);
     }
 
-    public ChatTrigger(Pattern pattern, String response, boolean active) {
+    public ChatTrigger(Pattern pattern, String response, boolean active, int delay) {
         this.pattern = pattern;
         this.active = active;
         this.response = response;
+        this.delay = delay;
     }
 
     public Matcher match(String string) {

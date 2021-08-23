@@ -10,6 +10,7 @@
 99thdc.options.chattriggers.title=Automated Postal
 99thdc.options.chattriggers.regex=Regex Matchin'
 99thdc.options.chattriggers.response=Postal to be sent
+99thdc.options.chattriggers.delay=Await
 99thdc.options.chattriggers.add=Add Activator
 99thdc.options.chatfilters.title=Postal Filter
 99thdc.options.chatfilters.regex=Regex Matchin'

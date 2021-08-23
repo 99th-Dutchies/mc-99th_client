@@ -72,6 +72,7 @@ import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.settings.HealthIndicator;
 import nl._99th_dutchclient.settings.ShowToasts;
+import nl._99th_dutchclient.util.MCStringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -298,7 +299,7 @@ public class GameSettings
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
-        new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
+        new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false, 0)
     );
     public List<ChatFilter> chatFilters = Lists.newArrayList();
 
@@ -2984,7 +2985,7 @@ public class GameSettings
                             didResetChatTriggers = true;
                         }
 
-                        this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], Boolean.valueOf(astring[3])));
+                        this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], Boolean.valueOf(astring[3]), MCStringUtils.tryParse(astring[4])));
                     }
 
                     if (astring[0].equals("chatFilter") && astring.length >= 2)
@@ -3039,7 +3040,7 @@ public class GameSettings
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             for(ChatTrigger trigger : this.chatTriggers) {
-                printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
+                printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active + "<:>" + trigger.delay);
             }
             for(ChatFilter filter : this.chatFilters) {
                 printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
@@ -3201,7 +3202,7 @@ public class GameSettings
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
         this.chatTriggers = Lists.newArrayList(
-                new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false)
+                new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", false, 0)
         );
         this.chatFilters = Lists.newArrayList();
         Shaders.setShaderPack("OFF");

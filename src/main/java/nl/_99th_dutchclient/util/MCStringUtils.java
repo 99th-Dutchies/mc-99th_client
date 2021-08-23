@@ -9,4 +9,16 @@ public class MCStringUtils
     public static String stripMagic(String in) {
         return in.replaceAll("\u00a7k", "");
     }
+
+    public static int tryParse(String in) {
+        int parsed = 0;
+
+        try{
+            parsed = Integer.parseInt(in);
+        } catch(NumberFormatException e) {
+            parsed = 0;
+        }
+
+        return parsed;
+    }
 }

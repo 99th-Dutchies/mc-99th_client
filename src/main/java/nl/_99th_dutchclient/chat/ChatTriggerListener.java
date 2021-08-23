@@ -1,5 +1,7 @@
 package nl._99th_dutchclient.chat;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
@@ -7,6 +9,7 @@ import net.minecraft.client.gui.chat.AbstractChatListener;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.util.MCStringUtils;
 
 public class ChatTriggerListener extends AbstractChatListener
 {
@@ -43,9 +46,17 @@ public class ChatTriggerListener extends AbstractChatListener
             }
 
             if(matches > 0) {
-                this.mc.ingameGUI.getChatGUI().addToSentMessages(resp);
-                this.mc.player.sendChatMessage(resp);
+                this.schedule(this.mc, resp, trigger.delay);
             }
         }
+    }
+
+    private void schedule(final Minecraft mc, final String resp, int delay) {
+        ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+
+        exec.schedule(() -> {
+            mc.ingameGUI.getChatGUI().addToSentMessages(resp);
+            mc.player.sendChatMessage(resp);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 }
