@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FocusableGui;
@@ -38,6 +39,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
+import nl._99th_dutchclient.chat.ChatFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -365,6 +367,16 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
 
     public void sendMessage(String text, boolean addToChat)
     {
+        for(ChatFilter filter : this.minecraft.gameSettings.chatFilters) {
+            if(!filter.activePlayer) continue;
+
+            Matcher matcher = filter.match(text);
+
+            while(matcher.find()) {
+                return;
+            }
+        }
+
         if (addToChat)
         {
             this.minecraft.ingameGUI.getChatGUI().addToSentMessages(text);

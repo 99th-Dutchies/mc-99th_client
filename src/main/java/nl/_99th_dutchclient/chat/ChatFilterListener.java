@@ -28,7 +28,7 @@ public class ChatFilterListener extends AbstractChatListener
 
     public boolean shouldHide(ChatType chatTypeIn, ITextComponent message, UUID sender) {
         for(ChatFilter filter : this.mc.gameSettings.chatFilters) {
-            if(!filter.active) continue;
+            if(!filter.activeChat) continue;
 
             Matcher matcher = filter.match(message.getString());
 

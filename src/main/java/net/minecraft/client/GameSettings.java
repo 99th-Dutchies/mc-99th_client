@@ -2994,7 +2994,7 @@ public class GameSettings
                             didResetChatFilters = true;
                         }
 
-                        this.chatFilters.add(new ChatFilter(astring[1], Boolean.valueOf(astring[3])));
+                        this.chatFilters.add(new ChatFilter(astring[1], Boolean.valueOf(astring[2]), Boolean.valueOf(astring[3])));
                     }
 
                     if (astring[0].equals("key_" + this._99thKeyBindFreelook.getKeyDescription()))
@@ -3042,7 +3042,7 @@ public class GameSettings
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active);
             }
             for(ChatFilter filter : this.chatFilters) {
-                printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.active);
+                printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
             }
             printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + ":" + this._99thKeyBindFreelook.getTranslationKey());
             printwriter.close();

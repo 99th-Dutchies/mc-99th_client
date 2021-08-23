@@ -14,6 +14,8 @@
 99thdc.options.chatfilters.title=Dialogue Filters
 99thdc.options.chatfilters.regex=Text to find
 99thdc.options.chatfilters.add=Add Filter
+99thdc.options.chatfilters.activePlayer=Thou text
+99thdc.options.chatfilters.activeChat=Anyone's text
 
 99thdc.options.SHOW_LOCATION_HUD=Local Point HUD
 99thdc.options.SHOW_INVENTORY_HUD=Thy Inventory HUD

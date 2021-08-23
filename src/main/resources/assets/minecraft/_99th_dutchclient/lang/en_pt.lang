@@ -14,6 +14,8 @@
 99thdc.options.chatfilters.title=Postal Filter
 99thdc.options.chatfilters.regex=Regex Matchin'
 99thdc.options.chatfilters.add=Add Filter
+99thdc.options.chatfilters.activePlayer=Me postal
+99thdc.options.chatfilters.activeChat=Thems postal
 
 99thdc.options.SHOW_LOCATION_HUD=Yer Position HUD
 99thdc.options.SHOW_INVENTORY_HUD=Loot Bag HUD

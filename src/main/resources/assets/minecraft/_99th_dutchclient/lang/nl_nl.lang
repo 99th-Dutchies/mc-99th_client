@@ -14,6 +14,8 @@
 99thdc.options.chatfilters.title=Chat Filters
 99thdc.options.chatfilters.regex=Regex Match
 99thdc.options.chatfilters.add=Nieuw Filter
+99thdc.options.chatfilters.activePlayer=Bij mij
+99thdc.options.chatfilters.activeChat=Bij iedereen
 
 99thdc.options.SHOW_LOCATION_HUD=Toon Locatie HUD
 99thdc.options.SHOW_INVENTORY_HUD=Toon Inventory HUD

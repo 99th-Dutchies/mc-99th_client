@@ -14,6 +14,8 @@
 99thdc.options.chatfilters.title=Chat Filters
 99thdc.options.chatfilters.regex=Regex Match
 99thdc.options.chatfilters.add=Add Filter
+99thdc.options.chatfilters.activePlayer=If mine
+99thdc.options.chatfilters.activeChat=If anyone's
 
 99thdc.options.SHOW_LOCATION_HUD=Show Location HUD
 99thdc.options.SHOW_INVENTORY_HUD=Show Inventory HUD

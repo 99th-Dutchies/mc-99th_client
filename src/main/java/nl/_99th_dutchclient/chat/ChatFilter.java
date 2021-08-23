@@ -6,15 +6,17 @@ import java.util.regex.Pattern;
 public class ChatFilter
 {
     public Pattern pattern;
-    public boolean active;
+    public boolean activePlayer;
+    public boolean activeChat;
 
-    public ChatFilter(String regex, boolean active) {
-        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), active);
+    public ChatFilter(String regex, boolean activePlayer, boolean activeChat) {
+        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), activePlayer, activeChat);
     }
 
-    public ChatFilter(Pattern pattern, boolean active) {
+    public ChatFilter(Pattern pattern, boolean activePlayer, boolean activeChat) {
         this.pattern = pattern;
-        this.active = active;
+        this.activePlayer = activePlayer;
+        this.activeChat = activeChat;
     }
 
     public Matcher match(String string) {

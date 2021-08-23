@@ -32,7 +32,7 @@ public class OptionsChatFiltersScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thdc.options.chatfilters.add"), (p_223703_1_) ->
         {
-            this.minecraft.gameSettings.chatFilters.add(new ChatFilter("", false));
+            this.minecraft.gameSettings.chatFilters.add(new ChatFilter("", false, false));
             this.chatFilterList.loadFilters();
         }));
         this.addButton(new Button(this.width / 2 + 5, this.height - 27, 150, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
@@ -63,6 +63,8 @@ public class OptionsChatFiltersScreen extends SettingsScreen
         this.chatFilterList.render(matrixStack, mouseX, mouseY, partialTicks);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 8, 16777215);
         drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.regex"), this.width / 2 - 105, 50, 16777215);
+        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.activePlayer"), this.width / 2 + 80, 50, 16777215);
+        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.activeChat"), this.width / 2 + 165, 50, 16777215);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 }
