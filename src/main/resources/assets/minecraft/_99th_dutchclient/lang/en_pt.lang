@@ -1,5 +1,7 @@
 # General
 99thdc.title=99th_DutchClient
+99thdc.seconds=%s Seconds
+99thdc.minutes=%s Minutes
 
 # Settings
 99thdc.options.title=99th_DutchClient Scribble
@@ -51,5 +53,17 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Digits
 99thdc.options.HEALTH_INDICATOR.icons=Pictures
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=Pictures
+99thdc.options.timeTillAFK=Time till AFK
+99thdc.options.ACTIVE_AFK.off=Off
+99thdc.options.ACTIVE_AFK.off.tooltip=Off
+99thdc.options.ACTIVE_AFK.AFKonly=AFK only
+99thdc.options.ACTIVE_AFK.AFKonly.tooltip=AFK only
+99thdc.options.ACTIVE_AFK.ActiveOnly=Active only
+99thdc.options.ACTIVE_AFK.ActiveOnly.tooltip=Active only
+99thdc.options.ACTIVE_AFK.always=Always
+99thdc.options.ACTIVE_AFK.always.tooltip=Always
 
 99thdc.key.freelook=Freelookin'
+
+99thdc.afk.activated=Yer gon'
+99thdc.afk.deactivated=Yer' back

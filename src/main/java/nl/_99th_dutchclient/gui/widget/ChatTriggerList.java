@@ -147,9 +147,9 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.delayField);
 
-            this.btnToggleActive = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 125, 65 + this.index * 25, 70, 20, this.chatTrigger.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
-                this.chatTrigger.active = !this.chatTrigger.active;
-                button.setMessage(this.chatTrigger.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
+            this.btnToggleActive = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 125, 65 + this.index * 25, 70, 20, new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()), (button) -> {
+                this.chatTrigger.active = this.chatTrigger.active.func_238166_c_();
+                button.setMessage(new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()));
                 ChatTriggerList.this.minecraft.gameSettings.setChatTrigger(this.index, this.chatTrigger);
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);

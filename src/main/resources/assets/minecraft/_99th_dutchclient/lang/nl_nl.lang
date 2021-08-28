@@ -1,5 +1,7 @@
 # General
 99thdc.title=99th_DutchClient
+99thdc.seconds=%s Seconden
+99thdc.minutes=%s Minuten
 
 # Settings
 99thdc.options.title=99th_DutchClient Instellingen
@@ -51,6 +53,18 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Nummers
 99thdc.options.HEALTH_INDICATOR.icons=Icoontjes
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=Icoontjes
+99thdc.options.timeTillAFK=Tijd tot AFK
+99thdc.options.ACTIVE_AFK.off=Uit
+99thdc.options.ACTIVE_AFK.off.tooltip=Uit
+99thdc.options.ACTIVE_AFK.AFKonly=Alleen AFK
+99thdc.options.ACTIVE_AFK.AFKonly.tooltip=Alleen AFK
+99thdc.options.ACTIVE_AFK.ActiveOnly=Alleen actief
+99thdc.options.ACTIVE_AFK.ActiveOnly.tooltip=Alleen actief
+99thdc.options.ACTIVE_AFK.always=Altijd
+99thdc.options.ACTIVE_AFK.always.tooltip=Altijd
 
 
 99thdc.key.freelook=Freelook
+
+99thdc.afk.activated=AFK-modus geactiveerd
+99thdc.afk.deactivated=AFK-modus uitgeschakeld

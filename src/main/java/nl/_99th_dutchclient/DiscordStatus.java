@@ -65,21 +65,21 @@ public class DiscordStatus
         if(clientplaynethandler == null || !clientplaynethandler.getNetworkManager().isChannelOpen()) {
             details = "";
         } else if (this.mc.getIntegratedServer() != null && !this.mc.getIntegratedServer().getPublic()) {
-            details = "Playing singleplayer";
+            details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " singleplayer";
         } else if(mc.isConnectedToRealms()) {
-            details = "Playing realms";
+            details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " realms";
         } else if(this.mc.getIntegratedServer() == null && (this.mc.getCurrentServerData() == null || !this.mc.getCurrentServerData().isOnLAN())) {
             if(this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF) {
-                details = "Online on " + this.mc.getCurrentServerData().serverName;
+                details = (this.mc.afkStatus.isAFK() ? "AFK on" : "Online on ") + this.mc.getCurrentServerData().serverName;
 
                 if(this.mc.world != null && this.mc.world.getScoreboard() != null && this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1) != null && this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.SERVER) {
                     state = this.getState(this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1));
                 }
             } else {
-                details = "Playing multiplayer";
+                details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " multiplayer";
             }
         } else {
-            details = "Playing multiplayer";
+            details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " multiplayer";
         }
 
         this.set(details, state);

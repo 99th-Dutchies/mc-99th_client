@@ -9,6 +9,7 @@ import net.minecraft.client.gui.chat.AbstractChatListener;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.settings.ActiveAFK;
 import nl._99th_dutchclient.util.MCStringUtils;
 
 public class ChatTriggerListener extends AbstractChatListener
@@ -31,7 +32,7 @@ public class ChatTriggerListener extends AbstractChatListener
         String msg = message.getString();
 
         for(ChatTrigger trigger : this.mc.gameSettings.chatTriggers) {
-            if(!trigger.active) continue;
+            if(trigger.active == ActiveAFK.OFF || (trigger.active == ActiveAFK.ACTIVEONLY && this.mc.afkStatus.isAFK()) || (trigger.active == ActiveAFK.AFKONLY && !this.mc.afkStatus.isAFK())) continue;
 
             Matcher matcher = trigger.match(message.getString());
             

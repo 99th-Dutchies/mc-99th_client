@@ -9,6 +9,7 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.gui.widget.ChatTriggerList;
+import nl._99th_dutchclient.settings.ActiveAFK;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class OptionsChatTriggersScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thdc.options.chattriggers.add"), (p_223703_1_) ->
         {
-            this.minecraft.gameSettings.chatTriggers.add(new ChatTrigger("", "", false, 0));
+            this.minecraft.gameSettings.chatTriggers.add(new ChatTrigger("", "", ActiveAFK.OFF, 0));
             this.chatTriggerList.loadTriggers();
         }));
         this.addButton(new Button(this.width / 2 + 5, this.height - 27, 150, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->

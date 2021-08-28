@@ -1,5 +1,7 @@
 # General
 99thdc.title=ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
+99thdc.seconds=spuoɔǝS %s
+99thdc.minutes=sǝʇnuᴉW %s
 
 # Settings
 99thdc.options.title=sᵷuᴉʇʇǝS ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
@@ -51,5 +53,17 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=sɹǝqɯnN
 99thdc.options.HEALTH_INDICATOR.icons=suoɔI
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=suoɔI
+99thdc.options.timeTillAFK=ꞰℲⱯ ꞁꞁᴉʇ ǝɯᴉ⟘
+99thdc.options.ACTIVE_AFK.off=ɟɟO
+99thdc.options.ACTIVE_AFK.off.tooltip=ɟɟO
+99thdc.options.ACTIVE_AFK.AFKonly=ʎꞁuo ꞰℲⱯ
+99thdc.options.ACTIVE_AFK.AFKonly.tooltip=ʎꞁuo ꞰℲⱯ
+99thdc.options.ACTIVE_AFK.ActiveOnly=ʎꞁuo ǝʌᴉʇɔⱯ
+99thdc.options.ACTIVE_AFK.ActiveOnly.tooltip=ʎꞁuo ǝʌᴉʇɔⱯ
+99thdc.options.ACTIVE_AFK.always=sʎɐʍꞁⱯ
+99thdc.options.ACTIVE_AFK.always.tooltip=sʎɐʍꞁⱯ
 
 99thdc.key.freelook=ʞooꞁǝǝɹℲ
+
+99thdc.afk.activated=pǝʇɐʌᴉʇɔɐ ǝpoɯ ꞰℲⱯ
+99thdc.afk.deactivated=pǝʇɐʌᴉʇɔɐǝp ǝpoɯ ꞰℲⱯ

@@ -234,10 +234,9 @@ import net.minecraft.world.storage.FolderName;
 import net.minecraft.world.storage.IServerConfiguration;
 import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.ServerWorldInfo;
+import nl._99th_dutchclient.AFKStatus;
 import nl._99th_dutchclient.DiscordStatus;
 import nl._99th_dutchclient.Freelook;
-import nl._99th_dutchclient.settings.DiscordShowRPC;
-import nl._99th_dutchclient.util.MCStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -350,6 +349,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public boolean skipRenderWorld;
     public List<Long> lastLeftClicks = new ArrayList<>();
     public List<Long> lastRightClicks = new ArrayList<>();
+    public AFKStatus afkStatus = new AFKStatus(this);
     @Nullable
     public Screen currentScreen;
     @Nullable
@@ -1722,6 +1722,8 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             --this.rightClickDelayTimer;
         }
 
+        this.afkStatus.check();
+
         this.profiler.startSection("gui");
 
         if (!this.isGamePaused)
@@ -2331,6 +2333,8 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         this.updateScreenTick(workingscreen);
         this.world = worldClientIn;
         this.updateWorldRenderer(worldClientIn);
+
+        this.afkStatus.moved();
 
         if (!this.integratedServerIsRunning)
         {

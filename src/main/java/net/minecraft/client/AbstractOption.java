@@ -33,6 +33,7 @@ import net.optifine.config.IteratableOptionOF;
 import net.optifine.config.SliderPercentageOptionOF;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.settings.ShowToasts;
+import nl._99th_dutchclient.util.NonLinearTime;
 
 public abstract class AbstractOption
 {
@@ -741,6 +742,21 @@ public abstract class AbstractOption
     {
         p_lambda$static$126_0_.showChatTimestamp = p_lambda$static$126_1_;
         Minecraft.getInstance().ingameGUI.getChatGUI().refreshChat();
+    });
+
+    public static final SliderPercentageOption TIME_TILL_AFK = new SliderPercentageOption("99thdc.options.timeTillAFK", 0.0D, 19.0D, 1.0F, (p_lambda$static$47_0_) ->
+    {
+        return NonLinearTime.DoubleToPercentage(p_lambda$static$47_0_.timeTillAFK);
+    }, (p_lambda$static$48_0_, p_lambda$static$48_1_) ->
+    {
+        p_lambda$static$48_0_.timeTillAFK = (int)NonLinearTime.PercentageToDouble(p_lambda$static$48_1_.doubleValue());
+    }, (p_lambda$static$49_0_, p_lambda$static$49_1_) ->
+    {
+        if(p_lambda$static$49_1_.get(p_lambda$static$49_0_) == 0) return p_lambda$static$49_1_.getGenericValueComponent(new TranslationTextComponent("Off"));
+        if(p_lambda$static$49_1_.get(p_lambda$static$49_0_) == 1) return p_lambda$static$49_1_.getGenericValueComponent(new TranslationTextComponent("99thdc.seconds", 30));
+
+        double d0 = NonLinearTime.PercentageToDouble(p_lambda$static$49_1_.get(p_lambda$static$49_0_)) / 60.0D;
+        return p_lambda$static$49_1_.getGenericValueComponent(new TranslationTextComponent("99thdc.minutes", (int)d0));
     });
 
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_OFF = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip");

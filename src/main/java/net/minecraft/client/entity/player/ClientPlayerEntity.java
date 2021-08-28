@@ -301,8 +301,13 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity
             double d2 = (double)(this.rotationYaw - this.lastReportedYaw);
             double d3 = (double)(this.rotationPitch - this.lastReportedPitch);
             ++this.positionUpdateTicks;
-            boolean flag1 = d4 * d4 + d0 * d0 + d1 * d1 > 9.0E-4D || this.positionUpdateTicks >= 20;
+            boolean flag0 = d4 * d4 + d0 * d0 + d1 * d1 > 9.0E-4D;
+            boolean flag1 = flag0 || this.positionUpdateTicks >= 20;
             boolean flag2 = d2 != 0.0D || d3 != 0.0D;
+
+            if(flag0) {
+                this.mc.afkStatus.moved();
+            }
 
             if (this.isPassenger())
             {
