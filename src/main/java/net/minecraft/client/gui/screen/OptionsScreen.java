@@ -86,10 +86,6 @@ public class OptionsScreen extends Screen
             }));
         }
 
-        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 36 - 6, 310, 20, new TranslationTextComponent(Lang.get("99thdc.title")), (p_213055_1_) ->
-        {
-            this.minecraft.displayGuiScreen(new Options99th_DutchClientScreen(this, this.settings));
-        }));
         this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 60 - 6, 150, 20, new TranslationTextComponent("options.skinCustomisation"), (p_213055_1_) ->
         {
             this.minecraft.displayGuiScreen(new CustomizeSkinScreen(this, this.settings));

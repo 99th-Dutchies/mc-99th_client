@@ -33,6 +33,8 @@ import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.WorldSummary;
 import net.optifine.reflect.Reflector;
 import net.optifine.reflect.ReflectorForge;
+import nl._99th_dutchclient.Lang;
+import nl._99th_dutchclient.gui.screen.Options99th_DutchClientScreen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -143,9 +145,9 @@ public class MainMenuScreen extends Screen
         {
             this.minecraft.displayGuiScreen(new OptionsScreen(this, this.minecraft.gameSettings));
         }));
-        this.addButton(new Button(this.width / 2 + 2, j + 72 + 12, 98, 20, new TranslationTextComponent("menu.quit"), (p_lambda$init$2_1_) ->
+        this.addButton(new Button(this.width / 2 + 2, j + 72 + 12, 98, 20, new TranslationTextComponent(Lang.get("99thdc.title")), (p_213055_1_) ->
         {
-            this.minecraft.shutdown();
+            this.minecraft.displayGuiScreen(new Options99th_DutchClientScreen(this, this.minecraft.gameSettings));
         }));
         this.addButton(new ImageButton(this.width / 2 + 104, j + 72 + 12, 20, 20, 0, 0, 20, ACCESSIBILITY_TEXTURES, 32, 64, (p_lambda$init$3_1_) ->
         {

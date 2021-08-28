@@ -7,6 +7,8 @@ import net.minecraft.realms.RealmsBridgeScreen;
 import net.minecraft.util.SharedConstants;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.TranslationTextComponent;
+import nl._99th_dutchclient.Lang;
+import nl._99th_dutchclient.gui.screen.Options99th_DutchClientScreen;
 
 public class IngameMenuScreen extends Screen
 {
@@ -30,7 +32,7 @@ public class IngameMenuScreen extends Screen
     {
         int i = -16;
         int j = 98;
-        this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 24 + -16, 204, 20, new TranslationTextComponent("menu.returnToGame"), (button2) ->
+        this.addButton(new Button(this.width / 2 - 102, this.height / 4 + -16, 204, 20, new TranslationTextComponent("menu.returnToGame"), (button2) ->
         {
             this.minecraft.displayGuiScreen((Screen)null);
             this.minecraft.mouseHelper.grabMouse();
@@ -66,16 +68,20 @@ public class IngameMenuScreen extends Screen
                 this.minecraft.displayGuiScreen(this);
             }, "https://aka.ms/snapshotbugs?ref=game", true));
         }));
-        this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 96 + -16, 98, 20, new TranslationTextComponent("menu.options"), (button2) ->
-        {
-            this.minecraft.displayGuiScreen(new OptionsScreen(this, this.minecraft.gameSettings));
-        }));
-        Button button = this.addButton(new Button(this.width / 2 + 4, this.height / 4 + 96 + -16, 98, 20, new TranslationTextComponent("menu.shareToLan"), (button2) ->
+        Button button = this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 96 + -16, 204, 20, new TranslationTextComponent("menu.shareToLan"), (button2) ->
         {
             this.minecraft.displayGuiScreen(new ShareToLanScreen(this));
         }));
+        this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 120 + -16, 98, 20, new TranslationTextComponent("menu.options"), (button2) ->
+        {
+            this.minecraft.displayGuiScreen(new OptionsScreen(this, this.minecraft.gameSettings));
+        }));
+        this.addButton(new Button(this.width / 2 + 4, this.height / 4 + 120 + -16, 98, 20, new TranslationTextComponent(Lang.get("99thdc.title")), (p_213055_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new Options99th_DutchClientScreen(this, this.minecraft.gameSettings));
+        }));
         button.active = this.minecraft.isSingleplayer() && !this.minecraft.getIntegratedServer().getPublic();
-        Button button1 = this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 120 + -16, 204, 20, new TranslationTextComponent("menu.returnToMenu"), (button2) ->
+        Button button1 = this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 168 + -16, 204, 20, new TranslationTextComponent("menu.returnToMenu"), (button2) ->
         {
             boolean flag = this.minecraft.isIntegratedServerRunning();
             boolean flag1 = this.minecraft.isConnectedToRealms();
