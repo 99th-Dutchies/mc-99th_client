@@ -70,7 +70,7 @@ public class DiscordStatus
             details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " realms";
         } else if(this.mc.getIntegratedServer() == null && (this.mc.getCurrentServerData() == null || !this.mc.getCurrentServerData().isOnLAN())) {
             if(this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF) {
-                details = (this.mc.afkStatus.isAFK() ? "AFK on" : "Online on ") + this.mc.getCurrentServerData().serverName;
+                details = (this.mc.afkStatus.isAFK() ? "AFK on " : "Online on ") + this.mc.getCurrentServerData().serverName;
 
                 if(this.mc.world != null && this.mc.world.getScoreboard() != null && this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1) != null && this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.SERVER) {
                     state = this.getState(this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1));
