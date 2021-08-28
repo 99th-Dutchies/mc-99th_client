@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "99th_DutchClient"
-#define MyAppVersion "0.5.3"
+#define MyAppVersion "0.6.0"
 #define MyAppPublisher "99th_Dutchies"
 #define MyAppURL "https://www.99th-dutchies.nl/"
 #define MCVersion "1.16.5"
