@@ -159,8 +159,10 @@ public class IngameGui extends AbstractGui
         this.chatListeners.get(ChatType.CHAT).add(new NormalChatListener(mcIn));
         this.chatListeners.get(ChatType.CHAT).add(chatlistener);
         this.chatListeners.get(ChatType.CHAT).add(new ChatTriggerListener(mcIn));
+        this.chatListeners.get(ChatType.SYSTEM).add(new ChatFilterListener(mcIn));
         this.chatListeners.get(ChatType.SYSTEM).add(new NormalChatListener(mcIn));
         this.chatListeners.get(ChatType.SYSTEM).add(chatlistener);
+        this.chatListeners.get(ChatType.SYSTEM).add(new ChatTriggerListener(mcIn));
         this.chatListeners.get(ChatType.GAME_INFO).add(new OverlayChatListener(mcIn));
         this.setDefaultTitlesTimes();
     }
