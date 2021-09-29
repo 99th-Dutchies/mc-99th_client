@@ -156,7 +156,13 @@ public class DiscordStatus
         }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
-            this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+            String sidebarName = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+
+            if(StringUtil.isNullOrEmpty(sidebarName)) {
+                return "";
+            } else {
+                this.lastGamemode = sidebarName;
+            }
         }
 
         if (this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
