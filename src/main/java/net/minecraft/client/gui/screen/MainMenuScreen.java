@@ -149,6 +149,10 @@ public class MainMenuScreen extends Screen
         {
             this.minecraft.displayGuiScreen(new Options99th_DutchClientScreen(this, this.minecraft.gameSettings));
         }));
+        this.addButton(new Button(this.width / 2 - 100, j + 96 + 12, 200, 20, new TranslationTextComponent("menu.quit"), (p_lambda$init$2_1_) ->
+        {
+            this.minecraft.shutdown();
+        }));
         this.addButton(new ImageButton(this.width / 2 + 104, j + 72 + 12, 20, 20, 0, 0, 20, ACCESSIBILITY_TEXTURES, 32, 64, (p_lambda$init$3_1_) ->
         {
             this.minecraft.displayGuiScreen(new AccessibilityScreen(this, this.minecraft.gameSettings));

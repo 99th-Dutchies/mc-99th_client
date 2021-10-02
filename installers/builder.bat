@@ -6,6 +6,10 @@ Rem %2 = name .jar file : 99th_DutchClient-0.0.1
 set baseversion=%1
 set jarfile=%2
 
+echo Start building full JAR
+echo Base version: %1
+echo Jar file: %2
+
 if not exist "build" ( 
     mkdir "build"
 )
