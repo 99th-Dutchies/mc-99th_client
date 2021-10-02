@@ -1,8 +1,7 @@
 package net.minecraft.client.renderer.entity;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
+import io.netty.util.internal.StringUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -26,6 +25,7 @@ import net.optifine.reflect.Reflector;
 import net.optifine.reflect.ReflectorForge;
 import net.optifine.util.Either;
 import nl._99th_dutchclient.settings.HealthIndicator;
+import nl._99th_dutchclient.util.MCStringUtils;
 
 public abstract class EntityRenderer<T extends Entity> implements net.optifine.entity.model.IEntityRenderer
 {
@@ -110,7 +110,7 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
             }
         }
 
-        if(canRenderName(entityIn) && (entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead()))) {
+        if(canRenderName(entityIn) && !StringUtil.isNullOrEmpty(MCStringUtils.strip(entityIn.getDisplayName().getString())) && (entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead()))) {
             HealthIndicator hi = Minecraft.getInstance().gameSettings.healthIndicator;
 
             if (hi != HealthIndicator.OFF) {
