@@ -305,10 +305,6 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity
             boolean flag1 = flag0 || this.positionUpdateTicks >= 20;
             boolean flag2 = d2 != 0.0D || d3 != 0.0D;
 
-            if(flag0) {
-                this.mc.afkStatus.moved();
-            }
-
             if (this.isPassenger())
             {
                 Vector3d vector3d = this.getMotion();

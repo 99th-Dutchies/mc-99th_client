@@ -29,6 +29,11 @@ public class AFKStatus
 
     public void check() {
         if (this.mc.gameSettings.timeTillAFK == 0) return;
+        if (this.mc.gameSettings.keyBindForward.isKeyDown() || this.mc.gameSettings.keyBindBack.isKeyDown() ||
+                this.mc.gameSettings.keyBindLeft.isKeyDown() || this.mc.gameSettings.keyBindRight.isKeyDown() ||
+                this.mc.gameSettings.keyBindJump.isKeyDown() || this.mc.gameSettings.keyBindSneak.isKeyDown()) {
+            this.moved();
+        }
 
         long now = System.currentTimeMillis();
 
