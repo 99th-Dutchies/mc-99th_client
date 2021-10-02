@@ -12,7 +12,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{2C25B067-D857-4A33-B295-BFF7CB110058} 
+AppId={{D59E1B43-7CA1-4793-BCF8-2D4AF4C8C05E}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -35,8 +35,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "{app}\..\{#MCVersion}\*"; DestDir: "{app}"; Flags: external recursesubdirs
-Source: "C:\sources\99th_dutchclient\installers\assets\panorama\*"; DestDir: "{app}\assets\minecraft\textures\gui\title\background"; Flags: recursesubdirs
-Source: "C:\sources\99th_dutchclient\installers\{#MyAppName}-{#MyAppVersion}.jar"; DestDir: "{app}"; DestName: "{#MCVersion}-{#MyAppName}.jar"; AfterInstall: AfterDuplicate; Flags: ignoreversion
+Source: "C:\sources\mc-99th_dutchclient\installers\assets\panorama\*"; DestDir: "{app}\assets\minecraft\textures\gui\title\background"; Flags: recursesubdirs
+Source: "C:\sources\mc-99th_dutchclient\installers\{#MyAppName}-{#MyAppVersion}.jar"; DestDir: "{app}"; DestName: "{#MCVersion}-{#MyAppName}.jar"; AfterInstall: AfterDuplicate; Flags: ignoreversion
 
 [Code]
 procedure AfterDuplicate();

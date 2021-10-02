@@ -112,6 +112,6 @@ task createFullJar(type:Exec) {
 
     doFirst {
         workingDir = file('./installers/')
-        commandLine = ['cmd', '/C', 'start', 'builder.bat', minecraft_version, '99th_DutchClient-' + version]
+        commandLine = ['cmd', '/C', 'start', 'builder.bat', minecraft_version, 'mc-99th_DutchClient-' + version]
     }
 }
