@@ -12,7 +12,6 @@ import net.minecraft.scoreboard.Scoreboard;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.util.MCStringUtils;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Optional;
 
 public class DiscordStatus
@@ -121,20 +120,20 @@ public class DiscordStatus
             boolean isTeam = this.mc.player.inventory.mainInventory.get(0).getDisplayName().getString().toLowerCase().contains("team selection");
 
             if(isTeam && !sidebar.getDisplayName().getString().contains("Team")) {
-                this.lastGamemode = "Team " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+                this.lastGamemode = "Team " + this.getSidebarHeader(sidebar);
             } else if(!isTeam) {
-                switch (MCStringUtils.strip(sidebar.getDisplayName().getString())) {
+                switch (this.getSidebarHeader(sidebar)) {
                     case "SkyWars":
                     case "EggWars":
                     case "Lucky Islands":
-                        this.lastGamemode = "Solo " + MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+                        this.lastGamemode = "Solo " + this.getSidebarHeader(sidebar);
                         break;
                     default:
-                        this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+                        this.lastGamemode = this.getSidebarHeader(sidebar);
                         break;
                 }
             } else {
-                this.lastGamemode = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+                this.lastGamemode = this.getSidebarHeader(sidebar);
             }
             this.lastMap = MCStringUtils.strip(map.get().getPlayerName());
 
@@ -156,7 +155,7 @@ public class DiscordStatus
         }
 
         if(StringUtil.isNullOrEmpty(this.lastGamemode)) {
-            String sidebarName = MCStringUtils.strip(sidebar.getDisplayName().getUnformattedComponentText());
+            String sidebarName = this.getSidebarHeader(sidebar);
 
             if(StringUtil.isNullOrEmpty(sidebarName)) {
                 return "";
@@ -183,6 +182,12 @@ public class DiscordStatus
 
             return "Playing " + this.lastGamemode;
         }
+    }
+
+    private String getSidebarHeader(ScoreObjective sidebar) {
+        String sdns = sidebar.getDisplayName().getString();
+
+        return MCStringUtils.strip(sdns);
     }
 
     private void set(String details, String state) {
