@@ -93,7 +93,10 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
             this.patternField.setText(this.pattern.getString());
             this.patternField.setResponder((p_214319_1_) ->
             {
-                this.chatFilter.pattern = Pattern.compile(p_214319_1_, Pattern.CASE_INSENSITIVE);
+                try{
+                    Pattern p = Pattern.compile(p_214319_1_, Pattern.CASE_INSENSITIVE);
+                    this.chatFilter.pattern = p;
+                } catch (Exception ex) {}
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.patternField);
 

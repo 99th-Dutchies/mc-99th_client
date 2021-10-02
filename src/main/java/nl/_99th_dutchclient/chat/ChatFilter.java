@@ -10,7 +10,12 @@ public class ChatFilter
     public boolean activeChat;
 
     public ChatFilter(String regex, boolean activePlayer, boolean activeChat) {
-        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), activePlayer, activeChat);
+        this(Pattern.compile(""), activePlayer, activeChat);
+
+        try{
+            Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            this.pattern = p;
+        } catch (Exception ex) {}
     }
 
     public ChatFilter(Pattern pattern, boolean activePlayer, boolean activeChat) {

@@ -13,7 +13,12 @@ public class ChatTrigger
     public int delay;
 
     public ChatTrigger(String regex, String response, ActiveAFK active, int delay) {
-        this(Pattern.compile(regex, Pattern.CASE_INSENSITIVE), response, active, delay);
+        this(Pattern.compile(""), response, active, delay);
+
+        try{
+            Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            this.pattern = p;
+        } catch (Exception ex) {}
     }
 
     public ChatTrigger(Pattern pattern, String response, ActiveAFK active, int delay) {
