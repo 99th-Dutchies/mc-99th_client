@@ -64,7 +64,7 @@ public class OptionsChatFiltersScreen extends SettingsScreen
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 8, 16777215);
         drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.regex"), this.width / 2 - 105, 50, 16777215);
         drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.activePlayer"), this.width / 2 + 80, 50, 16777215);
-        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.activeChat"), this.width / 2 + 165, 50, 16777215);
+        drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chatfilters.activeChat"), this.width / 2 + 160, 50, 16777215);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 }

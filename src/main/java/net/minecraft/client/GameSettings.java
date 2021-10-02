@@ -386,6 +386,12 @@ public class GameSettings
         this.saveOptions();
     }
 
+    public void removeChatFilter(int index)
+    {
+        this.chatFilters.remove(index);
+        this.saveOptions();
+    }
+
     /**
      * Loads the options from the options file. It appears that this has replaced the previous 'loadOptions'
      */

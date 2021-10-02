@@ -34,6 +34,7 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
         for(ChatFilterEntry entry : this.entries) {
             this.chatFiltersScreen.children.remove(entry.btnToggleActivePlayer);
             this.chatFiltersScreen.children.remove(entry.btnToggleActiveChat);
+            this.chatFiltersScreen.children.remove(entry.btnRemove);
             this.chatFiltersScreen.children.remove(entry.patternField);
         }
         this.entries.clear();
@@ -53,7 +54,7 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
 
     public int getRowWidth()
     {
-        return 400;
+        return 420;
     }
 
     public abstract static class Entry extends AbstractOptionList.Entry<Entry>
@@ -68,6 +69,7 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
 
         protected final Button btnToggleActivePlayer;
         protected final Button btnToggleActiveChat;
+        protected final Button btnRemove;
         protected final TextFieldWidget patternField;
 
         private ChatFilterEntry(int index, final ChatFilter chatFilter, final ITextComponent pattern)
@@ -100,19 +102,25 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.patternField);
 
-            this.btnToggleActivePlayer = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 45, 65 + this.index * 25, 75, 20, this.chatFilter.activePlayer ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
+            this.btnToggleActivePlayer = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 45, 65 + this.index * 25, 70, 20, this.chatFilter.activePlayer ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
                 this.chatFilter.activePlayer = !this.chatFilter.activePlayer;
                 button.setMessage(this.chatFilter.activePlayer ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
                 ChatFilterList.this.minecraft.gameSettings.setChatFilter(this.index, this.chatFilter);
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnToggleActivePlayer);
 
-            this.btnToggleActiveChat = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 130, 65 + this.index * 25, 75, 20, this.chatFilter.activeChat ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
+            this.btnToggleActiveChat = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 125, 65 + this.index * 25, 70, 20, this.chatFilter.activeChat ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
                 this.chatFilter.activeChat = !this.chatFilter.activeChat;
                 button.setMessage(this.chatFilter.activeChat ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
                 ChatFilterList.this.minecraft.gameSettings.setChatFilter(this.index, this.chatFilter);
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnToggleActiveChat);
+
+            this.btnRemove = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
+                ChatFilterList.this.minecraft.gameSettings.removeChatFilter(this.index);
+                ChatFilterList.this.loadFilters();
+            });
+            ChatFilterList.this.chatFiltersScreen.children.add(this.btnRemove);
         }
 
         public void render(MatrixStack p_230432_1_, int p_230432_2_, int p_230432_3_, int p_230432_4_, int p_230432_5_, int p_230432_6_, int p_230432_7_, int p_230432_8_, boolean p_230432_9_, float p_230432_10_)
@@ -123,6 +131,8 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
             this.btnToggleActivePlayer.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
             this.btnToggleActiveChat.y = p_230432_3_;
             this.btnToggleActiveChat.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
+            this.btnRemove.y = p_230432_3_;
+            this.btnRemove.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
         }
 
         public List <? extends IGuiEventListener > getEventListeners()
