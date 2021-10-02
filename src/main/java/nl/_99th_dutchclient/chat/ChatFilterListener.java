@@ -1,5 +1,6 @@
 package nl._99th_dutchclient.chat;
 
+import io.netty.util.internal.StringUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.chat.AbstractChatListener;
 import net.minecraft.util.text.ChatType;
@@ -33,6 +34,7 @@ public class ChatFilterListener extends AbstractChatListener
             Matcher matcher = filter.match(message.getString());
 
             while(matcher.find()) {
+                if(StringUtil.isNullOrEmpty(matcher.group())) continue;
                 return true;
             }
         }

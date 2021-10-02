@@ -4,13 +4,12 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.UUID;
+import io.netty.util.internal.StringUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.chat.AbstractChatListener;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
-import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.settings.ActiveAFK;
-import nl._99th_dutchclient.util.MCStringUtils;
 
 public class ChatTriggerListener extends AbstractChatListener
 {
@@ -40,6 +39,7 @@ public class ChatTriggerListener extends AbstractChatListener
             int matches = 0;
 
             while(matcher.find()) {
+                if(StringUtil.isNullOrEmpty(matcher.group())) continue;
                 matches++;
                 for (int i = 1; i <= matcher.groupCount(); i++) {
                     resp = resp.replace("$" + i, matcher.group(i));
