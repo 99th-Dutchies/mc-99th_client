@@ -30,6 +30,7 @@
 99thdc.options.CHAT_TIMESTAMP=Toon Tijd in Chat
 99thdc.options.TABLIST_PING=Ping in Tablist
 99thdc.options.DECODE_CHAT_MAGIC=Ontcijfer Chat Magic
+99thdc.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Optimalisatie
 99thdc.options.DISCORDRPC_SHOW_SERVER=Toon in Discord
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=Uit
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Uit

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.widget.button.OptionButton;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_dutchclient.Lang;
 
@@ -33,6 +34,13 @@ public class Options99th_DutchClientScreen extends SettingsScreen
         this.addButton(AbstractOption.DISCORDRPC_SHOW_SERVER.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 48, 310));
 
         this.addButton(AbstractOption.TIME_TILL_AFK.createWidget(this.minecraft.gameSettings, this.width / 2 - 155, this.height / 6 + 72, 310));
+
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 96, 310, 20, AbstractOption.RESOURCEPACK_OPTIMIZATION, AbstractOption.RESOURCEPACK_OPTIMIZATION.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.RESOURCEPACK_OPTIMIZATION.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.RESOURCEPACK_OPTIMIZATION.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
         {

@@ -299,6 +299,7 @@ public class GameSettings
     public ShowToasts showToasts = ShowToasts.ALL;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
+    public boolean resourcepackOptimization = false;
     public int timeTillAFK = 0;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0)
@@ -1814,6 +1815,11 @@ public class GameSettings
             this.decodeChatMagic = !this.decodeChatMagic;
             this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
         }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.RESOURCEPACK_OPTIMIZATION)
+        {
+            this.resourcepackOptimization = !this.resourcepackOptimization;
+        }
     }
 
     public ITextComponent getKeyComponentOF(AbstractOption p_getKeyComponentOF_1_)
@@ -2994,6 +3000,11 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("resourcepackOptimization") && astring.length >= 2)
+                    {
+                        this.resourcepackOptimization = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("timeTillAFK") && astring.length >= 2)
                     {
                         this.timeTillAFK = MCStringUtils.tryParse(astring[1]);
@@ -3077,6 +3088,7 @@ public class GameSettings
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
+            printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
             printwriter.println("timeTillAFK<:>" + this.timeTillAFK);
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active.func_238162_a_() + "<:>" + trigger.delay);
@@ -3240,6 +3252,7 @@ public class GameSettings
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
+        this.resourcepackOptimization = false;
         this.timeTillAFK = 0;
         this.chatTriggers = Lists.newArrayList(
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0)

@@ -30,6 +30,7 @@
 99thdc.options.CHAT_TIMESTAMP=Show thy Speech Time
 99thdc.options.TABLIST_PING=Connection on Tablist
 99thdc.options.DECODE_CHAT_MAGIC=Decode Illegible Text
+99thdc.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Optimization
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show thy Friends
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=Nothing
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Nothing

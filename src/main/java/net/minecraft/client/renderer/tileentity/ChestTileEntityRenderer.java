@@ -10,16 +10,14 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ChestBlock;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Atlases;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.state.properties.ChestType;
-import net.minecraft.tileentity.ChestTileEntity;
-import net.minecraft.tileentity.IChestLid;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMerger;
+import net.minecraft.tileentity.*;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.world.World;
@@ -124,6 +122,11 @@ public class ChestTileEntityRenderer<T extends TileEntity & IChestLid> extends T
             }
             else
             {
+                if(tileEntityIn instanceof EnderChestTileEntity && Minecraft.getInstance().gameSettings.resourcepackOptimization) {
+                    this.singleLatch.cubeList.clear();
+                    this.singleLatch.addBox(11.0F, -1.0F, 15.0F, 2.0F, 4.0F, 1.0F, 0.0F);
+                    this.singleLatch.rotationPointY = 8.0F;
+                }
                 this.renderModels(matrixStackIn, ivertexbuilder, this.singleLid, this.singleLatch, this.singleBottom, f1, i, combinedOverlayIn);
             }
 
