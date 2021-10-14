@@ -30,6 +30,7 @@
 99thdc.options.CHAT_TIMESTAMP=Show Time in Chat
 99thdc.options.TABLIST_PING=Ping in Tablist
 99thdc.options.DECODE_CHAT_MAGIC=Decode Chat Magic
+99thdc.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Optimization
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show in Discord
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=Off
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Off
