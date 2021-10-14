@@ -374,9 +374,9 @@ public class GameSettings
         this.saveOptions();
     }
 
-    public void removeChatTrigger(int index)
+    public void removeChatTrigger(ChatTrigger chatTrigger)
     {
-        this.chatTriggers.remove(index);
+        this.chatTriggers.remove(chatTrigger);
         this.saveOptions();
     }
 
@@ -386,9 +386,9 @@ public class GameSettings
         this.saveOptions();
     }
 
-    public void removeChatFilter(int index)
+    public void removeChatFilter(ChatFilter chatFilter)
     {
-        this.chatFilters.remove(index);
+        this.chatFilters.remove(chatFilter);
         this.saveOptions();
     }
 
@@ -2989,7 +2989,9 @@ public class GameSettings
                     if (astring[0].equals("decodeChatMagic") && astring.length >= 2)
                     {
                         this.decodeChatMagic = Boolean.valueOf(astring[1]);
-                        this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
+                        if(this.mc.fontRenderer != null) {
+                            this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
+                        }
                     }
 
                     if (astring[0].equals("timeTillAFK") && astring.length >= 2)

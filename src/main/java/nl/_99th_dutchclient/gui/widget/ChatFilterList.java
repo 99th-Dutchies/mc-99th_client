@@ -117,7 +117,7 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnToggleActiveChat);
 
             this.btnRemove = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
-                ChatFilterList.this.minecraft.gameSettings.removeChatFilter(this.index);
+                ChatFilterList.this.minecraft.gameSettings.removeChatFilter(this.chatFilter);
                 ChatFilterList.this.loadFilters();
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnRemove);

@@ -158,7 +158,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);
 
             this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
-                ChatTriggerList.this.minecraft.gameSettings.removeChatTrigger(this.index);
+                ChatTriggerList.this.minecraft.gameSettings.removeChatTrigger(this.chatTrigger);
                 ChatTriggerList.this.loadTriggers();
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnRemove);
