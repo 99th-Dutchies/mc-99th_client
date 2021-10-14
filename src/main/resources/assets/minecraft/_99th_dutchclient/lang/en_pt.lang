@@ -30,6 +30,7 @@
 99thdc.options.CHAT_TIMESTAMP=Time o' Postal
 99thdc.options.TABLIST_PING=Ship Speed in Shiplist
 99thdc.options.DECODE_CHAT_MAGIC=Decode Postal Witchery
+99thdc.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Optimization
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show yer mates
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=Keep yer secret
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Keep yer secret
