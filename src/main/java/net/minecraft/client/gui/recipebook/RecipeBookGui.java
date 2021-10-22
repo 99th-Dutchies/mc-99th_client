@@ -277,7 +277,7 @@ public class RecipeBookGui extends AbstractGui implements IRenderable, IGuiEvent
 
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
     {
-        if (this.isVisible())
+        if (this.isVisible() && this.searchBar != null)
         {
             RenderSystem.pushMatrix();
             RenderSystem.translatef(0.0F, 0.0F, 100.0F);
