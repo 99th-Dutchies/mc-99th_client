@@ -1,0 +1,47 @@
+package nl._99th_dutchclient.installer.xdelta;
+
+public class SimplePrime {
+    public static long belowOrEqual(long number) {
+        if (number < 2L)
+            return 0L;
+        if (number == 2L)
+            return 2L;
+        if ((number & 0x1L) == 0L)
+            number--;
+        while (!testPrime(number)) {
+            number -= 2L;
+            if (number <= 2L)
+                return 2L;
+        }
+        return number;
+    }
+
+    public static long aboveOrEqual(long number) {
+        if (number <= 2L)
+            return 2L;
+        if ((number & 0x1L) == 0L)
+            number++;
+        while (!testPrime(number)) {
+            number += 2L;
+            if (number < 0L)
+                return 0L;
+        }
+        return number;
+    }
+
+    public static boolean testPrime(long number) {
+        if (number == 2L)
+            return true;
+        if (number < 2L)
+            return false;
+        if ((number & 0x1L) == 0L)
+            return false;
+        long sqrt = (long)Math.floor(Math.sqrt(number));
+        for (long i = 3L; i <= sqrt; i += 2L) {
+            if (number % i == 0L)
+                return false;
+        }
+        return true;
+    }
+}
+

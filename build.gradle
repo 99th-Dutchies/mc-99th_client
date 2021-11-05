@@ -105,9 +105,9 @@ task copyAssets {
     }
 }
 
-task createFullJar(type:Exec) {
+task createInstallerJar(type:Exec) {
     group = "MCP"
-    description = "Build and create the full .jar file"
+    description = "Build and create the installer .jar file"
     dependsOn ':build'
 
     doFirst {

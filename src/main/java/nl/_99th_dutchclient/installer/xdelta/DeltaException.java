@@ -1,0 +1,9 @@
+package nl._99th_dutchclient.installer.xdelta;
+
+public class DeltaException extends Exception {
+    public DeltaException() {}
+
+    public DeltaException(String msg) {
+        super(msg);
+    }
+}

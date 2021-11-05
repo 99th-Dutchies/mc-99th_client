@@ -40,7 +40,7 @@ rmdir /s /q "fullmodpack/META-INF"
 
 echo Preparing modded version
 cd "fullmodpack"
-jar -cf ../../%jarfile%.jar *
+jar -cfm ../../%jarfile%-installer.jar ../../../Manifest.txt *
 
 echo Cleaning up
 cd ../
