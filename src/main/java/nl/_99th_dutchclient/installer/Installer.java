@@ -172,7 +172,7 @@ public class Installer {
     }
 
     public static String getClientVersion() {
-        return "0.6.3";
+        return "0.7.0";
     }
 
     public static String getClientMCVersion() {
