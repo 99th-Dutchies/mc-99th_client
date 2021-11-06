@@ -3,7 +3,9 @@ package nl._99th_dutchclient.command;
 import net.minecraft.client.Minecraft;
 
 public class AFKCommand extends Command {
-    public String command = "afk";
+    public AFKCommand() {
+        super("afk");
+    }
 
     @Override
     public void execute(String string) {

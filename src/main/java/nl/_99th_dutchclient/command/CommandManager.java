@@ -15,6 +15,7 @@ public class CommandManager {
     }
 
     private void loadCommands() {
+        this.commands.add(new AFKCommand());
     }
 
     public boolean checkCommand(String string) {
