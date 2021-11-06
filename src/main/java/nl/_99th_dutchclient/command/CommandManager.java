@@ -26,7 +26,7 @@ public class CommandManager {
             }
         }
 
-        this.mc.ingameGUI.getChatGUI().addToSentMessages(new TranslationTextComponent("99thdc.commands.notFound").getString());
+        this.mc.ingameGUI.getChatGUI().printChatMessage(new TranslationTextComponent("99thdc.commands.notFound"));
         return false;
     }
 }
