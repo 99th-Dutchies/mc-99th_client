@@ -219,27 +219,32 @@ public class InstallerGUI extends JFrame {
     }
 
     public void onInstall() {
-        try {
-            File dirMc = new File(getFieldFolder().getText());
-            if (!dirMc.exists()) {
-                Utils.showErrorMessage("Folder not found: " + dirMc.getPath());
-                return;
+        this.ivjButtonInstall.setText("Installing...");
+        this.ivjButtonInstall.setEnabled(false);
+
+        Thread thread = new Thread(() -> {
+            try {
+                File dirMc = new File(getFieldFolder().getText());
+                if (!dirMc.exists()) {
+                    Utils.showErrorMessage("Folder not found: " + dirMc.getPath());
+                    return;
+                }
+                if (!dirMc.isDirectory()) {
+                    Utils.showErrorMessage("Not a folder: " + dirMc.getPath());
+                    return;
+                }
+                Installer.doInstall(dirMc);
+                Utils.showMessage("99th_DutchClient is successfully installed.");
+                dispose();
+            } catch (Exception e) {
+                handleException(e);
+            } finally {
+                InstallerGUI.this.getButtonInstall().setText("Install");
+                InstallerGUI.this.getButtonInstall().setEnabled(true);
             }
-            if (!dirMc.isDirectory()) {
-                Utils.showErrorMessage("Not a folder: " + dirMc.getPath());
-                return;
-            }
-            this.ivjButtonInstall.setText("Installing...");
-            this.ivjButtonInstall.setEnabled(false);
-            Installer.doInstall(dirMc);
-            Utils.showMessage("99th_DutchClient is successfully installed.");
-            dispose();
-        } catch (Exception e) {
-            handleException(e);
-        } finally {
-            this.ivjButtonInstall.setText("Install");
-            this.ivjButtonInstall.setEnabled(true);
-        }
+        });
+
+        thread.start();
     }
 
     public void onClose() {
