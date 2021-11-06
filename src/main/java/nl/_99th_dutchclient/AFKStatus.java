@@ -11,11 +11,13 @@ public class AFKStatus
     private Minecraft mc;
     private boolean isAFK;
     private Long lastMove;
+    private boolean forcedAFK;
 
     public AFKStatus(Minecraft mc) {
         this.mc = mc;
         this.isAFK = false;
         this.lastMove = System.currentTimeMillis();
+        this.forcedAFK = false;
     }
 
     public void moved() {
@@ -25,6 +27,7 @@ public class AFKStatus
 
         this.isAFK = false;
         this.lastMove = System.currentTimeMillis();
+        this.forcedAFK = false;
     }
 
     public void check() {
@@ -37,12 +40,21 @@ public class AFKStatus
 
         long now = System.currentTimeMillis();
 
-        if(this.lastMove < now - (this.mc.gameSettings.timeTillAFK * 1000)) {
+        if(this.lastMove < now - (this.mc.gameSettings.timeTillAFK * 1000) || this.forcedAFK) {
             this.isAFK = true;
         }
 
         if(this.isAFK) {
             this.mc.ingameGUI.setOverlayMessage(new TranslationTextComponent("99thdc.afk.activated").setStyle(Style.EMPTY.setColor(Color.fromHex("#00AA00")).setBold(true)), false);
+        }
+    }
+
+    public void toggle() {
+        if(this.isAFK) {
+            this.moved();
+        } else {
+            this.forcedAFK = true;
+            this.check();
         }
     }
 
