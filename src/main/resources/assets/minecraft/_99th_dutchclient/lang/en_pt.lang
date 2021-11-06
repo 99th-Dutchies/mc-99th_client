@@ -65,6 +65,7 @@
 99thdc.options.ACTIVE_AFK.always.tooltip=Always
 
 99thdc.key.freelook=Freelookin'
+99thdc.key.command=99th_DutchClient Command
 
 99thdc.afk.activated=Yer gon'
 99thdc.afk.deactivated=Yer' back

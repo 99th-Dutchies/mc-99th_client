@@ -65,6 +65,7 @@
 99thdc.options.ACTIVE_AFK.always.tooltip=Always
 
 99thdc.key.freelook=Cheatlookz
+99thdc.key.command=99th_DutchClient Command
 
 99thdc.afk.activated=AFK mode activated
 99thdc.afk.deactivated=AFK mode deactivated

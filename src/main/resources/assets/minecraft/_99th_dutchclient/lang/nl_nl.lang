@@ -64,8 +64,8 @@
 99thdc.options.ACTIVE_AFK.always=Altijd
 99thdc.options.ACTIVE_AFK.always.tooltip=Altijd
 
-
 99thdc.key.freelook=Freelook
+99thdc.key.command=99th_DutchClient Command
 
 99thdc.afk.activated=AFK-modus geactiveerd
 99thdc.afk.deactivated=AFK-modus uitgeschakeld

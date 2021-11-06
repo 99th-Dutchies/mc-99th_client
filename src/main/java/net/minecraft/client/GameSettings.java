@@ -285,6 +285,7 @@ public class GameSettings
     public KeyBinding ofKeyBindZoom;
     private File optionsFileOF;
     public KeyBinding _99thKeyBindFreelook;
+    public KeyBinding _99thKeyBindCommand;
     private File optionsFile99thdc;
     public boolean showLocationHUD = true;
     public boolean showInventoryHUD = true;
@@ -341,8 +342,10 @@ public class GameSettings
         this.keyBindings = ArrayUtils.add(this.keyBindings, this.ofKeyBindZoom);
         KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
         this._99thKeyBindFreelook = new KeyBinding("99thdc.key.freelook", 71, "key.categories.misc");
+        this._99thKeyBindCommand = new KeyBinding("99thdc.key.command", 92, "key.categories.multiplayer");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindFreelook);
-        KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook});
+        this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindCommand);
+        KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook, this._99thKeyBindCommand});
         this.renderDistanceChunks = 8;
         this.loadOptions();
         Config.initGameSettings(this);
@@ -3051,6 +3054,10 @@ public class GameSettings
                     {
                         this._99thKeyBindFreelook.bind(InputMappings.getInputByName(astring[1]));
                     }
+                    if (astring[0].equals("key_" + this._99thKeyBindCommand.getKeyDescription()))
+                    {
+                        this._99thKeyBindCommand.bind(InputMappings.getInputByName(astring[1]));
+                    }
                 }
                 catch (Exception exception1)
                 {
@@ -3059,7 +3066,7 @@ public class GameSettings
                 }
             }
 
-            KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook});
+            KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook, this._99thKeyBindCommand});
             KeyBinding.resetKeyBindingArrayAndHash();
             bufferedreader.close();
         }
@@ -3097,6 +3104,7 @@ public class GameSettings
                 printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
             }
             printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + ":" + this._99thKeyBindFreelook.getTranslationKey());
+            printwriter.println("key_" + this._99thKeyBindCommand.getKeyDescription() + ":" + this._99thKeyBindCommand.getTranslationKey());
             printwriter.close();
         }
         catch (Exception exception1)

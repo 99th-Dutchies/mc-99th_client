@@ -2013,6 +2013,10 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             {
                 this.openChatScreen("/");
             }
+            if (this.currentScreen == null && this.loadingGui == null && this.gameSettings._99thKeyBindCommand.isPressed())
+            {
+                this.openChatScreen("\\");
+            }
         }
 
         if (this.player.isHandActive())
