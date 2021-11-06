@@ -4,8 +4,12 @@ public abstract class Command
 {
     public String command;
 
+    public Command(String command) {
+        this.command = command;
+    }
+
     public boolean matches(String string){
-        return string.startsWith("\\" + command + " ");
+        return string.equals("\\" + command) || string.startsWith("\\" + command + " ");
     }
 
     public abstract void execute(String string);

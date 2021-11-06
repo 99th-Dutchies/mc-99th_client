@@ -11,6 +11,10 @@ public class CommandManager {
 
     public CommandManager(Minecraft mc) {
         this.mc = mc;
+        this.loadCommands();
+    }
+
+    private void loadCommands() {
     }
 
     public boolean checkCommand(String string) {

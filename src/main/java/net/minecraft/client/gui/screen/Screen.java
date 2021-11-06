@@ -367,6 +367,11 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
 
     public void sendMessage(String text, boolean addToChat)
     {
+        if(text.startsWith("\\")) {
+            this.minecraft.commandManager.checkCommand(text);
+            return;
+        }
+
         for(ChatFilter filter : this.minecraft.gameSettings.chatFilters) {
             if(!filter.activePlayer) continue;
 
