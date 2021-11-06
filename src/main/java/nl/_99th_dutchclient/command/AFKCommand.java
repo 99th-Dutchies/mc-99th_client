@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 
 public class AFKCommand extends Command {
     public AFKCommand() {
-        super("afk");
+        super(new String[] {"afk"});
     }
 
     @Override
