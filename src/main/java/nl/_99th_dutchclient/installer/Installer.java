@@ -8,6 +8,8 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import nl._99th_dutchclient.Config;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONWriter;
 import org.json.simple.parser.JSONParser;
@@ -47,10 +49,10 @@ public class Installer {
         Utils.dbg("Dir versions: " + dirMcVers);
         String clientVer = getClientVersion();
         String clientMCVer = getClientMCVersion();
-        Utils.dbg("99th_DutchClient Version: " + clientVer);
+        Utils.dbg(Config.clientName + " Version: " + clientVer);
         Utils.dbg("Minecraft Version: " + clientMCVer);
-        String mcVerClient = clientMCVer + "-99th_DutchClient";
-        Utils.dbg("Minecraft_99th_DutchClient Version: " + mcVerClient);
+        String mcVerClient = clientMCVer + "-" + Config.clientName;
+        Utils.dbg("Minecraft-" + Config.clientName + " Version: " + mcVerClient);
         copyMinecraftVersion(clientMCVer, mcVerClient, dirMcVers);
         installClientJar(clientMCVer, mcVerClient, dirMcVers);
         updateJson(dirMcVers, mcVerClient, dirMcLib, clientMCVer);
@@ -84,18 +86,18 @@ public class Installer {
         JSONParser jp = new JSONParser();
         JSONObject root = (JSONObject)jp.parse(json);
         JSONObject profiles = (JSONObject)root.get("profiles");
-        JSONObject prof = (JSONObject)profiles.get("99th_DutchClient");
+        JSONObject prof = (JSONObject)profiles.get(Config.clientName);
         if (prof == null) {
             prof = new JSONObject();
-            prof.put("name", "99th_DutchClient");
+            prof.put("name", Config.clientName);
             prof.put("created", formatDateMs(new Date()));
-            profiles.put("99th_DutchClient", prof);
+            profiles.put(Config.clientName, prof);
         }
         prof.put("type", "custom");
         prof.put("lastVersionId", mcVerClient);
         prof.put("lastUsed", formatDateMs(new Date()));
         prof.put("icon", ProfileIcon.DATA);
-        root.put("selectedProfile", "99th_DutchClient");
+        root.put("selectedProfile", Config.clientName);
         FileOutputStream fosJson = new FileOutputStream(fileJson);
         OutputStreamWriter oswJson = new OutputStreamWriter(fosJson, "UTF-8");
         JSONWriter jw = new JSONWriter(oswJson);
@@ -113,7 +115,7 @@ public class Installer {
         File dirVerMcClient = new File(dirMcVer, mcVerClient);
         dirVerMcClient.mkdirs();
         Utils.dbg("Dir version MC: " + dirVerMc);
-        Utils.dbg("Dir version MC-99th_DutchClient: " + dirVerMcClient);
+        Utils.dbg("Dir version MC-" + Config.clientName + ": " + dirVerMcClient);
         File fileJarMc = new File(dirVerMc, mcVer + ".jar");
         File fileJarMcClient = new File(dirVerMcClient, mcVerClient + ".jar");
         if (!fileJarMc.exists()) {
@@ -128,10 +130,10 @@ public class Installer {
 
     private static boolean installClientJar(String clientMCVer, String mcVerClient, File dirMcVers) throws Exception {
         File fileSrc = getClientZipFile();
-        File dirDest = new File(dirMcVers, clientMCVer + "-99th_DutchClient");
-        File fileDest = new File(dirDest, clientMCVer + "-99th_DutchClient.jar");
+        File dirDest = new File(dirMcVers, clientMCVer + "-" + Config.clientName);
+        File fileDest = new File(dirDest, clientMCVer + "-" + Config.clientName + ".jar");
         if (false) {
-            fileDest = new File(fileSrc.getParentFile(), clientMCVer + "-99th_DutchClient_MOD.jar");
+            fileDest = new File(fileSrc.getParentFile(), clientMCVer + "-" + Config.clientName + "_MOD.jar");
             JFileChooser jfc = new JFileChooser(fileDest.getParentFile());
             jfc.setSelectedFile(fileDest);
             int ret = jfc.showSaveDialog(null);
@@ -172,11 +174,11 @@ public class Installer {
     }
 
     public static String getClientVersion() {
-        return "0.7.0";
+        return Config.clientVersion;
     }
 
     public static String getClientMCVersion() {
-        return "1.16.5";
+        return Config.mcVersion;
     }
 
     private static Object formatDate(Date date) {

@@ -30,7 +30,7 @@ public class Lang
     {
         Map map = new HashMap();
         List<String> list = new ArrayList<>();
-        String s = "_99th_dutchclient/lang/";
+        String s = nl._99th_dutchclient.Config.resourceBasePath + "/lang/";
         String s1 = "en_us";
         String s2 = ".lang";
         list.add(s + s1 + s2);
@@ -104,7 +104,7 @@ public class Lang
     {
         try
         {
-            String s = "_99th_dutchclient/lang/" + langCode + ".lang";
+            String s = nl._99th_dutchclient.Config.resourceBasePath + "/lang/" + langCode + ".lang";
             ResourceLocation resourcelocation = new ResourceLocation(s);
             IResource iresource = resourceManager.getResource(resourcelocation);
             InputStream inputstream = iresource.getInputStream();

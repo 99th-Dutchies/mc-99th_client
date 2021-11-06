@@ -235,6 +235,7 @@ import net.minecraft.world.storage.IServerConfiguration;
 import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.ServerWorldInfo;
 import nl._99th_dutchclient.AFKStatus;
+import nl._99th_dutchclient.Config;
 import nl._99th_dutchclient.DiscordStatus;
 import nl._99th_dutchclient.Freelook;
 import org.apache.logging.log4j.LogManager;
@@ -559,7 +560,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
 
     private String getWindowTitle()
     {
-        StringBuilder stringbuilder = new StringBuilder("99th_DutchClient | Minecraft");
+        StringBuilder stringbuilder = new StringBuilder(Config.clientName + " | Minecraft");
 
         if (this.isModdedClient())
         {

@@ -1,5 +1,7 @@
 package nl._99th_dutchclient.installer;
 
+import nl._99th_dutchclient.Config;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -163,7 +165,7 @@ public class Utils {
     }
 
     public static void showMessage(String msg) {
-        JOptionPane.showMessageDialog(null, msg, "99th_DutchClient", 1);
+        JOptionPane.showMessageDialog(null, msg, Config.clientName, 1);
     }
 
     public static void showErrorMessage(String msg) {

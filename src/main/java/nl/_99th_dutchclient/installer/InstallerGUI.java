@@ -1,5 +1,7 @@
 package nl._99th_dutchclient.installer;
 
+import nl._99th_dutchclient.Config;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -69,9 +71,9 @@ public class InstallerGUI extends JFrame {
             getButtonInstall().setEnabled(false);
             String clientVer = Installer.getClientVersion();
             String clientMCVer = Installer.getClientMCVersion();
-            Utils.dbg("99th_DutchClient Version: " + clientVer);
+            Utils.dbg(Config.clientName + " Version: " + clientVer);
             Utils.dbg("Minecraft Version: " + clientMCVer);
-            getLabelClientVersion().setText("99th_DutchClient-" + clientVer);
+            getLabelClientVersion().setText(Config.clientName + "-" + clientVer);
             getLabelMcVersion().setText("for Minecraft " + clientMCVer);
             getButtonInstall().setEnabled(true);
             getButtonInstall().requestFocus();
@@ -106,7 +108,7 @@ public class InstallerGUI extends JFrame {
                 this.ivjLabelClientVersion.setFont(new Font("Dialog", 1, 18));
                 this.ivjLabelClientVersion.setHorizontalAlignment(0);
                 this.ivjLabelClientVersion.setPreferredSize(new Dimension(585, 42));
-                this.ivjLabelClientVersion.setText("99th_DutchClient ...");
+                this.ivjLabelClientVersion.setText(Config.clientName + " ...");
             } catch (Throwable ivjExc) {
                 handleException(ivjExc);
             }
@@ -209,7 +211,7 @@ public class InstallerGUI extends JFrame {
             setSize(600, 350);
             setDefaultCloseOperation(0);
             setResizable(false);
-            setTitle("99th_DutchClient Installer");
+            setTitle(Config.clientName + " Installer");
             setContentPane(getPanelContentPane());
             initConnections();
         } catch (Throwable ivjExc) {
@@ -234,7 +236,7 @@ public class InstallerGUI extends JFrame {
                     return;
                 }
                 Installer.doInstall(dirMc);
-                Utils.showMessage("99th_DutchClient is successfully installed.");
+                Utils.showMessage(Config.clientName + " is successfully installed.");
                 dispose();
             } catch (Exception e) {
                 handleException(e);
@@ -285,7 +287,7 @@ public class InstallerGUI extends JFrame {
                 this.ivjTextArea.setLineWrap(true);
                 this.ivjTextArea.setOpaque(false);
                 this.ivjTextArea.setPreferredSize(new Dimension(465, 44));
-                this.ivjTextArea.setText("This installer will install the 99th_DutchClient in the official Minecraft launcher and will create a new profile \"99th_DutchClient\" for it.");
+                this.ivjTextArea.setText("This installer will install the " + Config.clientName + " in the official Minecraft launcher and will create a new profile \"" + Config.clientName + "\" for it.");
                 this.ivjTextArea.setWrapStyleWord(true);
             } catch (Throwable ivjExc) {
                 handleException(ivjExc);

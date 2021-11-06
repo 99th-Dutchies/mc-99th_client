@@ -335,7 +335,7 @@ public class GameSettings
         this.renderDistanceChunks = mcIn.isJava64bit() ? 12 : 8;
         this.syncChunkWrites = Util.getOSType() == Util.OS.WINDOWS;
         this.optionsFileOF = new File(mcDataDir, "optionsof.txt");
-        this.optionsFile99thdc = new File(mcDataDir, "options99th_dutchclient.txt");
+        this.optionsFile99thdc = new File(mcDataDir, nl._99th_dutchclient.Config.configFile);
         this.framerateLimit = (int)AbstractOption.FRAMERATE_LIMIT.getMaxValue();
         this.ofKeyBindZoom = new KeyBinding("of.key.zoom", 67, "key.categories.misc");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this.ofKeyBindZoom);

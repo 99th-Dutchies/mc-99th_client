@@ -40,7 +40,7 @@ public class DiscordStatus
         DiscordRichPresence presence = new DiscordRichPresence();
         presence.startTimestamp = System.currentTimeMillis() / 1000; // epoch second
         presence.largeImageKey = "icon";
-        presence.largeImageText = "99th_DutchClient";
+        presence.largeImageText = Config.clientName;
         this.richPresence = presence;
         lib.Discord_UpdatePresence(presence);
 
