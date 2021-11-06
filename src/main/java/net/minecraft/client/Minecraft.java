@@ -238,6 +238,7 @@ import nl._99th_dutchclient.AFKStatus;
 import nl._99th_dutchclient.Config;
 import nl._99th_dutchclient.DiscordStatus;
 import nl._99th_dutchclient.Freelook;
+import nl._99th_dutchclient.command.CommandManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -351,6 +352,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public List<Long> lastLeftClicks = new ArrayList<>();
     public List<Long> lastRightClicks = new ArrayList<>();
     public AFKStatus afkStatus = new AFKStatus(this);
+    public CommandManager commandManager = new CommandManager(this);
     @Nullable
     public Screen currentScreen;
     @Nullable

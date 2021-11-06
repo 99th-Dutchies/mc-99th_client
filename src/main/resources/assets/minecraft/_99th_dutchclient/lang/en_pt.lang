@@ -68,3 +68,5 @@
 
 99thdc.afk.activated=Yer gon'
 99thdc.afk.deactivated=Yer' back
+
+99thdc.commands.notFound=Unknown command. Try \help for a list of commands

@@ -69,3 +69,5 @@
 
 99thdc.afk.activated=AFK-modus geactiveerd
 99thdc.afk.deactivated=AFK-modus uitgeschakeld
+
+99thdc.commands.notFound=Unknown command. Try \help for a list of commands
