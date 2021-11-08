@@ -20,6 +20,8 @@ public class CommandManager {
     }
 
     public boolean checkCommand(String string) {
+        this.mc.ingameGUI.getChatGUI().addToSentMessages(string);
+
         for(Command command : this.commands) {
             if(command.matches(string)) {
                 command.execute(string);
