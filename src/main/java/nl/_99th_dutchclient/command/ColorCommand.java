@@ -20,7 +20,7 @@ public class ColorCommand extends Command {
         int halfChatWidth = chatGui.getChatWidth() / 2;
 
         String line = StringUtils.repeat(" ", halfChatWidth * 2 / (DefaultFontInfo.SPACE.getLength() + 1));
-        chatGui.printChatMessage(new StringTextComponent(TextFormatting.STRIKETHROUGH + line).setStyle(Style.EMPTY.setColor(Color.fromHex("#3aa9ff"))));
+        chatGui.printChatMessage(new StringTextComponent(TextFormatting.STRIKETHROUGH + line).setStyle(Style.EMPTY.setColor(Color.fromHex("#1E89EB"))));
 
         chatGui.printChatMessage(
                 new StringTextComponent("$0 ")

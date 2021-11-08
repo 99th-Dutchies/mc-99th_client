@@ -17,6 +17,7 @@ public class CommandManager {
     private void loadCommands() {
         this.commands.add(new AFKCommand());
         this.commands.add(new ColorCommand());
+        this.commands.add(new NameHistoryCommand());
     }
 
     public boolean checkCommand(String string) {
