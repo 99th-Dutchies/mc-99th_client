@@ -9,6 +9,7 @@
 99thdc.options.hudgui.title=99th_DutchClient Scribble HUD/GUI
 99thdc.options.chat=Postal
 99thdc.options.chat.title=99th_DutchClient Scribble Postal
+99thdc.options.chat.prefix=Chat Prefix
 99thdc.options.chattriggers.title=Automated Postal
 99thdc.options.chattriggers.regex=Regex Matchin'
 99thdc.options.chattriggers.response=Postal to be sent

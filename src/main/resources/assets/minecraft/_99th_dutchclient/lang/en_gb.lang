@@ -9,6 +9,7 @@
 99thdc.options.hudgui.title=99th_DutchClient Settings HUD/GUI
 99thdc.options.chat=Chat
 99thdc.options.chat.title=99th_DutchClient Settings Chat
+99thdc.options.chat.prefix=Chat Prefix
 99thdc.options.chattriggers.title=Chat Triggers
 99thdc.options.chattriggers.regex=Regex Match
 99thdc.options.chattriggers.response=Response
