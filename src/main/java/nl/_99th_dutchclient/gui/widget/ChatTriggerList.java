@@ -38,6 +38,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             this.chatTriggersScreen.children.remove(entry.patternField);
             this.chatTriggersScreen.children.remove(entry.responseField);
             this.chatTriggersScreen.children.remove(entry.delayField);
+            this.chatTriggersScreen.children.remove(entry.cooldownField);
         }
         this.entries.clear();
 
@@ -76,6 +77,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         protected final TextFieldWidget patternField;
         protected final TextFieldWidget responseField;
         protected final TextFieldWidget delayField;
+        protected final TextFieldWidget cooldownField;
 
         private ChatTriggerEntry(int index, final ChatTrigger chatTrigger, final ITextComponent pattern, final ITextComponent response)
         {
@@ -86,7 +88,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 
             this.patternField = new TextFieldWidget(
                     ChatTriggerList.this.minecraft.fontRenderer,
-                    ChatTriggerList.this.chatTriggersScreen.width / 2 - 180,
+                    ChatTriggerList.this.chatTriggersScreen.width / 2 - 210,
                     65 + this.index * 25,
                     120,
                     20,
@@ -110,7 +112,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 
             this.responseField = new TextFieldWidget(
                     ChatTriggerList.this.minecraft.fontRenderer,
-                    ChatTriggerList.this.chatTriggersScreen.width / 2 - 55,
+                    ChatTriggerList.this.chatTriggersScreen.width / 2 - 85,
                     65 + this.index * 25,
                     120,
                     20,
@@ -131,7 +133,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 
             this.delayField = new TextFieldWidget(
                     ChatTriggerList.this.minecraft.fontRenderer,
-                    ChatTriggerList.this.chatTriggersScreen.width / 2 + 70,
+                    ChatTriggerList.this.chatTriggersScreen.width / 2 + 40,
                     65 + this.index * 25,
                     50,
                     20,
@@ -150,14 +152,35 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.delayField);
 
-            this.btnToggleActive = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 125, 65 + this.index * 25, 70, 20, new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()), (button) -> {
+            this.cooldownField = new TextFieldWidget(
+                    ChatTriggerList.this.minecraft.fontRenderer,
+                    ChatTriggerList.this.chatTriggersScreen.width / 2 + 100,
+                    65 + this.index * 25,
+                    50,
+                    20,
+                    new TranslationTextComponent("99thdc.options.chattriggers.cooldown"))
+            {
+                protected IFormattableTextComponent getNarrationMessage()
+                {
+                    return super.getNarrationMessage().appendString(". ");
+                }
+            };
+            this.cooldownField.setMaxStringLength(256);
+            this.cooldownField.setText(this.chatTrigger.cooldown + "");
+            this.cooldownField.setResponder((p_214319_1_) ->
+            {
+                this.chatTrigger.cooldown = MCStringUtils.tryParse(p_214319_1_);
+            });
+            ChatTriggerList.this.chatTriggersScreen.children.add(this.cooldownField);
+
+            this.btnToggleActive = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 155, 65 + this.index * 25, 70, 20, new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()), (button) -> {
                 this.chatTrigger.active = this.chatTrigger.active.func_238166_c_();
                 button.setMessage(new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()));
                 ChatTriggerList.this.minecraft.gameSettings.setChatTrigger(this.index, this.chatTrigger);
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);
 
-            this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
+            this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 230, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
                 ChatTriggerList.this.minecraft.gameSettings.removeChatTrigger(this.chatTrigger);
                 ChatTriggerList.this.loadTriggers();
             });
@@ -172,6 +195,8 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             this.responseField.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
             this.delayField.y = p_230432_3_;
             this.delayField.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
+            this.cooldownField.y = p_230432_3_;
+            this.cooldownField.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
             this.btnToggleActive.y = p_230432_3_;
             this.btnToggleActive.render(p_230432_1_, p_230432_7_, p_230432_8_, p_230432_10_);
             this.btnRemove.y = p_230432_3_;

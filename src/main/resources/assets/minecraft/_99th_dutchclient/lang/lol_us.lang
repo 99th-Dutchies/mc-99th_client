@@ -13,6 +13,7 @@
 99thdc.options.chattriggers.regex=Reg-x Match
 99thdc.options.chattriggers.response=Respunz
 99thdc.options.chattriggers.delay=Deley
+99thdc.options.chattriggers.cooldown=Cooldown
 99thdc.options.chattriggers.add=At Triggr
 99thdc.options.chatfilters.title=Chet Filterz
 99thdc.options.chatfilters.regex=Reg-x Match

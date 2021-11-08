@@ -303,7 +303,7 @@ public class GameSettings
     public boolean resourcepackOptimization = false;
     public int timeTillAFK = 0;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
-        new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0)
+        new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
     );
     public List<ChatFilter> chatFilters = Lists.newArrayList();
 
@@ -3037,7 +3037,7 @@ public class GameSettings
                                 break;
                         }
 
-                        this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4])));
+                        this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4]), MCStringUtils.tryParse(astring[5])));
                     }
 
                     if (astring[0].equals("chatFilter") && astring.length >= 2)
@@ -3098,7 +3098,7 @@ public class GameSettings
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
             printwriter.println("timeTillAFK<:>" + this.timeTillAFK);
             for(ChatTrigger trigger : this.chatTriggers) {
-                printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active.func_238162_a_() + "<:>" + trigger.delay);
+                printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active.func_238162_a_() + "<:>" + trigger.delay + "<:>" + trigger.cooldown);
             }
             for(ChatFilter filter : this.chatFilters) {
                 printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
@@ -3263,7 +3263,7 @@ public class GameSettings
         this.resourcepackOptimization = false;
         this.timeTillAFK = 0;
         this.chatTriggers = Lists.newArrayList(
-                new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0)
+                new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
         );
         this.chatFilters = Lists.newArrayList();
         Shaders.setShaderPack("OFF");

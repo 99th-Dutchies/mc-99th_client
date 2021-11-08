@@ -13,6 +13,7 @@
 99thdc.options.chattriggers.regex=Text to find
 99thdc.options.chattriggers.response=Your Speech
 99thdc.options.chattriggers.delay=Await
+99thdc.options.chattriggers.cooldown=Cooldown
 99thdc.options.chattriggers.add=Add Activator
 99thdc.options.chatfilters.title=Dialogue Filters
 99thdc.options.chatfilters.regex=Text to find
