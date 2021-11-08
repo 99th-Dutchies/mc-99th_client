@@ -58,8 +58,12 @@ public class ChatTriggerListener extends AbstractChatListener
         ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
 
         exec.schedule(() -> {
-            mc.ingameGUI.getChatGUI().addToSentMessages(resp);
-            mc.player.sendChatMessage(resp);
+            String[] split = resp.split("\\|");
+
+            for(String r : split) {
+                mc.ingameGUI.getChatGUI().addToSentMessages(r);
+                mc.player.sendChatMessage(r);
+            }
         }, delay, TimeUnit.MILLISECONDS);
     }
 }
