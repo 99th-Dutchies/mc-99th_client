@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,10 +15,7 @@ import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.shader.Framebuffer;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.ClickEvent;
 import net.optifine.Config;
 import net.optifine.reflect.Reflector;
@@ -125,7 +123,7 @@ public class ScreenShotHelper
         {
             try {
                 nativeimage.write(file3);
-                ITextComponent itextcomponent1 = (new StringTextComponent(file3.getName())).mergeStyle(TextFormatting.UNDERLINE).modifyStyle((p_lambda$null$1_1_) -> {
+                ITextComponent itextcomponent1 = (new StringTextComponent(file3.getName())).mergeStyle(TextFormatting.ITALIC).modifyStyle((p_lambda$null$1_1_) -> {
                     return p_lambda$null$1_1_.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file3.getAbsolutePath()));
                 });
 
@@ -135,6 +133,35 @@ public class ScreenShotHelper
                 }
                 else {
                     messageConsumer.accept(new TranslationTextComponent("screenshot.success", itextcomponent1));
+                }
+
+                try {
+                    String file3Canonical = file3.getCanonicalPath();
+
+                    IFormattableTextComponent copyTC = new StringTextComponent("Copy").mergeStyle(TextFormatting.DARK_AQUA).modifyStyle((p) -> {
+                        return p.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_IMAGE_TO_CLIPBOARD, file3Canonical));
+                    });
+                    IFormattableTextComponent openFileTC = new StringTextComponent("Open image").mergeStyle(TextFormatting.GREEN).modifyStyle((p) -> {
+                        return p.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file3.getAbsolutePath()));
+                    });
+                    IFormattableTextComponent openFolderTC = new StringTextComponent("Open folder").mergeStyle(TextFormatting.DARK_GREEN).modifyStyle((p) -> {
+                        return p.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file3Canonical));
+                    });
+                    IFormattableTextComponent deleteTC = new StringTextComponent("Delete").mergeStyle(TextFormatting.DARK_RED).modifyStyle((p) -> {
+                        return p.setClickEvent(new ClickEvent(ClickEvent.Action.DELETE_FILE, file3Canonical));
+                    });
+
+                    IFormattableTextComponent actionsTC = copyTC
+                            .append(new StringTextComponent(" - ").setStyle(Style.EMPTY.setFormatting(TextFormatting.WHITE)))
+                            .append(openFileTC)
+                            .append(new StringTextComponent(" - ").setStyle(Style.EMPTY.setFormatting(TextFormatting.WHITE)))
+                            .append(openFolderTC)
+                            .append(new StringTextComponent(" - ").setStyle(Style.EMPTY.setFormatting(TextFormatting.WHITE)))
+                            .append(deleteTC);
+
+                    messageConsumer.accept(actionsTC);
+                } catch (IOException ex) {
+                    System.out.println("Failed determining canonical path of screenshot: " + ex.toString() + " ; " + ex.getMessage());
                 }
             }
             catch (Exception exception1)

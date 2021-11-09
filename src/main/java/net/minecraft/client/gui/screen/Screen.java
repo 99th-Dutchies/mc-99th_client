@@ -36,10 +36,12 @@ import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import nl._99th_dutchclient.chat.ChatFilter;
+import nl._99th_dutchclient.util.ImageClipboardHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -347,6 +349,20 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
                 else if (clickevent.getAction() == ClickEvent.Action.COPY_TO_CLIPBOARD)
                 {
                     this.minecraft.keyboardListener.setClipboardString(clickevent.getValue());
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.COPY_IMAGE_TO_CLIPBOARD)
+                {
+                    ImageClipboardHelper ich = new ImageClipboardHelper();
+                    ich.copyToClipboardFromFilename(clickevent.getValue());
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.DELETE_FILE)
+                {
+                    File f = new File(clickevent.getValue());
+                    if (f.delete()) {
+                        this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent("Image deleted!"));
+                    } else {
+                        System.out.println("Failed to delete the file.");
+                    }
                 }
                 else
                 {

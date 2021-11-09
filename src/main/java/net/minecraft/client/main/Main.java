@@ -277,6 +277,6 @@ public class Main
 
     static
     {
-        System.setProperty("java.awt.headless", "true");
+        System.setProperty("java.awt.headless", "false");
     }
 }

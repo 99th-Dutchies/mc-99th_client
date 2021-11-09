@@ -87,7 +87,9 @@ public class ClickEvent
         RUN_COMMAND("run_command", true),
         SUGGEST_COMMAND("suggest_command", true),
         CHANGE_PAGE("change_page", true),
-        COPY_TO_CLIPBOARD("copy_to_clipboard", true);
+        COPY_TO_CLIPBOARD("copy_to_clipboard", true),
+        COPY_IMAGE_TO_CLIPBOARD("copy_image_to_clipboard", true),
+        DELETE_FILE("delete_file", true);
 
         private static final Map<String, ClickEvent.Action> NAME_MAPPING = Arrays.stream(values()).collect(Collectors.toMap(ClickEvent.Action::getCanonicalName, (action) -> {
             return action;
