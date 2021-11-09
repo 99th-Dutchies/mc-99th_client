@@ -61,6 +61,11 @@ public class ChatTriggerListener extends AbstractChatListener
             String[] split = resp.split("\\|");
 
             for(String r : split) {
+                if(r.startsWith("\\")) {
+                    this.mc.commandManager.checkCommand(r);
+                    continue;
+                }
+
                 mc.ingameGUI.getChatGUI().addToSentMessages(r);
                 mc.player.sendChatMessage(r);
             }
