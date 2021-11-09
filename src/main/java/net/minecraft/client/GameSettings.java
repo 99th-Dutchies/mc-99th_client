@@ -3026,24 +3026,34 @@ public class GameSettings
                             didResetChatTriggers = true;
                         }
 
-                        ActiveAFK state = ActiveAFK.OFF;
-                        switch(astring[3]) {
-                            case "1":
-                                state = ActiveAFK.ALWAYS;
-                                break;
-                            case "2":
-                                state = ActiveAFK.AFKONLY;
-                                break;
-                            case "3":
-                                state = ActiveAFK.ACTIVEONLY;
-                                break;
-                            case "0":
-                            default:
-                                state = ActiveAFK.OFF;
-                                break;
-                        }
+                        if(astring.length == 3) {
+                            this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], ActiveAFK.ALWAYS, 0, 0));
+                        } else if(astring.length >= 4) {
+                            ActiveAFK state = ActiveAFK.OFF;
+                            switch (astring[3]) {
+                                case "1":
+                                    state = ActiveAFK.ALWAYS;
+                                    break;
+                                case "2":
+                                    state = ActiveAFK.AFKONLY;
+                                    break;
+                                case "3":
+                                    state = ActiveAFK.ACTIVEONLY;
+                                    break;
+                                case "0":
+                                default:
+                                    state = ActiveAFK.OFF;
+                                    break;
+                            }
 
-                        this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4]), MCStringUtils.tryParse(astring[5])));
+                            if(astring.length == 4) {
+                                this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, 0, 0));
+                            } else if(astring.length == 5) {
+                                this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4]), 0));
+                            } else if(astring.length == 6) {
+                                this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4]), MCStringUtils.tryParse(astring[5])));
+                            }
+                        }
                     }
 
                     if (astring[0].equals("chatFilter") && astring.length >= 2)
