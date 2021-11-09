@@ -1615,7 +1615,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     /**
      * Called when user clicked he's mouse right button (place)
      */
-    private void rightClickMouse()
+    public void rightClickMouse()
     {
         this.lastRightClicks.add(System.currentTimeMillis());
 
