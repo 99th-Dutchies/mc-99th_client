@@ -7,6 +7,9 @@
 99thdc.options.title=99th_DutchClient Choices
 99thdc.options.hudgui=HUD/GUI
 99thdc.options.hudgui.title=99th_DutchClient Choices HUD/GUI
+99thdc.options.hotkeys=Hotkeys
+99thdc.options.hotkeys.title=99th_DutchClient Settings Hotkeys
+99thdc.options.hotkeys.add=Add Hotkey
 99thdc.options.chat=Dialogue
 99thdc.options.chat.title=99th_DutchClient Choices Dialogue
 99thdc.options.chat.prefix=Chat Prefix

@@ -69,6 +69,7 @@ import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
 import nl._99th_dutchclient.chat.ChatFilter;
 import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.chat.Hotkey;
 import nl._99th_dutchclient.settings.ActiveAFK;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.settings.HealthIndicator;
@@ -307,6 +308,7 @@ public class GameSettings
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
     );
     public List<ChatFilter> chatFilters = Lists.newArrayList();
+    public List<Hotkey> _99thHotkeys = Lists.newArrayList();
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
@@ -394,6 +396,18 @@ public class GameSettings
     public void removeChatFilter(ChatFilter chatFilter)
     {
         this.chatFilters.remove(chatFilter);
+        this.saveOptions();
+    }
+
+    public void setHotkey(int index, Hotkey hotkey)
+    {
+        this._99thHotkeys.set(index, hotkey);
+        this.saveOptions();
+    }
+
+    public void removeHotkey(Hotkey hotkey)
+    {
+        this._99thHotkeys.remove(hotkey);
         this.saveOptions();
     }
 
@@ -2877,6 +2891,7 @@ public class GameSettings
     {
         boolean didResetChatTriggers = false;
         boolean didResetChatFilters = false;
+        boolean didResetHotkeys = false;
         try
         {
             File file1 = this.optionsFile99thdc;
@@ -3066,6 +3081,19 @@ public class GameSettings
                         this.chatFilters.add(new ChatFilter(astring[1], Boolean.valueOf(astring[2]), Boolean.valueOf(astring[3])));
                     }
 
+                    if (astring[0].equals("hotkey") && astring.length == 4)
+                    {
+                        if(!didResetHotkeys) {
+                            this._99thHotkeys = Lists.newArrayList();
+                            didResetHotkeys = true;
+                        }
+
+                        KeyBinding kb = new KeyBinding("99thdc.hotkeys.hotkey" + this._99thHotkeys.size(), -1, "key.categories.99thdchotkeys");
+                        kb.bind(InputMappings.getInputByName(astring[1]));
+
+                        this._99thHotkeys.add(new Hotkey(kb, astring[2], Boolean.valueOf(astring[3])));
+                    }
+
                     if (astring[0].equals("key_" + this._99thKeyBindFreelook.getKeyDescription()))
                     {
                         this._99thKeyBindFreelook.bind(InputMappings.getInputByName(astring[1]));
@@ -3120,8 +3148,11 @@ public class GameSettings
             for(ChatFilter filter : this.chatFilters) {
                 printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
             }
-            printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + ":" + this._99thKeyBindFreelook.getTranslationKey());
-            printwriter.println("key_" + this._99thKeyBindCommand.getKeyDescription() + ":" + this._99thKeyBindCommand.getTranslationKey());
+            for(Hotkey hotkey : this._99thHotkeys) {
+                printwriter.println("hotkey<:>" + hotkey.keyBinding.getTranslationKey() + "<:>" + hotkey.response + "<:>" + hotkey.active);
+            }
+            printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + "<:>" + this._99thKeyBindFreelook.getTranslationKey());
+            printwriter.println("key_" + this._99thKeyBindCommand.getKeyDescription() + "<:>" + this._99thKeyBindCommand.getTranslationKey());
             printwriter.close();
         }
         catch (Exception exception1)

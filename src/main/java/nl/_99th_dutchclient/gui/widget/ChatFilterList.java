@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_dutchclient.chat.ChatFilter;
 import nl._99th_dutchclient.gui.screen.OptionsChatFiltersScreen;
@@ -116,7 +117,7 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnToggleActiveChat);
 
-            this.btnRemove = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
+            this.btnRemove = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new StringTextComponent("X"), (button) -> {
                 ChatFilterList cfl = ChatFilterList.this;
 
                 cfl.minecraft.gameSettings.removeChatFilter(this.chatFilter);

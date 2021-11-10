@@ -238,6 +238,7 @@ import nl._99th_dutchclient.AFKStatus;
 import nl._99th_dutchclient.Config;
 import nl._99th_dutchclient.DiscordStatus;
 import nl._99th_dutchclient.Freelook;
+import nl._99th_dutchclient.chat.Hotkey;
 import nl._99th_dutchclient.command.CommandManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -2017,6 +2018,10 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             {
                 this.openChatScreen("\\");
             }
+        }
+
+        for(Hotkey hotkey : this.gameSettings._99thHotkeys) {
+            hotkey.handle();
         }
 
         if (this.player.isHandActive())

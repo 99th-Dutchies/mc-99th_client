@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.gui.screen.OptionsChatTriggersScreen;
@@ -180,7 +181,7 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);
 
-            this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 230, 65 + this.index * 25, 20, 20, new TranslationTextComponent("X"), (button) -> {
+            this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 230, 65 + this.index * 25, 20, 20, new StringTextComponent("X"), (button) -> {
                 ChatTriggerList ctl = ChatTriggerList.this;
 
                 ctl.minecraft.gameSettings.removeChatTrigger(this.chatTrigger);
