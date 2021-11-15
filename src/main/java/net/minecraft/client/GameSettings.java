@@ -71,6 +71,7 @@ import nl._99th_dutchclient.chat.ChatFilter;
 import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.chat.EventTrigger;
 import nl._99th_dutchclient.chat.Hotkey;
+import nl._99th_dutchclient.command.CustomCommand;
 import nl._99th_dutchclient.settings.ActiveAFK;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
 import nl._99th_dutchclient.settings.HealthIndicator;
@@ -314,6 +315,7 @@ public class GameSettings
         new EventTrigger(EventTrigger.Event.WORLD_JOIN, "", false, 0),
         new EventTrigger(EventTrigger.Event.SERVER_JOIN, "", false, 0)
     );
+    public List<CustomCommand> customCommands = Lists.newArrayList();
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
@@ -414,6 +416,20 @@ public class GameSettings
     {
         this._99thHotkeys.remove(hotkey);
         this.saveOptions();
+    }
+
+    public void setCustomCommand(int index, CustomCommand customCommand)
+    {
+        this.customCommands.set(index, customCommand);
+        this.saveOptions();
+        this.mc.commandManager.reloadCommands();
+    }
+
+    public void removeCustomCommand(CustomCommand customCommand)
+    {
+        this.customCommands.remove(customCommand);
+        this.saveOptions();
+        this.mc.commandManager.reloadCommands();
     }
 
     /**
@@ -2898,6 +2914,7 @@ public class GameSettings
         boolean didResetChatFilters = false;
         boolean didResetEventTriggers = false;
         boolean didResetHotkeys = false;
+        boolean didResetCustomCommands = false;
         try
         {
             File file1 = this.optionsFile99thdc;
@@ -3108,6 +3125,19 @@ public class GameSettings
                         this.eventTriggers.add(new EventTrigger(trigger, astring[2], Boolean.valueOf(astring[3]), MCStringUtils.tryParse(astring[4])));
                     }
 
+                    if (astring[0].equals("customCommand") && astring.length >= 2)
+                    {
+                        if(!didResetCustomCommands){
+                            this.customCommands = Lists.newArrayList();
+                            this.mc.commandManager.reloadCommands(false);
+                            didResetCustomCommands = true;
+                        }
+
+                        CustomCommand command = new CustomCommand(astring[1], astring[2], Boolean.valueOf(astring[3]));
+                        this.customCommands.add(command);
+                        this.mc.commandManager.loadCommand(command);
+                    }
+
                     if (astring[0].equals("hotkey") && astring.length == 4)
                     {
                         if(!didResetHotkeys) {
@@ -3180,6 +3210,9 @@ public class GameSettings
             }
             for(Hotkey hotkey : this._99thHotkeys) {
                 printwriter.println("hotkey<:>" + hotkey.keyBinding.getTranslationKey() + "<:>" + hotkey.response + "<:>" + hotkey.active);
+            }
+            for(CustomCommand customCommand : this.customCommands) {
+                printwriter.println("customCommand<:>" + customCommand.name + "<:>" + customCommand.response + "<:>" + customCommand.active);
             }
             printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + "<:>" + this._99thKeyBindFreelook.getTranslationKey());
             printwriter.println("key_" + this._99thKeyBindCommand.getKeyDescription() + "<:>" + this._99thKeyBindCommand.getTranslationKey());
@@ -3350,6 +3383,7 @@ public class GameSettings
                 new EventTrigger(EventTrigger.Event.SERVER_JOIN, "", false, 0)
         );
         this._99thHotkeys = Lists.newArrayList();
+        this.customCommands = Lists.newArrayList();
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

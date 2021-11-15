@@ -15,6 +15,10 @@
 99thdc.options.eventtriggers.delay=Delay
 99thdc.options.eventtriggers.server_join=On Server Join
 99thdc.options.eventtriggers.world_join=On World Join
+99thdc.options.customcommands.title=Custom Commands
+99thdc.options.customcommands.add=Add Command
+99thdc.options.customcommands.command=Command
+99thdc.options.customcommands.response=Response
 99thdc.options.chat=Dialogue
 99thdc.options.chat.title=99th_DutchClient Choices Dialogue
 99thdc.options.chat.prefix=Chat Prefix

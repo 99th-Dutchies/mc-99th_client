@@ -14,11 +14,30 @@ public class CommandManager {
         this.loadCommands();
     }
 
+    public void reloadCommands() {
+        this.reloadCommands(true);
+    }
+
+    public void reloadCommands(boolean includeCustom) {
+        this.commands = new ArrayList<>();
+        this.loadCommands();
+
+        if(includeCustom) {
+            for (Command command : this.mc.gameSettings.customCommands) {
+                this.loadCommand(command);
+            }
+        }
+    }
+
     private void loadCommands() {
         this.commands.add(new AFKCommand());
         this.commands.add(new ClickCommand());
         this.commands.add(new ColorCommand());
         this.commands.add(new NameHistoryCommand());
+    }
+
+    public void loadCommand(Command command) {
+        this.commands.add(command);
     }
 
     public boolean checkCommand(String string) {

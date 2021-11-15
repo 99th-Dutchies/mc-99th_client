@@ -64,6 +64,11 @@ public class OptionsChatScreen extends SettingsScreen
             this.minecraft.displayGuiScreen(new OptionsHotkeysScreen(this, this.gameSettings));
         }));
 
+        this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 144, 150, 20, new TranslationTextComponent("99thdc.options.customcommands.title"), (p_213055_1_) ->
+        {
+            this.minecraft.displayGuiScreen(new OptionsCustomCommandsScreen(this, this.gameSettings));
+        }));
+
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
         {
             this.minecraft.displayGuiScreen(this.parentScreen);
