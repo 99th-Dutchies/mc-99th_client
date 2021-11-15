@@ -223,6 +223,9 @@ public class InstallerGUI extends JFrame {
     public void onInstall() {
         this.ivjButtonInstall.setText("Installing...");
         this.ivjButtonInstall.setEnabled(false);
+        this.ivjButtonClose.setEnabled(false);
+        this.ivjFieldFolder.setEnabled(false);
+        this.ivjButtonFolder.setEnabled(false);
 
         Thread thread = new Thread(() -> {
             try {
@@ -241,8 +244,11 @@ public class InstallerGUI extends JFrame {
             } catch (Exception e) {
                 handleException(e);
             } finally {
-                InstallerGUI.this.getButtonInstall().setText("Install");
-                InstallerGUI.this.getButtonInstall().setEnabled(true);
+                this.ivjButtonInstall.setText("Install");
+                this.ivjButtonInstall.setEnabled(true);
+                this.ivjButtonClose.setEnabled(true);
+                this.ivjFieldFolder.setEnabled(true);
+                this.ivjButtonFolder.setEnabled(true);
             }
         });
 
