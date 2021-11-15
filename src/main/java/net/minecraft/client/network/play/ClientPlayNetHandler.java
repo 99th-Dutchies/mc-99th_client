@@ -304,6 +304,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.NibbleArray;
 import net.minecraft.world.lighting.WorldLightManager;
 import net.minecraft.world.storage.MapData;
+import nl._99th_dutchclient.chat.EventTrigger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -442,6 +443,14 @@ public class ClientPlayNetHandler implements IClientPlayNetHandler
         this.client.gameSettings.sendSettingsToServer();
         this.netManager.sendPacket(new CCustomPayloadPacket(CCustomPayloadPacket.BRAND, (new PacketBuffer(Unpooled.buffer())).writeString(ClientBrandRetriever.getClientModName())));
         this.client.getMinecraftGame().startGameSession();
+
+        for(EventTrigger eventTrigger : this.client.gameSettings.eventTriggers) {
+            if((this.client.serverJoinEventFlag && eventTrigger.trigger == EventTrigger.Event.SERVER_JOIN) ||
+                    eventTrigger.trigger == EventTrigger.Event.WORLD_JOIN) {
+                eventTrigger.handle();
+            }
+            this.client.serverJoinEventFlag = false;
+        }
     }
 
     /**

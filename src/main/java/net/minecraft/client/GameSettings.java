@@ -69,6 +69,7 @@ import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
 import nl._99th_dutchclient.chat.ChatFilter;
 import nl._99th_dutchclient.chat.ChatTrigger;
+import nl._99th_dutchclient.chat.EventTrigger;
 import nl._99th_dutchclient.chat.Hotkey;
 import nl._99th_dutchclient.settings.ActiveAFK;
 import nl._99th_dutchclient.settings.DiscordShowRPC;
@@ -309,6 +310,10 @@ public class GameSettings
     );
     public List<ChatFilter> chatFilters = Lists.newArrayList();
     public List<Hotkey> _99thHotkeys = Lists.newArrayList();
+    public List<EventTrigger> eventTriggers = Lists.newArrayList(
+        new EventTrigger(EventTrigger.Event.WORLD_JOIN, "", false, 0),
+        new EventTrigger(EventTrigger.Event.SERVER_JOIN, "", false, 0)
+    );
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
@@ -2891,6 +2896,7 @@ public class GameSettings
     {
         boolean didResetChatTriggers = false;
         boolean didResetChatFilters = false;
+        boolean didResetEventTriggers = false;
         boolean didResetHotkeys = false;
         try
         {
@@ -3081,6 +3087,27 @@ public class GameSettings
                         this.chatFilters.add(new ChatFilter(astring[1], Boolean.valueOf(astring[2]), Boolean.valueOf(astring[3])));
                     }
 
+                    if (astring[0].equals("eventTrigger") && astring.length >= 2)
+                    {
+                        if(!didResetEventTriggers){
+                            this.eventTriggers = Lists.newArrayList();
+                            didResetEventTriggers = true;
+                        }
+
+                        EventTrigger.Event trigger = null;
+
+                        switch(astring[1]) {
+                            case "server_join":
+                                trigger = EventTrigger.Event.SERVER_JOIN;
+                                break;
+                            case "world_join":
+                                trigger = EventTrigger.Event.WORLD_JOIN;
+                                break;
+                        }
+
+                        this.eventTriggers.add(new EventTrigger(trigger, astring[2], Boolean.valueOf(astring[3]), MCStringUtils.tryParse(astring[4])));
+                    }
+
                     if (astring[0].equals("hotkey") && astring.length == 4)
                     {
                         if(!didResetHotkeys) {
@@ -3147,6 +3174,9 @@ public class GameSettings
             }
             for(ChatFilter filter : this.chatFilters) {
                 printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
+            }
+            for(EventTrigger trigger : this.eventTriggers) {
+                printwriter.println("eventTrigger<:>" + trigger.trigger.getString() + "<:>" + trigger.response + "<:>" + trigger.active + "<:>" + trigger.delay);
             }
             for(Hotkey hotkey : this._99thHotkeys) {
                 printwriter.println("hotkey<:>" + hotkey.keyBinding.getTranslationKey() + "<:>" + hotkey.response + "<:>" + hotkey.active);
@@ -3315,6 +3345,11 @@ public class GameSettings
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
         );
         this.chatFilters = Lists.newArrayList();
+        this.eventTriggers = Lists.newArrayList(
+                new EventTrigger(EventTrigger.Event.WORLD_JOIN, "", false, 0),
+                new EventTrigger(EventTrigger.Event.SERVER_JOIN, "", false, 0)
+        );
+        this._99thHotkeys = Lists.newArrayList();
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

@@ -354,6 +354,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public List<Long> lastRightClicks = new ArrayList<>();
     public AFKStatus afkStatus = new AFKStatus(this);
     public CommandManager commandManager = new CommandManager(this);
+    public boolean serverJoinEventFlag = false;
     @Nullable
     public Screen currentScreen;
     @Nullable

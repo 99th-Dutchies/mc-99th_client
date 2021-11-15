@@ -76,6 +76,7 @@ public class ConnectingScreen extends Screen
                     }));
                     ConnectingScreen.this.networkManager.sendPacket(new CHandshakePacket(ip, port, ProtocolType.LOGIN));
                     ConnectingScreen.this.networkManager.sendPacket(new CLoginStartPacket(ConnectingScreen.this.minecraft.getSession().getProfile()));
+                    ConnectingScreen.this.minecraft.serverJoinEventFlag = true;
                 }
                 catch (UnknownHostException unknownhostexception)
                 {
