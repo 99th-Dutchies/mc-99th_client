@@ -22,7 +22,7 @@ configurations {
 }
 
 group = 'nl._99th_dutchies'
-version = '0.8.0-rc'
+version = '0.8.0'
 
 ext {
     minecraft_version = '1.16.5'
