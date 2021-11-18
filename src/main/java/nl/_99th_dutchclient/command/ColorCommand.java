@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class ColorCommand extends Command {
     public ColorCommand() {
-        super(new String[] {"color","colour"});
+        super(new String[] {"color","colour"}, "Show list of chat colors");
     }
 
     @Override

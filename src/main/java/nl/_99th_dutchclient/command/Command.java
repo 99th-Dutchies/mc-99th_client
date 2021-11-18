@@ -3,9 +3,11 @@ package nl._99th_dutchclient.command;
 public abstract class Command
 {
     public String[] commandNames;
+    public String description;
 
-    public Command(String[] commandNames) {
+    public Command(String[] commandNames, String description) {
         this.commandNames = commandNames;
+        this.description = description;
     }
 
     public boolean matches(String string) {

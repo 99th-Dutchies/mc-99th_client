@@ -30,6 +30,7 @@ public class CommandManager {
     }
 
     private void loadCommands() {
+        this.commands.add(new HelpCommand());
         this.commands.add(new AFKCommand());
         this.commands.add(new ClickCommand());
         this.commands.add(new ColorCommand());

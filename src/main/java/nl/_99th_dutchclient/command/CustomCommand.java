@@ -11,7 +11,7 @@ public class CustomCommand extends Command
     public boolean active;
 
     public CustomCommand(String name, String response, boolean active) {
-        super(new String[] {name});
+        super(new String[] {name}, response);
 
         this.name = name;
         this.response = response;

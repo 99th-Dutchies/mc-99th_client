@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 public class ClickCommand extends Command {
     public ClickCommand() {
-        super(new String[] {"click"});
+        super(new String[] {"click"}, "Click a slot");
     }
 
     @Override

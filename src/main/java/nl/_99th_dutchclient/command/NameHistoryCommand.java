@@ -13,7 +13,7 @@ import java.util.Date;
 
 public class NameHistoryCommand extends Command {
     public NameHistoryCommand() {
-        super(new String[] {"namehistory","nh"});
+        super(new String[] {"namehistory","nh"}, "Retrieve the name history of a player");
     }
 
     @Override

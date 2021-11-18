@@ -6,7 +6,7 @@ import net.minecraft.util.text.TextFormatting;
 
 public class AFKCommand extends Command {
     public AFKCommand() {
-        super(new String[] {"afk"});
+        super(new String[] {"afk"}, "Toggle your AFK status");
     }
 
     @Override
