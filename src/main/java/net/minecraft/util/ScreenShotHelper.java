@@ -145,7 +145,7 @@ public class ScreenShotHelper
                         return p.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file3.getAbsolutePath()));
                     });
                     IFormattableTextComponent openFolderTC = new StringTextComponent("Open folder").mergeStyle(TextFormatting.DARK_GREEN).modifyStyle((p) -> {
-                        return p.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file3Canonical));
+                        return p.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file3.getParent()));
                     });
                     IFormattableTextComponent deleteTC = new StringTextComponent("Delete").mergeStyle(TextFormatting.DARK_RED).modifyStyle((p) -> {
                         return p.setClickEvent(new ClickEvent(ClickEvent.Action.DELETE_FILE, file3Canonical));
