@@ -19,4 +19,5 @@ public abstract class Command
     }
 
     public abstract void execute(String string);
+    public abstract void invalid();
 }

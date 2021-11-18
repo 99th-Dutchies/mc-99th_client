@@ -21,7 +21,7 @@ public class NameHistoryCommand extends Command {
         String[] arguments = string.split(" ");
 
         if(arguments.length != 2) {
-            Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\namehistory [username]"));
+            this.invalid();
             return;
         }
 
@@ -63,5 +63,10 @@ public class NameHistoryCommand extends Command {
         });
 
         thread.start();
+    }
+
+    @Override
+    public void invalid() {
+        Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\namehistory [username]"));
     }
 }

@@ -1,6 +1,8 @@
 package nl._99th_dutchclient.command;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 
 public class CustomCommand extends Command
 {
@@ -55,5 +57,10 @@ public class CustomCommand extends Command
             mc.ingameGUI.getChatGUI().addToSentMessages(r);
             mc.player.sendChatMessage(r);
         }
+    }
+
+    @Override
+    public void invalid() {
+        Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\" + this.name));
     }
 }

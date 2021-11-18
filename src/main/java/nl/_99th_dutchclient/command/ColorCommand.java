@@ -99,4 +99,9 @@ public class ColorCommand extends Command {
                         .append(new StringTextComponent("$r "))
                         .append(new StringTextComponent("RESET")));
     }
+
+    @Override
+    public void invalid() {
+        Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\colour"));
+    }
 }

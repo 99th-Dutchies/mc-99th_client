@@ -20,11 +20,14 @@ public class ClickCommand extends Command {
 
         if(arguments.length < 2 || arguments.length > 3 ||
             arguments.length == 3 && !(Arrays.asList(new String[] {"hotbar","inv","chest"}).contains(arguments[1]))) {
-            mc.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\click (hotbar | inv | chest) [slot]"));
+            this.invalid();
             return;
         }
 
-        if(arguments[1].equals("hotbar")) {
+        if(Arrays.asList(new String[] {"hotbar","inv","chest"}).contains(arguments[1]) && arguments.length < 3) {
+            this.invalid();
+            return;
+        } if(arguments[1].equals("hotbar")) {
             InventoryHelper.clickHotbar(MCStringUtils.tryParse(arguments[2]));
         } else if(arguments.length == 2 && (mc.currentScreen == null)) {
             InventoryHelper.clickHotbar(MCStringUtils.tryParse(arguments[1]));
@@ -35,5 +38,10 @@ public class ClickCommand extends Command {
         } else if(arguments.length == 2 && !(mc.currentScreen == null)) {
             mc.playerController.windowClick(mc.player.container.windowId, MCStringUtils.tryParse(arguments[1]), 0, ClickType.PICKUP, mc.player);
         }
+    }
+
+    @Override
+    public void invalid() {
+        Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\click (hotbar | inv | chest) [slot]"));
     }
 }
