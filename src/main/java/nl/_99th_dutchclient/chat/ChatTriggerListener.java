@@ -31,7 +31,7 @@ public class ChatTriggerListener extends AbstractChatListener
         String msg = message.getString();
 
         for(ChatTrigger trigger : this.mc.gameSettings.chatTriggers) {
-            if(trigger.active == ActiveAFK.OFF || (trigger.active == ActiveAFK.ACTIVEONLY && this.mc.afkStatus.isAFK()) || (trigger.active == ActiveAFK.AFKONLY && !this.mc.afkStatus.isAFK())) continue;
+            if(trigger.response.isEmpty() || trigger.active == ActiveAFK.OFF || (trigger.active == ActiveAFK.ACTIVEONLY && this.mc.afkStatus.isAFK()) || (trigger.active == ActiveAFK.AFKONLY && !this.mc.afkStatus.isAFK())) continue;
 
             Matcher matcher = trigger.match(message.getString());
             

@@ -17,7 +17,7 @@ public class Hotkey {
     public void handle() {
         Minecraft mc = Minecraft.getInstance();
 
-        if(this.active && this.keyBinding.isPressed()) {
+        if(this.active && !this.response.isEmpty() && this.keyBinding.isPressed()) {
             String[] split = response.split("\\|");
 
             for(String r : split) {

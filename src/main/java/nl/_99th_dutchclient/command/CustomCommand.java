@@ -49,13 +49,15 @@ public class CustomCommand extends Command
         String[] split = resp.split("\\|");
 
         for(String r : split) {
-            if(r.startsWith("\\")) {
-                mc.commandManager.checkCommand(r);
-                continue;
-            }
+            if(!r.isEmpty()) {
+                if (r.startsWith("\\")) {
+                    mc.commandManager.checkCommand(r);
+                    continue;
+                }
 
-            mc.ingameGUI.getChatGUI().addToSentMessages(r);
-            mc.player.sendChatMessage(r);
+                mc.ingameGUI.getChatGUI().addToSentMessages(r);
+                mc.player.sendChatMessage(r);
+            }
         }
     }
 

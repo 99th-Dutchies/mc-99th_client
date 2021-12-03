@@ -22,7 +22,7 @@ public class EventTrigger
     public void handle() {
         Minecraft mc = Minecraft.getInstance();
 
-        if(this.active) {
+        if(this.active && !this.response.isEmpty()) {
             ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
 
             exec.schedule(() -> {
