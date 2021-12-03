@@ -28,20 +28,44 @@ public class ClickCommand extends Command {
             this.invalid();
             return;
         } if(arguments[1].equals("hotbar")) {
-            InventoryHelper.clickHotbar(MCStringUtils.tryParse(arguments[2]));
+            this.handleHotbar(MCStringUtils.tryParse(arguments[2]), mc);
         } else if(arguments.length == 2 && (mc.currentScreen == null)) {
-            InventoryHelper.clickHotbar(MCStringUtils.tryParse(arguments[1]));
+            this.handleHotbar(MCStringUtils.tryParse(arguments[1]), mc);
         } else if(arguments[1].equals("inv")) {
-            mc.player.container.slotClick(MCStringUtils.tryParse(arguments[2]), 0, ClickType.PICKUP, mc.player);
+            this.handleInv(MCStringUtils.tryParse(arguments[2]), mc);
         } else if(arguments[1].equals("chest")) {
-            mc.playerController.windowClick(mc.player.container.windowId, MCStringUtils.tryParse(arguments[2]), 0, ClickType.PICKUP, mc.player);
+            this.handleChest(MCStringUtils.tryParse(arguments[2]), mc);
         } else if(arguments.length == 2 && !(mc.currentScreen == null)) {
-            mc.playerController.windowClick(mc.player.container.windowId, MCStringUtils.tryParse(arguments[1]), 0, ClickType.PICKUP, mc.player);
+            this.handleChest(MCStringUtils.tryParse(arguments[1]), mc);
         }
     }
 
     @Override
     public void invalid() {
         Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid command usage: \\click (hotbar | inv | chest) [slot]"));
+    }
+
+    private void handleHotbar(int slot, Minecraft mc) {
+        if(slot < 0 || slot > 8) {
+            mc.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid hotbar slot: " + slot));
+        } else {
+            InventoryHelper.clickHotbar(slot);
+        }
+    }
+
+    private void handleInv(int slot, Minecraft mc) {
+        if(slot < 0 || slot > mc.player.container.inventorySlots.size() - 1) {
+            mc.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid inventory slot: " + slot));
+        } else {
+            mc.player.container.slotClick(slot, 0, ClickType.PICKUP, mc.player);
+        }
+    }
+
+    private void handleChest(int slot, Minecraft mc) {
+        if(slot < 0) {
+            mc.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "Invalid chest slot: " + slot));
+        } else {
+            mc.playerController.windowClick(mc.player.container.windowId, slot, 0, ClickType.PICKUP, mc.player);
+        }
     }
 }
