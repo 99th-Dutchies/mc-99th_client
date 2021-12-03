@@ -306,6 +306,7 @@ public class GameSettings
     public boolean resourcepackOptimization = false;
     public int timeTillAFK = 0;
     public String chatPrefix = "";
+    public boolean chatPrefixEnabled = false;
     public List<ChatTrigger> chatTriggers = Lists.newArrayList(
         new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
     );
@@ -3057,6 +3058,11 @@ public class GameSettings
                         this.chatPrefix = astring[1];
                     }
 
+                    if (astring[0].equals("chatPrefixEnabled") && astring.length >= 2)
+                    {
+                        this.chatPrefixEnabled = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("chatTrigger") && astring.length >= 2)
                     {
                         if(!didResetChatTriggers){
@@ -3199,6 +3205,7 @@ public class GameSettings
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
             printwriter.println("timeTillAFK<:>" + this.timeTillAFK);
             printwriter.println("chatPrefix<:>" + this.chatPrefix);
+            printwriter.println("chatPrefixEnabled<:>" + this.chatPrefixEnabled);
             for(ChatTrigger trigger : this.chatTriggers) {
                 printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active.func_238162_a_() + "<:>" + trigger.delay + "<:>" + trigger.cooldown);
             }
@@ -3374,6 +3381,7 @@ public class GameSettings
         this.resourcepackOptimization = false;
         this.timeTillAFK = 0;
         this.chatPrefix = "";
+        this.chatPrefixEnabled = false;
         this.chatTriggers = Lists.newArrayList(
                 new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
         );

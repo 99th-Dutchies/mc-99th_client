@@ -15,6 +15,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 public class OptionsChatScreen extends SettingsScreen
 {
     private TextFieldWidget chatPrefixField;
+    private Button chatPrefixEnabledButton;
 
     public OptionsChatScreen(Screen parentScreenIn, GameSettings gameSettingsIn)
     {
@@ -74,13 +75,19 @@ public class OptionsChatScreen extends SettingsScreen
             this.minecraft.displayGuiScreen(this.parentScreen);
         }));
 
-        this.chatPrefixField = new TextFieldWidget(this.font, this.width / 2 + 5, this.height / 6 + 48, 150, 20, new TranslationTextComponent("99thdc.options.chat.prefix"));
+        this.chatPrefixField = new TextFieldWidget(this.font, this.width / 2 - 75, this.height / 6 + 48, 150, 20, new TranslationTextComponent("99thdc.options.chat.prefix"));
         this.chatPrefixField.setMaxStringLength(256);
         this.chatPrefixField.setText(Minecraft.getInstance().gameSettings.chatPrefix);
         this.chatPrefixField.setResponder((p_214319_1_) -> {
             Minecraft.getInstance().gameSettings.chatPrefix = p_214319_1_;
         });
         this.children.add(this.chatPrefixField);
+
+        this.chatPrefixEnabledButton = new Button(this.width / 2 + 85, this.height / 6 + 48, 70, 20, this.gameSettings.chatPrefixEnabled ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
+            this.gameSettings.chatPrefixEnabled = !this.gameSettings.chatPrefixEnabled;
+            button.setMessage(this.gameSettings.chatPrefixEnabled ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
+        });
+        this.children.add(this.chatPrefixEnabledButton);
     }
 
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
@@ -89,6 +96,7 @@ public class OptionsChatScreen extends SettingsScreen
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 15, 16777215);
         drawString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.chat.prefix"), this.width / 2 - 149, this.height / 6 + 54, -1);
         this.chatPrefixField.render(matrixStack, mouseX, mouseY, partialTicks);
+        this.chatPrefixEnabledButton.render(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 }
