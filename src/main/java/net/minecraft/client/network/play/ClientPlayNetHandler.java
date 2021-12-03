@@ -449,8 +449,8 @@ public class ClientPlayNetHandler implements IClientPlayNetHandler
                     eventTrigger.trigger == EventTrigger.Event.WORLD_JOIN) {
                 eventTrigger.handle();
             }
-            this.client.serverJoinEventFlag = false;
         }
+        this.client.serverJoinEventFlag = false;
     }
 
     /**
