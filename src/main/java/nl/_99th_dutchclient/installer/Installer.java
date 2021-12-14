@@ -79,8 +79,7 @@ public class Installer {
     private static void updateLauncherJson(File dirMc, String mcVerClient, String fileName) throws IOException, ParseException {
         File fileJson = new File(dirMc, fileName);
         if (!fileJson.exists() || !fileJson.isFile()) {
-            Utils.showErrorMessage("File not found: " + fileJson);
-            throw new RuntimeException("QUIET");
+            return;
         }
         String json = Utils.readFile(fileJson, "UTF-8");
         JSONParser jp = new JSONParser();
