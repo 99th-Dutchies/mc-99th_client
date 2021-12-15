@@ -8,7 +8,7 @@
 99thdc.options.hudgui=HUD/GUI
 99thdc.options.hudgui.title=99th_DutchClient Scribble HUD/GUI
 99thdc.options.hotkeys=Fast Knobs
-99thdc.options.hotkeys.title=99th_DutchClient Settings Hotkeys
+99thdc.options.hotkeys.title=99th_DutchClient Settings Fast Knobs
 99thdc.options.hotkeys.add=Add Fast Knob
 99thdc.options.eventtriggers=Magic Triggers
 99thdc.options.eventtriggers.response=Postal to be sent
