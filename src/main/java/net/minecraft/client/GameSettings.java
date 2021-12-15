@@ -1807,6 +1807,9 @@ public class GameSettings
                     this.discordrpcShowServer = DiscordShowRPC.OFF;
                     break;
                 case OFF:
+                    this.discordrpcShowServer = DiscordShowRPC.PLAYING;
+                    break;
+                case PLAYING:
                 default:
                     this.discordrpcShowServer = DiscordShowRPC.SERVER;
                     break;
@@ -2985,13 +2988,16 @@ public class GameSettings
                             case "0":
                                 this.discordrpcShowServer = DiscordShowRPC.OFF;
                                 break;
-                                case "2":
+                                case "3":
                                 this.discordrpcShowServer = DiscordShowRPC.GAME;
                                 break;
-                                case "3":
+                                case "4":
                                 this.discordrpcShowServer = DiscordShowRPC.MAP;
                                 break;
                             case "1":
+                                this.discordrpcShowServer = DiscordShowRPC.PLAYING;
+                                break;
+                            case "2":
                             default:
                                 this.discordrpcShowServer = DiscordShowRPC.SERVER;
                                 break;
@@ -3229,6 +3235,15 @@ public class GameSettings
         {
             Config.warn("Failed to save options");
             exception1.printStackTrace();
+        }
+        this.updateDiscord();
+    }
+
+    public void updateDiscord() {
+        if(this.mc.discord.enabled && this.discordrpcShowServer == DiscordShowRPC.OFF) {
+            this.mc.discord.close();
+        } else if (!this.mc.discord.enabled && this.discordrpcShowServer != DiscordShowRPC.OFF) {
+            this.mc.discord.start();
         }
     }
 

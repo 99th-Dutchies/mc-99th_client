@@ -1,6 +1,5 @@
 package net.minecraft.client;
 
-import club.minnced.discord.rpc.*;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Queues;
 import com.google.gson.JsonElement;
@@ -240,6 +239,7 @@ import nl._99th_dutchclient.DiscordStatus;
 import nl._99th_dutchclient.Freelook;
 import nl._99th_dutchclient.chat.Hotkey;
 import nl._99th_dutchclient.command.CommandManager;
+import nl._99th_dutchclient.settings.DiscordShowRPC;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -354,6 +354,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public List<Long> lastRightClicks = new ArrayList<>();
     public AFKStatus afkStatus = new AFKStatus(this);
     public CommandManager commandManager = new CommandManager(this);
+    public DiscordStatus discord;
     public boolean serverJoinEventFlag = false;
     @Nullable
     public Screen currentScreen;
@@ -386,8 +387,6 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     @Nullable
     private IProfileResult profilerResult;
     private String debugProfilerName = "root";
-
-    private DiscordStatus discord = new DiscordStatus(this);
 
     public Minecraft(GameConfiguration gameConfig)
     {
@@ -435,6 +434,9 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         this.gameSettings = new GameSettings(this, this.gameDir);
         this.creativeSettings = new CreativeSettings(this.gameDir, this.dataFixer);
         LOGGER.info("Backend library: {}", (Object)RenderSystem.getBackendDescription());
+
+        this.discord = new DiscordStatus(this, this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF);
+
         ScreenSize screensize;
 
         if (this.gameSettings.overrideHeight > 0 && this.gameSettings.overrideWidth > 0)

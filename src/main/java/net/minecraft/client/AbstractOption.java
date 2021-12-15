@@ -760,6 +760,7 @@ public abstract class AbstractOption
     });
 
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_OFF = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip");
+    private static final ITextComponent DISCORDRPC_SHOW_SERVER_PLAYING = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_PLAYING.server.tooltip");
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_SERVER = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip", (new TranslationTextComponent("options.graphics.fabulous")).mergeStyle(TextFormatting.ITALIC));
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_GAME = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.game.tooltip");
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_MAP = new TranslationTextComponent("99thdc.options.DISCORDRPC_SHOW_SERVER.map.tooltip");
@@ -772,6 +773,10 @@ public abstract class AbstractOption
         {
             case OFF:
                 p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_OFF, 200));
+                break;
+
+            case PLAYING:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_PLAYING, 200));
                 break;
 
             case SERVER:

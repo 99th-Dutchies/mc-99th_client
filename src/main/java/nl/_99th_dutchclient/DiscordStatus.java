@@ -17,16 +17,20 @@ import java.util.Optional;
 public class DiscordStatus
 {
     private Minecraft mc;
+    private Thread worker;
     public DiscordRichPresence richPresence;
     public String lastGamemode = "";
     public String lastMap = "";
     public String lastKit = "";
     public String lastProfile = "";
     public String lastKills = "";
+    public boolean enabled = false;
 
-    public DiscordStatus(Minecraft mc) {
+    public DiscordStatus(Minecraft mc, boolean start) {
         this.mc = mc;
-        this.init();
+        if(start) {
+            this.start();
+        }
     }
 
     private void init() {
@@ -34,6 +38,7 @@ public class DiscordStatus
         String applicationId = "843127466705027082";
         String steamId = "";
         DiscordEventHandlers handlers = new DiscordEventHandlers();
+        this.enabled = true;
         handlers.ready = (user) -> System.out.println("Ready!");
         lib.Discord_Initialize(applicationId, handlers, true, "");
 
@@ -45,14 +50,15 @@ public class DiscordStatus
         lib.Discord_UpdatePresence(presence);
 
         // in a worker thread
-        new Thread(() -> {
+        this.worker = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 lib.Discord_RunCallbacks();
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException ignored) {}
             }
-        }, "RPC-Callback-Handler").start();
+        }, "RPC-Callback-Handler");
+        this.worker.start();
     }
 
     public void update() {
@@ -68,7 +74,7 @@ public class DiscordStatus
         } else if(mc.isConnectedToRealms()) {
             details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " realms";
         } else if(this.mc.getIntegratedServer() == null && (this.mc.getCurrentServerData() == null || !this.mc.getCurrentServerData().isOnLAN())) {
-            if(this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF) {
+            if(this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.PLAYING) {
                 details = (this.mc.afkStatus.isAFK() ? "AFK on " : "Online on ") + this.mc.getCurrentServerData().serverName;
 
                 if(this.mc.world != null && this.mc.world.getScoreboard() != null && this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1) != null && this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.SERVER) {
@@ -205,6 +211,13 @@ public class DiscordStatus
     }
 
     public void close() {
+        this.enabled = false;
+        this.worker.interrupt();
+        DiscordRPC.INSTANCE.Discord_ClearPresence();
         DiscordRPC.INSTANCE.Discord_Shutdown();
+    }
+
+    public void start() {
+        this.init();
     }
 }

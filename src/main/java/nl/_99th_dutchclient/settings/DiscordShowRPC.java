@@ -8,9 +8,10 @@ import java.util.Comparator;
 public enum DiscordShowRPC
 {
     OFF(0, "99thdc.options.DISCORDRPC_SHOW_SERVER.off"),
-    SERVER(1, "99thdc.options.DISCORDRPC_SHOW_SERVER.server"),
-    GAME(2, "99thdc.options.DISCORDRPC_SHOW_SERVER.game"),
-    MAP(3, "99thdc.options.DISCORDRPC_SHOW_SERVER.map");
+    PLAYING(1, "99thdc.options.DISCORDRPC_SHOW_SERVER.playing"),
+    SERVER(2, "99thdc.options.DISCORDRPC_SHOW_SERVER.server"),
+    GAME(3, "99thdc.options.DISCORDRPC_SHOW_SERVER.game"),
+    MAP(4, "99thdc.options.DISCORDRPC_SHOW_SERVER.map");
 
     private static final DiscordShowRPC[] field_238159_d_ = Arrays.stream(values()).sorted(Comparator.comparingInt(DiscordShowRPC::func_238162_a_)).toArray((p_238165_0_) -> {
         return new DiscordShowRPC[p_238165_0_];
@@ -45,6 +46,9 @@ public enum DiscordShowRPC
         {
             case OFF:
                 return "off";
+
+            case PLAYING:
+                return "playing";
 
             case SERVER:
                 return "server";
