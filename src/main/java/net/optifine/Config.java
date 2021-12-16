@@ -96,6 +96,7 @@ public class Config
     private static int availableProcessors = 0;
     public static boolean zoomMode = false;
     public static boolean zoomSmoothCamera = false;
+    public static double zoomLevel = 4.0D;
     private static int texturePackClouds = 0;
     private static boolean fullscreenModeChecked = false;
     private static boolean desktopModeChecked = false;

@@ -12,6 +12,7 @@ import net.minecraft.client.util.InputMappings;
 import net.minecraft.client.util.MouseSmoother;
 import net.minecraft.client.util.NativeUtil;
 import net.minecraft.util.math.MathHelper;
+import net.optifine.Config;
 import org.lwjgl.glfw.GLFWDropCallback;
 
 public class MouseHelper
@@ -189,6 +190,11 @@ public class MouseHelper
                         return;
                     }
 
+                    if(Config.zoomMode) {
+                        Config.zoomLevel += 0.5 * f1;
+                        Config.zoomLevel = Math.max(Config.zoomLevel, 1.0);
+                    }
+
                     this.accumulatedScrollDelta -= (double)f1;
 
                     if (this.minecraft.player.isSpectator())
@@ -203,7 +209,7 @@ public class MouseHelper
                             this.minecraft.player.abilities.setFlySpeed(f);
                         }
                     }
-                    else
+                    else if(!Config.zoomMode)
                     {
                         this.minecraft.player.inventory.changeCurrentItem((double)f1);
                     }

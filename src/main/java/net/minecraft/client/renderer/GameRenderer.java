@@ -442,12 +442,13 @@ public class GameRenderer implements IResourceManagerReloadListener, AutoCloseab
 
                 if (Config.zoomMode)
                 {
-                    d0 /= 4.0D;
+                    d0 /= Config.zoomLevel;
                 }
             }
             else if (Config.zoomMode)
             {
                 Config.zoomMode = false;
+                Config.zoomLevel = 4.0D;
                 this.mc.gameSettings.smoothCamera = Config.zoomSmoothCamera;
                 this.mc.worldRenderer.setDisplayListEntitiesDirty();
             }
