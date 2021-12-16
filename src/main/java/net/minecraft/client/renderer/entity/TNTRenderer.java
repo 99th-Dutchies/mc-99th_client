@@ -8,6 +8,7 @@ import net.minecraft.entity.item.TNTEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.util.text.StringTextComponent;
 
 public class TNTRenderer extends EntityRenderer<TNTEntity>
 {
@@ -38,6 +39,9 @@ public class TNTRenderer extends EntityRenderer<TNTEntity>
         TNTMinecartRenderer.renderTntFlash(Blocks.TNT.getDefaultState(), matrixStackIn, bufferIn, packedLightIn, entityIn.getFuse() / 5 % 2 == 0);
         matrixStackIn.pop();
         super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+
+        String fuseTime = (((entityIn.getFuse() - partialTicks) / 20.00) + "0000").substring(0,4);
+        this.renderName(entityIn, new StringTextComponent(fuseTime), matrixStackIn, bufferIn, packedLightIn);
     }
 
     /**

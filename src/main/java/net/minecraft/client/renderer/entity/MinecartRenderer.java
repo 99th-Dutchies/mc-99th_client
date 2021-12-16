@@ -10,10 +10,12 @@ import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.MinecartModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
+import net.minecraft.entity.item.minecart.TNTMinecartEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.util.text.StringTextComponent;
 
 public class MinecartRenderer<T extends AbstractMinecartEntity> extends EntityRenderer<T>
 {
@@ -104,6 +106,14 @@ public class MinecartRenderer<T extends AbstractMinecartEntity> extends EntityRe
         IVertexBuilder ivertexbuilder = bufferIn.getBuffer(this.modelMinecart.getRenderType(this.getEntityTexture(entityIn)));
         this.modelMinecart.render(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         matrixStackIn.pop();
+
+        if(entityIn instanceof TNTMinecartEntity) {
+            TNTMinecartEntity minecart = (TNTMinecartEntity) entityIn;
+            if (minecart.isIgnited()) {
+                String fuseTime = (((minecart.getFuseTicks() - partialTicks) / 20.00) + "0000").substring(0, 4);
+                this.renderName(entityIn, new StringTextComponent(fuseTime), matrixStackIn, bufferIn, packedLightIn);
+            }
+        }
     }
 
     /**
