@@ -30,7 +30,7 @@
 99thdc.options.chattriggers.add=Add Activator
 99thdc.options.chatfilters.title=Postal Filter
 99thdc.options.chatfilters.regex=Regex Matchin'
-99thdc.options.chatfilters.add=Add Filter
+99thdc.options.chatfilters.add=Add Postal Filter
 99thdc.options.chatfilters.activePlayer=Me postal
 99thdc.options.chatfilters.activeChat=Thems postal
 
@@ -48,8 +48,8 @@
 99thdc.options.DISCORDRPC_SHOW_SERVER=Show yer mates
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=Keep yer secret
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Keep yer secret
-99thdc.options.DISCORDRPC_SHOW_SERVER.playing=Playing 99th_DutchClient
-99thdc.options.DISCORDRPC_SHOW_SERVER.playing.tooltip=Playing 99th_DutchClient
+99thdc.options.DISCORDRPC_SHOW_SERVER.playing=Playin' 99th_DutchClient
+99thdc.options.DISCORDRPC_SHOW_SERVER.playing.tooltip=Playin' 99th_DutchClient
 99thdc.options.DISCORDRPC_SHOW_SERVER.server=Show Island
 99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=Show Island
 99thdc.options.DISCORDRPC_SHOW_SERVER.game=Show Island and What yer doin'
@@ -81,9 +81,9 @@
 99thdc.options.ACTIVE_AFK.always.tooltip=At All Times
 
 99thdc.key.freelook=Freelookin'
-99thdc.key.command=99th_DutchClient Command
+99thdc.key.command=99th_DutchClient Order
 
 99thdc.afk.activated=Yer gon'
 99thdc.afk.deactivated=Yer' back
 
-99thdc.commands.notFound=Unknown command. Try \help for a list of commands
+99thdc.commands.notFound=Unknown order. Try \help for all order possibilities
