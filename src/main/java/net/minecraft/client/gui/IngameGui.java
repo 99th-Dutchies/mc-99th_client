@@ -599,11 +599,11 @@ public class IngameGui extends AbstractGui
 
                     if (effectinstance.isAmbient())
                     {
-                        this.blit(matrixStack, k, l, 165, 166, 24, 24);
+                        this.blit(matrixStack, k, l + this.mc.fontRenderer.FONT_HEIGHT, 165, 166, 24, 24);
                     }
                     else
                     {
-                        this.blit(matrixStack, k, l, 141, 166, 24, 24);
+                        this.blit(matrixStack, k, l + this.mc.fontRenderer.FONT_HEIGHT, 141, 166, 24, 24);
 
                         if (effectinstance.getDuration() <= 200)
                         {
@@ -621,7 +621,7 @@ public class IngameGui extends AbstractGui
                     {
                         this.mc.getTextureManager().bindTexture(textureatlassprite.getAtlasTexture().getTextureLocation());
                         RenderSystem.color4f(1.0F, 1.0F, 1.0F, f1);
-                        blit(matrixStack, j1 + 3, k1 + this.mc.fontRenderer.FONT_HEIGHT, this.getBlitOffset(), 18, 18, textureatlassprite);
+                        blit(matrixStack, j1 + 3, k1 + 3 + this.mc.fontRenderer.FONT_HEIGHT, this.getBlitOffset(), 18, 18, textureatlassprite);
 
                         int duration = (int) (finalEffectinstance.getDuration() / 20.0);
                         String durationString = ((int) Math.floor(duration / 60.0)) + ":";
@@ -634,7 +634,7 @@ public class IngameGui extends AbstractGui
 
                     if (Reflector.IForgeEffectInstance_renderHUDEffect.exists())
                     {
-                        Reflector.call(effectinstance, Reflector.IForgeEffectInstance_renderHUDEffect, this, matrixStack, k, l, this.getBlitOffset(), f);
+                        Reflector.call(effectinstance, Reflector.IForgeEffectInstance_renderHUDEffect, this, matrixStack, k, l + this.mc.fontRenderer.FONT_HEIGHT, this.getBlitOffset(), f);
                     }
                 }
             }
