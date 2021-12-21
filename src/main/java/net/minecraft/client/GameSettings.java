@@ -72,10 +72,7 @@ import nl._99th_dutchclient.chat.ChatTrigger;
 import nl._99th_dutchclient.chat.EventTrigger;
 import nl._99th_dutchclient.chat.Hotkey;
 import nl._99th_dutchclient.command.CustomCommand;
-import nl._99th_dutchclient.settings.ActiveAFK;
-import nl._99th_dutchclient.settings.DiscordShowRPC;
-import nl._99th_dutchclient.settings.HealthIndicator;
-import nl._99th_dutchclient.settings.ShowToasts;
+import nl._99th_dutchclient.settings.*;
 import nl._99th_dutchclient.util.MCStringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
@@ -301,6 +298,7 @@ public class GameSettings
     public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
     public HealthIndicator healthIndicator = HealthIndicator.OFF;
     public ShowToasts showToasts = ShowToasts.ALL;
+    public PotionIcons potionIcons = PotionIcons.NORMAL;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
     public boolean resourcepackOptimization = false;
@@ -1848,6 +1846,22 @@ public class GameSettings
             }
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.POTION_ICONS)
+        {
+            switch(this.potionIcons){
+                case HIDE:
+                    this.potionIcons = PotionIcons.NORMAL;
+                    break;
+                case ALL:
+                    this.potionIcons = PotionIcons.HIDE;
+                    break;
+                case NORMAL:
+                default:
+                    this.potionIcons = PotionIcons.ALL;
+                    break;
+            }
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
         {
             this.tablistPing = !this.tablistPing;
@@ -3036,6 +3050,22 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("potionIcons") && astring.length >= 2)
+                    {
+                        switch(astring[1]){
+                            case "0":
+                                this.potionIcons = PotionIcons.HIDE;
+                                break;
+                                case "2":
+                                this.potionIcons = PotionIcons.ALL;
+                                break;
+                            case "1":
+                            default:
+                                this.potionIcons = PotionIcons.NORMAL;
+                                break;
+                        }
+                    }
+
                     if (astring[0].equals("tablistPing") && astring.length >= 2)
                     {
                         this.tablistPing = Boolean.valueOf(astring[1]);
@@ -3206,6 +3236,7 @@ public class GameSettings
             printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
             printwriter.println("healthIndicator<:>" + this.healthIndicator.func_238162_a_());
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
+            printwriter.println("potionIcons<:>" + this.potionIcons.func_238162_a_());
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
@@ -3390,6 +3421,7 @@ public class GameSettings
         this.discordrpcShowServer = DiscordShowRPC.SERVER;
         this.healthIndicator = HealthIndicator.OFF;
         this.showToasts = ShowToasts.ALL;
+        this.potionIcons = PotionIcons.NORMAL;
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);

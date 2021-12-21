@@ -70,6 +70,13 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Nummers
 99thdc.options.HEALTH_INDICATOR.icons=Icoontjes
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=Icoontjes
+99thdc.options.POTION_ICONS=Potions Icons
+99thdc.options.POTION_ICONS.hide=Hide
+99thdc.options.POTION_ICONS.hide.tooltip=Hide
+99thdc.options.POTION_ICONS.normal=Normal
+99thdc.options.POTION_ICONS.normal.tooltip=Normal
+99thdc.options.POTION_ICONS.all=Show All
+99thdc.options.POTION_ICONS.all.tooltip=Show All
 99thdc.options.timeTillAFK=Tijd tot AFK
 99thdc.options.ACTIVE_AFK.off=Uit
 99thdc.options.ACTIVE_AFK.off.tooltip=Uit

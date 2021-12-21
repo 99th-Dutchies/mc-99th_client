@@ -72,6 +72,8 @@ public class OptionsHUDGuiScreen extends SettingsScreen
 
         this.addButton(AbstractOption.HEALTH_INDICATOR.createWidget(this.minecraft.gameSettings,this.width / 2 + 5, this.height / 6 + 96, 150));
 
+        this.addButton(AbstractOption.POTION_ICONS.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 120, 150));
+
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
         {
             this.minecraft.displayGuiScreen(this.parentScreen);

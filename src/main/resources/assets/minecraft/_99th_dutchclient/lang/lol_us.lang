@@ -70,6 +70,13 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Numbrs
 99thdc.options.HEALTH_INDICATOR.icons=Pics
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=Pics
+99thdc.options.POTION_ICONS=Potions Icons
+99thdc.options.POTION_ICONS.hide=Hide
+99thdc.options.POTION_ICONS.hide.tooltip=Hide
+99thdc.options.POTION_ICONS.normal=Normal
+99thdc.options.POTION_ICONS.normal.tooltip=Normal
+99thdc.options.POTION_ICONS.all=Show All
+99thdc.options.POTION_ICONS.all.tooltip=Show All
 99thdc.options.timeTillAFK=Time till AFK
 99thdc.options.ACTIVE_AFK.off=Off
 99thdc.options.ACTIVE_AFK.off.tooltip=Off

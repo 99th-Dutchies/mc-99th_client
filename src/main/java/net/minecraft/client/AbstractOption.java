@@ -849,6 +849,33 @@ public abstract class AbstractOption
         return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 
+    private static final ITextComponent POTION_ICONS_HIDE = new TranslationTextComponent("99thdc.options.POTION_ICONS.hide.tooltip");
+    private static final ITextComponent POTION_ICONS_NORMAL = new TranslationTextComponent("99thdc.options.POTION_ICONS.normal.tooltip");
+    private static final ITextComponent POTION_ICONS_ALL = new TranslationTextComponent("99thdc.options.POTION_ICONS.all.tooltip");
+    public static final IteratableOption POTION_ICONS = new IteratableOption("99thdc.options.POTION_ICONS", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
+    {
+        p_lambda$static$127_0_.potionIcons = p_lambda$static$127_0_.potionIcons.func_238166_c_();
+    }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
+    {
+        switch (p_lambda$static$128_0_.potionIcons)
+        {
+            case HIDE:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(POTION_ICONS_HIDE, 200));
+                break;
+
+            case NORMAL:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(POTION_ICONS_NORMAL, 200));
+                break;
+
+            case ALL:
+                p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(POTION_ICONS_ALL, 200));
+                break;
+        }
+
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.potionIcons.func_238164_b_());
+        return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
+    });
+
     public static final BooleanOption TABLIST_PING = new BooleanOption("99thdc.options.TABLIST_PING", (p_lambda$static$129_0_) ->
     {
         return p_lambda$static$129_0_.tablistPing;

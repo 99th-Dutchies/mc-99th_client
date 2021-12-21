@@ -70,6 +70,13 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Digits
 99thdc.options.HEALTH_INDICATOR.icons=Pictures
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=Pictures
+99thdc.options.POTION_ICONS=Potions Icons
+99thdc.options.POTION_ICONS.hide=Hide
+99thdc.options.POTION_ICONS.hide.tooltip=Hide
+99thdc.options.POTION_ICONS.normal=Normal
+99thdc.options.POTION_ICONS.normal.tooltip=Normal
+99thdc.options.POTION_ICONS.all=Show All
+99thdc.options.POTION_ICONS.all.tooltip=Show All
 99thdc.options.timeTillAFK=Time till yer gon'
 99thdc.options.ACTIVE_AFK.off=Never
 99thdc.options.ACTIVE_AFK.off.tooltip=Never

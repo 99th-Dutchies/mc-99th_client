@@ -80,6 +80,7 @@ import net.optifine.reflect.Reflector;
 import nl._99th_dutchclient.chat.ChatFilterListener;
 import nl._99th_dutchclient.hud.*;
 import nl._99th_dutchclient.chat.ChatTriggerListener;
+import nl._99th_dutchclient.settings.PotionIcons;
 
 public class IngameGui extends AbstractGui
 {
@@ -533,7 +534,7 @@ public class IngameGui extends AbstractGui
     {
         Collection<EffectInstance> collection = this.mc.player.getActivePotionEffects();
 
-        if (!collection.isEmpty())
+        if (!collection.isEmpty() && this.mc.gameSettings.potionIcons != PotionIcons.HIDE)
         {
             RenderSystem.enableBlend();
             int i = 0;
@@ -571,7 +572,7 @@ public class IngameGui extends AbstractGui
                     }
                 }
 
-                if (effectinstance.isShowIcon())
+                if (effectinstance.isShowIcon() || this.mc.gameSettings.potionIcons == PotionIcons.ALL)
                 {
                     int k = this.scaledWidth;
                     int l = 1;
