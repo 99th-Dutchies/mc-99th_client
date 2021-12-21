@@ -7,26 +7,26 @@
 99thdc.options.title=sᵷuᴉʇʇǝS ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
 99thdc.options.hudgui=I∩⅁/ᗡ∩H
 99thdc.options.hudgui.title=I∩⅁/ᗡ∩H sᵷuᴉʇʇǝS ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
-99thdc.options.hotkeys=Hotkeys
-99thdc.options.hotkeys.title=99th_DutchClient Settings Hotkeys
-99thdc.options.hotkeys.add=Add Hotkey
-99thdc.options.eventtriggers=Event Triggers
-99thdc.options.eventtriggers.response=Response
-99thdc.options.eventtriggers.delay=Delay
-99thdc.options.eventtriggers.server_join=On Server Join
-99thdc.options.eventtriggers.world_join=On World Join
-99thdc.options.customcommands.title=Custom Commands
-99thdc.options.customcommands.add=Add Command
-99thdc.options.customcommands.command=Command
-99thdc.options.customcommands.response=Response
+99thdc.options.hotkeys=sʎǝʞʇoH
+99thdc.options.hotkeys.title=sʎǝʞʇoH sᵷuᴉʇʇǝS ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
+99thdc.options.hotkeys.add=ʎǝʞʇoH ppⱯ
+99thdc.options.eventtriggers=sɹǝᵷᵷᴉɹ⟘ ʇuǝʌƎ
+99thdc.options.eventtriggers.response=ǝsuodsǝᴚ
+99thdc.options.eventtriggers.delay=ʎɐꞁǝᗡ
+99thdc.options.eventtriggers.server_join=uᴉoՐ ɹǝʌɹǝS uO
+99thdc.options.eventtriggers.world_join=uᴉoՐ pꞁɹoM uO
+99thdc.options.customcommands.title=spuɐɯɯoƆ ɯoʇsnƆ
+99thdc.options.customcommands.add=puɐɯɯoƆ ppⱯ
+99thdc.options.customcommands.command=puɐɯɯoƆ
+99thdc.options.customcommands.response=ǝsuodsǝᴚ
 99thdc.options.chat=ʇɐɥƆ
 99thdc.options.chat.title=ʇɐɥƆ sᵷuᴉʇʇǝS ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
-99thdc.options.chat.prefix=Chat Prefix
+99thdc.options.chat.prefix=xᴉɟǝɹԀ ʇɐɥƆ
 99thdc.options.chattriggers.title=sɹǝᵷᵷᴉɹ⟘ ʇɐɥƆ
 99thdc.options.chattriggers.regex=ɥɔʇɐW xǝᵷǝᴚ
 99thdc.options.chattriggers.response=ǝsuodsǝᴚ
 99thdc.options.chattriggers.delay=ʎɐꞁǝᗡ
-99thdc.options.chattriggers.cooldown=Cooldown
+99thdc.options.chattriggers.cooldown=uʍopꞁooƆ
 99thdc.options.chattriggers.add=ɹǝᵷᵷᴉɹ⟘ ppⱯ
 99thdc.options.chatfilters.title=sɹǝʇꞁᴉℲ ʇɐɥƆ
 99thdc.options.chatfilters.regex=ɥɔʇɐW xǝᵷǝᴚ
@@ -48,8 +48,8 @@
 99thdc.options.DISCORDRPC_SHOW_SERVER=pɹoɔsᴉᗡ uᴉ ʍoɥS
 99thdc.options.DISCORDRPC_SHOW_SERVER.off=ɟɟO
 99thdc.options.DISCORDRPC_SHOW_SERVER.off.tooltip=ɟɟO
-99thdc.options.DISCORDRPC_SHOW_SERVER.playing=ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66 Playing
-99thdc.options.DISCORDRPC_SHOW_SERVER.playing.tooltip=ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66 Playing
+99thdc.options.DISCORDRPC_SHOW_SERVER.playing=ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66 ᵷuᴉʎɐꞁԀ
+99thdc.options.DISCORDRPC_SHOW_SERVER.playing.tooltip=ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66 ᵷuᴉʎɐꞁԀ
 99thdc.options.DISCORDRPC_SHOW_SERVER.server=ɹǝʌɹǝS ʍoɥS
 99thdc.options.DISCORDRPC_SHOW_SERVER.server.tooltip=ɹǝʌɹǝS ʍoɥS
 99thdc.options.DISCORDRPC_SHOW_SERVER.game=ǝɯɐᵷᴉuᴉW puɐ ɹǝʌɹǝS ʍoɥS
@@ -88,9 +88,9 @@
 99thdc.options.ACTIVE_AFK.always.tooltip=sʎɐʍꞁⱯ
 
 99thdc.key.freelook=ʞooꞁǝǝɹℲ
-99thdc.key.command=99th_DutchClient Command
+99thdc.key.command=puɐɯɯoƆ ʇuǝᴉꞁƆɥɔʇnᗡ_ɥʇ66
 
 99thdc.afk.activated=pǝʇɐʌᴉʇɔɐ ǝpoɯ ꞰℲⱯ
 99thdc.afk.deactivated=pǝʇɐʌᴉʇɔɐǝp ǝpoɯ ꞰℲⱯ
 
-99thdc.commands.notFound=Unknown command. Try \help for a list of commands
+99thdc.commands.notFound=spuɐɯɯoɔ ɟo ʇsᴉꞁ ɐ ɹoɟ dꞁǝɥ\ ʎɹ⟘ ˙puɐɯɯoɔ uʍouʞu∩
