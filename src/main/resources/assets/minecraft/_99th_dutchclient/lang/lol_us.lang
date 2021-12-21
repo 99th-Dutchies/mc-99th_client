@@ -70,7 +70,6 @@
 99thdc.options.HEALTH_INDICATOR.numbers.tooltip=Numbrs
 99thdc.options.HEALTH_INDICATOR.icons=Pics
 99thdc.options.HEALTH_INDICATOR.icons.tooltip=Pics
-<<<<<<< HEAD
 99thdc.options.POTION_ICONS=Potions Icons
 99thdc.options.POTION_ICONS.hide=Hide
 99thdc.options.POTION_ICONS.hide.tooltip=Hide
@@ -78,16 +77,6 @@
 99thdc.options.POTION_ICONS.normal.tooltip=Normal
 99thdc.options.POTION_ICONS.all=Show All
 99thdc.options.POTION_ICONS.all.tooltip=Show All
-99thdc.options.timeTillAFK=Time till AFK
-99thdc.options.ACTIVE_AFK.off=Off
-99thdc.options.ACTIVE_AFK.off.tooltip=Off
-99thdc.options.ACTIVE_AFK.AFKonly=AFK only
-99thdc.options.ACTIVE_AFK.AFKonly.tooltip=AFK only
-99thdc.options.ACTIVE_AFK.ActiveOnly=Active only
-99thdc.options.ACTIVE_AFK.ActiveOnly.tooltip=Active only
-99thdc.options.ACTIVE_AFK.always=Always
-99thdc.options.ACTIVE_AFK.always.tooltip=Always
-=======
 99thdc.options.timeTillAFK=Till you AFK
 99thdc.options.ACTIVE_AFK.off=No
 99thdc.options.ACTIVE_AFK.off.tooltip=No
@@ -97,7 +86,6 @@
 99thdc.options.ACTIVE_AFK.ActiveOnly.tooltip=Only not AFK
 99thdc.options.ACTIVE_AFK.always=Yes
 99thdc.options.ACTIVE_AFK.always.tooltip=Yes
->>>>>>> 24311fbc6b7f222b705f594a9e74b48c897e2c99
 
 99thdc.key.freelook=Cheatlookz
 99thdc.key.command=99th_DutchClient Command
