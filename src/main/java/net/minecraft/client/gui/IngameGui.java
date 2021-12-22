@@ -119,6 +119,14 @@ public class IngameGui extends AbstractGui
     /** The current sub-title displayed */
     private ITextComponent displayedSubTitle;
 
+    /** A timer for the current clientTitle displayed */
+    private int clientTitlesTimer;
+    @Nullable
+
+    /** The current clientTitle displayed */
+    private ITextComponent displayedClientTitle;
+    @Nullable
+
     /** The time that the title take to fade in */
     private int titleFadeIn;
 
@@ -390,6 +398,45 @@ public class IngameGui extends AbstractGui
                         RenderSystem.popMatrix();
                     }
 
+                    RenderSystem.disableBlend();
+                    RenderSystem.popMatrix();
+                }
+
+                this.mc.getProfiler().endSection();
+            }
+
+            if (this.displayedClientTitle != null && this.clientTitlesTimer > 0)
+            {
+                this.mc.getProfiler().startSection("clientTitle");
+                float f4 = (float)this.clientTitlesTimer - partialTicks;
+                int j1 = 255;
+
+                if (this.clientTitlesTimer > this.titleFadeOut + this.titleDisplayTime)
+                {
+                    float f5 = (float)(this.titleFadeIn + this.titleDisplayTime + this.titleFadeOut) - f4;
+                    j1 = (int)(f5 * 255.0F / (float)this.titleFadeIn);
+                }
+
+                if (this.clientTitlesTimer <= this.titleFadeOut)
+                {
+                    j1 = (int)(f4 * 255.0F / (float)this.titleFadeOut);
+                }
+
+                j1 = MathHelper.clamp(j1, 0, 255);
+
+                if (j1 > 8)
+                {
+                    RenderSystem.pushMatrix();
+                    RenderSystem.translatef((float)(this.scaledWidth / 2), (float)(this.scaledHeight / 2), 0.0F);
+                    RenderSystem.enableBlend();
+                    RenderSystem.defaultBlendFunc();
+                    RenderSystem.pushMatrix();
+                    RenderSystem.scalef(2.0F, 2.0F, 2.0F);
+                    int l1 = j1 << 24 & -16777216;
+                    int k2 = fontrenderer.getStringPropertyWidth(this.displayedClientTitle);
+                    this.func_238448_a_(matrixStack, fontrenderer, 5, k2, 16777215 | l1);
+                    fontrenderer.func_243246_a(matrixStack, this.displayedClientTitle, (float)(-k2 / 2), 15.0F, 16777215 | l1);
+                    RenderSystem.popMatrix();
                     RenderSystem.disableBlend();
                     RenderSystem.popMatrix();
                 }
@@ -1459,6 +1506,16 @@ public class IngameGui extends AbstractGui
             }
         }
 
+        if (this.clientTitlesTimer > 0)
+        {
+            --this.clientTitlesTimer;
+
+            if (this.clientTitlesTimer <= 0)
+            {
+                this.displayedClientTitle = null;
+            }
+        }
+
         ++this.ticks;
         Entity entity = this.mc.getRenderViewEntity();
 
@@ -1548,6 +1605,26 @@ public class IngameGui extends AbstractGui
             if (this.titlesTimer > 0)
             {
                 this.titlesTimer = this.titleFadeIn + this.titleDisplayTime + this.titleFadeOut;
+            }
+        }
+    }
+
+    public void setClientTitle(@Nullable ITextComponent clientTitleText)
+    {
+        if (clientTitleText == null)
+        {
+            this.displayedClientTitle = null;
+            this.clientTitlesTimer = 0;
+        }
+        else
+        {
+            if(this.displayedClientTitle != null && clientTitleText.getString().equals(this.displayedClientTitle.getString())) {
+                if (this.clientTitlesTimer <= this.titleFadeOut + this.titleDisplayTime) {
+                    this.clientTitlesTimer = this.titleDisplayTime + this.titleFadeOut;
+                }
+            } else {
+                this.displayedClientTitle = clientTitleText;
+                this.clientTitlesTimer = this.titleFadeIn + this.titleDisplayTime + this.titleFadeOut;
             }
         }
     }
