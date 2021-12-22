@@ -80,7 +80,7 @@ public class OptionsHUDGuiScreen extends SettingsScreen
         this.addButton(AbstractOption.POTION_ICONS.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 120, 150));
 
         this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 144, 220, 20, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"));
-        this.itemHUDitemsField.setMaxStringLength(256);
+        this.itemHUDitemsField.setMaxStringLength(1230);
         this.itemHUDitemsField.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings.itemHUDitems));
         this.itemHUDitemsField.setResponder((p_214319_1_) -> {
             Minecraft.getInstance().gameSettings.itemHUDitems = MCStringUtils.parseItems(p_214319_1_);
