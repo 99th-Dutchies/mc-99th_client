@@ -66,14 +66,22 @@ public class InventoryInfo
             int j1 = mc.getMainWindow().getScaledWidth() / 2 - 78 + (i + 10) * 20;
             int k1 = mc.getMainWindow().getScaledHeight() - 16 - 3;
 
+            ItemStack invStack;
             ItemStack dispStack = new ItemStack(item);
 
+            // Handle mainInventory
             for(int j = 0; j < inv.mainInventory.size(); j++) {
-                ItemStack invStack = inv.mainInventory.get(j);
+                invStack = inv.mainInventory.get(j);
                 if(invStack.isItemEqual(dispStack) && invStack.getCount() > 0) {
                     dispStack.setCount(dispStack.getCount() + invStack.getCount());
                 }
             }
+            // Handle Off Hand
+            invStack = mc.player.getHeldItemOffhand();
+            if(invStack.isItemEqual(dispStack) && invStack.getCount() > 0) {
+                dispStack.setCount(dispStack.getCount() + invStack.getCount());
+            }
+
             dispStack.setCount(dispStack.getCount() - 1);
 
             if(dispStack.getCount() > 0) {
