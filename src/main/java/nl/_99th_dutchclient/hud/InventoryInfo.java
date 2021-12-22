@@ -1,8 +1,9 @@
 package nl._99th_dutchclient.hud;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.MainWindow;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.*;
 import nl._99th_dutchclient.util.ColorGradient;
 import java.awt.Color;
@@ -19,6 +20,9 @@ public class InventoryInfo
 
         // Draw armor
         renderArmor(mc, ms);
+
+        // Draw inventory items
+        renderInventory(mc, pt, ms);
     }
 
     private static void renderMainhand(Minecraft mc, MatrixStack ms) {
@@ -47,6 +51,39 @@ public class InventoryInfo
             }
             j++;
         }
+    }
+
+    public static void renderInventory(Minecraft mc, float partialTicks, MatrixStack ms) {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enableRescaleNormal();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
+        int i = 0;
+        PlayerInventory inv = mc.player.inventory;
+
+        for(Item item : mc.gameSettings.itemHUDitems) {
+            int j1 = mc.getMainWindow().getScaledWidth() / 2 - 78 + (i + 10) * 20;
+            int k1 = mc.getMainWindow().getScaledHeight() - 16 - 3;
+
+            ItemStack dispStack = new ItemStack(item);
+
+            for(int j = 0; j < inv.mainInventory.size(); j++) {
+                ItemStack invStack = inv.mainInventory.get(j);
+                if(invStack.isItemEqual(dispStack) && invStack.getCount() > 0) {
+                    dispStack.setCount(dispStack.getCount() + invStack.getCount());
+                }
+            }
+            dispStack.setCount(dispStack.getCount() - 1);
+
+            if(dispStack.getCount() > 0) {
+                mc.ingameGUI.renderInventoryItem(j1, k1, partialTicks, mc.player, dispStack, dispStack.getCount() + "");
+                i++;
+            }
+        }
+
+        RenderSystem.disableRescaleNormal();
+        RenderSystem.disableBlend();
     }
 
     private static String ItemToString(ItemStack itemStack) {

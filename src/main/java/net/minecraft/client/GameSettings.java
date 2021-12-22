@@ -17,10 +17,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Nullable;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.resources.I18n;
@@ -39,6 +36,8 @@ import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.ChatVisibility;
 import net.minecraft.entity.player.PlayerModelPart;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.play.client.CClientSettingsPacket;
@@ -292,6 +291,7 @@ public class GameSettings
     public boolean showSystemHUD = true;
     public boolean showCPSHUD = true;
     public boolean showLookingHUD = true;
+    public List<Item> itemHUDitems = Lists.newArrayList(Items.ARROW, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.EMERALD);
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
     public boolean showChatTimestamp = false;
@@ -2981,6 +2981,11 @@ public class GameSettings
                         this.showLookingHUD = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("itemHUDitems") && astring.length >= 2)
+                    {
+                        this.itemHUDitems = MCStringUtils.parseItems(astring[1]);
+                    }
+
                     if (astring[0].equals("fullBrightness") && astring.length >= 2)
                     {
                         this.fullBrightness = Boolean.valueOf(astring[1]);
@@ -3230,6 +3235,7 @@ public class GameSettings
             printwriter.println("showSystemHUD<:>" + this.showSystemHUD);
             printwriter.println("showCPSHUD<:>" + this.showCPSHUD);
             printwriter.println("showLookingHUD<:>" + this.showLookingHUD);
+            printwriter.println("itemHUDitems<:>" + MCStringUtils.itemsToString(this.itemHUDitems));
             printwriter.println("fullBrightness<:>" + this.fullBrightness);
             printwriter.println("infiniteChat<:>" + this.infiniteChat);
             printwriter.println("showChatTimestamp<:>" + this.showChatTimestamp);
@@ -3415,6 +3421,7 @@ public class GameSettings
         this.showSystemHUD = true;
         this.showCPSHUD = true;
         this.showLookingHUD = true;
+        this.itemHUDitems = Lists.newArrayList(Items.ARROW, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.EMERALD);
         this.fullBrightness = false;
         this.infiniteChat = true;
         this.showChatTimestamp = false;

@@ -40,6 +40,7 @@
 99thdc.options.SHOW_CPS_HUD=Show Clicking Speed
 99thdc.options.SHOW_LOOKING_HUD=Show Gaze-At HUD
 99thdc.options.FULL_BRIGHTNESS=Full Vision
+99thdc.options.ITEMS_HUD.items=Items in HUD
 99thdc.options.INFINITE_CHAT=Immeasurable Text
 99thdc.options.CHAT_TIMESTAMP=Show thy Speech Time
 99thdc.options.TABLIST_PING=Connection on Tablist

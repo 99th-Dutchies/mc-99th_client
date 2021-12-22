@@ -1,5 +1,13 @@
 package nl._99th_dutchclient.util;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.command.arguments.ItemParser;
+import net.minecraft.item.Item;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class MCStringUtils
 {
     public static String strip(String in) {
@@ -20,5 +28,38 @@ public class MCStringUtils
         }
 
         return parsed;
+    }
+
+    public static List<Item> parseItems(String in) {
+        List<Item> list = new ArrayList<>();
+        String[] astring = in.split(",");
+
+        for(String s : astring) {
+            StringReader stringreader = new StringReader(s);
+            stringreader.setCursor(0);
+            ItemParser itemparser = new ItemParser(stringreader, false);
+
+            try
+            {
+                itemparser.parse();
+                list.add(itemparser.getItem());
+            }
+            catch (CommandSyntaxException commandsyntaxexception)
+            {
+            }
+        }
+
+        return list;
+    }
+
+    public static String itemsToString(List<Item> in) {
+        String s = "";
+        List<String> ls = new ArrayList<>();
+
+        for(Item i : in) {
+            ls.add(i.toString());
+        }
+
+        return String.join(",", ls);
     }
 }

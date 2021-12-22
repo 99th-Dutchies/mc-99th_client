@@ -3,15 +3,20 @@ package nl._99th_dutchclient.gui.screen;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.GameSettings;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.OptionButton;
 import net.minecraft.util.text.TranslationTextComponent;
+import nl._99th_dutchclient.util.MCStringUtils;
 
 public class OptionsHUDGuiScreen extends SettingsScreen
 {
+    private TextFieldWidget itemHUDitemsField;
+
     public OptionsHUDGuiScreen(Screen parentScreenIn, GameSettings gameSettingsIn)
     {
         super(parentScreenIn, gameSettingsIn, new TranslationTextComponent("99thdc.options.hudgui.title"));
@@ -74,6 +79,14 @@ public class OptionsHUDGuiScreen extends SettingsScreen
 
         this.addButton(AbstractOption.POTION_ICONS.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 120, 150));
 
+        this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 144, 220, 20, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"));
+        this.itemHUDitemsField.setMaxStringLength(256);
+        this.itemHUDitemsField.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings.itemHUDitems));
+        this.itemHUDitemsField.setResponder((p_214319_1_) -> {
+            Minecraft.getInstance().gameSettings.itemHUDitems = MCStringUtils.parseItems(p_214319_1_);
+        });
+        this.children.add(this.itemHUDitemsField);
+
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
         {
             this.minecraft.displayGuiScreen(this.parentScreen);
@@ -84,6 +97,8 @@ public class OptionsHUDGuiScreen extends SettingsScreen
     {
         this.renderBackground(matrixStack);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 15, 16777215);
+        drawString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"), this.width / 2 - 149, this.height / 6 + 150, -1);
+        this.itemHUDitemsField.render(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 }
