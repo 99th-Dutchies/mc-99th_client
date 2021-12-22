@@ -22,7 +22,7 @@ public class AFKStatus
 
     public void moved() {
         if(this.isAFK) {
-            this.mc.ingameGUI.setOverlayMessage(new TranslationTextComponent("99thdc.afk.deactivated").setStyle(Style.EMPTY.setColor(Color.fromHex("#AA0000")).setBold(true)), false);
+            this.mc.ingameGUI.setClientTitle(new TranslationTextComponent("99thdc.afk.deactivated").setStyle(Style.EMPTY.setColor(Color.fromHex("#AA0000")).setBold(true)));
         }
 
         this.isAFK = false;
@@ -45,7 +45,7 @@ public class AFKStatus
         }
 
         if(this.isAFK) {
-            this.mc.ingameGUI.setOverlayMessage(new TranslationTextComponent("99thdc.afk.activated").setStyle(Style.EMPTY.setColor(Color.fromHex("#00AA00")).setBold(true)), false);
+            this.mc.ingameGUI.setClientTitle(new TranslationTextComponent("99thdc.afk.activated").setStyle(Style.EMPTY.setColor(Color.fromHex("#00AA00")).setBold(true)));
         }
     }
 
