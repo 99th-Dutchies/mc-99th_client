@@ -81,6 +81,15 @@ public class InventoryInfo
             if(invStack.isItemEqual(dispStack) && invStack.getCount() > 0) {
                 dispStack.setCount(dispStack.getCount() + invStack.getCount());
             }
+            // Handle Armour
+            Iterable<ItemStack> armor = mc.player.getArmorInventoryList();
+            for(ItemStack armorStack : armor) {
+                if(!armorStack.isEmpty()) {
+                    if (armorStack.isItemEqual(dispStack) && armorStack.getCount() > 0) {
+                        dispStack.setCount(dispStack.getCount() + armorStack.getCount());
+                    }
+                }
+            }
 
             dispStack.setCount(dispStack.getCount() - 1);
 
