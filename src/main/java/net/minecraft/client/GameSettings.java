@@ -299,6 +299,7 @@ public class GameSettings
     public HealthIndicator healthIndicator = HealthIndicator.OFF;
     public ShowToasts showToasts = ShowToasts.ALL;
     public PotionIcons potionIcons = PotionIcons.NORMAL;
+    public boolean tntTimer = true;
     public boolean potionTimer = true;
     public boolean armorBreakWarning = false;
     public boolean outOfBlocksWarning = false;
@@ -1865,6 +1866,11 @@ public class GameSettings
             }
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.TNT_TIMER)
+        {
+            this.tntTimer = !this.tntTimer;
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.POTION_TIMER)
         {
             this.potionTimer = !this.potionTimer;
@@ -3089,6 +3095,11 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("tntTimer") && astring.length >= 2)
+                    {
+                        this.tntTimer = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("potionTimer") && astring.length >= 2)
                     {
                         this.potionTimer = Boolean.valueOf(astring[1]);
@@ -3276,6 +3287,7 @@ public class GameSettings
             printwriter.println("healthIndicator<:>" + this.healthIndicator.func_238162_a_());
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
             printwriter.println("potionIcons<:>" + this.potionIcons.func_238162_a_());
+            printwriter.println("tntTimer<:>" + this.tntTimer);
             printwriter.println("potionTimer<:>" + this.potionTimer);
             printwriter.println("armorBreakWarning<:>" + this.armorBreakWarning);
             printwriter.println("outOfBlocksWarning<:>" + this.outOfBlocksWarning);
@@ -3465,6 +3477,7 @@ public class GameSettings
         this.healthIndicator = HealthIndicator.OFF;
         this.showToasts = ShowToasts.ALL;
         this.potionIcons = PotionIcons.NORMAL;
+        this.tntTimer = true;
         this.potionTimer = true;
         this.armorBreakWarning = false;
         this.outOfBlocksWarning = false;

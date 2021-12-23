@@ -2,6 +2,7 @@ package net.minecraft.client.renderer.entity;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.entity.item.TNTEntity;
@@ -40,8 +41,10 @@ public class TNTRenderer extends EntityRenderer<TNTEntity>
         matrixStackIn.pop();
         super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
 
-        String fuseTime = (((entityIn.getFuse() - partialTicks) / 20.00) + "0000").substring(0,4);
-        this.renderName(entityIn, new StringTextComponent(fuseTime), matrixStackIn, bufferIn, packedLightIn);
+        if(Minecraft.getInstance().gameSettings.tntTimer) {
+            String fuseTime = (((entityIn.getFuse() - partialTicks) / 20.00) + "0000").substring(0, 4);
+            this.renderName(entityIn, new StringTextComponent(fuseTime), matrixStackIn, bufferIn, packedLightIn);
+        }
     }
 
     /**
