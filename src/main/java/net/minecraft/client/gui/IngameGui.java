@@ -77,10 +77,10 @@ import net.optifine.CustomColors;
 import net.optifine.CustomItems;
 import net.optifine.TextureAnimations;
 import net.optifine.reflect.Reflector;
-import nl._99th_dutchclient.chat.ChatFilterListener;
-import nl._99th_dutchclient.hud.*;
-import nl._99th_dutchclient.chat.ChatTriggerListener;
-import nl._99th_dutchclient.settings.PotionIcons;
+import nl._99th_client.chat.ChatFilterListener;
+import nl._99th_client.hud.*;
+import nl._99th_client.chat.ChatTriggerListener;
+import nl._99th_client.settings.PotionIcons;
 
 public class IngameGui extends AbstractGui
 {

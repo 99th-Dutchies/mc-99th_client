@@ -304,7 +304,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.NibbleArray;
 import net.minecraft.world.lighting.WorldLightManager;
 import net.minecraft.world.storage.MapData;
-import nl._99th_dutchclient.chat.EventTrigger;
+import nl._99th_client.chat.EventTrigger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

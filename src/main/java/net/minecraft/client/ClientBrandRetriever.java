@@ -1,6 +1,6 @@
 package net.minecraft.client;
 
-import nl._99th_dutchclient.Config;
+import nl._99th_client.Config;
 
 public class ClientBrandRetriever
 {

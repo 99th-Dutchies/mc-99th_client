@@ -40,8 +40,8 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
-import nl._99th_dutchclient.chat.ChatFilter;
-import nl._99th_dutchclient.util.ImageClipboardHelper;
+import nl._99th_client.chat.ChatFilter;
+import nl._99th_client.util.ImageClipboardHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

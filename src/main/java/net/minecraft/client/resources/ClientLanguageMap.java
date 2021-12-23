@@ -46,7 +46,7 @@ public class ClientLanguageMap extends LanguageMap
                     ResourceLocation resourcelocation = new ResourceLocation(s1, s);
                     func_239498_a_(p_239497_0_.getAllResources(resourcelocation), map);
                     net.optifine.Lang.loadResources(p_239497_0_, language.getCode(), map);
-                    nl._99th_dutchclient.Lang.loadResources(p_239497_0_, language.getCode(), map);
+                    nl._99th_client.Lang.loadResources(p_239497_0_, language.getCode(), map);
                 }
                 catch (FileNotFoundException filenotfoundexception)
                 {

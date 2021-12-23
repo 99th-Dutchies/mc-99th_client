@@ -10,7 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
-import nl._99th_dutchclient.settings.ShowToasts;
+import nl._99th_client.settings.ShowToasts;
 
 public class ToastGui extends AbstractGui
 {

@@ -7,8 +7,8 @@ import net.minecraft.realms.RealmsBridgeScreen;
 import net.minecraft.util.SharedConstants;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.TranslationTextComponent;
-import nl._99th_dutchclient.Lang;
-import nl._99th_dutchclient.gui.screen.Options99th_DutchClientScreen;
+import nl._99th_client.Lang;
+import nl._99th_client.gui.screen.Options99th_ClientScreen;
 
 public class IngameMenuScreen extends Screen
 {
@@ -76,9 +76,9 @@ public class IngameMenuScreen extends Screen
         {
             this.minecraft.displayGuiScreen(new OptionsScreen(this, this.minecraft.gameSettings));
         }));
-        this.addButton(new Button(this.width / 2 + 4, this.height / 4 + 120 + -16, 98, 20, new TranslationTextComponent(Lang.get("99thdc.title")), (p_213055_1_) ->
+        this.addButton(new Button(this.width / 2 + 4, this.height / 4 + 120 + -16, 98, 20, new TranslationTextComponent(Lang.get("99thclient.title")), (p_213055_1_) ->
         {
-            this.minecraft.displayGuiScreen(new Options99th_DutchClientScreen(this, this.minecraft.gameSettings));
+            this.minecraft.displayGuiScreen(new Options99th_ClientScreen(this, this.minecraft.gameSettings));
         }));
         button.active = this.minecraft.isSingleplayer() && !this.minecraft.getIntegratedServer().getPublic();
         Button button1 = this.addButton(new Button(this.width / 2 - 102, this.height / 4 + 168 + -16, 204, 20, new TranslationTextComponent("menu.returnToMenu"), (button2) ->

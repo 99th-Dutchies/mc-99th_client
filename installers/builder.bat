@@ -1,7 +1,7 @@
 @Echo off
 
 Rem %1 = base minecraft version : 1.16.5
-Rem %2 = name .jar file : 99th_DutchClient-0.0.1
+Rem %2 = name .jar file : 99th_Client-0.0.1
 
 set baseversion=%1
 set jarfile=%2

@@ -24,8 +24,8 @@ import net.minecraft.world.LightType;
 import net.optifine.reflect.Reflector;
 import net.optifine.reflect.ReflectorForge;
 import net.optifine.util.Either;
-import nl._99th_dutchclient.settings.HealthIndicator;
-import nl._99th_dutchclient.util.MCStringUtils;
+import nl._99th_client.settings.HealthIndicator;
+import nl._99th_client.util.MCStringUtils;
 
 public abstract class EntityRenderer<T extends Entity> implements net.optifine.entity.model.IEntityRenderer
 {

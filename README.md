@@ -1,4 +1,4 @@
-# 99th_DutchClient
+# 99th_Client
 
 ## Colors and stuff
 Neutral blue: `rgb(58,169,255)`  

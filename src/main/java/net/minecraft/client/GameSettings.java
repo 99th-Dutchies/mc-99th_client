@@ -9,13 +9,8 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.annotation.Nullable;
@@ -66,13 +61,13 @@ import net.optifine.reflect.Reflector;
 import net.optifine.shaders.Shaders;
 import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
-import nl._99th_dutchclient.chat.ChatFilter;
-import nl._99th_dutchclient.chat.ChatTrigger;
-import nl._99th_dutchclient.chat.EventTrigger;
-import nl._99th_dutchclient.chat.Hotkey;
-import nl._99th_dutchclient.command.CustomCommand;
-import nl._99th_dutchclient.settings.*;
-import nl._99th_dutchclient.util.MCStringUtils;
+import nl._99th_client.chat.ChatFilter;
+import nl._99th_client.chat.ChatTrigger;
+import nl._99th_client.chat.EventTrigger;
+import nl._99th_client.chat.Hotkey;
+import nl._99th_client.command.CustomCommand;
+import nl._99th_client.settings.*;
+import nl._99th_client.util.MCStringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -285,7 +280,7 @@ public class GameSettings
     private File optionsFileOF;
     public KeyBinding _99thKeyBindFreelook;
     public KeyBinding _99thKeyBindCommand;
-    private File optionsFile99thdc;
+    private File optionsFile99thclient;
     public boolean showLocationHUD = true;
     public boolean showInventoryHUD = true;
     public boolean showSystemHUD = true;
@@ -349,19 +344,37 @@ public class GameSettings
         this.renderDistanceChunks = mcIn.isJava64bit() ? 12 : 8;
         this.syncChunkWrites = Util.getOSType() == Util.OS.WINDOWS;
         this.optionsFileOF = new File(mcDataDir, "optionsof.txt");
-        this.optionsFile99thdc = new File(mcDataDir, nl._99th_dutchclient.Config.configFile);
+        this.fix99thclientOptionsFile(mcDataDir);
+        this.optionsFile99thclient = new File(mcDataDir, nl._99th_client.Config.configFile);
         this.framerateLimit = (int)AbstractOption.FRAMERATE_LIMIT.getMaxValue();
         this.ofKeyBindZoom = new KeyBinding("of.key.zoom", 67, "key.categories.misc");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this.ofKeyBindZoom);
         KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
-        this._99thKeyBindFreelook = new KeyBinding("99thdc.key.freelook", 71, "key.categories.misc");
-        this._99thKeyBindCommand = new KeyBinding("99thdc.key.command", 92, "key.categories.multiplayer");
+        this._99thKeyBindFreelook = new KeyBinding("99thclient.key.freelook", 71, "key.categories.misc");
+        this._99thKeyBindCommand = new KeyBinding("99thclient.key.command", 92, "key.categories.multiplayer");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindFreelook);
         this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindCommand);
         KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook, this._99thKeyBindCommand});
         this.renderDistanceChunks = 8;
         this.loadOptions();
         Config.initGameSettings(this);
+    }
+
+    private void fix99thclientOptionsFile(File mcDataDir) {
+        File newF = new File(mcDataDir, nl._99th_client.Config.configFile);
+        if(newF.exists()) return;
+
+        for(String oldFile : nl._99th_client.Config.oldConfigFiles) {
+            File oldF = new File(mcDataDir, oldFile);
+
+            if(oldF.exists()) {
+                try {
+                    Files.copy(oldF, newF);
+                } catch (IOException e) {
+                    LOGGER.error(e);
+                }
+            }
+        }
     }
 
     public float getTextBackgroundOpacity(float opacity)
@@ -936,7 +949,7 @@ public class GameSettings
         }
 
         this.loadOfOptions();
-        this.load99thdcOptions();
+        this.load99thclientOptions();
     }
 
     private CompoundNBT dataFix(CompoundNBT nbt)
@@ -1098,7 +1111,7 @@ public class GameSettings
             }
 
             this.saveOfOptions();
-            this.save99thdcOptions();
+            this.save99thclientOptions();
             this.sendSettingsToServer();
         }
     }
@@ -1754,7 +1767,7 @@ public class GameSettings
         }
     }
 
-    public void setOptionValue99thdc(AbstractOption p_setOptionValueOF_1_, int p_setOptionValueOF_2_)
+    public void setOptionValue99thclient(AbstractOption p_setOptionValueOF_1_, int p_setOptionValueOF_2_)
     {
         if (p_setOptionValueOF_1_ == AbstractOption.SHOW_LOCATION_HUD)
         {
@@ -2950,7 +2963,7 @@ public class GameSettings
         }
     }
 
-    public void load99thdcOptions()
+    public void load99thclientOptions()
     {
         boolean didResetChatTriggers = false;
         boolean didResetChatFilters = false;
@@ -2959,7 +2972,7 @@ public class GameSettings
         boolean didResetCustomCommands = false;
         try
         {
-            File file1 = this.optionsFile99thdc;
+            File file1 = this.optionsFile99thclient;
 
             if (!file1.exists())
             {
@@ -3236,7 +3249,7 @@ public class GameSettings
                             didResetHotkeys = true;
                         }
 
-                        KeyBinding kb = new KeyBinding("99thdc.hotkeys.hotkey" + this._99thHotkeys.size(), -1, "key.categories.99thdchotkeys");
+                        KeyBinding kb = new KeyBinding("99thclient.hotkeys.hotkey" + this._99thHotkeys.size(), -1, "key.categories.99thclienthotkeys");
                         kb.bind(InputMappings.getInputByName(astring[1]));
 
                         this._99thHotkeys.add(new Hotkey(kb, astring[2], Boolean.valueOf(astring[3])));
@@ -3269,11 +3282,11 @@ public class GameSettings
         }
     }
 
-    public void save99thdcOptions()
+    public void save99thclientOptions()
     {
         try
         {
-            PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile99thdc), StandardCharsets.UTF_8));
+            PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile99thclient), StandardCharsets.UTF_8));
             printwriter.println("showLocationHUD<:>" + this.showLocationHUD);
             printwriter.println("showInventoryHUD<:>" + this.showInventoryHUD);
             printwriter.println("showSystemHUD<:>" + this.showSystemHUD);

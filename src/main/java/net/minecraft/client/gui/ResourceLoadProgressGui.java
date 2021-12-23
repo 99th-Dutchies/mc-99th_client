@@ -27,7 +27,7 @@ import net.optifine.util.PropertiesOrdered;
 
 public class ResourceLoadProgressGui extends LoadingGui
 {
-    private static final ResourceLocation LOGO_TEXTURE = new ResourceLocation(nl._99th_dutchclient.Config.resourceBasePath + "/banner.jpg");
+    private static final ResourceLocation LOGO_TEXTURE = new ResourceLocation(nl._99th_client.Config.resourceBasePath + "/banner.jpg");
     private static final int field_238627_b_ = ColorHelper.PackedColor.packColor(255, 239, 50, 61);
     private static final int field_238628_c_ = field_238627_b_ & 16777215;
     private final Minecraft mc;
