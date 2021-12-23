@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.command.arguments.BlockPredicateArgument;
 import net.minecraft.command.arguments.BlockStateParser;
@@ -58,13 +59,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentUtils;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -382,6 +377,14 @@ public final class ItemStack
                     }
 
                     this.setDamage(0);
+                } else {
+                    if(getDamage() >= getMaxDamage() - 5) {
+                        Minecraft.getInstance().ingameGUI.setClientTitle(
+                                new TranslationTextComponent(this.getTranslationKey())
+                                        .append(new TranslationTextComponent(" almost broken"))
+                                        .setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true))
+                        );
+                    }
                 }
             }
         }
