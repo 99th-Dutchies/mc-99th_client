@@ -94,7 +94,13 @@ public class InventoryInfo
             dispStack.setCount(dispStack.getCount() - 1);
 
             if(dispStack.getCount() > 0) {
-                mc.ingameGUI.renderInventoryItem(j1, k1, partialTicks, mc.player, dispStack, dispStack.getCount() + "");
+                String t = "";
+                if(dispStack.getCount() >= 1000) {
+                    t = (dispStack.getCount() / 1000) + "K";
+                } else {
+                    t = dispStack.getCount() + "";
+                }
+                mc.ingameGUI.renderInventoryItem(j1, k1, partialTicks, mc.player, dispStack, t);
                 i++;
             }
         }
