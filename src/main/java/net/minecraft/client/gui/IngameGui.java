@@ -638,7 +638,7 @@ public class IngameGui extends AbstractGui
                     {
                         ++j;
                         k = k - 25 * j;
-                        l += 26;
+                        l += 26 + this.getFontRenderer().FONT_HEIGHT;
                     }
 
                     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
