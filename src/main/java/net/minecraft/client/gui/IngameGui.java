@@ -411,15 +411,15 @@ public class IngameGui extends AbstractGui
                 float f4 = (float)this.clientTitlesTimer - partialTicks;
                 int j1 = 255;
 
-                if (this.clientTitlesTimer > this.titleFadeOut + this.titleDisplayTime)
+                if (this.clientTitlesTimer > 20 + 70)
                 {
-                    float f5 = (float)(this.titleFadeIn + this.titleDisplayTime + this.titleFadeOut) - f4;
+                    float f5 = (float)(10 + 70 + 20) - f4;
                     j1 = (int)(f5 * 255.0F / (float)this.titleFadeIn);
                 }
 
-                if (this.clientTitlesTimer <= this.titleFadeOut)
+                if (this.clientTitlesTimer <= 20)
                 {
-                    j1 = (int)(f4 * 255.0F / (float)this.titleFadeOut);
+                    j1 = (int)(f4 * 255.0F / (float)20);
                 }
 
                 j1 = MathHelper.clamp(j1, 0, 255);
@@ -1619,12 +1619,12 @@ public class IngameGui extends AbstractGui
         else
         {
             if(this.displayedClientTitle != null && clientTitleText.getString().equals(this.displayedClientTitle.getString())) {
-                if (this.clientTitlesTimer <= this.titleFadeOut + this.titleDisplayTime) {
-                    this.clientTitlesTimer = this.titleDisplayTime + this.titleFadeOut;
+                if (this.clientTitlesTimer <= 20 + 70) {
+                    this.clientTitlesTimer = 70 + 20;
                 }
             } else {
                 this.displayedClientTitle = clientTitleText;
-                this.clientTitlesTimer = this.titleFadeIn + this.titleDisplayTime + this.titleFadeOut;
+                this.clientTitlesTimer = 10 + 70 + 20;
             }
         }
     }
