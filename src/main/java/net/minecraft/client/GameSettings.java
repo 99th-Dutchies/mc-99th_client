@@ -299,6 +299,7 @@ public class GameSettings
     public HealthIndicator healthIndicator = HealthIndicator.OFF;
     public ShowToasts showToasts = ShowToasts.ALL;
     public PotionIcons potionIcons = PotionIcons.NORMAL;
+    public boolean potionTimer = true;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
     public boolean resourcepackOptimization = false;
@@ -1862,6 +1863,11 @@ public class GameSettings
             }
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.POTION_TIMER)
+        {
+            this.potionTimer = !this.potionTimer;
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
         {
             this.tablistPing = !this.tablistPing;
@@ -3071,6 +3077,11 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("potionTimer") && astring.length >= 2)
+                    {
+                        this.potionTimer = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("tablistPing") && astring.length >= 2)
                     {
                         this.tablistPing = Boolean.valueOf(astring[1]);
@@ -3243,6 +3254,7 @@ public class GameSettings
             printwriter.println("healthIndicator<:>" + this.healthIndicator.func_238162_a_());
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
             printwriter.println("potionIcons<:>" + this.potionIcons.func_238162_a_());
+            printwriter.println("potionTimer<:>" + this.potionTimer);
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
@@ -3429,6 +3441,7 @@ public class GameSettings
         this.healthIndicator = HealthIndicator.OFF;
         this.showToasts = ShowToasts.ALL;
         this.potionIcons = PotionIcons.NORMAL;
+        this.potionTimer = true;
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);

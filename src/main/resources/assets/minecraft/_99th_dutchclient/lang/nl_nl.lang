@@ -40,6 +40,7 @@
 99thdc.options.SHOW_CPS_HUD=Toon CPS
 99thdc.options.SHOW_LOOKING_HUD=Toon Kijkend-Naar HUD
 99thdc.options.FULL_BRIGHTNESS=Maximale Helderheid
+99thdc.options.POTION_TIMER=Potion Timers
 99thdc.options.ITEMS_HUD.items=Items in HUD
 99thdc.options.INFINITE_CHAT=Oneindige Chat
 99thdc.options.CHAT_TIMESTAMP=Toon Tijd in Chat

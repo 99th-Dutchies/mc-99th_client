@@ -727,6 +727,14 @@ public abstract class AbstractOption
         p_lambda$static$124_0_.fullBrightness = p_lambda$static$124_1_;
     });
 
+    public static final BooleanOption POTION_TIMER = new BooleanOption("99thdc.options.POTION_TIMER", (p_lambda$static$123_0_) ->
+    {
+        return p_lambda$static$123_0_.potionTimer;
+    }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
+    {
+        p_lambda$static$124_0_.potionTimer = p_lambda$static$124_1_;
+    });
+
     public static final BooleanOption INFINITE_CHAT = new BooleanOption("99thdc.options.INFINITE_CHAT", (p_lambda$static$125_0_) ->
     {
         return p_lambda$static$125_0_.infiniteChat;

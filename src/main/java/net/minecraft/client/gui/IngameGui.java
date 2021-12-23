@@ -638,7 +638,7 @@ public class IngameGui extends AbstractGui
                     {
                         ++j;
                         k = k - 25 * j;
-                        l += 26 + this.getFontRenderer().FONT_HEIGHT;
+                        l += 26 + (this.mc.gameSettings.potionTimer ? this.getFontRenderer().FONT_HEIGHT : 0);
                     }
 
                     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -670,13 +670,15 @@ public class IngameGui extends AbstractGui
                         RenderSystem.color4f(1.0F, 1.0F, 1.0F, f1);
                         blit(matrixStack, j1 + 3, k1 + 3, this.getBlitOffset(), 18, 18, textureatlassprite);
 
-                        int duration = (int) (finalEffectinstance.getDuration() / 20.0);
-                        String durationString = ((int) Math.floor(duration / 60.0)) + ":";
+                        if(this.mc.gameSettings.potionTimer) {
+                            int duration = (int) (finalEffectinstance.getDuration() / 20.0);
+                            String durationString = ((int) Math.floor(duration / 60.0)) + ":";
 
-                        String s = "0" + (duration % 60);
-                        durationString += s.substring(s.length() - 2);
-                        int w = this.mc.fontRenderer.getStringWidth(durationString);
-                        this.mc.fontRenderer.drawStringWithShadow(matrixStack, durationString, j1+12 - w/2, k1 + 25, -1);
+                            String s = "0" + (duration % 60);
+                            durationString += s.substring(s.length() - 2);
+                            int w = this.mc.fontRenderer.getStringWidth(durationString);
+                            this.mc.fontRenderer.drawStringWithShadow(matrixStack, durationString, j1 + 12 - w / 2, k1 + 25, -1);
+                        }
                     });
 
                     if (Reflector.IForgeEffectInstance_renderHUDEffect.exists())
