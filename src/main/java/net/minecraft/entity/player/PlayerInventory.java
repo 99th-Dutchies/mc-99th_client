@@ -722,7 +722,7 @@ public class PlayerInventory implements IInventory, INameable
                             Minecraft.getInstance().ingameGUI.setClientTitle(
                                     new TranslationTextComponent(itemstack.getTranslationKey())
                                             .append(new TranslationTextComponent(" broke"))
-                                            .setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true))
+                                            .setStyle(Style.EMPTY.setColor(Color.fromHex("#FFCC00")).setBold(true))
                             );
                         }
                     });

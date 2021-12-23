@@ -382,7 +382,7 @@ public final class ItemStack
                         Minecraft.getInstance().ingameGUI.setClientTitle(
                                 new TranslationTextComponent(this.getTranslationKey())
                                         .append(new TranslationTextComponent(" almost broken"))
-                                        .setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true))
+                                        .setStyle(Style.EMPTY.setColor(Color.fromHex("#FFCC00")).setBold(true))
                         );
                     }
                 }
