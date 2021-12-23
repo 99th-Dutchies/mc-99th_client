@@ -7,6 +7,7 @@ import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -21,7 +22,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.*;
 import net.minecraft.world.World;
 
 public class BlockItem extends Item
@@ -97,6 +98,10 @@ public class BlockItem extends Item
                     if (playerentity == null || !playerentity.abilities.isCreativeMode)
                     {
                         itemstack.shrink(1);
+
+                        if(itemstack.getCount() == 9 && blockstate.isSolid()) {
+                            Minecraft.getInstance().ingameGUI.setClientTitle(new TranslationTextComponent("Low on Blocks!").setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true)));
+                        }
                     }
 
                     return ActionResultType.func_233537_a_(world.isRemote);
