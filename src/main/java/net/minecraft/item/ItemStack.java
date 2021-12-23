@@ -377,7 +377,7 @@ public final class ItemStack
                     }
 
                     this.setDamage(0);
-                } else {
+                } else if(Minecraft.getInstance().gameSettings.armorBreakWarning) {
                     if(getDamage() >= getMaxDamage() - 5) {
                         Minecraft.getInstance().ingameGUI.setClientTitle(
                                 new TranslationTextComponent(this.getTranslationKey())

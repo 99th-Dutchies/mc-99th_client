@@ -300,6 +300,8 @@ public class GameSettings
     public ShowToasts showToasts = ShowToasts.ALL;
     public PotionIcons potionIcons = PotionIcons.NORMAL;
     public boolean potionTimer = true;
+    public boolean armorBreakWarning = false;
+    public boolean outOfBlocksWarning = false;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
     public boolean resourcepackOptimization = false;
@@ -1868,6 +1870,16 @@ public class GameSettings
             this.potionTimer = !this.potionTimer;
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.ARMOR_BREAK_WARNING)
+        {
+            this.armorBreakWarning = !this.armorBreakWarning;
+        }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.OUT_OF_BLOCKS_WARNING)
+        {
+            this.outOfBlocksWarning = !this.outOfBlocksWarning;
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
         {
             this.tablistPing = !this.tablistPing;
@@ -3082,6 +3094,16 @@ public class GameSettings
                         this.potionTimer = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("armorBreakWarning") && astring.length >= 2)
+                    {
+                        this.armorBreakWarning = Boolean.valueOf(astring[1]);
+                    }
+
+                    if (astring[0].equals("outOfBlocksWarning") && astring.length >= 2)
+                    {
+                        this.outOfBlocksWarning = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("tablistPing") && astring.length >= 2)
                     {
                         this.tablistPing = Boolean.valueOf(astring[1]);
@@ -3255,6 +3277,8 @@ public class GameSettings
             printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
             printwriter.println("potionIcons<:>" + this.potionIcons.func_238162_a_());
             printwriter.println("potionTimer<:>" + this.potionTimer);
+            printwriter.println("armorBreakWarning<:>" + this.armorBreakWarning);
+            printwriter.println("outOfBlocksWarning<:>" + this.outOfBlocksWarning);
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
@@ -3442,6 +3466,8 @@ public class GameSettings
         this.showToasts = ShowToasts.ALL;
         this.potionIcons = PotionIcons.NORMAL;
         this.potionTimer = true;
+        this.armorBreakWarning = false;
+        this.outOfBlocksWarning = false;
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);

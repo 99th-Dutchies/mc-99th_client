@@ -735,6 +735,22 @@ public abstract class AbstractOption
         p_lambda$static$124_0_.potionTimer = p_lambda$static$124_1_;
     });
 
+    public static final BooleanOption ARMOR_BREAK_WARNING = new BooleanOption("99thdc.options.ARMOR_BREAK_WARNING", (p_lambda$static$123_0_) ->
+    {
+        return p_lambda$static$123_0_.armorBreakWarning;
+    }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
+    {
+        p_lambda$static$124_0_.armorBreakWarning = p_lambda$static$124_1_;
+    });
+
+    public static final BooleanOption OUT_OF_BLOCKS_WARNING = new BooleanOption("99thdc.options.OUT_OF_BLOCKS_WARNING", (p_lambda$static$123_0_) ->
+    {
+        return p_lambda$static$123_0_.outOfBlocksWarning;
+    }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
+    {
+        p_lambda$static$124_0_.outOfBlocksWarning = p_lambda$static$124_1_;
+    });
+
     public static final BooleanOption INFINITE_CHAT = new BooleanOption("99thdc.options.INFINITE_CHAT", (p_lambda$static$125_0_) ->
     {
         return p_lambda$static$125_0_.infiniteChat;

@@ -79,7 +79,6 @@ public class OptionsHUDGuiScreen extends SettingsScreen
 
         this.addButton(AbstractOption.POTION_ICONS.createWidget(this.minecraft.gameSettings,this.width / 2 - 155, this.height / 6 + 120, 150));
 
-        this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 144, 220, 20, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"));
         this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 120, 150, 20, AbstractOption.POTION_TIMER, AbstractOption.POTION_TIMER.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.POTION_TIMER.nextValue(this.minecraft.gameSettings);
@@ -87,6 +86,21 @@ public class OptionsHUDGuiScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 144, 150, 20, AbstractOption.ARMOR_BREAK_WARNING, AbstractOption.ARMOR_BREAK_WARNING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.ARMOR_BREAK_WARNING.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.ARMOR_BREAK_WARNING.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 144, 150, 20, AbstractOption.OUT_OF_BLOCKS_WARNING, AbstractOption.OUT_OF_BLOCKS_WARNING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.OUT_OF_BLOCKS_WARNING.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.OUT_OF_BLOCKS_WARNING.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 168, 220, 20, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"));
         this.itemHUDitemsField.setMaxStringLength(1230);
         this.itemHUDitemsField.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings.itemHUDitems));
         this.itemHUDitemsField.setResponder((p_214319_1_) -> {
@@ -104,7 +118,7 @@ public class OptionsHUDGuiScreen extends SettingsScreen
     {
         this.renderBackground(matrixStack);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 15, 16777215);
-        drawString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"), this.width / 2 - 149, this.height / 6 + 150, -1);
+        drawString(matrixStack, this.font, new TranslationTextComponent("99thdc.options.ITEMS_HUD.items"), this.width / 2 - 149, this.height / 6 + 174, -1);
         this.itemHUDitemsField.render(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }

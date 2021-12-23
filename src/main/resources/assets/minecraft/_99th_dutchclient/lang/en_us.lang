@@ -41,6 +41,8 @@
 99thdc.options.SHOW_LOOKING_HUD=Show Looking-At HUD
 99thdc.options.FULL_BRIGHTNESS=Full Brightness
 99thdc.options.POTION_TIMER=Potion Timers
+99thdc.options.ARMOR_BREAK_WARNING=Armor Break Warning
+99thdc.options.OUT_OF_BLOCKS_WARNING=Out-of-blocks Warning
 99thdc.options.ITEMS_HUD.items=Items in HUD
 99thdc.options.INFINITE_CHAT=Infinite Chat
 99thdc.options.CHAT_TIMESTAMP=Show Time in Chat

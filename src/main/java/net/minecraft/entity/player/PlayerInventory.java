@@ -718,11 +718,13 @@ public class PlayerInventory implements IInventory, INameable
                     {
                         p_214023_1_.sendBreakAnimation(EquipmentSlotType.fromSlotTypeAndIndex(EquipmentSlotType.Group.ARMOR, j));
 
-                        Minecraft.getInstance().ingameGUI.setClientTitle(
-                                new TranslationTextComponent(itemstack.getTranslationKey())
-                                        .append(new TranslationTextComponent(" broke"))
-                                        .setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true))
-                        );
+                        if(Minecraft.getInstance().gameSettings.armorBreakWarning) {
+                            Minecraft.getInstance().ingameGUI.setClientTitle(
+                                    new TranslationTextComponent(itemstack.getTranslationKey())
+                                            .append(new TranslationTextComponent(" broke"))
+                                            .setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true))
+                            );
+                        }
                     });
                 }
             }
