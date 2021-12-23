@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
@@ -21,7 +22,9 @@ import net.minecraft.tags.ITag;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.INameable;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.text.Color;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
@@ -714,6 +717,12 @@ public class PlayerInventory implements IInventory, INameable
                     itemstack.damageItem((int)p_234563_2_, this.player, (p_214023_1_) ->
                     {
                         p_214023_1_.sendBreakAnimation(EquipmentSlotType.fromSlotTypeAndIndex(EquipmentSlotType.Group.ARMOR, j));
+
+                        Minecraft.getInstance().ingameGUI.setClientTitle(
+                                new TranslationTextComponent(itemstack.getTranslationKey())
+                                        .append(new TranslationTextComponent(" broke"))
+                                        .setStyle(Style.EMPTY.setColor(Color.fromHex("#AA5500")).setBold(true))
+                        );
                     });
                 }
             }
