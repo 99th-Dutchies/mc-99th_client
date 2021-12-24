@@ -1706,15 +1706,15 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
                         }
                     }
 
-                    //if (this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK)
-                    //{
-                        //BlockHighlight.highlightTileEntity(matrixStackIn, this.renderTypeTextures, irendertypebuffer1, irendertypebuffer$impl);
-                    //}
-
                     TileEntityRendererDispatcher.instance.renderTileEntity(tileentity1, partialTicks, matrixStackIn, irendertypebuffer1);
                     matrixStackIn.pop();
                     ++this.countTileEntitiesRendered;
                 }
+            }
+
+            if (this.mc.gameSettings.blockHighlight && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK)
+            {
+                BlockHighlight.highlightTileEntity(matrixStackIn, this.renderTypeTextures, irendertypebuffer$impl, irendertypebuffer$impl);
             }
         }
 
