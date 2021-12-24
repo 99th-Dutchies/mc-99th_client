@@ -86,21 +86,35 @@ public class OptionsHUDGuiScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 144, 150, 20, AbstractOption.ARMOR_BREAK_WARNING, AbstractOption.ARMOR_BREAK_WARNING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 144, 150, 20, AbstractOption.BLOCK_HIGHLIGHT, AbstractOption.BLOCK_HIGHLIGHT.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.BLOCK_HIGHLIGHT.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.BLOCK_HIGHLIGHT.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 144, 150, 20, AbstractOption.TNT_TIMER, AbstractOption.TNT_TIMER.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.TNT_TIMER.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.TNT_TIMER.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 168, 150, 20, AbstractOption.ARMOR_BREAK_WARNING, AbstractOption.ARMOR_BREAK_WARNING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.ARMOR_BREAK_WARNING.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.ARMOR_BREAK_WARNING.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 144, 150, 20, AbstractOption.OUT_OF_BLOCKS_WARNING, AbstractOption.OUT_OF_BLOCKS_WARNING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        this.addButton(new OptionButton(this.width / 2 + 5, this.height / 6 + 168, 150, 20, AbstractOption.OUT_OF_BLOCKS_WARNING, AbstractOption.OUT_OF_BLOCKS_WARNING.func_238152_c_(this.gameSettings), (p_213105_1_) ->
         {
             AbstractOption.OUT_OF_BLOCKS_WARNING.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.OUT_OF_BLOCKS_WARNING.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
         }));
 
-        this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 168, 220, 20, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"));
+        this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 192, 220, 20, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"));
         this.itemHUDitemsField.setMaxStringLength(1230);
         this.itemHUDitemsField.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings.itemHUDitems));
         this.itemHUDitemsField.setResponder((p_214319_1_) -> {
@@ -118,7 +132,7 @@ public class OptionsHUDGuiScreen extends SettingsScreen
     {
         this.renderBackground(matrixStack);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 15, 16777215);
-        drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"), this.width / 2 - 149, this.height / 6 + 174, -1);
+        drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"), this.width / 2 - 149, this.height / 6 + 198, -1);
         this.itemHUDitemsField.render(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
     }

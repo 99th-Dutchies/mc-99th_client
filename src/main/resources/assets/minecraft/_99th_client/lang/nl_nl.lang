@@ -49,6 +49,7 @@
 99thclient.options.CHAT_TIMESTAMP=Toon Tijd in Chat
 99thclient.options.TABLIST_PING=Ping in Tablist
 99thclient.options.DECODE_CHAT_MAGIC=Ontcijfer Chat Magic
+99thclient.options.BLOCK_HIGHLIGHT=Block Highlight
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Optimalisatie
 99thclient.options.DISCORDRPC_SHOW_SERVER=Toon in Discord
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=Uit

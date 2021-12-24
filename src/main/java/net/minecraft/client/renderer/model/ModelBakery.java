@@ -82,6 +82,8 @@ public class ModelBakery
     public static final RenderMaterial LOCATION_BANNER_BASE = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation("entity/banner_base"));
     public static final RenderMaterial LOCATION_SHIELD_BASE = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation("entity/shield_base"));
     public static final RenderMaterial LOCATION_SHIELD_NO_PATTERN = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation("entity/shield_base_nopattern"));
+    public static final RenderMaterial HIGHLIGHT_OVERLAY = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation("textures/highlight_overlay.png"));
+    public static final RenderType HIGHLIGHT_OVERLAY_TYPE = RenderType.getCrumbling(new ResourceLocation("textures/highlight_overlay.png"));
     public static final List<ResourceLocation> DESTROY_STAGES = IntStream.range(0, 10).mapToObj((p_lambda$static$0_0_) ->
     {
         return new ResourceLocation("block/destroy_stage_" + p_lambda$static$0_0_);
@@ -109,6 +111,7 @@ public class ModelBakery
         p_lambda$static$2_0_.add(LOCATION_BANNER_BASE);
         p_lambda$static$2_0_.add(LOCATION_SHIELD_BASE);
         p_lambda$static$2_0_.add(LOCATION_SHIELD_NO_PATTERN);
+        p_lambda$static$2_0_.add(HIGHLIGHT_OVERLAY);
 
         for (ResourceLocation resourcelocation : DESTROY_STAGES)
         {

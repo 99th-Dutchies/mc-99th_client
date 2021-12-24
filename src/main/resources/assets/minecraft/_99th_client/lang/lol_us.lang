@@ -49,6 +49,7 @@
 99thclient.options.CHAT_TIMESTAMP=Message Time in Chatz
 99thclient.options.TABLIST_PING=Other kitten's poing
 99thclient.options.DECODE_CHAT_MAGIC=Chat not goez brrr
+99thclient.options.BLOCK_HIGHLIGHT=Block Highlight
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Better Kitten Pack
 99thclient.options.DISCORDRPC_SHOW_SERVER=Show othr kittns
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=No

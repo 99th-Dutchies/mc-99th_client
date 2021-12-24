@@ -49,6 +49,7 @@
 99thclient.options.CHAT_TIMESTAMP=Time o' Postal
 99thclient.options.TABLIST_PING=Ship Speed in Shiplist
 99thclient.options.DECODE_CHAT_MAGIC=Decode Postal Witchery
+99thclient.options.BLOCK_HIGHLIGHT=Block Highlight
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Picture Pack Upgradin'
 99thclient.options.DISCORDRPC_SHOW_SERVER=Show yer mates
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=Keep yer secret

@@ -925,6 +925,14 @@ public abstract class AbstractOption
         p_lambda$static$132_0_.mc.fontRenderer.setDecodeChatMagic(p_lambda$static$132_1_);
     });
 
+    public static final BooleanOption BLOCK_HIGHLIGHT = new BooleanOption("99thclient.options.BLOCK_HIGHLIGHT", (p_lambda$static$131_0_) ->
+    {
+        return p_lambda$static$131_0_.blockHighlight;
+    }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
+    {
+        p_lambda$static$132_0_.blockHighlight = p_lambda$static$132_1_;
+    });
+
     public static final BooleanOption RESOURCEPACK_OPTIMIZATION = new BooleanOption("99thclient.options.RESOURCEPACK_OPTIMIZATION", (p_lambda$static$131_0_) ->
     {
         return p_lambda$static$131_0_.resourcepackOptimization;

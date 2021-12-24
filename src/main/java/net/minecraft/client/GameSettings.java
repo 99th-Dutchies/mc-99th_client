@@ -300,6 +300,7 @@ public class GameSettings
     public boolean outOfBlocksWarning = false;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
+    public boolean blockHighlight = false;
     public boolean resourcepackOptimization = false;
     public int timeTillAFK = 0;
     public String chatPrefix = "";
@@ -1910,6 +1911,11 @@ public class GameSettings
             this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
         }
 
+        if (p_setOptionValueOF_1_ == AbstractOption.BLOCK_HIGHLIGHT)
+        {
+            this.blockHighlight = !this.blockHighlight;
+        }
+
         if (p_setOptionValueOF_1_ == AbstractOption.RESOURCEPACK_OPTIMIZATION)
         {
             this.resourcepackOptimization = !this.resourcepackOptimization;
@@ -3141,6 +3147,11 @@ public class GameSettings
                         }
                     }
 
+                    if (astring[0].equals("blockHighlight") && astring.length >= 2)
+                    {
+                        this.blockHighlight = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("resourcepackOptimization") && astring.length >= 2)
                     {
                         this.resourcepackOptimization = Boolean.valueOf(astring[1]);
@@ -3306,6 +3317,7 @@ public class GameSettings
             printwriter.println("outOfBlocksWarning<:>" + this.outOfBlocksWarning);
             printwriter.println("tablistPing<:>" + this.tablistPing);
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
+            printwriter.println("blockHighlight<:>" + this.blockHighlight);
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
             printwriter.println("timeTillAFK<:>" + this.timeTillAFK);
             printwriter.println("chatPrefix<:>" + this.chatPrefix);
@@ -3497,6 +3509,7 @@ public class GameSettings
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
+        this.blockHighlight = false;
         this.resourcepackOptimization = false;
         this.timeTillAFK = 0;
         this.chatPrefix = "";

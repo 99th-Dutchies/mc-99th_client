@@ -150,6 +150,7 @@ import net.optifine.util.ChunkUtils;
 import net.optifine.util.MathUtils;
 import net.optifine.util.PairInt;
 import net.optifine.util.RenderChunkUtils;
+import nl._99th_client.BlockHighlight;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
@@ -1705,6 +1706,11 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
                         }
                     }
 
+                    //if (this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK)
+                    //{
+                        //BlockHighlight.highlightTileEntity(matrixStackIn, this.renderTypeTextures, irendertypebuffer1, irendertypebuffer$impl);
+                    //}
+
                     TileEntityRendererDispatcher.instance.renderTileEntity(tileentity1, partialTicks, matrixStackIn, irendertypebuffer1);
                     matrixStackIn.pop();
                     ++this.countTileEntitiesRendered;
@@ -1808,6 +1814,10 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
             }
         }
 
+        if (this.mc.gameSettings.blockHighlight && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK)
+        {
+            BlockHighlight.highlightBlock((BlockRayTraceResult)this.mc.objectMouseOver, this.world, this.renderTypeTextures, matrixStackIn, d0, d1, d2);
+        }
         this.renderOverlayDamaged = false;
         --renderEntitiesCounter;
         this.checkMatrixStack(matrixStackIn);
