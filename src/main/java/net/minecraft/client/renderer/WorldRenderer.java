@@ -150,7 +150,6 @@ import net.optifine.util.ChunkUtils;
 import net.optifine.util.MathUtils;
 import net.optifine.util.PairInt;
 import net.optifine.util.RenderChunkUtils;
-import nl._99th_client.BlockHighlight;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
@@ -1711,11 +1710,6 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
                     ++this.countTileEntitiesRendered;
                 }
             }
-
-            if (this.mc.gameSettings.blockHighlight && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK)
-            {
-                BlockHighlight.highlightTileEntity(matrixStackIn, this.renderTypeTextures, irendertypebuffer$impl, irendertypebuffer$impl);
-            }
         }
 
         synchronized (this.setTileEntities)
@@ -1814,10 +1808,6 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
             }
         }
 
-        if (this.mc.gameSettings.blockHighlight && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK)
-        {
-            BlockHighlight.highlightBlock((BlockRayTraceResult)this.mc.objectMouseOver, this.world, this.renderTypeTextures, matrixStackIn, d0, d1, d2);
-        }
         this.renderOverlayDamaged = false;
         --renderEntitiesCounter;
         this.checkMatrixStack(matrixStackIn);
@@ -3282,9 +3272,15 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
 
     private void drawSelectionBox(MatrixStack matrixStackIn, IVertexBuilder bufferIn, Entity entityIn, double xIn, double yIn, double zIn, BlockPos blockPosIn, BlockState blockStateIn)
     {
+        VoxelShape shape = blockStateIn.getShape(this.world, blockPosIn, ISelectionContext.forEntity(entityIn));
+
         if (!Config.isCustomEntityModels() || !CustomEntityModels.isCustomModel(blockStateIn))
         {
-            drawShape(matrixStackIn, bufferIn, blockStateIn.getShape(this.world, blockPosIn, ISelectionContext.forEntity(entityIn)), (double)blockPosIn.getX() - xIn, (double)blockPosIn.getY() - yIn, (double)blockPosIn.getZ() - zIn, 0.0F, 0.0F, 0.0F, 0.4F);
+            if(this.mc.gameSettings.blockHighlight) {
+                drawShapeBlockhighlight(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn);
+            } else {
+                drawShape(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn, 0.0F, 0.0F, 0.0F, 0.4F);
+            }
         }
     }
 
@@ -3313,6 +3309,75 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
             bufferIn.pos(matrix4f, (float)(p_lambda$drawShape$6_12_ + xIn), (float)(p_lambda$drawShape$6_14_ + yIn), (float)(p_lambda$drawShape$6_16_ + zIn)).color(red, green, blue, alpha).endVertex();
             bufferIn.pos(matrix4f, (float)(p_lambda$drawShape$6_18_ + xIn), (float)(p_lambda$drawShape$6_20_ + yIn), (float)(p_lambda$drawShape$6_22_ + zIn)).color(red, green, blue, alpha).endVertex();
         });
+    }
+
+    private static void drawShapeBlockhighlight(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn)
+    {
+        Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+        float outlineRed = 0.0F / 255.0F;
+        float outlineGreen = 0.0F / 255.0F;
+        float outlineBlue = 0.0F / 255.0F;
+        float outlineAlpha = 40.0F / 100.0F;
+        shapeIn.forEachEdge((p_lambda$drawShape$6_12_, p_lambda$drawShape$6_14_, p_lambda$drawShape$6_16_, p_lambda$drawShape$6_18_, p_lambda$drawShape$6_20_, p_lambda$drawShape$6_22_) ->
+        {
+            bufferIn.pos(matrix4f, (float)(p_lambda$drawShape$6_12_ + xIn), (float)(p_lambda$drawShape$6_14_ + yIn), (float)(p_lambda$drawShape$6_16_ + zIn)).color(outlineRed, outlineGreen, outlineBlue, outlineAlpha).endVertex();
+            bufferIn.pos(matrix4f, (float)(p_lambda$drawShape$6_18_ + xIn), (float)(p_lambda$drawShape$6_20_ + yIn), (float)(p_lambda$drawShape$6_22_ + zIn)).color(outlineRed, outlineGreen, outlineBlue, outlineAlpha).endVertex();
+        });
+
+        float red = 128.0F / 255.0F;
+        float green = 128.0F / 255.0F;
+        float blue = 128.0F / 255.0F;
+        float alpha = 50.0F / 100.0F;
+        float depth = 0.001F;
+        RenderTypeBuffers renderTypeBuffers = Minecraft.getInstance().getRenderTypeBuffers();
+        IRenderTypeBuffer.Impl bufferSource = renderTypeBuffers.getBufferSource();
+        IVertexBuilder rectBuffer = bufferSource.getBuffer(RenderType.getLightning());
+        float minX = (float)xIn;
+        float maxX = (float)(xIn + 1.0D);
+        float minY = (float)yIn;
+        float maxY = (float)(yIn + 1.0D);
+        rectBuffer.pos(matrix4f, minX, maxY, (float)zIn - depth).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX, maxY, (float)zIn - depth).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX, minY, (float)zIn - depth).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX, minY, (float)zIn - depth).color(red, green, blue, alpha)
+                .endVertex();
+        float nZ = (float)(zIn + 1.0D);
+        rectBuffer.pos(matrix4f, maxX, maxY, nZ + depth).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, minX, maxY, nZ + depth).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, minX, minY, nZ + depth).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, maxX, minY, nZ + depth).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, minX - depth, maxY, nZ).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, minX - depth, maxY, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX - depth, minY, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX - depth, minY, nZ).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, maxX + depth, minY, nZ).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, maxX + depth, minY, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX + depth, maxY, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX + depth, maxY, nZ).color(red, green, blue, alpha).endVertex();
+        rectBuffer.pos(matrix4f, maxX, maxY + depth, nZ).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX, maxY + depth, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX, maxY + depth, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX, maxY + depth, nZ).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX, minY - depth, nZ).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, minX, minY - depth, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX, minY - depth, (float)zIn).color(red, green, blue, alpha)
+                .endVertex();
+        rectBuffer.pos(matrix4f, maxX, minY - depth, nZ).color(red, green, blue, alpha)
+                .endVertex();
+        bufferSource.finish();
     }
 
     public static void drawBoundingBox(MatrixStack matrixStackIn, IVertexBuilder bufferIn, AxisAlignedBB aabbIn, float red, float green, float blue, float alpha)
