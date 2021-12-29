@@ -49,14 +49,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ITag;
 import net.minecraft.tags.ITagCollectionSupplier;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.CachedBlockInfo;
-import net.minecraft.util.Hand;
-import net.minecraft.util.IItemProvider;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.Util;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.*;
@@ -384,6 +377,8 @@ public final class ItemStack
                                         .append(new TranslationTextComponent(" almost broken"))
                                         .setStyle(Style.EMPTY.setColor(Color.fromHex("#FFCC00")).setBold(true))
                         );
+
+                        Minecraft.getInstance().player.playSound(SoundEvents.ENTITY_BAT_HURT, 1.0F, 1.0F);
                     }
                 }
             }
