@@ -7,9 +7,11 @@ import java.net.URI;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 
 import nl._99th_client.Config;
+import nl._99th_client.api.ApiClient;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONWriter;
 import org.json.simple.parser.JSONParser;
@@ -58,6 +60,7 @@ public class Installer {
         updateJson(dirMcVers, mcVerClient, dirMcLib, clientMCVer);
         updateLauncherJson(dirMc, mcVerClient, "launcher_profiles.json");
         updateLauncherJson(dirMc, mcVerClient, "launcher_profiles_microsoft_store.json");
+        ApiClient.post("installed", new HashMap());
     }
 
     private static void updateJson(File dirMcVers, String mcVerClient, File dirMcLib, String clientMCVer) throws IOException, ParseException {
