@@ -212,7 +212,9 @@ public class DiscordStatus
 
     public void close() {
         this.enabled = false;
-        this.worker.interrupt();
+        if(this.worker != null) {
+            this.worker.interrupt();
+        }
         DiscordRPC.INSTANCE.Discord_ClearPresence();
         DiscordRPC.INSTANCE.Discord_Shutdown();
     }
