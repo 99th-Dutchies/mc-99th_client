@@ -60,7 +60,9 @@ public class Installer {
         updateJson(dirMcVers, mcVerClient, dirMcLib, clientMCVer);
         updateLauncherJson(dirMc, mcVerClient, "launcher_profiles.json");
         updateLauncherJson(dirMc, mcVerClient, "launcher_profiles_microsoft_store.json");
-        ApiClient.post("installed", new HashMap());
+
+        ApiClient apiClient = new ApiClient();
+        apiClient.installed();
     }
 
     private static void updateJson(File dirMcVers, String mcVerClient, File dirMcLib, String clientMCVer) throws IOException, ParseException {

@@ -10,7 +10,15 @@ import java.util.*;
 public class ApiClient {
     private static final String device_id = DeviceID.getDeviceID();
 
-    public static List<String> post(String route, HashMap<String,String> body) throws IOException {
+    public ApiClient() {
+
+    }
+
+    public void installed() throws IOException {
+        this.post("installed", new HashMap());
+    }
+
+    private String post(String route, HashMap<String,String> body) throws IOException {
         body.put("version", Config.clientVersion);
         body.put("device_id", device_id);
 

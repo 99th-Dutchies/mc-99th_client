@@ -4,8 +4,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MultipartUtil {
     private final String boundary;
@@ -31,8 +29,10 @@ public class MultipartUtil {
         URL url = new URL(requestURL);
         httpConn = (HttpURLConnection) url.openConnection();
         httpConn.setUseCaches(false);
-        httpConn.setDoOutput(true);    // indicates POST method
+        httpConn.setDoOutput(true);
+        httpConn.setRequestMethod("POST");
         httpConn.setDoInput(true);
+        httpConn.addRequestProperty("User-Agent", "99th_Client ApiClient");
         httpConn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
         outputStream = httpConn.getOutputStream();
         writer = new PrintWriter(new OutputStreamWriter(outputStream, charset), true);
@@ -99,9 +99,8 @@ public class MultipartUtil {
      * status OK, otherwise an exception is thrown.
      * @throws IOException
      */
-    public List<String> finish() throws IOException {
-        List<String> response = new ArrayList<String>();
-        writer.append(LINE_FEED).flush();
+    public String finish() throws IOException {
+        StringBuilder response = new StringBuilder();
         writer.append("--" + boundary + "--").append(LINE_FEED);
         writer.close();
 
@@ -111,13 +110,13 @@ public class MultipartUtil {
             BufferedReader reader = new BufferedReader(new InputStreamReader(httpConn.getInputStream()));
             String line = null;
             while ((line = reader.readLine()) != null) {
-                response.add(line);
+                response.append(line).append(LINE_FEED);
             }
             reader.close();
             httpConn.disconnect();
         } else {
             throw new IOException("Server returned non-OK status: " + status);
         }
-        return response;
+        return response.toString().trim();
     }
 }
