@@ -1,5 +1,6 @@
 package nl._99th_client.api;
 
+import net.minecraft.util.Session;
 import nl._99th_client.Config;
 import nl._99th_client.util.DeviceID;
 
@@ -8,10 +9,28 @@ import java.net.URLEncoder;
 import java.util.*;
 
 public class ApiClient {
+    private static String session_id;
     private static final String device_id = DeviceID.getDeviceID();
 
     public ApiClient() {
 
+    }
+
+    public void startSession(Session session) throws IOException {
+        HashMap<String, String> data = new HashMap<>();
+
+        data.put("playername", session.getUsername());
+        data.put("playerid", session.getPlayerID());
+
+        this.session_id = this.post("play/start", data);
+    }
+
+    public void stopSession() throws IOException {
+        HashMap<String, String> data = new HashMap<>();
+
+        data.put("id", this.session_id);
+
+        this.post("play/stop", data);
     }
 
     public void installed() throws IOException {

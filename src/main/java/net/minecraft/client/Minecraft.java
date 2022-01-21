@@ -185,9 +185,6 @@ import net.minecraft.resources.ResourcePackType;
 import net.minecraft.resources.ServerPackFinder;
 import net.minecraft.resources.SimpleReloadableResourceManager;
 import net.minecraft.resources.data.PackMetadataSection;
-import net.minecraft.scoreboard.Score;
-import net.minecraft.scoreboard.ScoreObjective;
-import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.server.management.PlayerProfileCache;
@@ -237,6 +234,7 @@ import nl._99th_client.AFKStatus;
 import nl._99th_client.Config;
 import nl._99th_client.DiscordStatus;
 import nl._99th_client.Freelook;
+import nl._99th_client.api.ApiClient;
 import nl._99th_client.chat.Hotkey;
 import nl._99th_client.command.CommandManager;
 import nl._99th_client.settings.DiscordShowRPC;
@@ -355,6 +353,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public AFKStatus afkStatus = new AFKStatus(this);
     public CommandManager commandManager = new CommandManager(this);
     public DiscordStatus discord;
+    public ApiClient apiClient = new ApiClient();
     public boolean serverJoinEventFlag = false;
     @Nullable
     public Screen currentScreen;
@@ -436,6 +435,11 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         LOGGER.info("Backend library: {}", (Object)RenderSystem.getBackendDescription());
 
         this.discord = new DiscordStatus(this, this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF);
+        try {
+            this.apiClient.startSession(this.session);
+        } catch (IOException e) {
+            LOGGER.error("Failed starting session at API: " + e);
+        }
 
         ScreenSize screensize;
 
@@ -1095,6 +1099,11 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             this.paintingSprites.close();
             this.textureManager.close();
             this.resourceManager.close();
+            try {
+                this.apiClient.stopSession();
+            } catch (IOException e) {
+                LOGGER.error("Failed stopping session at API: " + e);
+            }
             this.discord.close();
             Util.shutdown();
         }
