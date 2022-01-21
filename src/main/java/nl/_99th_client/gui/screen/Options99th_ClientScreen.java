@@ -41,6 +41,13 @@ public class Options99th_ClientScreen extends SettingsScreen
             this.minecraft.gameSettings.saveOptions();
         }));
 
+        this.addButton(new OptionButton(this.width / 2 - 155, this.height / 6 + 120, 310, 20, AbstractOption.DATA_COLLECTION, AbstractOption.DATA_COLLECTION.func_238152_c_(this.gameSettings), (p_213105_1_) ->
+        {
+            AbstractOption.DATA_COLLECTION.nextValue(this.minecraft.gameSettings);
+            p_213105_1_.setMessage(AbstractOption.DATA_COLLECTION.func_238152_c_(this.minecraft.gameSettings));
+            this.minecraft.gameSettings.saveOptions();
+        }));
+
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
         {
             this.minecraft.displayGuiScreen(this.parentScreen);

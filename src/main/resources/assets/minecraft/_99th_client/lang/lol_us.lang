@@ -51,6 +51,7 @@
 99thclient.options.DECODE_CHAT_MAGIC=Chat not goez brrr
 99thclient.options.BLOCK_HIGHLIGHT=Light up blockie
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Better Kitten Pack
+99thclient.options.DATA_COLLECTION=Allow Data Collection
 99thclient.options.DISCORDRPC_SHOW_SERVER=Show othr kittns
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=No
 99thclient.options.DISCORDRPC_SHOW_SERVER.off.tooltip=No

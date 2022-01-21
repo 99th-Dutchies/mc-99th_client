@@ -302,6 +302,7 @@ public class GameSettings
     public boolean decodeChatMagic = false;
     public boolean blockHighlight = false;
     public boolean resourcepackOptimization = false;
+    public boolean dataCollection = true;
     public int timeTillAFK = 0;
     public String chatPrefix = "";
     public boolean chatPrefixEnabled = false;
@@ -1920,6 +1921,12 @@ public class GameSettings
         {
             this.resourcepackOptimization = !this.resourcepackOptimization;
         }
+
+        if (p_setOptionValueOF_1_ == AbstractOption.DATA_COLLECTION)
+        {
+            this.dataCollection = !this.dataCollection;
+            this.updateDataCollection();
+        }
     }
 
     public ITextComponent getKeyComponentOF(AbstractOption p_getKeyComponentOF_1_)
@@ -3157,6 +3164,11 @@ public class GameSettings
                         this.resourcepackOptimization = Boolean.valueOf(astring[1]);
                     }
 
+                    if (astring[0].equals("dataCollection") && astring.length >= 2)
+                    {
+                        this.dataCollection = Boolean.valueOf(astring[1]);
+                    }
+
                     if (astring[0].equals("timeTillAFK") && astring.length >= 2)
                     {
                         this.timeTillAFK = MCStringUtils.tryParse(astring[1]);
@@ -3319,6 +3331,7 @@ public class GameSettings
             printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
             printwriter.println("blockHighlight<:>" + this.blockHighlight);
             printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
+            printwriter.println("dataCollection<:>" + this.dataCollection);
             printwriter.println("timeTillAFK<:>" + this.timeTillAFK);
             printwriter.println("chatPrefix<:>" + this.chatPrefix);
             printwriter.println("chatPrefixEnabled<:>" + this.chatPrefixEnabled);
@@ -3354,6 +3367,18 @@ public class GameSettings
             this.mc.discord.close();
         } else if (!this.mc.discord.enabled && this.discordrpcShowServer != DiscordShowRPC.OFF) {
             this.mc.discord.start();
+        }
+    }
+
+    public void updateDataCollection() {
+        try {
+            if(this.dataCollection) {
+                this.mc.apiClient.startSession(this.mc.getSession());
+            } else {
+                this.mc.apiClient.stopSession();
+            }
+        } catch (IOException e) {
+            LOGGER.error("Error changing dataCollection: " + e);
         }
     }
 
@@ -3511,6 +3536,7 @@ public class GameSettings
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
         this.blockHighlight = false;
         this.resourcepackOptimization = false;
+        this.dataCollection = true;
         this.timeTillAFK = 0;
         this.chatPrefix = "";
         this.chatPrefixEnabled = false;

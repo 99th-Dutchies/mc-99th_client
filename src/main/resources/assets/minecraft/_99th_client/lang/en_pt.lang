@@ -51,6 +51,7 @@
 99thclient.options.DECODE_CHAT_MAGIC=Decode Postal Witchery
 99thclient.options.BLOCK_HIGHLIGHT=Cubes Highlightin'
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Picture Pack Upgradin'
+99thclient.options.DATA_COLLECTION=Allow Data Collection
 99thclient.options.DISCORDRPC_SHOW_SERVER=Show yer mates
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=Keep yer secret
 99thclient.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Keep yer secret

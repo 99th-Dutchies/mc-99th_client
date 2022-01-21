@@ -435,10 +435,12 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         LOGGER.info("Backend library: {}", (Object)RenderSystem.getBackendDescription());
 
         this.discord = new DiscordStatus(this, this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF);
-        try {
-            this.apiClient.startSession(this.session);
-        } catch (IOException e) {
-            LOGGER.error("Failed starting session at API: " + e);
+        if(this.gameSettings.dataCollection) {
+            try {
+                this.apiClient.startSession(this.session);
+            } catch (IOException e) {
+                LOGGER.error("Failed starting session at API: " + e);
+            }
         }
 
         ScreenSize screensize;
@@ -1099,10 +1101,12 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             this.paintingSprites.close();
             this.textureManager.close();
             this.resourceManager.close();
-            try {
-                this.apiClient.stopSession();
-            } catch (IOException e) {
-                LOGGER.error("Failed stopping session at API: " + e);
+            if(this.gameSettings.dataCollection) {
+                try {
+                    this.apiClient.stopSession();
+                } catch (IOException e) {
+                    LOGGER.error("Failed stopping session at API: " + e);
+                }
             }
             this.discord.close();
             Util.shutdown();

@@ -51,6 +51,7 @@
 99thclient.options.DECODE_CHAT_MAGIC=Decode Illegible Text
 99thclient.options.BLOCK_HIGHLIGHT=Pieces Colouring
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Betterment
+99thclient.options.DATA_COLLECTION=Allow Data Collection
 99thclient.options.DISCORDRPC_SHOW_SERVER=Show thy Friends
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=Nothing
 99thclient.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Nothing

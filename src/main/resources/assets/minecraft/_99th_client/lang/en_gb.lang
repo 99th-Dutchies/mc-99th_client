@@ -51,6 +51,7 @@
 99thclient.options.DECODE_CHAT_MAGIC=Decode Chat Magic
 99thclient.options.BLOCK_HIGHLIGHT=Block Highlight
 99thclient.options.RESOURCEPACK_OPTIMIZATION=Resource Pack Optimization
+99thclient.options.DATA_COLLECTION=Allow Data Collection
 99thclient.options.DISCORDRPC_SHOW_SERVER=Show in Discord
 99thclient.options.DISCORDRPC_SHOW_SERVER.off=Off
 99thclient.options.DISCORDRPC_SHOW_SERVER.off.tooltip=Off

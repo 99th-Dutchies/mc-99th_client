@@ -941,6 +941,15 @@ public abstract class AbstractOption
         p_lambda$static$132_0_.resourcepackOptimization = p_lambda$static$132_1_;
     });
 
+    public static final BooleanOption DATA_COLLECTION = new BooleanOption("99thclient.options.DATA_COLLECTION", (p_lambda$static$131_0_) ->
+    {
+        return p_lambda$static$131_0_.dataCollection;
+    }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
+    {
+        p_lambda$static$132_0_.dataCollection = p_lambda$static$132_1_;
+        p_lambda$static$132_0_.updateDataCollection();
+    });
+
     public AbstractOption(String translationKeyIn)
     {
         this.translatedBaseMessage = new TranslationTextComponent(translationKeyIn);
