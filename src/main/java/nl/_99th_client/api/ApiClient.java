@@ -1,8 +1,11 @@
 package nl._99th_client.api;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.util.Session;
 import nl._99th_client.Config;
 import nl._99th_client.util.DeviceID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -18,9 +21,10 @@ public class ApiClient {
 
     public void startSession(Session session) throws IOException {
         HashMap<String, String> data = new HashMap<>();
+        GameProfile profile = session.getProfile();
 
-        data.put("playername", session.getUsername());
-        data.put("playerid", session.getPlayerID());
+        data.put("playername", profile.getName());
+        data.put("playerid", profile.getId().toString());
 
         this.session_id = this.post("play/start", data);
     }
