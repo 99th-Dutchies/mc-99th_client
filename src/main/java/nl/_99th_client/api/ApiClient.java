@@ -1,6 +1,7 @@
 package nl._99th_client.api;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
 import nl._99th_client.Config;
 import nl._99th_client.util.DeviceID;
@@ -14,27 +15,44 @@ import java.util.*;
 public class ApiClient {
     private static String session_id;
     private static final String device_id = DeviceID.getDeviceID();
+    private static Minecraft mc;
+    private static Logger LOGGER;
 
-    public ApiClient() {
-
+    public ApiClient(Minecraft mc) {
+        this.mc = mc;
+        this.LOGGER = LogManager.getLogger();
     }
 
-    public void startSession(Session session) throws IOException {
-        HashMap<String, String> data = new HashMap<>();
-        GameProfile profile = session.getProfile();
+    public ApiClient() {}
 
-        data.put("playername", profile.getName());
-        data.put("playerid", profile.getId().toString());
+    public void startSession(Session session) {
+        if(this.mc.gameSettings.dataCollection) {
+            try {
+                HashMap<String, String> data = new HashMap<>();
+                GameProfile profile = session.getProfile();
 
-        this.session_id = this.post("play/start", data);
+                data.put("playername", profile.getName());
+                data.put("playerid", profile.getId().toString());
+
+                this.session_id = this.post("play/start", data);
+            } catch (IOException e) {
+                LOGGER.error("Failed starting session at API: " + e);
+            }
+        }
     }
 
-    public void stopSession() throws IOException {
-        HashMap<String, String> data = new HashMap<>();
+    public void stopSession() {
+        if(this.mc.gameSettings.dataCollection) {
+            try {
+                HashMap<String, String> data = new HashMap<>();
 
-        data.put("id", this.session_id);
+                data.put("id", this.session_id);
 
-        this.post("play/stop", data);
+                this.post("play/stop", data);
+            } catch (IOException e) {
+                LOGGER.error("Failed stopping session at API: " + e);
+            }
+        }
     }
 
     public void installed() throws IOException {

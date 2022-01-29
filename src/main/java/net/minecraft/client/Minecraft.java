@@ -353,7 +353,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public AFKStatus afkStatus = new AFKStatus(this);
     public CommandManager commandManager = new CommandManager(this);
     public DiscordStatus discord;
-    public ApiClient apiClient = new ApiClient();
+    public ApiClient apiClient = new ApiClient(this);
     public boolean serverJoinEventFlag = false;
     @Nullable
     public Screen currentScreen;
@@ -435,13 +435,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         LOGGER.info("Backend library: {}", (Object)RenderSystem.getBackendDescription());
 
         this.discord = new DiscordStatus(this, this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF);
-        if(this.gameSettings.dataCollection) {
-            try {
-                this.apiClient.startSession(this.session);
-            } catch (IOException e) {
-                LOGGER.error("Failed starting session at API: " + e);
-            }
-        }
+        this.apiClient.startSession(this.session);
 
         ScreenSize screensize;
 
@@ -1101,13 +1095,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
             this.paintingSprites.close();
             this.textureManager.close();
             this.resourceManager.close();
-            if(this.gameSettings.dataCollection) {
-                try {
-                    this.apiClient.stopSession();
-                } catch (IOException e) {
-                    LOGGER.error("Failed stopping session at API: " + e);
-                }
-            }
+            this.apiClient.stopSession();
             this.discord.close();
             Util.shutdown();
         }
