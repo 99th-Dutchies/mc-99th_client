@@ -871,7 +871,7 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
     {
         if (this.world != null)
         {
-            if (Minecraft.isFabulousGraphicsEnabled())
+            if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings.blockHighlight)
             {
                 this.func_239233_v_();
             }
@@ -3317,7 +3317,7 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
         float outlineRed = 0.0F / 255.0F;
         float outlineGreen = 0.0F / 255.0F;
         float outlineBlue = 0.0F / 255.0F;
-        float outlineAlpha = 40.0F / 100.0F;
+        float outlineAlpha = 50.0F / 100.0F;
         shapeIn.forEachEdge((p_lambda$drawShape$6_12_, p_lambda$drawShape$6_14_, p_lambda$drawShape$6_16_, p_lambda$drawShape$6_18_, p_lambda$drawShape$6_20_, p_lambda$drawShape$6_22_) ->
         {
             bufferIn.pos(matrix4f, (float)(p_lambda$drawShape$6_12_ + xIn), (float)(p_lambda$drawShape$6_14_ + yIn), (float)(p_lambda$drawShape$6_16_ + zIn)).color(outlineRed, outlineGreen, outlineBlue, outlineAlpha).endVertex();
