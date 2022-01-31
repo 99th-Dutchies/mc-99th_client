@@ -31,8 +31,6 @@ import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.ChatVisibility;
 import net.minecraft.entity.player.PlayerModelPart;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.play.client.CClientSettingsPacket;
@@ -61,13 +59,7 @@ import net.optifine.reflect.Reflector;
 import net.optifine.shaders.Shaders;
 import net.optifine.util.FontUtils;
 import net.optifine.util.KeyUtils;
-import nl._99th_client.chat.ChatFilter;
-import nl._99th_client.chat.ChatTrigger;
-import nl._99th_client.chat.EventTrigger;
-import nl._99th_client.chat.Hotkey;
-import nl._99th_client.command.CustomCommand;
-import nl._99th_client.settings.*;
-import nl._99th_client.util.MCStringUtils;
+import nl._99th_client._99thClientSettings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -174,6 +166,7 @@ public class GameSettings
     public final KeyBinding keyBindLoadToolbar = new KeyBinding("key.loadToolbarActivator", 88, "key.categories.creative");
     public KeyBinding[] keyBindings = ArrayUtils.addAll(new KeyBinding[] {this.keyBindAttack, this.keyBindUseItem, this.keyBindForward, this.keyBindLeft, this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindSprint, this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindPlayerList, this.keyBindPickBlock, this.keyBindCommand, this.field_244602_au, this.keyBindScreenshot, this.keyBindTogglePerspective, this.keyBindSmoothCamera, this.keyBindFullscreen, this.keyBindSpectatorOutlines, this.keyBindSwapHands, this.keyBindSaveToolbar, this.keyBindLoadToolbar, this.keyBindAdvancements}, this.keyBindsHotbar);
     protected Minecraft mc;
+    public _99thClientSettings _99thClientSettings;
     private final File optionsFile;
     public Difficulty difficulty = Difficulty.NORMAL;
     public boolean hideGUI;
@@ -278,49 +271,12 @@ public class GameSettings
     private static final String[] KEYS_DYNAMIC_LIGHTS = new String[] {"options.off", "options.graphics.fast", "options.graphics.fancy"};
     public KeyBinding ofKeyBindZoom;
     private File optionsFileOF;
-    public KeyBinding _99thKeyBindFreelook;
-    public KeyBinding _99thKeyBindCommand;
-    private File optionsFile99thclient;
-    public boolean showLocationHUD = true;
-    public boolean showInventoryHUD = true;
-    public boolean showSystemHUD = true;
-    public boolean showCPSHUD = true;
-    public boolean showLookingHUD = true;
-    public List<Item> itemHUDitems = Lists.newArrayList(Items.ARROW, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.EMERALD);
-    public boolean fullBrightness = false;
-    public boolean infiniteChat = true;
-    public boolean showChatTimestamp = false;
-    public DiscordShowRPC discordrpcShowServer = DiscordShowRPC.SERVER;
-    public HealthIndicator healthIndicator = HealthIndicator.OFF;
-    public ShowToasts showToasts = ShowToasts.ALL;
-    public PotionIcons potionIcons = PotionIcons.NORMAL;
-    public boolean tntTimer = true;
-    public boolean potionTimer = true;
-    public boolean armorBreakWarning = false;
-    public boolean outOfBlocksWarning = false;
-    public boolean tablistPing = false;
-    public boolean decodeChatMagic = false;
-    public boolean blockHighlight = false;
-    public boolean resourcepackOptimization = false;
-    public boolean dataCollection = true;
-    public int timeTillAFK = 0;
-    public String chatPrefix = "";
-    public boolean chatPrefixEnabled = false;
-    public List<ChatTrigger> chatTriggers = Lists.newArrayList(
-        new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
-    );
-    public List<ChatFilter> chatFilters = Lists.newArrayList();
-    public List<Hotkey> _99thHotkeys = Lists.newArrayList();
-    public List<EventTrigger> eventTriggers = Lists.newArrayList(
-        new EventTrigger(EventTrigger.Event.WORLD_JOIN, "", false, 0),
-        new EventTrigger(EventTrigger.Event.SERVER_JOIN, "", false, 0)
-    );
-    public List<CustomCommand> customCommands = Lists.newArrayList();
 
     public GameSettings(Minecraft mcIn, File mcDataDir)
     {
         this.setForgeKeybindProperties();
         this.mc = mcIn;
+        this._99thClientSettings = new _99thClientSettings(mcIn, mcDataDir);
         this.optionsFile = new File(mcDataDir, "options.txt");
 
         if (mcIn.isJava64bit() && Runtime.getRuntime().maxMemory() >= 1000000000L)
@@ -346,37 +302,14 @@ public class GameSettings
         this.renderDistanceChunks = mcIn.isJava64bit() ? 12 : 8;
         this.syncChunkWrites = Util.getOSType() == Util.OS.WINDOWS;
         this.optionsFileOF = new File(mcDataDir, "optionsof.txt");
-        this.fix99thclientOptionsFile(mcDataDir);
-        this.optionsFile99thclient = new File(mcDataDir, nl._99th_client.Config.configFile);
         this.framerateLimit = (int)AbstractOption.FRAMERATE_LIMIT.getMaxValue();
         this.ofKeyBindZoom = new KeyBinding("of.key.zoom", 67, "key.categories.misc");
         this.keyBindings = ArrayUtils.add(this.keyBindings, this.ofKeyBindZoom);
         KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
-        this._99thKeyBindFreelook = new KeyBinding("99thclient.key.freelook", 71, "key.categories.misc");
-        this._99thKeyBindCommand = new KeyBinding("99thclient.key.command", 92, "key.categories.multiplayer");
-        this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindFreelook);
-        this.keyBindings = ArrayUtils.add(this.keyBindings, this._99thKeyBindCommand);
-        KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook, this._99thKeyBindCommand});
-        this.renderDistanceChunks = 8;
+         this.renderDistanceChunks = 8;
         this.loadOptions();
+        this._99thClientSettings.load99thclientSettings(this);
         Config.initGameSettings(this);
-    }
-
-    private void fix99thclientOptionsFile(File mcDataDir) {
-        File newF = new File(mcDataDir, nl._99th_client.Config.configFile);
-        if(newF.exists()) return;
-
-        for(String oldFile : nl._99th_client.Config.oldConfigFiles) {
-            File oldF = new File(mcDataDir, oldFile);
-
-            if(oldF.exists()) {
-                try {
-                    Files.copy(oldF, newF);
-                } catch (IOException e) {
-                    LOGGER.error(e);
-                }
-            }
-        }
     }
 
     public float getTextBackgroundOpacity(float opacity)
@@ -398,56 +331,6 @@ public class GameSettings
     {
         keyBindingIn.bind(inputIn);
         this.saveOptions();
-    }
-
-    public void setChatTrigger(int index, ChatTrigger chatTrigger)
-    {
-        this.chatTriggers.set(index, chatTrigger);
-        this.saveOptions();
-    }
-
-    public void removeChatTrigger(ChatTrigger chatTrigger)
-    {
-        this.chatTriggers.remove(chatTrigger);
-        this.saveOptions();
-    }
-
-    public void setChatFilter(int index, ChatFilter chatFilter)
-    {
-        this.chatFilters.set(index, chatFilter);
-        this.saveOptions();
-    }
-
-    public void removeChatFilter(ChatFilter chatFilter)
-    {
-        this.chatFilters.remove(chatFilter);
-        this.saveOptions();
-    }
-
-    public void setHotkey(int index, Hotkey hotkey)
-    {
-        this._99thHotkeys.set(index, hotkey);
-        this.saveOptions();
-    }
-
-    public void removeHotkey(Hotkey hotkey)
-    {
-        this._99thHotkeys.remove(hotkey);
-        this.saveOptions();
-    }
-
-    public void setCustomCommand(int index, CustomCommand customCommand)
-    {
-        this.customCommands.set(index, customCommand);
-        this.saveOptions();
-        this.mc.commandManager.reloadCommands();
-    }
-
-    public void removeCustomCommand(CustomCommand customCommand)
-    {
-        this.customCommands.remove(customCommand);
-        this.saveOptions();
-        this.mc.commandManager.reloadCommands();
     }
 
     /**
@@ -951,7 +834,6 @@ public class GameSettings
         }
 
         this.loadOfOptions();
-        this.load99thclientOptions();
     }
 
     private CompoundNBT dataFix(CompoundNBT nbt)
@@ -1113,9 +995,9 @@ public class GameSettings
             }
 
             this.saveOfOptions();
-            this.save99thclientOptions();
             this.sendSettingsToServer();
         }
+        this._99thClientSettings.saveSettings();
     }
 
     public float getSoundLevel(SoundCategory category)
@@ -1766,166 +1648,6 @@ public class GameSettings
         if (p_setOptionValueOF_1_ == AbstractOption.CHAT_SHADOW)
         {
             this.ofChatShadow = !this.ofChatShadow;
-        }
-    }
-
-    public void setOptionValue99thclient(AbstractOption p_setOptionValueOF_1_, int p_setOptionValueOF_2_)
-    {
-        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_LOCATION_HUD)
-        {
-            this.showLocationHUD = !this.showLocationHUD;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_INVENTORY_HUD)
-        {
-            this.showInventoryHUD = !this.showInventoryHUD;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_SYSTEM_HUD)
-        {
-            this.showSystemHUD = !this.showSystemHUD;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_CPS_HUD)
-        {
-            this.showCPSHUD = !this.showCPSHUD;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_LOOKING_HUD)
-        {
-            this.showLookingHUD = !this.showLookingHUD;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.FULL_BRIGHTNESS)
-        {
-            this.fullBrightness = !this.fullBrightness;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.INFINITE_CHAT)
-        {
-            this.infiniteChat = !this.infiniteChat;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.CHAT_TIMESTAMP)
-        {
-            this.showChatTimestamp = !this.showChatTimestamp;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.DISCORDRPC_SHOW_SERVER)
-        {
-            switch(this.discordrpcShowServer){
-                case SERVER:
-                    this.discordrpcShowServer = DiscordShowRPC.GAME;
-                    break;
-                case GAME:
-                    this.discordrpcShowServer = DiscordShowRPC.MAP;
-                    break;
-                case MAP:
-                    this.discordrpcShowServer = DiscordShowRPC.OFF;
-                    break;
-                case OFF:
-                    this.discordrpcShowServer = DiscordShowRPC.PLAYING;
-                    break;
-                case PLAYING:
-                default:
-                    this.discordrpcShowServer = DiscordShowRPC.SERVER;
-                    break;
-            }
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.HEALTH_INDICATOR)
-        {
-            switch(this.healthIndicator){
-                case OFF:
-                    this.healthIndicator = HealthIndicator.NUMBERS;
-                    break;
-                case NUMBERS:
-                    this.healthIndicator = HealthIndicator.ICONS;
-                    break;
-                case ICONS:
-                default:
-                    this.healthIndicator = healthIndicator.OFF;
-                    break;
-            }
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.SHOW_TOASTS)
-        {
-            switch(this.showToasts){
-                case OFF:
-                    this.showToasts = ShowToasts.SYSTEM;
-                    break;
-                case SYSTEM:
-                    this.showToasts = ShowToasts.ALL;
-                    break;
-                case ALL:
-                default:
-                    this.showToasts = ShowToasts.OFF;
-                    break;
-            }
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.POTION_ICONS)
-        {
-            switch(this.potionIcons){
-                case HIDE:
-                    this.potionIcons = PotionIcons.NORMAL;
-                    break;
-                case ALL:
-                    this.potionIcons = PotionIcons.HIDE;
-                    break;
-                case NORMAL:
-                default:
-                    this.potionIcons = PotionIcons.ALL;
-                    break;
-            }
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.TNT_TIMER)
-        {
-            this.tntTimer = !this.tntTimer;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.POTION_TIMER)
-        {
-            this.potionTimer = !this.potionTimer;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.ARMOR_BREAK_WARNING)
-        {
-            this.armorBreakWarning = !this.armorBreakWarning;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.OUT_OF_BLOCKS_WARNING)
-        {
-            this.outOfBlocksWarning = !this.outOfBlocksWarning;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.TABLIST_PING)
-        {
-            this.tablistPing = !this.tablistPing;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.DECODE_CHAT_MAGIC)
-        {
-            this.decodeChatMagic = !this.decodeChatMagic;
-            this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.BLOCK_HIGHLIGHT)
-        {
-            this.blockHighlight = !this.blockHighlight;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.RESOURCEPACK_OPTIMIZATION)
-        {
-            this.resourcepackOptimization = !this.resourcepackOptimization;
-        }
-
-        if (p_setOptionValueOF_1_ == AbstractOption.DATA_COLLECTION)
-        {
-            this.dataCollection = !this.dataCollection;
-            this.updateDataCollection();
         }
     }
 
@@ -2976,412 +2698,6 @@ public class GameSettings
         }
     }
 
-    public void load99thclientOptions()
-    {
-        boolean didResetChatTriggers = false;
-        boolean didResetChatFilters = false;
-        boolean didResetEventTriggers = false;
-        boolean didResetHotkeys = false;
-        boolean didResetCustomCommands = false;
-        try
-        {
-            File file1 = this.optionsFile99thclient;
-
-            if (!file1.exists())
-            {
-                file1 = this.optionsFile;
-            }
-
-            if (!file1.exists())
-            {
-                return;
-            }
-
-            BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(new FileInputStream(file1), StandardCharsets.UTF_8));
-            String s = "";
-
-            while ((s = bufferedreader.readLine()) != null)
-            {
-                try
-                {
-                    String[] astring = s.split("<:>");
-
-                    if (astring[0].equals("showLocationHUD") && astring.length >= 2)
-                    {
-                        this.showLocationHUD = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("showInventoryHUD") && astring.length >= 2)
-                    {
-                        this.showInventoryHUD = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("showSystemHUD") && astring.length >= 2)
-                    {
-                        this.showSystemHUD = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("showCPSHUD") && astring.length >= 2)
-                    {
-                        this.showCPSHUD = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("showLookingHUD") && astring.length >= 2)
-                    {
-                        this.showLookingHUD = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("itemHUDitems") && astring.length >= 2)
-                    {
-                        this.itemHUDitems = MCStringUtils.parseItems(astring[1]);
-                    }
-
-                    if (astring[0].equals("fullBrightness") && astring.length >= 2)
-                    {
-                        this.fullBrightness = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("infiniteChat") && astring.length >= 2)
-                    {
-                        this.infiniteChat = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("showChatTimestamp") && astring.length >= 2)
-                    {
-                        this.showChatTimestamp = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("discordrpcShowServer") && astring.length >= 2)
-                    {
-                        switch(astring[1]){
-                            case "0":
-                                this.discordrpcShowServer = DiscordShowRPC.OFF;
-                                break;
-                                case "3":
-                                this.discordrpcShowServer = DiscordShowRPC.GAME;
-                                break;
-                                case "4":
-                                this.discordrpcShowServer = DiscordShowRPC.MAP;
-                                break;
-                            case "1":
-                                this.discordrpcShowServer = DiscordShowRPC.PLAYING;
-                                break;
-                            case "2":
-                            default:
-                                this.discordrpcShowServer = DiscordShowRPC.SERVER;
-                                break;
-                        }
-                    }
-
-                    if (astring[0].equals("healthIndicator") && astring.length >= 2)
-                    {
-                        switch(astring[1]){
-                            case "1":
-                                this.healthIndicator = HealthIndicator.NUMBERS;
-                                break;
-                                case "2":
-                                this.healthIndicator = HealthIndicator.ICONS;
-                                break;
-                            case "0":
-                            default:
-                                this.healthIndicator = HealthIndicator.OFF;
-                                break;
-                        }
-                    }
-
-                    if (astring[0].equals("showToasts") && astring.length >= 2)
-                    {
-                        switch(astring[1]){
-                            case "0":
-                                this.showToasts = ShowToasts.OFF;
-                                break;
-                                case "1":
-                                this.showToasts = ShowToasts.SYSTEM;
-                                break;
-                            case "2":
-                            default:
-                                this.showToasts = ShowToasts.ALL;
-                                break;
-                        }
-                    }
-
-                    if (astring[0].equals("potionIcons") && astring.length >= 2)
-                    {
-                        switch(astring[1]){
-                            case "0":
-                                this.potionIcons = PotionIcons.HIDE;
-                                break;
-                                case "2":
-                                this.potionIcons = PotionIcons.ALL;
-                                break;
-                            case "1":
-                            default:
-                                this.potionIcons = PotionIcons.NORMAL;
-                                break;
-                        }
-                    }
-
-                    if (astring[0].equals("tntTimer") && astring.length >= 2)
-                    {
-                        this.tntTimer = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("potionTimer") && astring.length >= 2)
-                    {
-                        this.potionTimer = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("armorBreakWarning") && astring.length >= 2)
-                    {
-                        this.armorBreakWarning = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("outOfBlocksWarning") && astring.length >= 2)
-                    {
-                        this.outOfBlocksWarning = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("tablistPing") && astring.length >= 2)
-                    {
-                        this.tablistPing = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("decodeChatMagic") && astring.length >= 2)
-                    {
-                        this.decodeChatMagic = Boolean.valueOf(astring[1]);
-                        if(this.mc.fontRenderer != null) {
-                            this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
-                        }
-                    }
-
-                    if (astring[0].equals("blockHighlight") && astring.length >= 2)
-                    {
-                        this.blockHighlight = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("resourcepackOptimization") && astring.length >= 2)
-                    {
-                        this.resourcepackOptimization = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("dataCollection") && astring.length >= 2)
-                    {
-                        this.dataCollection = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("timeTillAFK") && astring.length >= 2)
-                    {
-                        this.timeTillAFK = MCStringUtils.tryParse(astring[1]);
-                    }
-
-                    if (astring[0].equals("chatPrefix") && astring.length >= 2)
-                    {
-                        this.chatPrefix = astring[1];
-                    }
-
-                    if (astring[0].equals("chatPrefixEnabled") && astring.length >= 2)
-                    {
-                        this.chatPrefixEnabled = Boolean.valueOf(astring[1]);
-                    }
-
-                    if (astring[0].equals("chatTrigger") && astring.length >= 2)
-                    {
-                        if(!didResetChatTriggers){
-                            this.chatTriggers = Lists.newArrayList();
-                            didResetChatTriggers = true;
-                        }
-
-                        if(astring.length == 3) {
-                            this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], ActiveAFK.ALWAYS, 0, 0));
-                        } else if(astring.length >= 4) {
-                            ActiveAFK state = ActiveAFK.OFF;
-                            switch (astring[3]) {
-                                case "1":
-                                    state = ActiveAFK.ALWAYS;
-                                    break;
-                                case "2":
-                                    state = ActiveAFK.AFKONLY;
-                                    break;
-                                case "3":
-                                    state = ActiveAFK.ACTIVEONLY;
-                                    break;
-                                case "0":
-                                default:
-                                    state = ActiveAFK.OFF;
-                                    break;
-                            }
-
-                            if(astring.length == 4) {
-                                this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, 0, 0));
-                            } else if(astring.length == 5) {
-                                this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4]), 0));
-                            } else if(astring.length == 6) {
-                                this.chatTriggers.add(new ChatTrigger(astring[1], astring[2], state, MCStringUtils.tryParse(astring[4]), MCStringUtils.tryParse(astring[5])));
-                            }
-                        }
-                    }
-
-                    if (astring[0].equals("chatFilter") && astring.length >= 2)
-                    {
-                        if(!didResetChatFilters){
-                            this.chatFilters = Lists.newArrayList();
-                            didResetChatFilters = true;
-                        }
-
-                        this.chatFilters.add(new ChatFilter(astring[1], Boolean.valueOf(astring[2]), Boolean.valueOf(astring[3])));
-                    }
-
-                    if (astring[0].equals("eventTrigger") && astring.length >= 2)
-                    {
-                        if(!didResetEventTriggers){
-                            this.eventTriggers = Lists.newArrayList();
-                            didResetEventTriggers = true;
-                        }
-
-                        EventTrigger.Event trigger = null;
-
-                        switch(astring[1]) {
-                            case "server_join":
-                                trigger = EventTrigger.Event.SERVER_JOIN;
-                                break;
-                            case "world_join":
-                                trigger = EventTrigger.Event.WORLD_JOIN;
-                                break;
-                        }
-
-                        this.eventTriggers.add(new EventTrigger(trigger, astring[2], Boolean.valueOf(astring[3]), MCStringUtils.tryParse(astring[4])));
-                    }
-
-                    if (astring[0].equals("customCommand") && astring.length >= 2)
-                    {
-                        if(!didResetCustomCommands){
-                            this.customCommands = Lists.newArrayList();
-                            this.mc.commandManager.reloadCommands(false);
-                            didResetCustomCommands = true;
-                        }
-
-                        CustomCommand command = new CustomCommand(astring[1], astring[2], Boolean.valueOf(astring[3]));
-                        this.customCommands.add(command);
-                        this.mc.commandManager.loadCommand(command);
-                    }
-
-                    if (astring[0].equals("hotkey") && astring.length == 4)
-                    {
-                        if(!didResetHotkeys) {
-                            this._99thHotkeys = Lists.newArrayList();
-                            didResetHotkeys = true;
-                        }
-
-                        KeyBinding kb = new KeyBinding("99thclient.hotkeys.hotkey" + this._99thHotkeys.size(), -1, "key.categories.99thclienthotkeys");
-                        kb.bind(InputMappings.getInputByName(astring[1]));
-
-                        this._99thHotkeys.add(new Hotkey(kb, astring[2], Boolean.valueOf(astring[3])));
-                    }
-
-                    if (astring[0].equals("key_" + this._99thKeyBindFreelook.getKeyDescription()))
-                    {
-                        this._99thKeyBindFreelook.bind(InputMappings.getInputByName(astring[1]));
-                    }
-                    if (astring[0].equals("key_" + this._99thKeyBindCommand.getKeyDescription()))
-                    {
-                        this._99thKeyBindCommand.bind(InputMappings.getInputByName(astring[1]));
-                    }
-                }
-                catch (Exception exception1)
-                {
-                    Config.dbg("Skipping bad option: " + s);
-                    exception1.printStackTrace();
-                }
-            }
-
-            KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this._99thKeyBindFreelook, this._99thKeyBindCommand});
-            KeyBinding.resetKeyBindingArrayAndHash();
-            bufferedreader.close();
-        }
-        catch (Exception exception11)
-        {
-            Config.warn("Failed to load options");
-            exception11.printStackTrace();
-        }
-    }
-
-    public void save99thclientOptions()
-    {
-        try
-        {
-            PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile99thclient), StandardCharsets.UTF_8));
-            printwriter.println("showLocationHUD<:>" + this.showLocationHUD);
-            printwriter.println("showInventoryHUD<:>" + this.showInventoryHUD);
-            printwriter.println("showSystemHUD<:>" + this.showSystemHUD);
-            printwriter.println("showCPSHUD<:>" + this.showCPSHUD);
-            printwriter.println("showLookingHUD<:>" + this.showLookingHUD);
-            printwriter.println("itemHUDitems<:>" + MCStringUtils.itemsToString(this.itemHUDitems));
-            printwriter.println("fullBrightness<:>" + this.fullBrightness);
-            printwriter.println("infiniteChat<:>" + this.infiniteChat);
-            printwriter.println("showChatTimestamp<:>" + this.showChatTimestamp);
-            printwriter.println("discordrpcShowServer<:>" + this.discordrpcShowServer.func_238162_a_());
-            printwriter.println("healthIndicator<:>" + this.healthIndicator.func_238162_a_());
-            printwriter.println("showToasts<:>" + this.showToasts.func_238162_a_());
-            printwriter.println("potionIcons<:>" + this.potionIcons.func_238162_a_());
-            printwriter.println("tntTimer<:>" + this.tntTimer);
-            printwriter.println("potionTimer<:>" + this.potionTimer);
-            printwriter.println("armorBreakWarning<:>" + this.armorBreakWarning);
-            printwriter.println("outOfBlocksWarning<:>" + this.outOfBlocksWarning);
-            printwriter.println("tablistPing<:>" + this.tablistPing);
-            printwriter.println("decodeChatMagic<:>" + this.decodeChatMagic);
-            printwriter.println("blockHighlight<:>" + this.blockHighlight);
-            printwriter.println("resourcepackOptimization<:>" + this.resourcepackOptimization);
-            printwriter.println("dataCollection<:>" + this.dataCollection);
-            printwriter.println("timeTillAFK<:>" + this.timeTillAFK);
-            printwriter.println("chatPrefix<:>" + this.chatPrefix);
-            printwriter.println("chatPrefixEnabled<:>" + this.chatPrefixEnabled);
-            for(ChatTrigger trigger : this.chatTriggers) {
-                printwriter.println("chatTrigger<:>" + trigger.pattern.pattern() + "<:>" + trigger.response + "<:>" + trigger.active.func_238162_a_() + "<:>" + trigger.delay + "<:>" + trigger.cooldown);
-            }
-            for(ChatFilter filter : this.chatFilters) {
-                printwriter.println("chatFilter<:>" + filter.pattern.pattern() + "<:>" + filter.activePlayer + "<:>" + filter.activeChat);
-            }
-            for(EventTrigger trigger : this.eventTriggers) {
-                printwriter.println("eventTrigger<:>" + trigger.trigger.getString() + "<:>" + trigger.response + "<:>" + trigger.active + "<:>" + trigger.delay);
-            }
-            for(Hotkey hotkey : this._99thHotkeys) {
-                printwriter.println("hotkey<:>" + hotkey.keyBinding.getTranslationKey() + "<:>" + hotkey.response + "<:>" + hotkey.active);
-            }
-            for(CustomCommand customCommand : this.customCommands) {
-                printwriter.println("customCommand<:>" + customCommand.name + "<:>" + customCommand.response + "<:>" + customCommand.active);
-            }
-            printwriter.println("key_" + this._99thKeyBindFreelook.getKeyDescription() + "<:>" + this._99thKeyBindFreelook.getTranslationKey());
-            printwriter.println("key_" + this._99thKeyBindCommand.getKeyDescription() + "<:>" + this._99thKeyBindCommand.getTranslationKey());
-            printwriter.close();
-        }
-        catch (Exception exception1)
-        {
-            Config.warn("Failed to save options");
-            exception1.printStackTrace();
-        }
-        this.updateDiscord();
-    }
-
-    public void updateDiscord() {
-        if(this.mc.discord.enabled && this.discordrpcShowServer == DiscordShowRPC.OFF) {
-            this.mc.discord.close();
-        } else if (!this.mc.discord.enabled && this.discordrpcShowServer != DiscordShowRPC.OFF) {
-            this.mc.discord.start();
-        }
-    }
-
-    public void updateDataCollection() {
-        try {
-            if(this.dataCollection) {
-                this.mc.apiClient.startSession(this.mc.getSession());
-            } else {
-                this.mc.apiClient.stopSession();
-            }
-        } catch (IOException e) {
-            LOGGER.error("Error changing dataCollection: " + e);
-        }
-    }
-
     public void updateRenderClouds()
     {
         switch (this.ofClouds)
@@ -3514,42 +2830,6 @@ public class GameSettings
         this.ofDrippingWaterLava = true;
         this.ofAnimatedTerrain = true;
         this.ofAnimatedTextures = true;
-        this.showLocationHUD = true;
-        this.showInventoryHUD = true;
-        this.showSystemHUD = true;
-        this.showCPSHUD = true;
-        this.showLookingHUD = true;
-        this.itemHUDitems = Lists.newArrayList(Items.ARROW, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.EMERALD);
-        this.fullBrightness = false;
-        this.infiniteChat = true;
-        this.showChatTimestamp = false;
-        this.discordrpcShowServer = DiscordShowRPC.SERVER;
-        this.healthIndicator = HealthIndicator.OFF;
-        this.showToasts = ShowToasts.ALL;
-        this.potionIcons = PotionIcons.NORMAL;
-        this.tntTimer = true;
-        this.potionTimer = true;
-        this.armorBreakWarning = false;
-        this.outOfBlocksWarning = false;
-        this.tablistPing = false;
-        this.decodeChatMagic = false;
-        this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
-        this.blockHighlight = false;
-        this.resourcepackOptimization = false;
-        this.dataCollection = true;
-        this.timeTillAFK = 0;
-        this.chatPrefix = "";
-        this.chatPrefixEnabled = false;
-        this.chatTriggers = Lists.newArrayList(
-                new ChatTrigger("\\s?(\\w*)(?:\\shas activated).*", "/thanks $1", ActiveAFK.OFF, 0, 0)
-        );
-        this.chatFilters = Lists.newArrayList();
-        this.eventTriggers = Lists.newArrayList(
-                new EventTrigger(EventTrigger.Event.WORLD_JOIN, "", false, 0),
-                new EventTrigger(EventTrigger.Event.SERVER_JOIN, "", false, 0)
-        );
-        this._99thHotkeys = Lists.newArrayList();
-        this.customCommands = Lists.newArrayList();
         Shaders.setShaderPack("OFF");
         Shaders.configAntialiasingLevel = 0;
         Shaders.uninit();

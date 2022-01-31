@@ -23,7 +23,7 @@ public class CommandManager {
         this.loadCommands();
 
         if(includeCustom) {
-            for (Command command : this.mc.gameSettings.customCommands) {
+            for (Command command : this.mc.gameSettings._99thClientSettings.customCommands) {
                 this.loadCommand(command);
             }
         }

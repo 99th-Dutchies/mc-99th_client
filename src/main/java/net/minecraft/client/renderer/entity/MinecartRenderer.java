@@ -107,7 +107,7 @@ public class MinecartRenderer<T extends AbstractMinecartEntity> extends EntityRe
         this.modelMinecart.render(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         matrixStackIn.pop();
 
-        if(entityIn instanceof TNTMinecartEntity && Minecraft.getInstance().gameSettings.tntTimer) {
+        if(entityIn instanceof TNTMinecartEntity && Minecraft.getInstance().gameSettings._99thClientSettings.tntTimer) {
             TNTMinecartEntity minecart = (TNTMinecartEntity) entityIn;
             if (minecart.isIgnited()) {
                 String fuseTime = (((minecart.getFuseTicks() - partialTicks) / 20.00) + "0000").substring(0, 4);

@@ -32,7 +32,7 @@ public class OptionsChatFiltersScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thclient.options.chatfilters.add"), (p_223703_1_) ->
         {
-            this.minecraft.gameSettings.chatFilters.add(new ChatFilter("", false, false));
+            this.minecraft.gameSettings._99thClientSettings.chatFilters.add(new ChatFilter("", false, false));
             this.chatFilterList.loadFilters();
         }));
         this.addButton(new Button(this.width / 2 + 5, this.height - 27, 150, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
@@ -46,14 +46,14 @@ public class OptionsChatFiltersScreen extends SettingsScreen
     private void removeEmpty() {
         ArrayList<ChatFilter> remove = new ArrayList<>();
 
-        for(ChatFilter cf : this.minecraft.gameSettings.chatFilters){
+        for(ChatFilter cf : this.minecraft.gameSettings._99thClientSettings.chatFilters){
             if(StringUtils.isBlank(cf.pattern.toString())) {
                 remove.add(cf);
             }
         }
 
         for(ChatFilter cfr : remove) {
-            this.minecraft.gameSettings.chatFilters.remove(cfr);
+            this.minecraft.gameSettings._99thClientSettings.chatFilters.remove(cfr);
         }
     }
 

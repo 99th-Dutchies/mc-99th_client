@@ -30,23 +30,29 @@ public class MCStringUtils
         return parsed;
     }
 
+    public static Item parseItem(String in) {
+        StringReader stringreader = new StringReader(in);
+        stringreader.setCursor(0);
+        ItemParser itemparser = new ItemParser(stringreader, false);
+
+        try
+        {
+            itemparser.parse();
+            return itemparser.getItem();
+        }
+        catch (CommandSyntaxException commandsyntaxexception)
+        {
+        }
+
+        return null;
+    }
+
     public static List<Item> parseItems(String in) {
         List<Item> list = new ArrayList<>();
         String[] astring = in.split(",");
 
         for(String s : astring) {
-            StringReader stringreader = new StringReader(s);
-            stringreader.setCursor(0);
-            ItemParser itemparser = new ItemParser(stringreader, false);
-
-            try
-            {
-                itemparser.parse();
-                list.add(itemparser.getItem());
-            }
-            catch (CommandSyntaxException commandsyntaxexception)
-            {
-            }
+            list.add(MCStringUtils.parseItem(s));
         }
 
         return list;

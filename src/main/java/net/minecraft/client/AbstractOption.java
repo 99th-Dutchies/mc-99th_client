@@ -31,8 +31,6 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.optifine.Config;
 import net.optifine.config.IteratableOptionOF;
 import net.optifine.config.SliderPercentageOptionOF;
-import nl._99th_client.settings.DiscordShowRPC;
-import nl._99th_client.settings.ShowToasts;
 import nl._99th_client.util.NonLinearTime;
 
 public abstract class AbstractOption
@@ -681,107 +679,107 @@ public abstract class AbstractOption
 
     public static final BooleanOption SHOW_LOCATION_HUD = new BooleanOption("99thclient.options.SHOW_LOCATION_HUD", (p_lambda$static$119_0_) ->
     {
-        return p_lambda$static$119_0_.showLocationHUD;
+        return p_lambda$static$119_0_._99thClientSettings.showLocationHUD;
     }, (p_lambda$static$120_0_, p_lambda$static$120_1_) ->
     {
-        p_lambda$static$120_0_.showLocationHUD = p_lambda$static$120_1_;
+        p_lambda$static$120_0_._99thClientSettings.showLocationHUD = p_lambda$static$120_1_;
     });
 
     public static final BooleanOption SHOW_INVENTORY_HUD = new BooleanOption("99thclient.options.SHOW_INVENTORY_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_.showInventoryHUD;
+        return p_lambda$static$121_0_._99thClientSettings.showInventoryHUD;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_.showInventoryHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.showInventoryHUD = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption SHOW_SYSTEM_HUD = new BooleanOption("99thclient.options.SHOW_SYSTEM_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_.showSystemHUD;
+        return p_lambda$static$121_0_._99thClientSettings.showSystemHUD;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_.showSystemHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.showSystemHUD = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption SHOW_CPS_HUD = new BooleanOption("99thclient.options.SHOW_CPS_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_.showCPSHUD;
+        return p_lambda$static$121_0_._99thClientSettings.showCPSHUD;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_.showCPSHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.showCPSHUD = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption SHOW_LOOKING_HUD = new BooleanOption("99thclient.options.SHOW_LOOKING_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_.showLookingHUD;
+        return p_lambda$static$121_0_._99thClientSettings.showLookingHUD;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_.showLookingHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.showLookingHUD = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption FULL_BRIGHTNESS = new BooleanOption("99thclient.options.FULL_BRIGHTNESS", (p_lambda$static$123_0_) ->
     {
-        return p_lambda$static$123_0_.fullBrightness;
+        return p_lambda$static$123_0_._99thClientSettings.fullBrightness;
     }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
     {
-        p_lambda$static$124_0_.fullBrightness = p_lambda$static$124_1_;
+        p_lambda$static$124_0_._99thClientSettings.fullBrightness = p_lambda$static$124_1_;
     });
 
     public static final BooleanOption TNT_TIMER = new BooleanOption("99thclient.options.TNT_TIMER", (p_lambda$static$123_0_) ->
     {
-        return p_lambda$static$123_0_.tntTimer;
+        return p_lambda$static$123_0_._99thClientSettings.tntTimer;
     }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
     {
-        p_lambda$static$124_0_.tntTimer = p_lambda$static$124_1_;
+        p_lambda$static$124_0_._99thClientSettings.tntTimer = p_lambda$static$124_1_;
     });
 
     public static final BooleanOption POTION_TIMER = new BooleanOption("99thclient.options.POTION_TIMER", (p_lambda$static$123_0_) ->
     {
-        return p_lambda$static$123_0_.potionTimer;
+        return p_lambda$static$123_0_._99thClientSettings.potionTimer;
     }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
     {
-        p_lambda$static$124_0_.potionTimer = p_lambda$static$124_1_;
+        p_lambda$static$124_0_._99thClientSettings.potionTimer = p_lambda$static$124_1_;
     });
 
     public static final BooleanOption ARMOR_BREAK_WARNING = new BooleanOption("99thclient.options.ARMOR_BREAK_WARNING", (p_lambda$static$123_0_) ->
     {
-        return p_lambda$static$123_0_.armorBreakWarning;
+        return p_lambda$static$123_0_._99thClientSettings.armorBreakWarning;
     }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
     {
-        p_lambda$static$124_0_.armorBreakWarning = p_lambda$static$124_1_;
+        p_lambda$static$124_0_._99thClientSettings.armorBreakWarning = p_lambda$static$124_1_;
     });
 
     public static final BooleanOption OUT_OF_BLOCKS_WARNING = new BooleanOption("99thclient.options.OUT_OF_BLOCKS_WARNING", (p_lambda$static$123_0_) ->
     {
-        return p_lambda$static$123_0_.outOfBlocksWarning;
+        return p_lambda$static$123_0_._99thClientSettings.outOfBlocksWarning;
     }, (p_lambda$static$124_0_, p_lambda$static$124_1_) ->
     {
-        p_lambda$static$124_0_.outOfBlocksWarning = p_lambda$static$124_1_;
+        p_lambda$static$124_0_._99thClientSettings.outOfBlocksWarning = p_lambda$static$124_1_;
     });
 
     public static final BooleanOption INFINITE_CHAT = new BooleanOption("99thclient.options.INFINITE_CHAT", (p_lambda$static$125_0_) ->
     {
-        return p_lambda$static$125_0_.infiniteChat;
+        return p_lambda$static$125_0_._99thClientSettings.infiniteChat;
     }, (p_lambda$static$126_0_, p_lambda$static$126_1_) ->
     {
-        p_lambda$static$126_0_.infiniteChat = p_lambda$static$126_1_;
+        p_lambda$static$126_0_._99thClientSettings.infiniteChat = p_lambda$static$126_1_;
     });
 
     public static final BooleanOption CHAT_TIMESTAMP = new BooleanOption("99thclient.options.CHAT_TIMESTAMP", (p_lambda$static$125_0_) ->
     {
-        return p_lambda$static$125_0_.showChatTimestamp;
+        return p_lambda$static$125_0_._99thClientSettings.showChatTimestamp;
     }, (p_lambda$static$126_0_, p_lambda$static$126_1_) ->
     {
-        p_lambda$static$126_0_.showChatTimestamp = p_lambda$static$126_1_;
+        p_lambda$static$126_0_._99thClientSettings.showChatTimestamp = p_lambda$static$126_1_;
         Minecraft.getInstance().ingameGUI.getChatGUI().refreshChat();
     });
 
     public static final SliderPercentageOption TIME_TILL_AFK = new SliderPercentageOption("99thclient.options.timeTillAFK", 0.0D, 19.0D, 1.0F, (p_lambda$static$47_0_) ->
     {
-        return NonLinearTime.DoubleToPercentage(p_lambda$static$47_0_.timeTillAFK);
+        return NonLinearTime.DoubleToPercentage(p_lambda$static$47_0_._99thClientSettings.timeTillAFK);
     }, (p_lambda$static$48_0_, p_lambda$static$48_1_) ->
     {
-        p_lambda$static$48_0_.timeTillAFK = (int)NonLinearTime.PercentageToDouble(p_lambda$static$48_1_.doubleValue());
+        p_lambda$static$48_0_._99thClientSettings.timeTillAFK = (int)NonLinearTime.PercentageToDouble(p_lambda$static$48_1_.doubleValue());
     }, (p_lambda$static$49_0_, p_lambda$static$49_1_) ->
     {
         if(p_lambda$static$49_1_.get(p_lambda$static$49_0_) == 0) return p_lambda$static$49_1_.getGenericValueComponent(new TranslationTextComponent("Off"));
@@ -798,10 +796,10 @@ public abstract class AbstractOption
     private static final ITextComponent DISCORDRPC_SHOW_SERVER_MAP = new TranslationTextComponent("99thclient.options.DISCORDRPC_SHOW_SERVER.map.tooltip");
     public static final IteratableOption DISCORDRPC_SHOW_SERVER = new IteratableOption("99thclient.options.DISCORDRPC_SHOW_SERVER", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
     {
-        p_lambda$static$127_0_.discordrpcShowServer = p_lambda$static$127_0_.discordrpcShowServer.func_238166_c_();
+        p_lambda$static$127_0_._99thClientSettings.discordrpcShowServer = p_lambda$static$127_0_._99thClientSettings.discordrpcShowServer.func_238166_c_();
     }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
     {
-        switch (p_lambda$static$128_0_.discordrpcShowServer)
+        switch (p_lambda$static$128_0_._99thClientSettings.discordrpcShowServer)
         {
             case OFF:
                 p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_OFF, 200));
@@ -823,7 +821,7 @@ public abstract class AbstractOption
                 p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(DISCORDRPC_SHOW_SERVER_MAP, 200));
         }
 
-        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.discordrpcShowServer.func_238164_b_());
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_._99thClientSettings.discordrpcShowServer.func_238164_b_());
         return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 
@@ -832,10 +830,10 @@ public abstract class AbstractOption
     private static final ITextComponent HEALTH_INDICATOR_ICONS = new TranslationTextComponent("99thclient.options.HEALTH_INDICATOR.icons.tooltip");
     public static final IteratableOption HEALTH_INDICATOR = new IteratableOption("99thclient.options.HEALTH_INDICATOR", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
     {
-        p_lambda$static$127_0_.healthIndicator = p_lambda$static$127_0_.healthIndicator.func_238166_c_();
+        p_lambda$static$127_0_._99thClientSettings.healthIndicator = p_lambda$static$127_0_._99thClientSettings.healthIndicator.func_238166_c_();
     }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
     {
-        switch (p_lambda$static$128_0_.healthIndicator)
+        switch (p_lambda$static$128_0_._99thClientSettings.healthIndicator)
         {
             case OFF:
                 p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(HEALTH_INDICATOR_OFF, 200));
@@ -850,7 +848,7 @@ public abstract class AbstractOption
                 break;
         }
 
-        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.healthIndicator.func_238164_b_());
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_._99thClientSettings.healthIndicator.func_238164_b_());
         return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 
@@ -859,10 +857,10 @@ public abstract class AbstractOption
     private static final ITextComponent SHOW_TOASTS_ALL = new TranslationTextComponent("99thclient.options.SHOW_TOASTS.all.tooltip");
     public static final IteratableOption SHOW_TOASTS = new IteratableOption("99thclient.options.SHOW_TOASTS", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
     {
-        p_lambda$static$127_0_.showToasts = p_lambda$static$127_0_.showToasts.func_238166_c_();
+        p_lambda$static$127_0_._99thClientSettings.showToasts = p_lambda$static$127_0_._99thClientSettings.showToasts.func_238166_c_();
     }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
     {
-        switch (p_lambda$static$128_0_.showToasts)
+        switch (p_lambda$static$128_0_._99thClientSettings.showToasts)
         {
             case OFF:
                 p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(SHOW_TOASTS_OFF, 200));
@@ -877,7 +875,7 @@ public abstract class AbstractOption
                 break;
         }
 
-        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.showToasts.func_238164_b_());
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_._99thClientSettings.showToasts.func_238164_b_());
         return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 
@@ -886,10 +884,10 @@ public abstract class AbstractOption
     private static final ITextComponent POTION_ICONS_ALL = new TranslationTextComponent("99thclient.options.POTION_ICONS.all.tooltip");
     public static final IteratableOption POTION_ICONS = new IteratableOption("99thclient.options.POTION_ICONS", (p_lambda$static$127_0_, p_lambda$static$127_1_) ->
     {
-        p_lambda$static$127_0_.potionIcons = p_lambda$static$127_0_.potionIcons.func_238166_c_();
+        p_lambda$static$127_0_._99thClientSettings.potionIcons = p_lambda$static$127_0_._99thClientSettings.potionIcons.func_238166_c_();
     }, (p_lambda$static$128_0_, p_lambda$static$128_1_) ->
     {
-        switch (p_lambda$static$128_0_.potionIcons)
+        switch (p_lambda$static$128_0_._99thClientSettings.potionIcons)
         {
             case HIDE:
                 p_lambda$static$128_1_.setOptionValues(Minecraft.getInstance().fontRenderer.trimStringToWidth(POTION_ICONS_HIDE, 200));
@@ -904,50 +902,50 @@ public abstract class AbstractOption
                 break;
         }
 
-        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_.potionIcons.func_238164_b_());
+        IFormattableTextComponent iformattabletextcomponent = new TranslationTextComponent(p_lambda$static$128_0_._99thClientSettings.potionIcons.func_238164_b_());
         return p_lambda$static$128_1_.getGenericValueComponent(iformattabletextcomponent);
     });
 
     public static final BooleanOption TABLIST_PING = new BooleanOption("99thclient.options.TABLIST_PING", (p_lambda$static$129_0_) ->
     {
-        return p_lambda$static$129_0_.tablistPing;
+        return p_lambda$static$129_0_._99thClientSettings.tablistPing;
     }, (p_lambda$static$130_0_, p_lambda$static$130_1_) ->
     {
-        p_lambda$static$130_0_.tablistPing = p_lambda$static$130_1_;
+        p_lambda$static$130_0_._99thClientSettings.tablistPing = p_lambda$static$130_1_;
     });
 
     public static final BooleanOption DECODE_CHAT_MAGIC = new BooleanOption("99thclient.options.DECODE_CHAT_MAGIC", (p_lambda$static$131_0_) ->
     {
-        return p_lambda$static$131_0_.decodeChatMagic;
+        return p_lambda$static$131_0_._99thClientSettings.decodeChatMagic;
     }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
     {
-        p_lambda$static$132_0_.decodeChatMagic = p_lambda$static$132_1_;
+        p_lambda$static$132_0_._99thClientSettings.decodeChatMagic = p_lambda$static$132_1_;
         p_lambda$static$132_0_.mc.fontRenderer.setDecodeChatMagic(p_lambda$static$132_1_);
     });
 
     public static final BooleanOption BLOCK_HIGHLIGHT = new BooleanOption("99thclient.options.BLOCK_HIGHLIGHT", (p_lambda$static$131_0_) ->
     {
-        return p_lambda$static$131_0_.blockHighlight;
+        return p_lambda$static$131_0_._99thClientSettings.blockHighlight;
     }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
     {
-        p_lambda$static$132_0_.blockHighlight = p_lambda$static$132_1_;
+        p_lambda$static$132_0_._99thClientSettings.blockHighlight = p_lambda$static$132_1_;
     });
 
     public static final BooleanOption RESOURCEPACK_OPTIMIZATION = new BooleanOption("99thclient.options.RESOURCEPACK_OPTIMIZATION", (p_lambda$static$131_0_) ->
     {
-        return p_lambda$static$131_0_.resourcepackOptimization;
+        return p_lambda$static$131_0_._99thClientSettings.resourcepackOptimization;
     }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
     {
-        p_lambda$static$132_0_.resourcepackOptimization = p_lambda$static$132_1_;
+        p_lambda$static$132_0_._99thClientSettings.resourcepackOptimization = p_lambda$static$132_1_;
     });
 
     public static final BooleanOption DATA_COLLECTION = new BooleanOption("99thclient.options.DATA_COLLECTION", (p_lambda$static$131_0_) ->
     {
-        return p_lambda$static$131_0_.dataCollection;
+        return p_lambda$static$131_0_._99thClientSettings.dataCollection;
     }, (p_lambda$static$132_0_, p_lambda$static$132_1_) ->
     {
-        p_lambda$static$132_0_.dataCollection = p_lambda$static$132_1_;
-        p_lambda$static$132_0_.updateDataCollection();
+        p_lambda$static$132_0_._99thClientSettings.dataCollection = p_lambda$static$132_1_;
+        p_lambda$static$132_0_._99thClientSettings.updateDataCollection();
     });
 
     public AbstractOption(String translationKeyIn)

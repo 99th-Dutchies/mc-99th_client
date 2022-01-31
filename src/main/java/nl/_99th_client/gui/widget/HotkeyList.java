@@ -38,7 +38,7 @@ public class HotkeyList extends AbstractOptionList<HotkeyList.Entry>
         }
         this.entries.clear();
 
-        for (Hotkey hotkey : this.minecraft.gameSettings._99thHotkeys)
+        for (Hotkey hotkey : this.minecraft.gameSettings._99thClientSettings.hotkeys)
         {
             ITextComponent itextcomponent = new TranslationTextComponent(hotkey.response);
             int i = this.minecraft.fontRenderer.getStringPropertyWidth(itextcomponent);
@@ -113,7 +113,7 @@ public class HotkeyList extends AbstractOptionList<HotkeyList.Entry>
             {
                 HotkeyList hl = HotkeyList.this;
 
-                hl.minecraft.gameSettings.removeHotkey(this.hotkey);
+                hl.minecraft.gameSettings._99thClientSettings.removeHotkey(this.hotkey);
                 hl.loadHotkeys();
                 hl.setScrollAmount(0);
             });

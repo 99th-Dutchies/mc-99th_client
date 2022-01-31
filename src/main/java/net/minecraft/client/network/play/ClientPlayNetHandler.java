@@ -444,7 +444,7 @@ public class ClientPlayNetHandler implements IClientPlayNetHandler
         this.netManager.sendPacket(new CCustomPayloadPacket(CCustomPayloadPacket.BRAND, (new PacketBuffer(Unpooled.buffer())).writeString(ClientBrandRetriever.getClientModName())));
         this.client.getMinecraftGame().startGameSession();
 
-        for(EventTrigger eventTrigger : this.client.gameSettings.eventTriggers) {
+        for(EventTrigger eventTrigger : this.client.gameSettings._99thClientSettings.eventTriggers) {
             if((this.client.serverJoinEventFlag && eventTrigger.trigger == EventTrigger.Event.SERVER_JOIN) ||
                     eventTrigger.trigger == EventTrigger.Event.WORLD_JOIN) {
                 eventTrigger.handle();

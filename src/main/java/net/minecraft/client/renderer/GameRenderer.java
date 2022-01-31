@@ -453,7 +453,7 @@ public class GameRenderer implements IResourceManagerReloadListener, AutoCloseab
                 this.mc.worldRenderer.setDisplayListEntitiesDirty();
             }
 
-            this.mc.freelook.setActive(this.mc.gameSettings._99thKeyBindFreelook.isKeyDown());
+            this.mc.freelook.setActive(this.mc.gameSettings._99thClientSettings.keyBindFreelook.isKeyDown());
 
             if (activeRenderInfoIn.getRenderViewEntity() instanceof LivingEntity && ((LivingEntity)activeRenderInfoIn.getRenderViewEntity()).getShouldBeDead())
             {

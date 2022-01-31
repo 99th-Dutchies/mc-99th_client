@@ -32,7 +32,7 @@ public class OptionsCustomCommandsScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thclient.options.customcommands.add"), (p_223703_1_) ->
         {
-            this.minecraft.gameSettings.customCommands.add(new CustomCommand("", "", false));
+            this.minecraft.gameSettings._99thClientSettings.customCommands.add(new CustomCommand("", "", false));
             this.customCommandsList.loadCustomCommands();
         }));
         this.addButton(new Button(this.width / 2 + 5, this.height - 27, 150, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
@@ -46,14 +46,14 @@ public class OptionsCustomCommandsScreen extends SettingsScreen
     private void removeEmpty() {
         ArrayList<CustomCommand> remove = new ArrayList<>();
 
-        for(CustomCommand cc : this.minecraft.gameSettings.customCommands){
+        for(CustomCommand cc : this.minecraft.gameSettings._99thClientSettings.customCommands){
             if(StringUtils.isBlank(cc.name) && StringUtils.isBlank(cc.response)) {
                 remove.add(cc);
             }
         }
 
         for(CustomCommand ccr : remove) {
-            this.minecraft.gameSettings.customCommands.remove(ccr);
+            this.minecraft.gameSettings._99thClientSettings.customCommands.remove(ccr);
         }
     }
 

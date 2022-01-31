@@ -77,15 +77,15 @@ public class OptionsChatScreen extends SettingsScreen
 
         this.chatPrefixField = new TextFieldWidget(this.font, this.width / 2 - 75, this.height / 6 + 48, 150, 20, new TranslationTextComponent("99thclient.options.chat.prefix"));
         this.chatPrefixField.setMaxStringLength(256);
-        this.chatPrefixField.setText(Minecraft.getInstance().gameSettings.chatPrefix);
+        this.chatPrefixField.setText(Minecraft.getInstance().gameSettings._99thClientSettings.chatPrefix);
         this.chatPrefixField.setResponder((p_214319_1_) -> {
-            Minecraft.getInstance().gameSettings.chatPrefix = p_214319_1_;
+            Minecraft.getInstance().gameSettings._99thClientSettings.chatPrefix = p_214319_1_;
         });
         this.children.add(this.chatPrefixField);
 
-        this.chatPrefixEnabledButton = new Button(this.width / 2 + 85, this.height / 6 + 48, 70, 20, this.gameSettings.chatPrefixEnabled ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
-            this.gameSettings.chatPrefixEnabled = !this.gameSettings.chatPrefixEnabled;
-            button.setMessage(this.gameSettings.chatPrefixEnabled ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
+        this.chatPrefixEnabledButton = new Button(this.width / 2 + 85, this.height / 6 + 48, 70, 20, this.gameSettings._99thClientSettings.chatPrefixEnabled ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
+            this.gameSettings._99thClientSettings.chatPrefixEnabled = !this.gameSettings._99thClientSettings.chatPrefixEnabled;
+            button.setMessage(this.gameSettings._99thClientSettings.chatPrefixEnabled ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
         });
         this.children.add(this.chatPrefixEnabledButton);
     }

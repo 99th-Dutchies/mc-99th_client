@@ -21,8 +21,7 @@ public class ChatTriggerListener extends AbstractChatListener
     }
 
     /**
-     * Called whenever this listener receives a chat message, if this listener is registered to the given type in {@link
-     * net.minecraft.client.gui.GuiIngame#chatListeners chatListeners}
+     * Called whenever this listener receives a chat message, if this listener is registered to the given type in
      */
     public void say(ChatType chatTypeIn, ITextComponent message, UUID sender)
     {
@@ -30,7 +29,7 @@ public class ChatTriggerListener extends AbstractChatListener
 
         String msg = message.getString();
 
-        for(ChatTrigger trigger : this.mc.gameSettings.chatTriggers) {
+        for(ChatTrigger trigger : this.mc.gameSettings._99thClientSettings.chatTriggers) {
             if(trigger.response.isEmpty() || trigger.active == ActiveAFK.OFF || (trigger.active == ActiveAFK.ACTIVEONLY && this.mc.afkStatus.isAFK()) || (trigger.active == ActiveAFK.AFKONLY && !this.mc.afkStatus.isAFK())) continue;
 
             Matcher matcher = trigger.match(message.getString());

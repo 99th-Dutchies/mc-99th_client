@@ -25,6 +25,7 @@ public class SettingsScreen extends Screen
     public void onClose()
     {
         this.minecraft.gameSettings.saveOptions();
+        this.minecraft.gameSettings._99thClientSettings.saveSettings();
     }
 
     public void closeScreen()

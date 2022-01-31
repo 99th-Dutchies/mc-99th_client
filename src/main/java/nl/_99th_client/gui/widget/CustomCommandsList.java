@@ -13,7 +13,6 @@ import nl._99th_client.gui.screen.OptionsCustomCommandsScreen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 public class CustomCommandsList extends AbstractOptionList<CustomCommandsList.Entry>
 {
@@ -38,9 +37,9 @@ public class CustomCommandsList extends AbstractOptionList<CustomCommandsList.En
         }
         this.entries.clear();
 
-        for(int j = 0; j < this.minecraft.gameSettings.customCommands.size(); j++)
+        for(int j = 0; j < this.minecraft.gameSettings._99thClientSettings.customCommands.size(); j++)
         {
-            customCommand = this.minecraft.gameSettings.customCommands.get(j);
+            customCommand = this.minecraft.gameSettings._99thClientSettings.customCommands.get(j);
 
             CustomCommandEntry entry = new CustomCommandEntry(j, customCommand);
             this.addEntry(entry);
@@ -129,7 +128,7 @@ public class CustomCommandsList extends AbstractOptionList<CustomCommandsList.En
             this.btnRemove = new Button(CustomCommandsList.this.customCommandsScreen.width / 2 + 170, 65 + this.index * 25, 20, 20, new StringTextComponent("X"), (button) -> {
                 CustomCommandsList ccl = CustomCommandsList.this;
 
-                ccl.minecraft.gameSettings.removeCustomCommand(this.customCommand);
+                ccl.minecraft.gameSettings._99thClientSettings.removeCustomCommand(this.customCommand);
                 ccl.loadCustomCommands();
                 ccl.setScrollAmount(0);
             });

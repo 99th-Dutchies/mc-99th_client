@@ -40,9 +40,9 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
         }
         this.entries.clear();
 
-        for(int j = 0; j < this.minecraft.gameSettings.chatFilters.size(); j++)
+        for(int j = 0; j < this.minecraft.gameSettings._99thClientSettings.chatFilters.size(); j++)
         {
-            chatfilter = this.minecraft.gameSettings.chatFilters.get(j);
+            chatfilter = this.minecraft.gameSettings._99thClientSettings.chatFilters.get(j);
             ITextComponent pattern = new TranslationTextComponent(chatfilter.pattern.pattern());
 
             ChatFilterEntry entry = new ChatFilterEntry(j, chatfilter, pattern);
@@ -106,21 +106,21 @@ public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
             this.btnToggleActivePlayer = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 45, 65 + this.index * 25, 70, 20, this.chatFilter.activePlayer ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
                 this.chatFilter.activePlayer = !this.chatFilter.activePlayer;
                 button.setMessage(this.chatFilter.activePlayer ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
-                ChatFilterList.this.minecraft.gameSettings.setChatFilter(this.index, this.chatFilter);
+                ChatFilterList.this.minecraft.gameSettings._99thClientSettings.setChatFilter(this.index, this.chatFilter);
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnToggleActivePlayer);
 
             this.btnToggleActiveChat = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 125, 65 + this.index * 25, 70, 20, this.chatFilter.activeChat ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"), (button) -> {
                 this.chatFilter.activeChat = !this.chatFilter.activeChat;
                 button.setMessage(this.chatFilter.activeChat ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
-                ChatFilterList.this.minecraft.gameSettings.setChatFilter(this.index, this.chatFilter);
+                ChatFilterList.this.minecraft.gameSettings._99thClientSettings.setChatFilter(this.index, this.chatFilter);
             });
             ChatFilterList.this.chatFiltersScreen.children.add(this.btnToggleActiveChat);
 
             this.btnRemove = new Button(ChatFilterList.this.chatFiltersScreen.width / 2 + 200, 65 + this.index * 25, 20, 20, new StringTextComponent("X"), (button) -> {
                 ChatFilterList cfl = ChatFilterList.this;
 
-                cfl.minecraft.gameSettings.removeChatFilter(this.chatFilter);
+                cfl.minecraft.gameSettings._99thClientSettings.removeChatFilter(this.chatFilter);
                 cfl.loadFilters();
                 cfl.setScrollAmount(0);
             });

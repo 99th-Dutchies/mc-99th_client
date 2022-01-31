@@ -30,9 +30,9 @@ public class EventTriggerList extends AbstractOptionList<EventTriggerList.Entry>
 
     public void loadTriggers() {
         EventTrigger eventTrigger;
-        for(int j = 0; j < this.minecraft.gameSettings.eventTriggers.size(); j++)
+        for(int j = 0; j < this.minecraft.gameSettings._99thClientSettings.eventTriggers.size(); j++)
         {
-            eventTrigger = this.minecraft.gameSettings.eventTriggers.get(j);
+            eventTrigger = this.minecraft.gameSettings._99thClientSettings.eventTriggers.get(j);
 
             EventTriggerEntry entry = new EventTriggerEntry(j, eventTrigger);
             this.addEntry(entry);

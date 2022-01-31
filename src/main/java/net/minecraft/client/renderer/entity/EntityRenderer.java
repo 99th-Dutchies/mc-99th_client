@@ -111,15 +111,15 @@ public abstract class EntityRenderer<T extends Entity> implements net.optifine.e
         }
 
         if(canRenderName(entityIn) && !StringUtil.isNullOrEmpty(MCStringUtils.strip(entityIn.getDisplayName().getString())) && (entityIn instanceof PlayerEntity || (entityIn instanceof MobEntity && Minecraft.getInstance().player.getDistance(entityIn) <= 10 && !((MobEntity) entityIn).getShouldBeDead()))) {
-            HealthIndicator hi = Minecraft.getInstance().gameSettings.healthIndicator;
+            HealthIndicator hi = Minecraft.getInstance().gameSettings._99thClientSettings.healthIndicator;
 
             if (hi != HealthIndicator.OFF) {
                 float playerHealth = MathHelper.ceil(((LivingEntity) entityIn).getHealth());
                 float playerGoldHealth = MathHelper.ceil(((LivingEntity) entityIn).getAbsorptionAmount());
 
-                if (Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.NUMBERS || playerHealth > 40 || playerGoldHealth > 20) {
+                if (Minecraft.getInstance().gameSettings._99thClientSettings.healthIndicator == HealthIndicator.NUMBERS || playerHealth > 40 || playerGoldHealth > 20) {
                     this.renderHealthNumbers(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
-                } else if (Minecraft.getInstance().gameSettings.healthIndicator == HealthIndicator.ICONS) {
+                } else if (Minecraft.getInstance().gameSettings._99thClientSettings.healthIndicator == HealthIndicator.ICONS) {
                     this.renderHealthIcons(entityIn, isDeadmau5, matrixStackIn, bufferIn, packedLightIn);
                 }
             }

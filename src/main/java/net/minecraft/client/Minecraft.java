@@ -230,10 +230,7 @@ import net.minecraft.world.storage.FolderName;
 import net.minecraft.world.storage.IServerConfiguration;
 import net.minecraft.world.storage.SaveFormat;
 import net.minecraft.world.storage.ServerWorldInfo;
-import nl._99th_client.AFKStatus;
-import nl._99th_client.Config;
-import nl._99th_client.DiscordStatus;
-import nl._99th_client.Freelook;
+import nl._99th_client.*;
 import nl._99th_client.api.ApiClient;
 import nl._99th_client.chat.Hotkey;
 import nl._99th_client.command.CommandManager;
@@ -434,7 +431,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         this.creativeSettings = new CreativeSettings(this.gameDir, this.dataFixer);
         LOGGER.info("Backend library: {}", (Object)RenderSystem.getBackendDescription());
 
-        this.discord = new DiscordStatus(this, this.gameSettings.discordrpcShowServer != DiscordShowRPC.OFF);
+        this.discord = new DiscordStatus(this, this.gameSettings._99thClientSettings.discordrpcShowServer != DiscordShowRPC.OFF);
         this.apiClient.startSession(this.session);
 
         ScreenSize screensize;
@@ -488,7 +485,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         this.musicTicker = new MusicTicker(this);
         this.fontResourceMananger = new FontResourceManager(this.textureManager);
         this.fontRenderer = this.fontResourceMananger.func_238548_a_();
-        this.fontRenderer.setDecodeChatMagic(this.gameSettings.decodeChatMagic);
+        this.fontRenderer.setDecodeChatMagic(this.gameSettings._99thClientSettings.decodeChatMagic);
         this.resourceManager.addReloadListener(this.fontResourceMananger.getReloadListener());
         this.forceUnicodeFont(this.getForceUnicodeFont());
         this.resourceManager.addReloadListener(new GrassColorReloadListener());
@@ -2011,20 +2008,20 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
         {
             while (this.gameSettings.keyBindChat.isPressed())
             {
-                this.openChatScreen(this.gameSettings.chatPrefixEnabled ? this.gameSettings.chatPrefix : "");
+                this.openChatScreen(this.gameSettings._99thClientSettings.chatPrefixEnabled ? this.gameSettings._99thClientSettings.chatPrefix : "");
             }
 
             if (this.currentScreen == null && this.loadingGui == null && this.gameSettings.keyBindCommand.isPressed())
             {
                 this.openChatScreen("/");
             }
-            if (this.currentScreen == null && this.loadingGui == null && this.gameSettings._99thKeyBindCommand.isPressed())
+            if (this.currentScreen == null && this.loadingGui == null && this.gameSettings._99thClientSettings.keyBindCommand.isPressed())
             {
                 this.openChatScreen("\\");
             }
         }
 
-        for(Hotkey hotkey : this.gameSettings._99thHotkeys) {
+        for(Hotkey hotkey : this.gameSettings._99thClientSettings.hotkeys) {
             hotkey.handle();
         }
 

@@ -116,9 +116,9 @@ public class OptionsHUDGuiScreen extends SettingsScreen
 
         this.itemHUDitemsField = new TextFieldWidget(this.font, this.width / 2 - 65, this.height / 6 + 192, 220, 20, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"));
         this.itemHUDitemsField.setMaxStringLength(1230);
-        this.itemHUDitemsField.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings.itemHUDitems));
+        this.itemHUDitemsField.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings._99thClientSettings.itemHUDitems));
         this.itemHUDitemsField.setResponder((p_214319_1_) -> {
-            Minecraft.getInstance().gameSettings.itemHUDitems = MCStringUtils.parseItems(p_214319_1_);
+            Minecraft.getInstance().gameSettings._99thClientSettings.itemHUDitems = MCStringUtils.parseItems(p_214319_1_);
         });
         this.children.add(this.itemHUDitemsField);
 

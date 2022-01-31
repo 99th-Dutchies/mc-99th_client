@@ -19,8 +19,7 @@ public class ChatFilterListener extends AbstractChatListener
     }
 
     /**
-     * Called whenever this listener receives a chat message, if this listener is registered to the given type in {@link
-     * net.minecraft.client.gui.GuiIngame#chatListeners chatListeners}
+     * Called whenever this listener receives a chat message, if this listener is registered to the given type in
      */
     public void say(ChatType chatTypeIn, ITextComponent message, UUID sender)
     {
@@ -28,7 +27,7 @@ public class ChatFilterListener extends AbstractChatListener
     }
 
     public boolean shouldHide(ChatType chatTypeIn, ITextComponent message, UUID sender) {
-        for(ChatFilter filter : this.mc.gameSettings.chatFilters) {
+        for(ChatFilter filter : this.mc.gameSettings._99thClientSettings.chatFilters) {
             if(!filter.activeChat) continue;
 
             Matcher matcher = filter.match(message.getString());

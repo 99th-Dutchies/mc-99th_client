@@ -98,7 +98,7 @@ public class PlayerTabOverlayGui extends AbstractGui
             h = Math.max(h, sw);
         }
 
-        if(this.mc.gameSettings.tablistPing) {
+        if(this.mc.gameSettings._99thClientSettings.tablistPing) {
             i += h;
         }
 
@@ -245,7 +245,7 @@ public class PlayerTabOverlayGui extends AbstractGui
 
     protected void func_238522_a_(MatrixStack p_238522_1_, int p_238522_2_, int p_238522_3_, int p_238522_4_, NetworkPlayerInfo p_238522_5_)
     {
-        if(this.mc.gameSettings.tablistPing) {
+        if(this.mc.gameSettings._99thClientSettings.tablistPing) {
             int j;
 
             if (p_238522_5_.getResponseTime() <= 0) {

@@ -62,7 +62,7 @@ public class InventoryInfo
         int i = 0;
         PlayerInventory inv = mc.player.inventory;
 
-        for(Item item : mc.gameSettings.itemHUDitems) {
+        for(Item item : mc.gameSettings._99thClientSettings.itemHUDitems) {
             int j1 = mc.getMainWindow().getScaledWidth() / 2 - 78 + (i + 10) * 20;
             int k1 = mc.getMainWindow().getScaledHeight() - 16 - 3;
 

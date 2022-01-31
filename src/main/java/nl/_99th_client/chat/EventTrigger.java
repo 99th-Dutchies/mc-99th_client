@@ -42,6 +42,7 @@ public class EventTrigger
     }
 
     public enum Event {
+        EMPTY("empty"),
         SERVER_JOIN("server_join"),
         WORLD_JOIN("world_join");
 
@@ -60,6 +61,17 @@ public class EventTrigger
         public String getString()
         {
             return this.eventName;
+        }
+
+        public static Event fromString(String in) {
+            switch(in) {
+                case "server_join":
+                    return Event.SERVER_JOIN;
+                case "world_join":
+                    return Event.WORLD_JOIN;
+                default:
+                    return Event.EMPTY;
+            }
         }
     }
 }

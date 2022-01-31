@@ -33,7 +33,7 @@ public class OptionsChatTriggersScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thclient.options.chattriggers.add"), (p_223703_1_) ->
         {
-            this.minecraft.gameSettings.chatTriggers.add(new ChatTrigger("", "", ActiveAFK.OFF, 0, 0));
+            this.minecraft.gameSettings._99thClientSettings.chatTriggers.add(new ChatTrigger("", "", ActiveAFK.OFF, 0, 0));
             this.chatTriggerList.loadTriggers();
         }));
         this.addButton(new Button(this.width / 2 + 5, this.height - 27, 150, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
@@ -47,14 +47,14 @@ public class OptionsChatTriggersScreen extends SettingsScreen
     private void removeEmpty() {
         ArrayList<ChatTrigger> remove = new ArrayList<>();
 
-        for(ChatTrigger ct : this.minecraft.gameSettings.chatTriggers){
+        for(ChatTrigger ct : this.minecraft.gameSettings._99thClientSettings.chatTriggers){
             if(StringUtils.isBlank(ct.pattern.toString()) && StringUtils.isBlank(ct.response)) {
                 remove.add(ct);
             }
         }
 
         for(ChatTrigger ctr : remove) {
-            this.minecraft.gameSettings.chatTriggers.remove(ctr);
+            this.minecraft.gameSettings._99thClientSettings.chatTriggers.remove(ctr);
         }
     }
 

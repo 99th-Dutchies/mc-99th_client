@@ -90,7 +90,7 @@ public class ExperienceOrbRenderer extends EntityRenderer<ExperienceOrbEntity>
 
     private static void vertex(IVertexBuilder bufferIn, Matrix4f matrixIn, Matrix3f matrixNormalIn, float x, float y, int red, int green, int blue, float texU, float texV, int packedLight)
     {
-        if(Minecraft.getInstance().gameSettings.resourcepackOptimization){
+        if(Minecraft.getInstance().gameSettings._99thClientSettings.resourcepackOptimization){
             bufferIn.pos(matrixIn, x, y, 0.0F).color(255,255,255,255).tex(texU, texV).overlay(OverlayTexture.NO_OVERLAY).lightmap(packedLight).normal(matrixNormalIn, 0.0F, 1.0F, 0.0F).endVertex();
         } else {
             bufferIn.pos(matrixIn, x, y, 0.0F).color(red, green, blue, 128).tex(texU, texV).overlay(OverlayTexture.NO_OVERLAY).lightmap(packedLight).normal(matrixNormalIn, 0.0F, 1.0F, 0.0F).endVertex();

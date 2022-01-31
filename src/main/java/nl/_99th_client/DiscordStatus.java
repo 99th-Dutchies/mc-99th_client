@@ -74,10 +74,10 @@ public class DiscordStatus
         } else if(mc.isConnectedToRealms()) {
             details = (this.mc.afkStatus.isAFK() ? "AFK in" : "Playing") + " realms";
         } else if(this.mc.getIntegratedServer() == null && (this.mc.getCurrentServerData() == null || !this.mc.getCurrentServerData().isOnLAN())) {
-            if(this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.PLAYING) {
+            if(this.mc.gameSettings._99thClientSettings.discordrpcShowServer != DiscordShowRPC.PLAYING) {
                 details = (this.mc.afkStatus.isAFK() ? "AFK on " : "Online on ") + this.mc.getCurrentServerData().serverName;
 
-                if(this.mc.world != null && this.mc.world.getScoreboard() != null && this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1) != null && this.mc.gameSettings.discordrpcShowServer != DiscordShowRPC.SERVER) {
+                if(this.mc.world != null && this.mc.world.getScoreboard() != null && this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1) != null && this.mc.gameSettings._99thClientSettings.discordrpcShowServer != DiscordShowRPC.SERVER) {
                     state = this.getState(this.mc.world.getScoreboard().getObjectiveInDisplaySlot(1));
                 }
             } else {
@@ -103,7 +103,7 @@ public class DiscordStatus
             this.lastProfile = "";
             this.lastKills = "";
 
-            if(this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
+            if(this.mc.gameSettings._99thClientSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
                 return "In a lobby";
             } else {
                 return "In lobby " + MCStringUtils.strip(lobby.get().getPlayerName()).replaceAll("Lobby:?\\s?", "");
@@ -170,7 +170,7 @@ public class DiscordStatus
             }
         }
 
-        if (this.mc.gameSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
+        if (this.mc.gameSettings._99thClientSettings.discordrpcShowServer == DiscordShowRPC.GAME) {
             return "Playing " + this.lastGamemode;
         } else {
             if(!StringUtil.isNullOrEmpty(this.lastMap)) {

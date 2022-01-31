@@ -41,7 +41,7 @@ public class TNTRenderer extends EntityRenderer<TNTEntity>
         matrixStackIn.pop();
         super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
 
-        if(Minecraft.getInstance().gameSettings.tntTimer) {
+        if(Minecraft.getInstance().gameSettings._99thClientSettings.tntTimer) {
             String fuseTime = (((entityIn.getFuse() - partialTicks) / 20.00) + "0000").substring(0, 4);
             this.renderName(entityIn, new StringTextComponent(fuseTime), matrixStackIn, bufferIn, packedLightIn);
         }

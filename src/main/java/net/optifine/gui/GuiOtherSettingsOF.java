@@ -85,6 +85,7 @@ public class GuiOtherSettingsOF extends GuiScreenOF
         if (flag)
         {
             this.minecraft.gameSettings.resetSettings();
+            this.minecraft.gameSettings._99thClientSettings.resetSettings();
         }
 
         this.minecraft.displayGuiScreen(this);

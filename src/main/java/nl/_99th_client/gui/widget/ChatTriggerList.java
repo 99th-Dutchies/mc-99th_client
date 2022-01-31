@@ -43,9 +43,9 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
         }
         this.entries.clear();
 
-        for(int j = 0; j < this.minecraft.gameSettings.chatTriggers.size(); j++)
+        for(int j = 0; j < this.minecraft.gameSettings._99thClientSettings.chatTriggers.size(); j++)
         {
-            chattrigger = this.minecraft.gameSettings.chatTriggers.get(j);
+            chattrigger = this.minecraft.gameSettings._99thClientSettings.chatTriggers.get(j);
             ITextComponent pattern = new TranslationTextComponent(chattrigger.pattern.pattern());
             ITextComponent response = new TranslationTextComponent(chattrigger.response);
 
@@ -177,14 +177,14 @@ public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
             this.btnToggleActive = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 155, 65 + this.index * 25, 70, 20, new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()), (button) -> {
                 this.chatTrigger.active = this.chatTrigger.active.func_238166_c_();
                 button.setMessage(new TranslationTextComponent(this.chatTrigger.active.func_238164_b_()));
-                ChatTriggerList.this.minecraft.gameSettings.setChatTrigger(this.index, this.chatTrigger);
+                ChatTriggerList.this.minecraft.gameSettings._99thClientSettings.setChatTrigger(this.index, this.chatTrigger);
             });
             ChatTriggerList.this.chatTriggersScreen.children.add(this.btnToggleActive);
 
             this.btnRemove = new Button(ChatTriggerList.this.chatTriggersScreen.width / 2 + 230, 65 + this.index * 25, 20, 20, new StringTextComponent("X"), (button) -> {
                 ChatTriggerList ctl = ChatTriggerList.this;
 
-                ctl.minecraft.gameSettings.removeChatTrigger(this.chatTrigger);
+                ctl.minecraft.gameSettings._99thClientSettings.removeChatTrigger(this.chatTrigger);
                 ctl.loadTriggers();
                 ctl.setScrollAmount(0);
             });

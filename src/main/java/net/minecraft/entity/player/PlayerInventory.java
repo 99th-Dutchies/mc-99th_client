@@ -718,7 +718,7 @@ public class PlayerInventory implements IInventory, INameable
                     {
                         p_214023_1_.sendBreakAnimation(EquipmentSlotType.fromSlotTypeAndIndex(EquipmentSlotType.Group.ARMOR, j));
 
-                        if(Minecraft.getInstance().gameSettings.armorBreakWarning) {
+                        if(Minecraft.getInstance().gameSettings._99thClientSettings.armorBreakWarning) {
                             Minecraft.getInstance().ingameGUI.setClientTitle(
                                     new TranslationTextComponent(itemstack.getTranslationKey())
                                             .append(new TranslationTextComponent(" broke"))

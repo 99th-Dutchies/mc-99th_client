@@ -30,7 +30,7 @@ public class RealmsTermsScreen extends RealmsScreen
     /**
      * The screen to display when OK is clicked on the disconnect screen.
      *  
-     * Seems to be either null (integrated server) or an instance of either {@link MultiplayerScreen} (when connecting
+     * Seems to be either null (integrated server) or an instance of either (when connecting
      * to a server) or {@link com.mojang.realmsclient.gui.screens.RealmsTermsScreen} (when connecting to MCO server)
      */
     private final RealmsServer guiScreenServer;

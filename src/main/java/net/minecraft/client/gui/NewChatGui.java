@@ -220,7 +220,7 @@ public class NewChatGui extends AbstractGui
         int i = MathHelper.floor((double)this.getChatWidth() / this.getScale());
 
         ITextComponent text;
-        if(this.mc.gameSettings.showChatTimestamp) {
+        if(this.mc.gameSettings._99thClientSettings.showChatTimestamp) {
             text = new StringTextComponent("[" + DateTimeFormatter.ofPattern("HH:mm:ss").format(ldt) + "] ").append(p_238493_1_);
         } else {
             text = p_238493_1_;
@@ -239,7 +239,7 @@ public class NewChatGui extends AbstractGui
             this.drawnChatLines.add(0, new ChatLine<>(p_238493_3_, ireorderingprocessor, p_238493_2_));
         }
 
-        while (this.drawnChatLines.size() > 100 && !mc.gameSettings.infiniteChat)
+        while (this.drawnChatLines.size() > 100 && !mc.gameSettings._99thClientSettings.infiniteChat)
         {
             this.drawnChatLines.remove(this.drawnChatLines.size() - 1);
         }
@@ -248,7 +248,7 @@ public class NewChatGui extends AbstractGui
         {
             this.chatLines.add(0, new ChatLine<>(p_238493_3_, p_238493_1_, p_238493_2_));
 
-            while (this.chatLines.size() > 100 && !mc.gameSettings.infiniteChat)
+            while (this.chatLines.size() > 100 && !mc.gameSettings._99thClientSettings.infiniteChat)
             {
                 this.chatLines.remove(this.chatLines.size() - 1);
             }

@@ -36,10 +36,10 @@ public class OptionsHotkeysScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height - 27, 150, 20, new TranslationTextComponent("99thclient.options.hotkeys.add"), (p_223703_1_) ->
         {
-            KeyBinding kb = new KeyBinding("99thclient.hotkeys.hotkey" + this.minecraft.gameSettings._99thHotkeys.size(), -1, "key.categories.99thclienthotkeys");
+            KeyBinding kb = new KeyBinding("99thclient.hotkeys.hotkey" + this.minecraft.gameSettings._99thClientSettings.hotkeys.size(), -1, "key.categories.99thclienthotkeys");
             kb.bind(InputMappings.getInputByName("key.keyboard.unknown"));
 
-            this.minecraft.gameSettings._99thHotkeys.add(new Hotkey(kb, "", false));
+            this.minecraft.gameSettings._99thClientSettings.hotkeys.add(new Hotkey(kb, "", false));
             this.hotkeyList.loadHotkeys();
         }));
 
@@ -54,14 +54,14 @@ public class OptionsHotkeysScreen extends SettingsScreen
     private void removeEmpty() {
         ArrayList<Hotkey> remove = new ArrayList<>();
 
-        for(Hotkey hk : this.minecraft.gameSettings._99thHotkeys){
+        for(Hotkey hk : this.minecraft.gameSettings._99thClientSettings.hotkeys){
             if(hk.keyBinding.isDefault() && StringUtils.isBlank(hk.response)) {
                 remove.add(hk);
             }
         }
 
         for(Hotkey hk : remove) {
-            this.minecraft.gameSettings._99thHotkeys.remove(hk);
+            this.minecraft.gameSettings._99thClientSettings.hotkeys.remove(hk);
         }
     }
 

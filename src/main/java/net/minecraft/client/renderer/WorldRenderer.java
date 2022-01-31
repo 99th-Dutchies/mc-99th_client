@@ -871,7 +871,7 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
     {
         if (this.world != null)
         {
-            if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings.blockHighlight)
+            if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
             {
                 this.func_239233_v_();
             }
@@ -3276,7 +3276,7 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
 
         if (!Config.isCustomEntityModels() || !CustomEntityModels.isCustomModel(blockStateIn))
         {
-            if(this.mc.gameSettings.blockHighlight) {
+            if(this.mc.gameSettings._99thClientSettings.blockHighlight) {
                 drawShapeBlockhighlight(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn);
             } else {
                 drawShape(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn, 0.0F, 0.0F, 0.0F, 0.4F);

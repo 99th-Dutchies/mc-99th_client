@@ -2,7 +2,6 @@ package nl._99th_client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.Color;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TranslationTextComponent;
 
@@ -31,7 +30,7 @@ public class AFKStatus
     }
 
     public void check() {
-        if (this.mc.gameSettings.timeTillAFK == 0 && !this.forcedAFK) return;
+        if (this.mc.gameSettings._99thClientSettings.timeTillAFK == 0 && !this.forcedAFK) return;
         if (this.mc.gameSettings.keyBindForward.isKeyDown() || this.mc.gameSettings.keyBindBack.isKeyDown() ||
                 this.mc.gameSettings.keyBindLeft.isKeyDown() || this.mc.gameSettings.keyBindRight.isKeyDown() ||
                 this.mc.gameSettings.keyBindJump.isKeyDown() || this.mc.gameSettings.keyBindSneak.isKeyDown()) {
@@ -40,7 +39,7 @@ public class AFKStatus
 
         long now = System.currentTimeMillis();
 
-        if(this.lastMove < now - (this.mc.gameSettings.timeTillAFK * 1000) || this.forcedAFK) {
+        if(this.lastMove < now - (this.mc.gameSettings._99thClientSettings.timeTillAFK * 1000) || this.forcedAFK) {
             this.isAFK = true;
         }
 

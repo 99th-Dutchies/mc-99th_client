@@ -203,19 +203,19 @@ public class IngameGui extends AbstractGui
             RenderSystem.defaultBlendFunc();
         }
 
-        if(this.mc.gameSettings.showLocationHUD && !this.mc.gameSettings.showDebugInfo) {
+        if(this.mc.gameSettings._99thClientSettings.showLocationHUD && !this.mc.gameSettings.showDebugInfo) {
             LocationInfo.render(this.mc, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings.showInventoryHUD && !this.mc.gameSettings.showDebugInfo) {
+        if(this.mc.gameSettings._99thClientSettings.showInventoryHUD && !this.mc.gameSettings.showDebugInfo) {
             InventoryInfo.render(this.mc, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings.showSystemHUD && !this.mc.gameSettings.showDebugInfo) {
+        if(this.mc.gameSettings._99thClientSettings.showSystemHUD && !this.mc.gameSettings.showDebugInfo) {
             SystemInfo.render(this.mc, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings.showCPSHUD) {
+        if(this.mc.gameSettings._99thClientSettings.showCPSHUD) {
             CPSInfo.render(this.mc, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings.showLookingHUD && !this.mc.gameSettings.showDebugInfo) {
+        if(this.mc.gameSettings._99thClientSettings.showLookingHUD && !this.mc.gameSettings.showDebugInfo) {
             LookingInfo.render(this.mc, matrixStack, partialTicks);
         }
 
@@ -581,7 +581,7 @@ public class IngameGui extends AbstractGui
     {
         Collection<EffectInstance> collection = this.mc.player.getActivePotionEffects();
 
-        if (!collection.isEmpty() && this.mc.gameSettings.potionIcons != PotionIcons.HIDE)
+        if (!collection.isEmpty() && this.mc.gameSettings._99thClientSettings.potionIcons != PotionIcons.HIDE)
         {
             RenderSystem.enableBlend();
             int i = 0;
@@ -619,7 +619,7 @@ public class IngameGui extends AbstractGui
                     }
                 }
 
-                if (effectinstance.isShowIcon() || this.mc.gameSettings.potionIcons == PotionIcons.ALL)
+                if (effectinstance.isShowIcon() || this.mc.gameSettings._99thClientSettings.potionIcons == PotionIcons.ALL)
                 {
                     int k = this.scaledWidth;
                     int l = 1;
@@ -638,7 +638,7 @@ public class IngameGui extends AbstractGui
                     {
                         ++j;
                         k = k - 25 * j;
-                        l += 26 + (this.mc.gameSettings.potionTimer ? this.getFontRenderer().FONT_HEIGHT : 0);
+                        l += 26 + (this.mc.gameSettings._99thClientSettings.potionTimer ? this.getFontRenderer().FONT_HEIGHT : 0);
                     }
 
                     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -670,7 +670,7 @@ public class IngameGui extends AbstractGui
                         RenderSystem.color4f(1.0F, 1.0F, 1.0F, f1);
                         blit(matrixStack, j1 + 3, k1 + 3, this.getBlitOffset(), 18, 18, textureatlassprite);
 
-                        if(this.mc.gameSettings.potionTimer) {
+                        if(this.mc.gameSettings._99thClientSettings.potionTimer) {
                             int duration = (int) (finalEffectinstance.getDuration() / 20.0);
                             String durationString = ((int) Math.floor(duration / 60.0)) + ":";
 

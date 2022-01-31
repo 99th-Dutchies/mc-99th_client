@@ -122,7 +122,7 @@ public class ChestTileEntityRenderer<T extends TileEntity & IChestLid> extends T
             }
             else
             {
-                if(tileEntityIn instanceof TrappedChestTileEntity && Minecraft.getInstance().gameSettings.resourcepackOptimization) {
+                if(tileEntityIn instanceof TrappedChestTileEntity && Minecraft.getInstance().gameSettings._99thClientSettings.resourcepackOptimization) {
                     this.singleLatch.cubeList.clear();
                     this.singleLatch.addBox(11.0F, -2.0F, 15.0F, 2.0F, 5.0F, 1.0F, 0.0F);
                     this.singleLatch.rotationPointY = 8.0F;

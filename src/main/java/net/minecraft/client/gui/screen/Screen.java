@@ -388,7 +388,7 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
             return;
         }
 
-        for(ChatFilter filter : this.minecraft.gameSettings.chatFilters) {
+        for(ChatFilter filter : this.minecraft.gameSettings._99thClientSettings.chatFilters) {
             if(!filter.activePlayer) continue;
 
             Matcher matcher = filter.match(text);

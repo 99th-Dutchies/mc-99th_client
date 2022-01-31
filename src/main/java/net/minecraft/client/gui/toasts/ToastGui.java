@@ -74,8 +74,8 @@ public class ToastGui extends AbstractGui
 
     public void add(IToast toastIn)
     {
-        if(this.mc.gameSettings.showToasts == ShowToasts.OFF ||
-                (this.mc.gameSettings.showToasts == ShowToasts.SYSTEM && !(toastIn instanceof SystemToast))) return;
+        if(this.mc.gameSettings._99thClientSettings.showToasts == ShowToasts.OFF ||
+                (this.mc.gameSettings._99thClientSettings.showToasts == ShowToasts.SYSTEM && !(toastIn instanceof SystemToast))) return;
 
         this.toastsQueue.add(toastIn);
     }
