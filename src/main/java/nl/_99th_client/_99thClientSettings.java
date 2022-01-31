@@ -493,6 +493,7 @@ public class _99thClientSettings {
         root.put("decodeChatMagic", this.decodeChatMagic);
         root.put("blockHighlight", this.blockHighlight);
         root.put("resourcepackOptimization", this.resourcepackOptimization);
+        root.put("dataCollection", this.dataCollection);
         root.put("timeTillAFK", this.timeTillAFK);
         root.put("chatPrefix", this.chatPrefix);
         root.put("chatPrefixEnabled", this.chatPrefixEnabled);
@@ -586,6 +587,7 @@ public class _99thClientSettings {
             this.decodeChatMagic = (boolean) root.get("decodeChatMagic");
             this.blockHighlight = (boolean) root.get("blockHighlight");
             this.resourcepackOptimization = (boolean) root.get("resourcepackOptimization");
+            this.dataCollection = (boolean) root.get("dataCollection");
             this.timeTillAFK = ((Long) root.get("timeTillAFK")).intValue();
             this.chatPrefix = (String) root.get("chatPrefix");
             this.chatPrefixEnabled = (boolean) root.get("chatPrefixEnabled");
