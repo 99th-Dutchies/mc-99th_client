@@ -8,21 +8,14 @@ import net.minecraft.util.HandSide;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextComponent;
 import net.optifine.Config;
+import nl._99th_client.settings.HUDSetting;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CPSInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms, float pt) {
-        // Draw right clicks
-        renderCPSright(mc, ms);
-
-        // Draw left clicks
-        renderCPSleft(mc, ms);
-    }
-
-    private static void renderCPSleft(Minecraft mc, MatrixStack ms) {
+    public static void renderLeft(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         List<Long> remove = new ArrayList<>();
         long now = System.currentTimeMillis();
         for(Long click : mc.lastLeftClicks) {
@@ -35,15 +28,11 @@ public class CPSInfo
         }
 
         if(mc.lastLeftClicks.size() > 0) {
-            if(getMainHandside(mc) == HandSide.RIGHT) {
-                drawCPSRight(mc.lastLeftClicks.size() + "", mc, ms);
-            } else {
-                drawCPSLeft(mc.lastLeftClicks.size() + "", mc, ms);
-            }
+            drawCPS(mc.lastLeftClicks.size() + "", hudSetting.x, hudSetting.y, mc, ms);
         }
     }
 
-    private static void renderCPSright(Minecraft mc, MatrixStack ms) {
+    public static void renderRight(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         List<Long> remove = new ArrayList<>();
         long now = System.currentTimeMillis();
         for(Long click : mc.lastRightClicks) {
@@ -56,37 +45,16 @@ public class CPSInfo
         }
 
         if(mc.lastRightClicks.size() > 0) {
-            if(getMainHandside(mc) == HandSide.RIGHT) {
-                drawCPSLeft(mc.lastRightClicks.size() + "", mc, ms);
-            } else {
-                drawCPSRight(mc.lastRightClicks.size() + "", mc, ms);
-            }
+            drawCPS(mc.lastRightClicks.size() + "", hudSetting.x, hudSetting.y, mc, ms);
         }
     }
 
-    private static void drawCPSLeft(String cps, Minecraft mc, MatrixStack ms) {
+    private static void drawCPS(String cps, int x, int y, Minecraft mc, MatrixStack ms) {
         mc.fontRenderer.drawStringWithShadow(
                 ms,
                 cps,
-                mc.getMainWindow().getScaledWidth() / 2  - 91 - (getMainHandside(mc) == HandSide.RIGHT ? 29 : 0) - 5 - mc.fontRenderer.getStringWidth(mc.lastRightClicks.size() + ""),
-                mc.getMainWindow().getScaledHeight() - 15,
+                mc.getMainWindow().getScaledWidth() / 2 + x,
+                mc.getMainWindow().getScaledHeight() - y,
                 -1);
-    }
-
-    private static void drawCPSRight(String cps, Minecraft mc, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(
-                ms,
-                cps,
-                mc.getMainWindow().getScaledWidth() / 2  + 91 + (getMainHandside(mc) == HandSide.RIGHT ? 0 : 29) + 5,
-                mc.getMainWindow().getScaledHeight() - 15,
-                -1);
-    }
-
-    private static HandSide getMainHandside(Minecraft mc) {
-        PlayerEntity playerentity = !(mc.getRenderViewEntity() instanceof PlayerEntity) ? null : (PlayerEntity)mc.getRenderViewEntity();
-
-        if(playerentity == null) return HandSide.RIGHT;
-
-        return playerentity.getPrimaryHand();
     }
 }

@@ -8,22 +8,23 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
+import nl._99th_client.settings.HUDSetting;
 
 public class LookingInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms, float pt) {
+    public static void render(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
         Entity entity = mc.getRenderViewEntity();
 
         if (entity != null && mc.world != null) {
             // Draw reach
-            renderReach(mc, ms, pt, entity);
+            renderReach(mc, hudSetting, ms, pt, entity);
 
             // Draw block
-            renderBlock(mc, ms, pt, entity);
+            renderBlock(mc, hudSetting, ms, pt, entity);
         }
     }
 
-    private static void renderReach(Minecraft mc, MatrixStack ms, float pt, Entity entity) {
+    private static void renderReach(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt, Entity entity) {
         double d = 10.0D * 10.0D;
         Vector3d vector3d = entity.getEyePosition(pt);
         Vector3d vector3d1 = entity.getLook(1.0F);
@@ -38,11 +39,11 @@ public class LookingInfo
         if (entityraytraceresult != null && mc.player != null) {
             Entity ent = entityraytraceresult.getEntity();
             String reach = ent.getDisplayName().getString() + " (" + (Math.round(ent.getDistance(mc.player) * 10.0F) / 10.0F) + " blocks away)";
-            mc.fontRenderer.drawStringWithShadow(ms, reach, 1, 126, -1);
+            mc.fontRenderer.drawStringWithShadow(ms, reach, hudSetting.x, hudSetting.y, -1);
         }
     }
 
-    private static void renderBlock(Minecraft mc, MatrixStack ms, float pt, Entity entity) {
+    private static void renderBlock(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt, Entity entity) {
         RayTraceResult rayTraceBlock = entity.pick(20.0D, 0.0F, false);
 
         if (rayTraceBlock.getType() == RayTraceResult.Type.BLOCK) {
@@ -57,15 +58,15 @@ public class LookingInfo
             float damage = (ds / hardness) / (canHarvest ? 30 : 100);
 
             if(damage > 1) {
-                mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), 1, 136, -1);
+                mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), hudSetting.x, hudSetting.y + 10, -1);
             } else {
                 double ticks = Math.ceil(1.0F / damage);
                 double seconds = ticks / 20;
 
                 if(seconds < 0) {
-                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), 1, 136, -1);
+                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), hudSetting.x, hudSetting.y + 10, -1);
                 } else {
-                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString() + " (" + seconds + "s)", 1, 136, -1);
+                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString() + " (" + seconds + "s)", hudSetting.x, hudSetting.y + 10, -1);
                 }
             }
         }

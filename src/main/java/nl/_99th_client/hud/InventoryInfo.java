@@ -5,39 +5,42 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.*;
+import nl._99th_client.settings.HUDSetting;
 import nl._99th_client.util.ColorGradient;
 import java.awt.Color;
 import java.lang.Math;
 
 public class InventoryInfo
 {
-    public static void render(Minecraft mc, MatrixStack ms, float pt) {
+    public static void renderMain(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
         // Draw main-hand item
-        renderMainhand(mc, ms);
+        renderMainhand(mc, hudSetting, ms);
 
         // Draw off-hand item
-        renderOffhand(mc, ms);
+        renderOffhand(mc, hudSetting, ms);
 
         // Draw armor
-        renderArmor(mc, ms);
-
-        // Draw inventory items
-        renderInventory(mc, pt, ms);
+        renderArmor(mc, hudSetting, ms);
     }
 
-    private static void renderMainhand(Minecraft mc, MatrixStack ms) {
+    public static void renderItems(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
+        // Draw inventory items
+        renderInventory(mc, hudSetting, pt, ms);
+    }
+
+    private static void renderMainhand(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         String itemString = ItemToString(mc.player.getHeldItemMainhand());
         int itemColor = ItemToColor(mc.player.getHeldItemMainhand());
-        mc.fontRenderer.drawStringWithShadow(ms, itemString, 1, 51, itemColor);
+        mc.fontRenderer.drawStringWithShadow(ms, itemString, hudSetting.x, hudSetting.y, itemColor);
     }
 
-    private static void renderOffhand(Minecraft mc, MatrixStack ms) {
+    private static void renderOffhand(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         String itemString = ItemToString(mc.player.getHeldItemOffhand());
         int itemColor = ItemToColor(mc.player.getHeldItemOffhand());
-        mc.fontRenderer.drawStringWithShadow(ms, itemString, 1, 61, itemColor);
+        mc.fontRenderer.drawStringWithShadow(ms, itemString, hudSetting.x, hudSetting.y + 10, itemColor);
     }
 
-    private static void renderArmor(Minecraft mc, MatrixStack ms) {
+    private static void renderArmor(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         String itemString;
         int itemColor;
         int j = 0;
@@ -47,13 +50,13 @@ public class InventoryInfo
             if(!i.isEmpty()){
                 itemString = ItemToString(i);
                 itemColor = ItemToColor(i);
-                mc.fontRenderer.drawStringWithShadow(ms, itemString, 1, 106 - (j * 10), itemColor);
+                mc.fontRenderer.drawStringWithShadow(ms, itemString, hudSetting.x, hudSetting.y + 55 - (j * 10), itemColor);
             }
             j++;
         }
     }
 
-    public static void renderInventory(Minecraft mc, float partialTicks, MatrixStack ms) {
+    public static void renderInventory(Minecraft mc, HUDSetting hudSetting, float partialTicks, MatrixStack ms) {
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableRescaleNormal();
         RenderSystem.enableBlend();
@@ -63,8 +66,8 @@ public class InventoryInfo
         PlayerInventory inv = mc.player.inventory;
 
         for(Item item : mc.gameSettings._99thClientSettings.itemHUDitems) {
-            int j1 = mc.getMainWindow().getScaledWidth() / 2 - 78 + (i + 10) * 20;
-            int k1 = mc.getMainWindow().getScaledHeight() - 16 - 3;
+            int j1 = mc.getMainWindow().getScaledWidth() / 2 - hudSetting.x + (i + 10) * 20;
+            int k1 = mc.getMainWindow().getScaledHeight() - hudSetting.y;
 
             ItemStack invStack;
             ItemStack dispStack = new ItemStack(item);

@@ -203,20 +203,26 @@ public class IngameGui extends AbstractGui
             RenderSystem.defaultBlendFunc();
         }
 
-        if(this.mc.gameSettings._99thClientSettings.showLocationHUD && !this.mc.gameSettings.showDebugInfo) {
-            LocationInfo.render(this.mc, matrixStack, partialTicks);
+        if(this.mc.gameSettings._99thClientSettings.locationHUD.active && !this.mc.gameSettings.showDebugInfo) {
+            LocationInfo.render(this.mc, this.mc.gameSettings._99thClientSettings.locationHUD, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings._99thClientSettings.showInventoryHUD && !this.mc.gameSettings.showDebugInfo) {
-            InventoryInfo.render(this.mc, matrixStack, partialTicks);
+        if(this.mc.gameSettings._99thClientSettings.inventoryHUDmain.active && !this.mc.gameSettings.showDebugInfo) {
+            InventoryInfo.renderMain(this.mc, this.mc.gameSettings._99thClientSettings.inventoryHUDmain, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings._99thClientSettings.showSystemHUD && !this.mc.gameSettings.showDebugInfo) {
-            SystemInfo.render(this.mc, matrixStack, partialTicks);
+        if(this.mc.gameSettings._99thClientSettings.inventoryHUDitems.active) {
+            InventoryInfo.renderItems(this.mc, this.mc.gameSettings._99thClientSettings.inventoryHUDitems, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings._99thClientSettings.showCPSHUD) {
-            CPSInfo.render(this.mc, matrixStack, partialTicks);
+        if(this.mc.gameSettings._99thClientSettings.systemHUD.active && !this.mc.gameSettings.showDebugInfo) {
+            SystemInfo.render(this.mc, this.mc.gameSettings._99thClientSettings.systemHUD, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings._99thClientSettings.showLookingHUD && !this.mc.gameSettings.showDebugInfo) {
-            LookingInfo.render(this.mc, matrixStack, partialTicks);
+        if(this.mc.gameSettings._99thClientSettings.cpsHUDleft.active) {
+            CPSInfo.renderLeft(this.mc, this.mc.gameSettings._99thClientSettings.cpsHUDleft, matrixStack);
+        }
+        if(this.mc.gameSettings._99thClientSettings.cpsHUDright.active) {
+            CPSInfo.renderRight(this.mc, this.mc.gameSettings._99thClientSettings.cpsHUDright, matrixStack);
+        }
+        if(this.mc.gameSettings._99thClientSettings.lookingHUD.active && !this.mc.gameSettings.showDebugInfo) {
+            LookingInfo.render(this.mc, this.mc.gameSettings._99thClientSettings.lookingHUD, matrixStack, partialTicks);
         }
 
         ItemStack itemstack = this.mc.player.inventory.armorItemInSlot(3);

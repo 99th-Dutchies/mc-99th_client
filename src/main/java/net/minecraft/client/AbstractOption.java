@@ -679,42 +679,44 @@ public abstract class AbstractOption
 
     public static final BooleanOption SHOW_LOCATION_HUD = new BooleanOption("99thclient.options.SHOW_LOCATION_HUD", (p_lambda$static$119_0_) ->
     {
-        return p_lambda$static$119_0_._99thClientSettings.showLocationHUD;
+        return p_lambda$static$119_0_._99thClientSettings.locationHUD.active;
     }, (p_lambda$static$120_0_, p_lambda$static$120_1_) ->
     {
-        p_lambda$static$120_0_._99thClientSettings.showLocationHUD = p_lambda$static$120_1_;
+        p_lambda$static$120_0_._99thClientSettings.locationHUD.active = p_lambda$static$120_1_;
     });
 
     public static final BooleanOption SHOW_INVENTORY_HUD = new BooleanOption("99thclient.options.SHOW_INVENTORY_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_._99thClientSettings.showInventoryHUD;
+        return p_lambda$static$121_0_._99thClientSettings.inventoryHUDmain.active && p_lambda$static$121_0_._99thClientSettings.inventoryHUDitems.active;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_._99thClientSettings.showInventoryHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.inventoryHUDmain.active = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.inventoryHUDitems.active = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption SHOW_SYSTEM_HUD = new BooleanOption("99thclient.options.SHOW_SYSTEM_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_._99thClientSettings.showSystemHUD;
+        return p_lambda$static$121_0_._99thClientSettings.systemHUD.active;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_._99thClientSettings.showSystemHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.systemHUD.active = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption SHOW_CPS_HUD = new BooleanOption("99thclient.options.SHOW_CPS_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_._99thClientSettings.showCPSHUD;
+        return p_lambda$static$121_0_._99thClientSettings.cpsHUDleft.active && p_lambda$static$121_0_._99thClientSettings.cpsHUDright.active;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_._99thClientSettings.showCPSHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.cpsHUDleft.active = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.cpsHUDright.active = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption SHOW_LOOKING_HUD = new BooleanOption("99thclient.options.SHOW_LOOKING_HUD", (p_lambda$static$121_0_) ->
     {
-        return p_lambda$static$121_0_._99thClientSettings.showLookingHUD;
+        return p_lambda$static$121_0_._99thClientSettings.lookingHUD.active;
     }, (p_lambda$static$122_0_, p_lambda$static$122_1_) ->
     {
-        p_lambda$static$122_0_._99thClientSettings.showLookingHUD = p_lambda$static$122_1_;
+        p_lambda$static$122_0_._99thClientSettings.lookingHUD.active = p_lambda$static$122_1_;
     });
 
     public static final BooleanOption FULL_BRIGHTNESS = new BooleanOption("99thclient.options.FULL_BRIGHTNESS", (p_lambda$static$123_0_) ->
