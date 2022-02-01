@@ -567,99 +567,165 @@ public class _99thClientSettings {
 
     public void fromJSON(JSONObject root, GameSettings gameSettings) {
         try {
-            this.showLocationHUD = (boolean) root.get("showLocationHUD");
-            this.showInventoryHUD = (boolean) root.get("showInventoryHUD");
-            this.showSystemHUD = (boolean) root.get("showSystemHUD");
-            this.showCPSHUD = (boolean) root.get("showCPSHUD");
-            this.showLookingHUD = (boolean) root.get("showLookingHUD");
-            this.fullBrightness = (boolean) root.get("fullBrightness");
-            this.infiniteChat = (boolean) root.get("infiniteChat");
-            this.showChatTimestamp = (boolean) root.get("showChatTimestamp");
-            this.discordrpcShowServer = DiscordShowRPC.func_238163_a_(((Long) root.get("discordrpcShowServer")).intValue());
-            this.healthIndicator = HealthIndicator.func_238163_a_(((Long) root.get("healthIndicator")).intValue());
-            this.showToasts = ShowToasts.func_238163_a_(((Long) root.get("showToasts")).intValue());
-            this.potionIcons = PotionIcons.func_238163_a_(((Long) root.get("potionIcons")).intValue());
-            this.tntTimer = (boolean) root.get("tntTimer");
-            this.potionTimer = (boolean) root.get("potionTimer");
-            this.armorBreakWarning = (boolean) root.get("armorBreakWarning");
-            this.outOfBlocksWarning = (boolean) root.get("outOfBlocksWarning");
-            this.tablistPing = (boolean) root.get("tablistPing");
-            this.decodeChatMagic = (boolean) root.get("decodeChatMagic");
-            this.blockHighlight = (boolean) root.get("blockHighlight");
-            this.resourcepackOptimization = (boolean) root.get("resourcepackOptimization");
-            this.dataCollection = (boolean) root.get("dataCollection");
-            this.timeTillAFK = ((Long) root.get("timeTillAFK")).intValue();
-            this.chatPrefix = (String) root.get("chatPrefix");
-            this.chatPrefixEnabled = (boolean) root.get("chatPrefixEnabled");
+            if(root.containsKey("showLocationHUD")) {
+                this.showLocationHUD = (boolean) root.get("showLocationHUD");
+            }
+            if(root.containsKey("showInventoryHUD")) {
+                this.showInventoryHUD = (boolean) root.get("showInventoryHUD");
+            }
+            if(root.containsKey("showSystemHUD")) {
+                this.showSystemHUD = (boolean) root.get("showSystemHUD");
+            }
+            if(root.containsKey("showCPSHUD")) {
+                this.showCPSHUD = (boolean) root.get("showCPSHUD");
+            }
+            if(root.containsKey("showLookingHUD")) {
+                this.showLookingHUD = (boolean) root.get("showLookingHUD");
+            }
+            if(root.containsKey("fullBrightness")) {
+                this.fullBrightness = (boolean) root.get("fullBrightness");
+            }
+            if(root.containsKey("infiniteChat")) {
+                this.infiniteChat = (boolean) root.get("infiniteChat");
+            }
+            if(root.containsKey("showChatTimestamp")) {
+                this.showChatTimestamp = (boolean) root.get("showChatTimestamp");
+            }
+            if(root.containsKey("discordrpcShowServer")) {
+                this.discordrpcShowServer = DiscordShowRPC.func_238163_a_(((Long) root.get("discordrpcShowServer")).intValue());
+            }
+            if(root.containsKey("healthIndicator")) {
+                this.healthIndicator = HealthIndicator.func_238163_a_(((Long) root.get("healthIndicator")).intValue());
+            }
+            if(root.containsKey("showToasts")) {
+                this.showToasts = ShowToasts.func_238163_a_(((Long) root.get("showToasts")).intValue());
+            }
+            if(root.containsKey("potionIcons")) {
+                this.potionIcons = PotionIcons.func_238163_a_(((Long) root.get("potionIcons")).intValue());
+            }
+            if(root.containsKey("tntTimer")) {
+                this.tntTimer = (boolean) root.get("tntTimer");
+            }
+            if(root.containsKey("potionTimer")) {
+                this.potionTimer = (boolean) root.get("potionTimer");
+            }
+            if(root.containsKey("armorBreakWarning")) {
+                this.armorBreakWarning = (boolean) root.get("armorBreakWarning");
+            }
+            if(root.containsKey("outOfBlocksWarning")) {
+                this.outOfBlocksWarning = (boolean) root.get("outOfBlocksWarning");
+            }
+            if(root.containsKey("tablistPing")) {
+                this.tablistPing = (boolean) root.get("tablistPing");
+            }
+            if(root.containsKey("decodeChatMagic")) {
+                this.decodeChatMagic = (boolean) root.get("decodeChatMagic");
+            }
+            if(root.containsKey("blockHighlight")) {
+                this.blockHighlight = (boolean) root.get("blockHighlight");
+            }
+            if(root.containsKey("resourcepackOptimization")) {
+                this.resourcepackOptimization = (boolean) root.get("resourcepackOptimization");
+            }
+            if(root.containsKey("dataCollection")) {
+                this.dataCollection = (boolean) root.get("dataCollection");
+            }
+            if(root.containsKey("timeTillAFK")) {
+                this.timeTillAFK = ((Long) root.get("timeTillAFK")).intValue();
+            }
+            if(root.containsKey("chatPrefix")) {
+                this.chatPrefix = (String) root.get("chatPrefix");
+            }
+            if(root.containsKey("chatPrefixEnabled")) {
+                this.chatPrefixEnabled = (boolean) root.get("chatPrefixEnabled");
+            }
 
-            this.itemHUDitems = new ArrayList<>();
-            for(Object o : (JSONArray) root.get("itemHUDitems")) {
-                String s = (String) o;
-                Item i = MCStringUtils.parseItem(s);
-                if(i != null) {
-                    this.itemHUDitems.add(i);
+            if(root.containsKey("itemHUDitems")) {
+                this.itemHUDitems = new ArrayList<>();
+                for (Object o : (JSONArray) root.get("itemHUDitems")) {
+                    String s = (String) o;
+                    Item i = MCStringUtils.parseItem(s);
+                    if (i != null) {
+                        this.itemHUDitems.add(i);
+                    }
                 }
             }
 
-            this.chatTriggers = new ArrayList<>();
-            for(Object o : (JSONArray) root.get("chatTriggers")) {
-                JSONObject jCTrigger = (JSONObject) o;
-                this.chatTriggers.add(new ChatTrigger(
-                        (String) jCTrigger.get("pattern"),
-                        (String) jCTrigger.get("response"),
-                        ActiveAFK.func_238163_a_(((Long) jCTrigger.get("active")).intValue()),
-                        ((Long) jCTrigger.get("delay")).intValue(),
-                        ((Long) jCTrigger.get("cooldown")).intValue()));
+            if(root.containsKey("chatTriggers")) {
+                this.chatTriggers = new ArrayList<>();
+                for(Object o : (JSONArray) root.get("chatTriggers")) {
+                    JSONObject jCTrigger = (JSONObject) o;
+                    this.chatTriggers.add(new ChatTrigger(
+                            (String) jCTrigger.get("pattern"),
+                            (String) jCTrigger.get("response"),
+                            ActiveAFK.func_238163_a_(((Long) jCTrigger.get("active")).intValue()),
+                            ((Long) jCTrigger.get("delay")).intValue(),
+                            ((Long) jCTrigger.get("cooldown")).intValue()));
+                }
             }
 
-            this.chatFilters = new ArrayList<>();
-            for(Object o : (JSONArray) root.get("chatFilters")) {
-                JSONObject jCFilter = (JSONObject) o;
-                this.chatFilters.add(new ChatFilter(
-                        (String) jCFilter.get("pattern"),
-                        (boolean) jCFilter.get("activePlayer"),
-                        (boolean) jCFilter.get("activeChat")));
+            if(root.containsKey("chatFilters")) {
+                this.chatFilters = new ArrayList<>();
+                for (Object o : (JSONArray) root.get("chatFilters")) {
+                    JSONObject jCFilter = (JSONObject) o;
+                    this.chatFilters.add(new ChatFilter(
+                            (String) jCFilter.get("pattern"),
+                            (boolean) jCFilter.get("activePlayer"),
+                            (boolean) jCFilter.get("activeChat")));
+                }
             }
 
-            this.eventTriggers = new ArrayList<>();
-            for(Object o : (JSONArray) root.get("eventTriggers")) {
-                JSONObject jETrigger = (JSONObject) o;
-                this.eventTriggers.add(new EventTrigger(
-                        EventTrigger.Event.fromString((String) jETrigger.get("trigger")),
-                        (String) jETrigger.get("response"),
-                        (boolean) jETrigger.get("active"),
-                        ((Long) jETrigger.get("delay")).intValue()));
+            if(root.containsKey("eventTriggers")) {
+                this.eventTriggers = new ArrayList<>();
+                for (Object o : (JSONArray) root.get("eventTriggers")) {
+                    JSONObject jETrigger = (JSONObject) o;
+                    this.eventTriggers.add(new EventTrigger(
+                            EventTrigger.Event.fromString((String) jETrigger.get("trigger")),
+                            (String) jETrigger.get("response"),
+                            (boolean) jETrigger.get("active"),
+                            ((Long) jETrigger.get("delay")).intValue()));
+                }
             }
 
-            this.hotkeys = new ArrayList<>();
-            for(Object o : (JSONArray) root.get("hotkeys")) {
-                JSONObject jHotkey = (JSONObject) o;
+            if(root.containsKey("hotkeys")) {
+                this.hotkeys = new ArrayList<>();
+                for (Object o : (JSONArray) root.get("hotkeys")) {
+                    JSONObject jHotkey = (JSONObject) o;
 
-                KeyBinding kb = new KeyBinding("99thclient.hotkeys.hotkey" + this.hotkeys.size(), -1, "key.categories.99thclienthotkeys");
-                kb.bind(InputMappings.getInputByName((String) jHotkey.get("keyBinding")));
+                    KeyBinding kb = new KeyBinding("99thclient.hotkeys.hotkey" + this.hotkeys.size(), -1, "key.categories.99thclienthotkeys");
+                    kb.bind(InputMappings.getInputByName((String) jHotkey.get("keyBinding")));
 
-                this.hotkeys.add(new Hotkey(
-                        kb,
-                        (String) jHotkey.get("response"),
-                        (boolean) jHotkey.get("active")));
+                    this.hotkeys.add(new Hotkey(
+                            kb,
+                            (String) jHotkey.get("response"),
+                            (boolean) jHotkey.get("active")));
+                }
             }
 
-            this.customCommands = new ArrayList<>();
-            for(Object o : (JSONArray) root.get("customCommands")) {
-                JSONObject jCCommand = (JSONObject) o;
+            if(root.containsKey("customCommands")) {
+                this.customCommands = new ArrayList<>();
+                for (Object o : (JSONArray) root.get("customCommands")) {
+                    JSONObject jCCommand = (JSONObject) o;
 
-                CustomCommand command = new CustomCommand(
-                        (String) jCCommand.get("name"),
-                        (String) jCCommand.get("response"),
-                        (boolean) jCCommand.get("active"));
+                    CustomCommand command = new CustomCommand(
+                            (String) jCCommand.get("name"),
+                            (String) jCCommand.get("response"),
+                            (boolean) jCCommand.get("active"));
 
-                this.customCommands.add(command);
-                this.mc.commandManager.loadCommand(command);
+                    this.customCommands.add(command);
+                    this.mc.commandManager.loadCommand(command);
+                }
             }
 
-            JSONObject jKeyBinds = (JSONObject) root.get("keyBinds");
-            this.keyBindFreelook.bind(InputMappings.getInputByName((String) jKeyBinds.get("freelook")));
-            this.keyBindCommand.bind(InputMappings.getInputByName((String) jKeyBinds.get("command")));
+            if(root.containsKey("keyBinds")) {
+                JSONObject jKeyBinds = (JSONObject) root.get("keyBinds");
+                if(jKeyBinds.containsKey("freelook")) {
+                    this.keyBindFreelook.bind(InputMappings.getInputByName((String) jKeyBinds.get("freelook")));
+                }
+                if(jKeyBinds.containsKey("command")) {
+                    this.keyBindCommand.bind(InputMappings.getInputByName((String) jKeyBinds.get("command")));
+                }
+            }
 
             if(this.mc.fontRenderer != null) {
                 this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
