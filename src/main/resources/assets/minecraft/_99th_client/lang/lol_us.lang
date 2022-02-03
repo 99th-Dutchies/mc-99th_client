@@ -101,3 +101,5 @@
 99thclient.afk.deactivated=YOU BACK
 
 99thclient.commands.notFound=Don't know command. Do \help for good command!
+
+99thclient.item.minecraft.cookie=Marshmallow

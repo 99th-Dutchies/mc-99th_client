@@ -101,3 +101,5 @@
 99thclient.afk.deactivated=Thou is no longer away
 
 99thclient.commands.notFound=Thy command is not known. Try \help for a list of thy commands
+
+99thclient.item.minecraft.cookie=Marshmallow

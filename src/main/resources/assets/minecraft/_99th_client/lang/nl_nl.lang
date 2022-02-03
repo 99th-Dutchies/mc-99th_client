@@ -101,3 +101,5 @@
 99thclient.afk.deactivated=AFK-modus uitgeschakeld
 
 99thclient.commands.notFound=Onbekende opdracht. probeer \help voor een lijst met alle opdrachten
+
+99thclient.item.minecraft.cookie=Marshmallow

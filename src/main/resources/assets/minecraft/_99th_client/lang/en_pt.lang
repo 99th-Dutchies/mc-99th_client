@@ -101,3 +101,5 @@
 99thclient.afk.deactivated=Yer' back
 
 99thclient.commands.notFound=Unknown order. Try \help for all order possibilities
+
+99thclient.item.minecraft.cookie=Marshmallow

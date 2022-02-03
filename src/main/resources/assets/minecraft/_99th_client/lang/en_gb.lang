@@ -101,3 +101,5 @@
 99thclient.afk.deactivated=AFK mode deactivated
 
 99thclient.commands.notFound=Unknown command. Try \help for a list of commands
+
+99thclient.item.minecraft.cookie=Marshmallow
