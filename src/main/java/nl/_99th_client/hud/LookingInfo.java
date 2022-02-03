@@ -36,9 +36,9 @@ public class LookingInfo
             return !p_lambda$getMouseOver$0_0_.isSpectator() && p_lambda$getMouseOver$0_0_.canBeCollidedWith();
         }, d);
 
-        if (entityraytraceresult != null && mc.player != null) {
+        if (entityraytraceresult != null && mc.renderViewEntity != null) {
             Entity ent = entityraytraceresult.getEntity();
-            String reach = ent.getDisplayName().getString() + " (" + (Math.round(ent.getDistance(mc.player) * 10.0F) / 10.0F) + " blocks away)";
+            String reach = ent.getDisplayName().getString() + " (" + (Math.round(ent.getDistance(mc.renderViewEntity) * 10.0F) / 10.0F) + " blocks away)";
             mc.fontRenderer.drawStringWithShadow(ms, reach, hudSetting.x, hudSetting.y, -1);
         }
     }

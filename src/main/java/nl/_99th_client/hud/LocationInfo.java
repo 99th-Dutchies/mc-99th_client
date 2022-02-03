@@ -21,20 +21,20 @@ public class LocationInfo
     }
 
     private static void renderX(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(ms, "[X] " + (int) mc.player.getPosX(), hudSetting.x, hudSetting.y, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, "[X] " + (int) mc.renderViewEntity.getPosX(), hudSetting.x, hudSetting.y, -1);
     }
 
     private static void renderY(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(ms, "[Y] " + (int) mc.player.getPosY(), hudSetting.x, hudSetting.y + 10, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, "[Y] " + (int) mc.renderViewEntity.getPosY(), hudSetting.x, hudSetting.y + 10, -1);
     }
 
     private static void renderZ(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(ms, "[Z] " + (int) mc.player.getPosZ(), hudSetting.x, hudSetting.y + 20, -1);
+        mc.fontRenderer.drawStringWithShadow(ms, "[Z] " + (int) mc.renderViewEntity.getPosZ(), hudSetting.x, hudSetting.y + 20, -1);
     }
 
     private static void renderDir(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         // Determine direction based on rotation
-        float rot = ((mc.player.rotationYaw % 360.0F) + 360.0F) % 360.0F;
+        float rot = ((mc.renderViewEntity.rotationYaw % 360.0F) + 360.0F) % 360.0F;
 
         String dir = rotationToDirection(rot);
         String deltaX = rotationToDeltaX(rot);
@@ -117,7 +117,7 @@ public class LocationInfo
     }
 
     private static void renderBiome(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        String biomeName = mc.player.world.getBiome(mc.player.getPosition()).getCategory().getName().replaceAll("_", " ");
+        String biomeName = mc.renderViewEntity.world.getBiome(mc.renderViewEntity.getPosition()).getCategory().getName().replaceAll("_", " ");
         biomeName = biomeName.substring(0, 1).toUpperCase() + biomeName.substring(1);
         mc.fontRenderer.drawStringWithShadow(ms, biomeName, hudSetting.x, hudSetting.y + 30, -1);
     }
