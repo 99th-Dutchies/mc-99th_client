@@ -99,7 +99,7 @@ public class BlockItem extends Item
                     {
                         itemstack.shrink(1);
 
-                        if(itemstack.getCount() <= 9 && blockstate.isSolid() && Minecraft.getInstance().gameSettings._99thClientSettings.outOfBlocksWarning) {
+                        if(itemstack.getCount() > 0 && itemstack.getCount() <= 9 && blockstate.isSolid() && Minecraft.getInstance().gameSettings._99thClientSettings.outOfBlocksWarning) {
                             Minecraft.getInstance().ingameGUI.setClientTitle(new TranslationTextComponent("Low on Blocks!").setStyle(Style.EMPTY.setColor(Color.fromHex("#FFCC00")).setBold(true)));
                         }
                     }
