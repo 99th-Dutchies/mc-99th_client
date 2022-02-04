@@ -47,27 +47,27 @@ public class OptionsChatScreen extends SettingsScreen
 
         this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 96, 150, 20, new TranslationTextComponent("99thclient.options.chattriggers.title"), (p_213052_1_) ->
         {
-            this.minecraft.displayGuiScreen(new OptionsChatTriggersScreen(this, this.gameSettings));
+            this.minecraft.displayGuiScreen(new OptionsChat_ChatTriggersScreen(this, this.gameSettings));
         }));
 
         this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 96, 150, 20, new TranslationTextComponent("99thclient.options.chatfilters.title"), (p_213052_1_) ->
         {
-            this.minecraft.displayGuiScreen(new OptionsChatFiltersScreen(this, this.gameSettings));
+            this.minecraft.displayGuiScreen(new OptionsChat_ChatFiltersScreen(this, this.gameSettings));
         }));
 
         this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 120, 150, 20, new TranslationTextComponent("99thclient.options.eventtriggers"), (p_213055_1_) ->
         {
-            this.minecraft.displayGuiScreen(new OptionsEventTriggersScreen(this, this.gameSettings));
+            this.minecraft.displayGuiScreen(new OptionsChat_EventTriggersScreen(this, this.gameSettings));
         }));
 
         this.addButton(new Button(this.width / 2 + 5, this.height / 6 + 120, 150, 20, new TranslationTextComponent("99thclient.options.hotkeys"), (p_213055_1_) ->
         {
-            this.minecraft.displayGuiScreen(new OptionsHotkeysScreen(this, this.gameSettings));
+            this.minecraft.displayGuiScreen(new OptionsChat_HotkeysScreen(this, this.gameSettings));
         }));
 
         this.addButton(new Button(this.width / 2 - 155, this.height / 6 + 144, 150, 20, new TranslationTextComponent("99thclient.options.customcommands.title"), (p_213055_1_) ->
         {
-            this.minecraft.displayGuiScreen(new OptionsCustomCommandsScreen(this, this.gameSettings));
+            this.minecraft.displayGuiScreen(new OptionsChat_CustomCommandsScreen(this, this.gameSettings));
         }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->

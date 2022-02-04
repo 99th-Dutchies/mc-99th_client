@@ -8,7 +8,7 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.util.text.*;
 import nl._99th_client.command.CustomCommand;
-import nl._99th_client.gui.screen.OptionsCustomCommandsScreen;
+import nl._99th_client.gui.screen.OptionsChat_CustomCommandsScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +16,10 @@ import java.util.Locale;
 
 public class CustomCommandsList extends AbstractOptionList<CustomCommandsList.Entry>
 {
-    private final OptionsCustomCommandsScreen customCommandsScreen;
+    private final OptionsChat_CustomCommandsScreen customCommandsScreen;
     private List<CustomCommandEntry> entries = new ArrayList<>();
 
-    public CustomCommandsList(OptionsCustomCommandsScreen customCommands, Minecraft mcIn)
+    public CustomCommandsList(OptionsChat_CustomCommandsScreen customCommands, Minecraft mcIn)
     {
         super(mcIn, customCommands.width + 45, customCommands.height, 43, customCommands.height - 43, 25);
         this.customCommandsScreen = customCommands;

@@ -11,7 +11,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.chat.ChatFilter;
-import nl._99th_client.gui.screen.OptionsChatFiltersScreen;
+import nl._99th_client.gui.screen.OptionsChat_ChatFiltersScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +19,10 @@ import java.util.regex.Pattern;
 
 public class ChatFilterList extends AbstractOptionList<ChatFilterList.Entry>
 {
-    private final OptionsChatFiltersScreen chatFiltersScreen;
+    private final OptionsChat_ChatFiltersScreen chatFiltersScreen;
     private List<ChatFilterEntry> entries = new ArrayList<>();
 
-    public ChatFilterList(OptionsChatFiltersScreen chatFilters, Minecraft mcIn)
+    public ChatFilterList(OptionsChat_ChatFiltersScreen chatFilters, Minecraft mcIn)
     {
         super(mcIn, chatFilters.width + 45, chatFilters.height, 43, chatFilters.height - 43, 25);
         this.chatFiltersScreen = chatFilters;

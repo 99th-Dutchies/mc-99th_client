@@ -10,7 +10,7 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.chat.EventTrigger;
-import nl._99th_client.gui.screen.OptionsEventTriggersScreen;
+import nl._99th_client.gui.screen.OptionsChat_EventTriggersScreen;
 import nl._99th_client.util.MCStringUtils;
 
 import java.util.ArrayList;
@@ -18,10 +18,10 @@ import java.util.List;
 
 public class EventTriggerList extends AbstractOptionList<EventTriggerList.Entry>
 {
-    private final OptionsEventTriggersScreen eventTriggersScreen;
+    private final OptionsChat_EventTriggersScreen eventTriggersScreen;
     private List<EventTriggerEntry> entries = new ArrayList<>();
 
-    public EventTriggerList(OptionsEventTriggersScreen eventTriggers, Minecraft mcIn)
+    public EventTriggerList(OptionsChat_EventTriggersScreen eventTriggers, Minecraft mcIn)
     {
         super(mcIn, eventTriggers.width + 45, eventTriggers.height, 43, eventTriggers.height - 43, 25);
         this.eventTriggersScreen = eventTriggers;

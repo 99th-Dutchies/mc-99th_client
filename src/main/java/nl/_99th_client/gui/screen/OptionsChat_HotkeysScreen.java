@@ -15,14 +15,14 @@ import nl._99th_client.gui.widget.HotkeyList;
 import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 
-public class OptionsHotkeysScreen extends SettingsScreen
+public class OptionsChat_HotkeysScreen extends SettingsScreen
 {
     /** The ID of the button that has been pressed. */
     public KeyBinding buttonId;
     public long time;
     private HotkeyList hotkeyList;
 
-    public OptionsHotkeysScreen(Screen screen, GameSettings settings)
+    public OptionsChat_HotkeysScreen(Screen screen, GameSettings settings)
     {
         super(screen, settings, new TranslationTextComponent("99thclient.options.hotkeys"));
     }

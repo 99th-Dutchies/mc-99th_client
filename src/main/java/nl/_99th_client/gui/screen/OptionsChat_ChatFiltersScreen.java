@@ -13,11 +13,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 
-public class OptionsChatFiltersScreen extends SettingsScreen
+public class OptionsChat_ChatFiltersScreen extends SettingsScreen
 {
     private ChatFilterList chatFilterList;
 
-    public OptionsChatFiltersScreen(Screen screen, GameSettings settings)
+    public OptionsChat_ChatFiltersScreen(Screen screen, GameSettings settings)
     {
         super(screen, settings, new TranslationTextComponent("99thclient.options.chatfilters.title"));
     }

@@ -11,7 +11,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.chat.ChatTrigger;
-import nl._99th_client.gui.screen.OptionsChatTriggersScreen;
+import nl._99th_client.gui.screen.OptionsChat_ChatTriggersScreen;
 import nl._99th_client.util.MCStringUtils;
 
 import java.util.ArrayList;
@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
 
 public class ChatTriggerList extends AbstractOptionList<ChatTriggerList.Entry>
 {
-    private final OptionsChatTriggersScreen chatTriggersScreen;
+    private final OptionsChat_ChatTriggersScreen chatTriggersScreen;
     private List<ChatTriggerEntry> entries = new ArrayList<>();
 
-    public ChatTriggerList(OptionsChatTriggersScreen chatTriggers, Minecraft mcIn)
+    public ChatTriggerList(OptionsChat_ChatTriggersScreen chatTriggers, Minecraft mcIn)
     {
         super(mcIn, chatTriggers.width + 45, chatTriggers.height, 43, chatTriggers.height - 43, 25);
         this.chatTriggersScreen = chatTriggers;

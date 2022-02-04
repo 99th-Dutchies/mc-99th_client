@@ -14,11 +14,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 
-public class OptionsChatTriggersScreen extends SettingsScreen
+public class OptionsChat_ChatTriggersScreen extends SettingsScreen
 {
     private ChatTriggerList chatTriggerList;
 
-    public OptionsChatTriggersScreen(Screen screen, GameSettings settings)
+    public OptionsChat_ChatTriggersScreen(Screen screen, GameSettings settings)
     {
         super(screen, settings, new TranslationTextComponent("99thclient.options.chattriggers.title"));
     }

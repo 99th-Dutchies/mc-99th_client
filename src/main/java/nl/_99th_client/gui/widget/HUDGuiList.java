@@ -1,21 +1,13 @@
 package nl._99th_client.gui.widget;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.AbstractOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.OptionButton;
 import net.minecraft.client.gui.widget.list.AbstractOptionList;
-import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.*;
 import nl._99th_client._99thClientSettings;
-import nl._99th_client.chat.Hotkey;
 import nl._99th_client.gui.screen.OptionsHUDGuiScreen;
-import nl._99th_client.gui.screen.OptionsHotkeysScreen;
 import nl._99th_client.settings.HUDSetting;
 import nl._99th_client.settings.HealthIndicator;
 import nl._99th_client.settings.PotionIcons;

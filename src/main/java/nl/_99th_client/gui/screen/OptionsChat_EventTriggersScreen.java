@@ -9,11 +9,11 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.gui.widget.EventTriggerList;
 
-public class OptionsEventTriggersScreen extends SettingsScreen
+public class OptionsChat_EventTriggersScreen extends SettingsScreen
 {
     private EventTriggerList eventTriggerList;
 
-    public OptionsEventTriggersScreen(Screen screen, GameSettings settings)
+    public OptionsChat_EventTriggersScreen(Screen screen, GameSettings settings)
     {
         super(screen, settings, new TranslationTextComponent("99thclient.options.eventtriggers"));
     }

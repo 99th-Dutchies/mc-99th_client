@@ -13,11 +13,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 
-public class OptionsCustomCommandsScreen extends SettingsScreen
+public class OptionsChat_CustomCommandsScreen extends SettingsScreen
 {
     private CustomCommandsList customCommandsList;
 
-    public OptionsCustomCommandsScreen(Screen screen, GameSettings settings)
+    public OptionsChat_CustomCommandsScreen(Screen screen, GameSettings settings)
     {
         super(screen, settings, new TranslationTextComponent("99thclient.options.customcommands.title"));
     }

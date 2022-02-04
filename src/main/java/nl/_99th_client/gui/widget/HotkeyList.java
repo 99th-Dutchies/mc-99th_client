@@ -10,17 +10,17 @@ import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.*;
 import nl._99th_client.chat.Hotkey;
-import nl._99th_client.gui.screen.OptionsHotkeysScreen;
+import nl._99th_client.gui.screen.OptionsChat_HotkeysScreen;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HotkeyList extends AbstractOptionList<HotkeyList.Entry>
 {
-    private final OptionsHotkeysScreen optionsHotkeysScreen;
+    private final OptionsChat_HotkeysScreen optionsHotkeysScreen;
     private int maxListLabelWidth;
     private List<HotkeyList.HotkeyEntry> entries = new ArrayList<>();
 
-    public HotkeyList(OptionsHotkeysScreen optionsHotkeysScreen, Minecraft mcIn)
+    public HotkeyList(OptionsChat_HotkeysScreen optionsHotkeysScreen, Minecraft mcIn)
     {
         super(mcIn, optionsHotkeysScreen.width + 45, optionsHotkeysScreen.height, 43, optionsHotkeysScreen.height - 32, 25);
         this.optionsHotkeysScreen = optionsHotkeysScreen;
