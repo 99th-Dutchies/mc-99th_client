@@ -43,7 +43,7 @@ public final class Color
         return this.name != null ? this.name : this.getHex();
     }
 
-    private String getHex()
+    public String getHex()
     {
         return String.format("#%06X", this.color);
     }

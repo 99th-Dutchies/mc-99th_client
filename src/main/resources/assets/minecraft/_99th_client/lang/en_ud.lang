@@ -3,11 +3,20 @@
 99thclient.seconds=spuoɔǝS %s
 99thclient.minutes=sǝʇnuᴉW %s
 partial=Partial
+more=More...
 
 # Settings
 99thclient.options.title=sᵷuᴉʇʇǝS ʇuǝᴉꞁƆ_ɥʇ66
 99thclient.options.hudgui=I∩⅁/ᗡ∩H
 99thclient.options.hudgui.title=I∩⅁/ᗡ∩H sᵷuᴉʇʇǝS ʇuǝᴉꞁƆ_ɥʇ66
+99thclient.options.HUDsetting.active=Activate
+99thclient.options.HUDsetting.mainColor=Text Color
+99thclient.options.HUDsetting.subColor=Indicator Color
+99thclient.options.HUDsetting.bracketColor=Bracket Color
+99thclient.options.HUDsetting.bracketType=Bracket Shape
+99thclient.options.HUDsetting.xPos=Horizontal Position
+99thclient.options.HUDsetting.yPos=Vertical Position
+99thclient.options.HUDsetting.zPos=Z-Position
 99thclient.options.hotkeys=sʎǝʞʇoH
 99thclient.options.hotkeys.title=sʎǝʞʇoH sᵷuᴉʇʇǝS ʇuǝᴉꞁƆ_ɥʇ66
 99thclient.options.hotkeys.add=ʎǝʞʇoH ppⱯ

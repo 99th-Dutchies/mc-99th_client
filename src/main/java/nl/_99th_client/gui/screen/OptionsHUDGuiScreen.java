@@ -6,15 +6,11 @@ import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.gui.widget.HUDGuiList;
 
 public class OptionsHUDGuiScreen extends SettingsScreen
 {
-    /** The ID of the button that has been pressed. */
-    public KeyBinding buttonId;
-    public long time;
     private HUDGuiList hudGuiList;
 
     public OptionsHUDGuiScreen(Screen parentScreenIn, GameSettings gameSettingsIn)

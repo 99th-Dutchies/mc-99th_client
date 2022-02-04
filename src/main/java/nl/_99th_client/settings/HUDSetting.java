@@ -1,28 +1,42 @@
 package nl._99th_client.settings;
 
 public class HUDSetting {
-    public boolean active = true;
-    public int mainColor = -1;
-    public int subColor = -1;
-    public int bracketColor = -1;
-    public Bracket bracketType = Bracket.NONE;
-    public int x = 0;
-    public int y = 0;
-    public int z = 0;
+    public Type type;
+    public boolean active;
+    public int mainColor;
+    public int subColor;
+    public int bracketColor;
+    public Bracket bracketType;
+    public int x;
+    public int y;
+    public int z;
 
     public HUDSetting() {
-        this(true, -1, -1, -1, Bracket.NONE, 0, 0, 0);
+        this(Type.EMPTY, true, -1, -1, -1, Bracket.NONE, 0, 0, 0);
     }
 
     public HUDSetting(boolean active, int mainColor, int subColor) {
-        this(active, mainColor, subColor, -1, Bracket.NONE, 0, 0,0);
+        this(Type.COLOR, active, mainColor, subColor, -1, Bracket.NONE, 0, 0,0);
     }
 
     public HUDSetting(boolean active, int mainColor, int subColor, int bracketColor, Bracket bracketType) {
-        this(active, mainColor, subColor, bracketColor, bracketType, 0, 0,0);
+        this(Type.BRACKET, active, mainColor, subColor, bracketColor, bracketType, 0, 0,0);
+    }
+
+    public HUDSetting(boolean active, int x, int y, int z) {
+        this(Type.POSITION, active, -1, -1, -1, Bracket.NONE, x, y, z);
+    }
+
+    public HUDSetting(boolean active, int mainColor, int subColor, int x, int y, int z) {
+        this(Type.POSITION_COLOR, active, mainColor, subColor, -1, Bracket.NONE, x, y, z);
     }
 
     public HUDSetting(boolean active, int mainColor, int subColor, int bracketColor, Bracket bracketType, int x, int y, int z) {
+        this(Type.FULL, active, mainColor, subColor, bracketColor, bracketType, x, y, z);
+    }
+
+    public HUDSetting(Type type, boolean active, int mainColor, int subColor, int bracketColor, Bracket bracketType, int x, int y, int z) {
+        this.type = type;
         this.active = active;
         this.mainColor = mainColor;
         this.subColor = subColor;
@@ -33,12 +47,67 @@ public class HUDSetting {
         this.z = z;
     }
 
+    public enum Type {
+        EMPTY("empty"),
+        COLOR("color"),
+        BRACKET("bracket"),
+        POSITION("position"),
+        POSITION_COLOR("position_color"),
+        FULL("full");
+
+        private final String name;
+
+        Type(String name)
+        {
+            this.name = name;
+        }
+
+        public String toString()
+        {
+            return this.getString();
+        }
+
+        public String getString()
+        {
+            return this.name;
+        }
+
+        public boolean hasColor() {
+            return !(this.name.equals("empty") || this.name.equals("position"));
+        }
+
+        public boolean hasBracket() {
+            return this.name.equals("bracket") || this.name.equals("full");
+        }
+
+        public boolean hasPosition() {
+            return !(this.name.equals("empty") || this.name.equals("color") || this.name.equals("bracket"));
+        }
+
+        public static HUDSetting.Type fromString(String in) {
+            switch(in) {
+                case "empty":
+                    return Type.EMPTY;
+                case "color":
+                    return Type.COLOR;
+                case "bracket":
+                    return Type.BRACKET;
+                case "position":
+                    return Type.POSITION;
+                case "position_color":
+                    return Type.POSITION_COLOR;
+                default:
+                case "full":
+                    return Type.FULL;
+            }
+        }
+    }
+
     public enum Bracket {
         NONE("none"),
         ANGLE("angle"),
         CURLY("curly"),
         ROUND("round"),
-        SHARP_ANGLE("sharp_angle"),
         SQUARE("square");
 
         private final String name;
@@ -51,13 +120,11 @@ public class HUDSetting {
         public String open() {
             switch(this.name) {
                 case "angle":
-                    return "〈";
+                    return "<";
                 case "curly":
                     return "{";
                 case "round":
                     return "(";
-                case "sharp_angle":
-                    return "<";
                 case "square":
                     return "[";
                 default:
@@ -69,13 +136,11 @@ public class HUDSetting {
         public String close() {
             switch(this.name) {
                 case "angle":
-                    return "〉";
+                    return ">";
                 case "curly":
                     return "}";
                 case "round":
                     return ")";
-                case "sharp_angle":
-                    return ">";
                 case "square":
                     return "]";
                 default:
@@ -102,8 +167,6 @@ public class HUDSetting {
                     return Bracket.CURLY;
                 case "round":
                     return Bracket.ROUND;
-                case "sharp_angle":
-                    return Bracket.SHARP_ANGLE;
                 case "square":
                     return Bracket.SQUARE;
                 default:

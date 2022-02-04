@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.util.text.*;
 import nl._99th_client._99thClientSettings;
 import nl._99th_client.gui.screen.OptionsHUDGuiScreen;
+import nl._99th_client.gui.screen.OptionsHUD_HUDSettingScreen;
 import nl._99th_client.settings.HUDSetting;
 import nl._99th_client.settings.HealthIndicator;
 import nl._99th_client.settings.PotionIcons;
@@ -182,9 +183,13 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             });
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnToggleActive);
 
-            this.btnMore = new Button(0, 0, 70, 20, new StringTextComponent("More..."), (p_214387_2_) ->
+            this.btnMore = new Button(0, 0, 70, 20, new TranslationTextComponent("more"), (p_214387_2_) ->
             {
-                HUDGuiList hl = HUDGuiList.this;
+                if(this.hudSettingSecondary == null) {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting));
+                } else {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting, this.hudSettingSecondary));
+                }
             });
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);
         }
@@ -204,9 +209,13 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             });
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnToggleActive);
 
-            this.btnMore = new Button(0, 0, 70, 20, new StringTextComponent("More..."), (p_214387_2_) ->
+            this.btnMore = new Button(0, 0, 70, 20, new TranslationTextComponent("more"), (p_214387_2_) ->
             {
-                HUDGuiList hl = HUDGuiList.this;
+                if(this.hudSettingSecondary == null) {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting));
+                } else {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting, this.hudSettingSecondary));
+                }
             });
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);
         }
