@@ -2,6 +2,7 @@
 99thclient.title=ʇuǝᴉꞁƆ_ɥʇ66
 99thclient.seconds=spuoɔǝS %s
 99thclient.minutes=sǝʇnuᴉW %s
+partial=Partial
 
 # Settings
 99thclient.options.title=sᵷuᴉʇʇǝS ʇuǝᴉꞁƆ_ɥʇ66
@@ -34,11 +35,12 @@
 99thclient.options.chatfilters.activePlayer=ǝuᴉɯ ɟI
 99thclient.options.chatfilters.activeChat=s,ǝuoʎuɐ ɟI
 
-99thclient.options.SHOW_LOCATION_HUD=ᗡ∩H uoᴉʇɐɔoꞀ ʍoɥS
-99thclient.options.SHOW_INVENTORY_HUD=ᗡ∩H ʎɹoʇuǝʌuI ʍoɥS
-99thclient.options.SHOW_SYSTEM_HUD=ᗡ∩H ɯǝʇsʎS ʍoɥS
-99thclient.options.SHOW_CPS_HUD=SԀƆ ʍoɥS
-99thclient.options.SHOW_LOOKING_HUD=ᗡ∩H ʇⱯ-ᵷuᴉʞooꞀ ʍoɥS
+99thclient.options.LOCATION_HUD=ᗡ∩H uoᴉʇɐɔoꞀ
+99thclient.options.INVENTORY_COUNT_HUD=ᗡ∩H ʇunoƆ ʎɹoʇuǝʌuI
+99thclient.options.AMOR_HUD=ᗡ∩H ɹoɯɹⱯ
+99thclient.options.SYSTEM_HUD=ᗡ∩H ɯǝʇsʎS
+99thclient.options.CPS_HUD=SԀƆ
+99thclient.options.LOOKING_HUD=ᗡ∩H ʇⱯ-ᵷuᴉʞooꞀ
 99thclient.options.FULL_BRIGHTNESS=ssǝuʇɥᵷᴉɹᗺ ꞁꞁnℲ
 99thclient.options.TNT_TIMER=sɹǝɯᴉ⟘ ⟘N⟘
 99thclient.options.POTION_TIMER=sɹǝɯᴉ⟘ uoᴉʇoԀ
@@ -65,25 +67,16 @@
 99thclient.options.DISCORDRPC_SHOW_SERVER.map.tooltip=dɐW puɐ ǝɯɐᵷᴉuᴉW 'ɹǝʌɹǝS ʍoɥS
 99thclient.options.SHOW_TOASTS=sʇsɐo⟘
 99thclient.options.SHOW_TOASTS.off=ǝuoN
-99thclient.options.SHOW_TOASTS.off.tooltip=ǝuoN
 99thclient.options.SHOW_TOASTS.system=ɯǝʇsʎS
-99thclient.options.SHOW_TOASTS.system.tooltip=ɯǝʇsʎS
 99thclient.options.SHOW_TOASTS.all=ꞁꞁⱯ
-99thclient.options.SHOW_TOASTS.all.tooltip=ꞁꞁⱯ
 99thclient.options.HEALTH_INDICATOR=ɹoʇɐɔᴉpuI ɥʇꞁɐǝH
 99thclient.options.HEALTH_INDICATOR.off=ɟɟO
-99thclient.options.HEALTH_INDICATOR.off.tooltip=ɟɟO
 99thclient.options.HEALTH_INDICATOR.numbers=sɹǝqɯnN
-99thclient.options.HEALTH_INDICATOR.numbers.tooltip=sɹǝqɯnN
 99thclient.options.HEALTH_INDICATOR.icons=suoɔI
-99thclient.options.HEALTH_INDICATOR.icons.tooltip=suoɔI
 99thclient.options.POTION_ICONS=suoɔI suoᴉʇoԀ
 99thclient.options.POTION_ICONS.hide=ǝpᴉH
-99thclient.options.POTION_ICONS.hide.tooltip=ǝpᴉH
 99thclient.options.POTION_ICONS.normal=ꞁɐɯɹoN
-99thclient.options.POTION_ICONS.normal.tooltip=ꞁɐɯɹoN
 99thclient.options.POTION_ICONS.all=ꞁꞁⱯ ʍoɥS
-99thclient.options.POTION_ICONS.all.tooltip=ꞁꞁⱯ ʍoɥS
 99thclient.options.timeTillAFK=ꞰℲⱯ ꞁꞁᴉʇ ǝɯᴉ⟘
 99thclient.options.ACTIVE_AFK.off=ɟɟO
 99thclient.options.ACTIVE_AFK.off.tooltip=ɟɟO

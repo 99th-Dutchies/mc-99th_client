@@ -2,6 +2,7 @@
 99thclient.title=99th_Client
 99thclient.seconds=%s Seconds
 99thclient.minutes=%s Minutes
+partial=Partial
 
 # Settings
 99thclient.options.title=99th_CLIENT SETTINGZ
@@ -34,11 +35,12 @@
 99thclient.options.chatfilters.activePlayer=If mine
 99thclient.options.chatfilters.activeChat=If anyonez
 
-99thclient.options.SHOW_LOCATION_HUD=See Location HUD
-99thclient.options.SHOW_INVENTORY_HUD=Sow Invntorie HUD
-99thclient.options.SHOW_SYSTEM_HUD=Sow Computer Thingies
-99thclient.options.SHOW_CPS_HUD=Clicking Speeeeed
-99thclient.options.SHOW_LOOKING_HUD=Were you looking?
+99thclient.options.LOCATION_HUD=Location HUD
+99thclient.options.INVENTORY_COUNT_HUD=Invntorie Count HUD
+99thclient.options.ARMOR_HUD=Gear HUD
+99thclient.options.SYSTEM_HUD=Computer Thingies
+99thclient.options.CPS_HUD=Clicking Speeeeed
+99thclient.options.LOOKING_HUD=Were you looking?
 99thclient.options.FULL_BRIGHTNESS=SUPER LIGHT
 99thclient.options.TNT_TIMER=Time till BOOM
 99thclient.options.POTION_TIMER=Poshun Timerrrrrr
@@ -65,25 +67,16 @@
 99thclient.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Yes
 99thclient.options.SHOW_TOASTS=Taostz
 99thclient.options.SHOW_TOASTS.off=No
-99thclient.options.SHOW_TOASTS.off.tooltip=No
 99thclient.options.SHOW_TOASTS.system=Computr thingie
-99thclient.options.SHOW_TOASTS.system.tooltip=Computr thingie
 99thclient.options.SHOW_TOASTS.all=Evvythin
-99thclient.options.SHOW_TOASTS.all.tooltip=Evvythin
 99thclient.options.HEALTH_INDICATOR=Haelth Indiecatur
 99thclient.options.HEALTH_INDICATOR.off=No
-99thclient.options.HEALTH_INDICATOR.off.tooltip=No
 99thclient.options.HEALTH_INDICATOR.numbers=Numbrs
-99thclient.options.HEALTH_INDICATOR.numbers.tooltip=Numbrs
 99thclient.options.HEALTH_INDICATOR.icons=Pics
-99thclient.options.HEALTH_INDICATOR.icons.tooltip=Pics
 99thclient.options.POTION_ICONS=Poshun Pics
 99thclient.options.POTION_ICONS.hide=NOOOO
-99thclient.options.POTION_ICONS.hide.tooltip=NOOOO
 99thclient.options.POTION_ICONS.normal=Maybe?
-99thclient.options.POTION_ICONS.normal.tooltip=Maybe?
 99thclient.options.POTION_ICONS.all=GIVE ME
-99thclient.options.POTION_ICONS.all.tooltip=GIVE ME
 99thclient.options.timeTillAFK=Till you AFK
 99thclient.options.ACTIVE_AFK.off=No
 99thclient.options.ACTIVE_AFK.off.tooltip=No

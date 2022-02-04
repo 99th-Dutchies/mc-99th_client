@@ -2,6 +2,7 @@
 99thclient.title=99th_Client
 99thclient.seconds=%s Seconden
 99thclient.minutes=%s Minuten
+partial=Partial
 
 # Settings
 99thclient.options.title=99th_Client Instellingen
@@ -34,11 +35,12 @@
 99thclient.options.chatfilters.activePlayer=Bij mij
 99thclient.options.chatfilters.activeChat=Bij iedereen
 
-99thclient.options.SHOW_LOCATION_HUD=Toon Locatie HUD
-99thclient.options.SHOW_INVENTORY_HUD=Toon Inventory HUD
-99thclient.options.SHOW_SYSTEM_HUD=Toon Systeem HUD
-99thclient.options.SHOW_CPS_HUD=Toon CPS
-99thclient.options.SHOW_LOOKING_HUD=Toon Kijkend-Naar HUD
+99thclient.options.LOCATION_HUD=Locatie HUD
+99thclient.options.INVENTORY_COUNT_HUD=Inventory Tel HUD
+99thclient.options.ARMOR_HUD=Kleding HUD
+99thclient.options.SYSTEM_HUD=Systeem HUD
+99thclient.options.CPS_HUD=CPS
+99thclient.options.LOOKING_HUD=Kijkend-Naar HUD
 99thclient.options.FULL_BRIGHTNESS=Maximale Helderheid
 99thclient.options.TNT_TIMER=TNT Klok
 99thclient.options.POTION_TIMER=Toverdrank Timers
@@ -65,25 +67,16 @@
 99thclient.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Toon Server, Minigame en Map
 99thclient.options.SHOW_TOASTS=Toasts
 99thclient.options.SHOW_TOASTS.off=Geen
-99thclient.options.SHOW_TOASTS.off.tooltip=Geen
 99thclient.options.SHOW_TOASTS.system=Systeem
-99thclient.options.SHOW_TOASTS.system.tooltip=Systeem
 99thclient.options.SHOW_TOASTS.all=Alle
-99thclient.options.SHOW_TOASTS.all.tooltip=Alle
 99thclient.options.HEALTH_INDICATOR=Gezondheids Indicator
 99thclient.options.HEALTH_INDICATOR.off=Uit
-99thclient.options.HEALTH_INDICATOR.off.tooltip=Uit
 99thclient.options.HEALTH_INDICATOR.numbers=Nummers
-99thclient.options.HEALTH_INDICATOR.numbers.tooltip=Nummers
 99thclient.options.HEALTH_INDICATOR.icons=Icoontjes
-99thclient.options.HEALTH_INDICATOR.icons.tooltip=Icoontjes
 99thclient.options.POTION_ICONS=Toverdrank Icoontjes
 99thclient.options.POTION_ICONS.hide=Verberg
-99thclient.options.POTION_ICONS.hide.tooltip=Verberg
 99thclient.options.POTION_ICONS.normal=Normaal
-99thclient.options.POTION_ICONS.normal.tooltip=Normaal
 99thclient.options.POTION_ICONS.all=Laat Altijd Zien
-99thclient.options.POTION_ICONS.all.tooltip=Laat Altijd Zien
 99thclient.options.timeTillAFK=Tijd tot AFK
 99thclient.options.ACTIVE_AFK.off=Uit
 99thclient.options.ACTIVE_AFK.off.tooltip=Uit

@@ -2,6 +2,7 @@
 99thclient.title=99th_Client
 99thclient.seconds=%s Seconds
 99thclient.minutes=%s Minutes
+partial=Partial
 
 # Settings
 99thclient.options.title=99th_Client Settings
@@ -34,11 +35,12 @@
 99thclient.options.chatfilters.activePlayer=If mine
 99thclient.options.chatfilters.activeChat=If anyone's
 
-99thclient.options.SHOW_LOCATION_HUD=Show Location HUD
-99thclient.options.SHOW_INVENTORY_HUD=Show Inventory HUD
-99thclient.options.SHOW_SYSTEM_HUD=Show System HUD
-99thclient.options.SHOW_CPS_HUD=Show CPS
-99thclient.options.SHOW_LOOKING_HUD=Show Looking-At HUD
+99thclient.options.LOCATION_HUD=Location HUD
+99thclient.options.INVENTORY_COUNT_HUD=Inventory Count HUD
+99thclient.options.ARMOR_HUD=Armor HUD
+99thclient.options.SYSTEM_HUD=System HUD
+99thclient.options.CPS_HUD=CPS
+99thclient.options.LOOKING_HUD=Looking-At HUD
 99thclient.options.FULL_BRIGHTNESS=Full Brightness
 99thclient.options.TNT_TIMER=TNT Timers
 99thclient.options.POTION_TIMER=Potion Timers
@@ -65,25 +67,16 @@
 99thclient.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Show Server, Minigame and Map
 99thclient.options.SHOW_TOASTS=Toasts
 99thclient.options.SHOW_TOASTS.off=None
-99thclient.options.SHOW_TOASTS.off.tooltip=None
 99thclient.options.SHOW_TOASTS.system=System
-99thclient.options.SHOW_TOASTS.system.tooltip=System
 99thclient.options.SHOW_TOASTS.all=All
-99thclient.options.SHOW_TOASTS.all.tooltip=All
 99thclient.options.HEALTH_INDICATOR=Health Indicator
 99thclient.options.HEALTH_INDICATOR.off=Off
-99thclient.options.HEALTH_INDICATOR.off.tooltip=Off
 99thclient.options.HEALTH_INDICATOR.numbers=Numbers
-99thclient.options.HEALTH_INDICATOR.numbers.tooltip=Numbers
 99thclient.options.HEALTH_INDICATOR.icons=Icons
-99thclient.options.HEALTH_INDICATOR.icons.tooltip=Icons
 99thclient.options.POTION_ICONS=Potions Icons
 99thclient.options.POTION_ICONS.hide=Hide
-99thclient.options.POTION_ICONS.hide.tooltip=Hide
 99thclient.options.POTION_ICONS.normal=Normal
-99thclient.options.POTION_ICONS.normal.tooltip=Normal
 99thclient.options.POTION_ICONS.all=Show All
-99thclient.options.POTION_ICONS.all.tooltip=Show All
 99thclient.options.timeTillAFK=Time till AFK
 99thclient.options.ACTIVE_AFK.off=Off
 99thclient.options.ACTIVE_AFK.off.tooltip=Off

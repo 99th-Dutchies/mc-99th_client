@@ -2,6 +2,7 @@
 99thclient.title=99th_Client
 99thclient.seconds=%s Seconds
 99thclient.minutes=%s Minutes
+partial=Partial
 
 # Settings
 99thclient.options.title=99th_Client Scribble
@@ -34,11 +35,12 @@
 99thclient.options.chatfilters.activePlayer=Me postal
 99thclient.options.chatfilters.activeChat=Thems postal
 
-99thclient.options.SHOW_LOCATION_HUD=Yer Position HUD
-99thclient.options.SHOW_INVENTORY_HUD=Loot Bag HUD
-99thclient.options.SHOW_SYSTEM_HUD=Boat Status HUD
-99thclient.options.SHOW_CPS_HUD=Show Cannon Speed
-99thclient.options.SHOW_LOOKING_HUD=Spyglass HUD
+99thclient.options.LOCATION_HUD=Yer Position HUD
+99thclient.options.ARMOR_HUD=Armor HUD
+99thclient.options.INVENTORY_COUNT_HUD=Loot Bag HUD
+99thclient.options.SYSTEM_HUD=Boat Status HUD
+99thclient.options.CPS_HUD=Cannon Speed
+99thclient.options.LOOKING_HUD=Spyglass HUD
 99thclient.options.FULL_BRIGHTNESS=Full Sunshinin'
 99thclient.options.TNT_TIMER=Powder keg Clock
 99thclient.options.POTION_TIMER=Grog Clock
@@ -65,25 +67,16 @@
 99thclient.options.DISCORDRPC_SHOW_SERVER.map.tooltip=Show Island, What yer doin' and Where
 99thclient.options.SHOW_TOASTS=Life Messages
 99thclient.options.SHOW_TOASTS.off=Nothin'
-99thclient.options.SHOW_TOASTS.off.tooltip=Nothin'
 99thclient.options.SHOW_TOASTS.system=Boat
-99thclient.options.SHOW_TOASTS.system.tooltip=Boat
 99thclient.options.SHOW_TOASTS.all=Everythin'
-99thclient.options.SHOW_TOASTS.all.tooltip=Everythin'
 99thclient.options.HEALTH_INDICATOR=Ship Status
 99thclient.options.HEALTH_INDICATOR.off=Nothin'
-99thclient.options.HEALTH_INDICATOR.off.tooltip=Nothin'
 99thclient.options.HEALTH_INDICATOR.numbers=Digits
-99thclient.options.HEALTH_INDICATOR.numbers.tooltip=Digits
 99thclient.options.HEALTH_INDICATOR.icons=Pictures
-99thclient.options.HEALTH_INDICATOR.icons.tooltip=Pictures
 99thclient.options.POTION_ICONS=Grog Pictures
 99thclient.options.POTION_ICONS.hide=Nothin'
-99thclient.options.POTION_ICONS.hide.tooltip=Nothin'
 99thclient.options.POTION_ICONS.normal=Usual
-99thclient.options.POTION_ICONS.normal.tooltip=Usual
 99thclient.options.POTION_ICONS.all=Everythin'
-99thclient.options.POTION_ICONS.all.tooltip=Everythin'
 99thclient.options.timeTillAFK=Time till yer gon'
 99thclient.options.ACTIVE_AFK.off=Never
 99thclient.options.ACTIVE_AFK.off.tooltip=Never

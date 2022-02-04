@@ -653,7 +653,7 @@ public class _99thClientSettings {
                         ((Long) jLocationHUD.get("mainColor")).intValue(),
                         ((Long) jLocationHUD.get("subColor")).intValue(),
                         ((Long) jLocationHUD.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jLocationHUD.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jLocationHUD.get("bracketType")),
                         ((Long) jLocationHUD.get("x")).intValue(),
                         ((Long) jLocationHUD.get("y")).intValue(),
                         ((Long) jLocationHUD.get("z")).intValue());
@@ -666,7 +666,7 @@ public class _99thClientSettings {
                         ((Long) jInventoryHUDmain.get("mainColor")).intValue(),
                         ((Long) jInventoryHUDmain.get("subColor")).intValue(),
                         ((Long) jInventoryHUDmain.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jInventoryHUDmain.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jInventoryHUDmain.get("bracketType")),
                         ((Long) jInventoryHUDmain.get("x")).intValue(),
                         ((Long) jInventoryHUDmain.get("y")).intValue(),
                         ((Long) jInventoryHUDmain.get("z")).intValue());
@@ -679,7 +679,7 @@ public class _99thClientSettings {
                         ((Long) jInventoryHUDitems.get("mainColor")).intValue(),
                         ((Long) jInventoryHUDitems.get("subColor")).intValue(),
                         ((Long) jInventoryHUDitems.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jInventoryHUDitems.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jInventoryHUDitems.get("bracketType")),
                         ((Long) jInventoryHUDitems.get("x")).intValue(),
                         ((Long) jInventoryHUDitems.get("y")).intValue(),
                         ((Long) jInventoryHUDitems.get("z")).intValue());
@@ -692,7 +692,7 @@ public class _99thClientSettings {
                         ((Long) jSystemHUD.get("mainColor")).intValue(),
                         ((Long) jSystemHUD.get("subColor")).intValue(),
                         ((Long) jSystemHUD.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jSystemHUD.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jSystemHUD.get("bracketType")),
                         ((Long) jSystemHUD.get("x")).intValue(),
                         ((Long) jSystemHUD.get("y")).intValue(),
                         ((Long) jSystemHUD.get("z")).intValue());
@@ -705,7 +705,7 @@ public class _99thClientSettings {
                         ((Long) jCpsHUDleft.get("mainColor")).intValue(),
                         ((Long) jCpsHUDleft.get("subColor")).intValue(),
                         ((Long) jCpsHUDleft.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jCpsHUDleft.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jCpsHUDleft.get("bracketType")),
                         ((Long) jCpsHUDleft.get("x")).intValue(),
                         ((Long) jCpsHUDleft.get("y")).intValue(),
                         ((Long) jCpsHUDleft.get("z")).intValue());
@@ -718,20 +718,20 @@ public class _99thClientSettings {
                         ((Long) jCpsHUDright.get("mainColor")).intValue(),
                         ((Long) jCpsHUDright.get("subColor")).intValue(),
                         ((Long) jCpsHUDright.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jCpsHUDright.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jCpsHUDright.get("bracketType")),
                         ((Long) jCpsHUDright.get("x")).intValue(),
                         ((Long) jCpsHUDright.get("y")).intValue(),
                         ((Long) jCpsHUDright.get("z")).intValue());
             }
             if(root.containsKey("lookingHUD")) {
-                JSONObject jLookingHUD = (JSONObject) root.get("cpsHUD");
+                JSONObject jLookingHUD = (JSONObject) root.get("lookingHUD");
 
                 this.lookingHUD = new HUDSetting(
                         (boolean) jLookingHUD.get("active"),
                         ((Long) jLookingHUD.get("mainColor")).intValue(),
                         ((Long) jLookingHUD.get("subColor")).intValue(),
                         ((Long) jLookingHUD.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jLookingHUD.get("bracketColor")),
+                        HUDSetting.Bracket.fromString((String) jLookingHUD.get("bracketType")),
                         ((Long) jLookingHUD.get("x")).intValue(),
                         ((Long) jLookingHUD.get("y")).intValue(),
                         ((Long) jLookingHUD.get("z")).intValue());
