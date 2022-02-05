@@ -9,12 +9,13 @@ import java.net.URI;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 
 import nl._99th_client.Config;
 import nl._99th_client.api.ApiClient;
-import nl._99th_client.util.json.JSONWriter;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONWriter;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 

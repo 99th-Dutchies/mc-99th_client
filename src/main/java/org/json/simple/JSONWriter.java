@@ -1,8 +1,4 @@
-package nl._99th_client.util.json;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+package org.json.simple;
 
 import java.io.IOException;
 import java.io.Writer;
