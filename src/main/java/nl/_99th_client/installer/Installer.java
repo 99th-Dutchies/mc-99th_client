@@ -1,7 +1,5 @@
 package nl._99th_client.installer;
 
-import io.sentry.Sentry;
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -22,12 +20,6 @@ import org.json.simple.parser.ParseException;
 public class Installer {
     public static void main(String[] args)
     {
-        Sentry.init(options -> {
-            options.setDsn(Config.sentryDsn);
-            options.setDebug(true);
-            options.setRelease("Installer " + Config.clientVersion);
-        });
-
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             InstallerGUI frm = new InstallerGUI();
