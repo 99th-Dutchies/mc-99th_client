@@ -2,7 +2,10 @@ package nl._99th_client.hud;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
 import nl._99th_client.settings.HUDSetting;
 
 public class LocationInfo
@@ -21,15 +24,42 @@ public class LocationInfo
     }
 
     private static void renderX(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(ms, "[X] " + (int) mc.renderViewEntity.getPosX(), hudSetting.x, hudSetting.y, -1);
+        IFormattableTextComponent s = new StringTextComponent(hudSetting.bracketType.open()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.bracketColor)));
+        s.append(new StringTextComponent("X").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
+        s.append(new StringTextComponent(hudSetting.bracketType.close()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.bracketColor))));
+        s.append(new StringTextComponent(" " + (int) mc.renderViewEntity.getPosX()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor))));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+        }
     }
 
     private static void renderY(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(ms, "[Y] " + (int) mc.renderViewEntity.getPosY(), hudSetting.x, hudSetting.y + 10, -1);
+        IFormattableTextComponent s = new StringTextComponent(hudSetting.bracketType.open()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.bracketColor)));
+        s.append(new StringTextComponent("Y").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
+        s.append(new StringTextComponent(hudSetting.bracketType.close()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.bracketColor))));
+        s.append(new StringTextComponent(" " + (int) mc.renderViewEntity.getPosY()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor))));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+        }
     }
 
     private static void renderZ(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(ms, "[Z] " + (int) mc.renderViewEntity.getPosZ(), hudSetting.x, hudSetting.y + 20, -1);
+        IFormattableTextComponent s = new StringTextComponent(hudSetting.bracketType.open()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.bracketColor)));
+        s.append(new StringTextComponent("Z").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
+        s.append(new StringTextComponent(hudSetting.bracketType.close()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.bracketColor))));
+        s.append(new StringTextComponent(" " + (int) mc.renderViewEntity.getPosZ()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor))));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 20, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 20, -1);
+        }
     }
 
     private static void renderDir(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
@@ -41,9 +71,32 @@ public class LocationInfo
         String deltaY = rotationToDeltaZ(rot);
 
         // Draw orientation/direction
-        mc.fontRenderer.drawStringWithShadow(ms, deltaX, hudSetting.x + 60, hudSetting.y, -1);
-        mc.fontRenderer.drawStringWithShadow(ms, dir, hudSetting.x + 60, hudSetting.y + 10, -1);
-        mc.fontRenderer.drawStringWithShadow(ms, deltaY, hudSetting.x + 60, hudSetting.y + 20, -1);
+        IFormattableTextComponent dX = new StringTextComponent(deltaX).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor)));
+        IFormattableTextComponent dDir = new StringTextComponent(dir).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+        IFormattableTextComponent dY = new StringTextComponent(deltaY).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, dX, hudSetting.posX() + 60, hudSetting.posY(), -1);
+            mc.fontRenderer.func_243246_a(ms, dDir, hudSetting.posX() + 60, hudSetting.posY() + 10, -1);
+            mc.fontRenderer.func_243246_a(ms, dY, hudSetting.posX() + 60, hudSetting.posY() + 20, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, dX, hudSetting.posX() + 60, hudSetting.posY(), -1);
+            mc.fontRenderer.func_243248_b(ms, dDir, hudSetting.posX() + 60, hudSetting.posY() + 10, -1);
+            mc.fontRenderer.func_243248_b(ms, dY, hudSetting.posX() + 60, hudSetting.posY() + 20, -1);
+        }
+    }
+
+    private static void renderBiome(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
+        String biomeName = mc.renderViewEntity.world.getBiome(mc.renderViewEntity.getPosition()).getCategory().getName().replaceAll("_", " ");
+        biomeName = biomeName.substring(0, 1).toUpperCase() + biomeName.substring(1);
+
+        IFormattableTextComponent s = new StringTextComponent(biomeName).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+        }
     }
 
     private static String rotationToDirection(float rotation) {
@@ -114,11 +167,5 @@ public class LocationInfo
         } else {
             return "?";
         }
-    }
-
-    private static void renderBiome(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        String biomeName = mc.renderViewEntity.world.getBiome(mc.renderViewEntity.getPosition()).getCategory().getName().replaceAll("_", " ");
-        biomeName = biomeName.substring(0, 1).toUpperCase() + biomeName.substring(1);
-        mc.fontRenderer.drawStringWithShadow(ms, biomeName, hudSetting.x, hudSetting.y + 30, -1);
     }
 }

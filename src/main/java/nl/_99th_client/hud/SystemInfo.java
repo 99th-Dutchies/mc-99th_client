@@ -4,11 +4,12 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.network.play.NetworkPlayerInfo;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
 import net.optifine.Config;
 import nl._99th_client.settings.HUDSetting;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SystemInfo
 {
@@ -28,19 +29,35 @@ public class SystemInfo
 
         if (l >= 0)
         {
-            String s = Config.getFpsString().split("/")[0];
-            mc.fontRenderer.drawStringWithShadow(ms, s + " FPS", hudSetting.x, hudSetting.y, -1);
+            String fps = Config.getFpsString().split("/")[0];
+
+            IFormattableTextComponent s = new StringTextComponent(fps + " FPS").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+
+            if(hudSetting.dropShadow) {
+                mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+            } else {
+                mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+            }
         }
     }
 
     private static void renderPing(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         NetworkPlayerInfo playerInfo = mc.getConnection().getPlayerInfo(mc.player.getUniqueID());
         ServerData currentServer = mc.getCurrentServerData();
+        String ping = "";
 
         if(playerInfo != null) {
-            mc.fontRenderer.drawStringWithShadow(ms, playerInfo.getResponseTime() + " ms", hudSetting.x, hudSetting.y + 30, -1);
+            ping = playerInfo.getResponseTime() + " ms";
         } else if(currentServer != null) {
-            mc.fontRenderer.drawStringWithShadow(ms, currentServer.pingToServer + " ms", hudSetting.x, hudSetting.y + 30, -1);
+            ping = currentServer.pingToServer + " ms";
+        }
+
+        IFormattableTextComponent s = new StringTextComponent(ping).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
         }
     }
 
@@ -50,7 +67,13 @@ public class SystemInfo
         long k = Runtime.getRuntime().freeMemory();
         long l = j - k;
 
-        mc.fontRenderer.drawStringWithShadow(ms, bytesToMb(l) + " MB", hudSetting.x, hudSetting.y + 10, -1);
+        IFormattableTextComponent s = new StringTextComponent(bytesToMb(l) + " MB").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+        }
     }
 
     private static long bytesToMb(long bytes)

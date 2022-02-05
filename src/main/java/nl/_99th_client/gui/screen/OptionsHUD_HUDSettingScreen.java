@@ -2,13 +2,13 @@ package nl._99th_client.gui.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.GameSettings;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.Color;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.settings.HUDSetting;
@@ -16,20 +16,23 @@ import nl._99th_client.util.MCStringUtils;
 
 public class OptionsHUD_HUDSettingScreen extends SettingsScreen
 {
+    private TranslationTextComponent title;
     private final HUDSetting hudSetting;
     private HUDSetting hudSettingSecondary;
 
-    public OptionsHUD_HUDSettingScreen(Screen parentScreenIn, GameSettings gameSettingsIn, ITextComponent title, HUDSetting hudSetting)
+    public OptionsHUD_HUDSettingScreen(Screen parentScreenIn, GameSettings gameSettingsIn, TranslationTextComponent title, HUDSetting hudSetting)
     {
         super(parentScreenIn, gameSettingsIn, title);
 
+        this.title = title;
         this.hudSetting = hudSetting;
     }
 
-    public OptionsHUD_HUDSettingScreen(Screen parentScreenIn, GameSettings gameSettingsIn, ITextComponent title, HUDSetting hudSetting, HUDSetting hudSettingSecondary)
+    public OptionsHUD_HUDSettingScreen(Screen parentScreenIn, GameSettings gameSettingsIn, TranslationTextComponent title, HUDSetting hudSetting, HUDSetting hudSettingSecondary)
     {
         super(parentScreenIn, gameSettingsIn, title);
 
+        this.title = title;
         this.hudSetting = hudSetting;
         this.hudSettingSecondary = hudSettingSecondary;
     }
@@ -81,6 +84,12 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 }
             });
             this.addButton(subColorTFW);
+            curY++;
+
+            this.addButton(new Button(this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, setting.dropShadow ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"), (button) -> {
+                setting.dropShadow = !setting.dropShadow;
+                button.setMessage(setting.dropShadow ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"));
+            }));
             curY++;
         }
 
@@ -142,6 +151,17 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
             this.addButton(yPosTFW);
             curY++;
         }
+
+        if(this.title.getKey().equals("99thclient.options.INVENTORY_COUNT_HUD")) {
+            TextFieldWidget itemHUDitemsTFW = new TextFieldWidget(this.font, this.width / 2 + xOffset, this.height / 6 + curY * 24, 220, 20, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"));
+            itemHUDitemsTFW.setMaxStringLength(1230);
+            itemHUDitemsTFW.setText(MCStringUtils.itemsToString(Minecraft.getInstance().gameSettings._99thClientSettings.itemHUDitems));
+            itemHUDitemsTFW.setResponder((p_214319_1_) -> {
+                Minecraft.getInstance().gameSettings._99thClientSettings.itemHUDitems = MCStringUtils.parseItems(p_214319_1_);
+            });
+            this.addButton(itemHUDitemsTFW);
+            curY++;
+        }
     }
 
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
@@ -162,6 +182,9 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
 
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.subColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
+
+            drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.dropShadow"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+            curY++;
         }
         if(this.hudSetting.type.hasBracket() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasBracket())) {
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.bracketColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
@@ -175,6 +198,10 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
             curY++;
 
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.yPos"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+            curY++;
+        }
+        if(this.title.getKey().equals("99thclient.options.INVENTORY_COUNT_HUD")) {
+            drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.ITEMS_HUD.items"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
         }
 
         super.render(matrixStack, mouseX, mouseY, partialTicks);

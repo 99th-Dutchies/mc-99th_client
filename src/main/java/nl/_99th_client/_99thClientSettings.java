@@ -39,13 +39,13 @@ public class _99thClientSettings {
     public KeyBinding keyBindFreelook;
     public KeyBinding keyBindCommand;
     public KeyBinding[] keyBindings;
-    public HUDSetting locationHUD = new HUDSetting(true, -1, -1, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
-    public HUDSetting inventoryHUDmain = new HUDSetting(true, -1, -1, 1, 51, 0);
-    public HUDSetting inventoryHUDitems = new HUDSetting(true, 78, 19, 0);
-    public HUDSetting systemHUD = new HUDSetting(true, -1, -1, 91, 1, 0);
-    public HUDSetting cpsHUDleft = new HUDSetting(true, -1, -1, -125, 15, 0);
-    public HUDSetting cpsHUDright = new HUDSetting(true, -1, -1, 96, 15, 0);
-    public HUDSetting lookingHUD = new HUDSetting(true, -1, -1, 1, 126, 0);
+    public HUDSetting locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
+    public HUDSetting inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
+    public HUDSetting inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
+    public HUDSetting systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+    public HUDSetting cpsHUDleft = new HUDSetting(true, -1, -1, true, 215, -15, 0);
+    public HUDSetting cpsHUDright = new HUDSetting(true, -1, -1, true, -222, -15, 0);
+    public HUDSetting lookingHUD = new HUDSetting(true, -1, -1, true, 1, 126, 0);
     public List<Item> itemHUDitems = Lists.newArrayList(Items.ARROW, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.EMERALD);
     public boolean fullBrightness = false;
     public boolean infiniteChat = true;
@@ -122,25 +122,25 @@ public class _99thClientSettings {
                         String[] astring = s.split("<:>");
 
                         if (astring[0].equals("showLocationHUD") && astring.length >= 2) {
-                            this.locationHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, -1, HUDSetting.Bracket.SQUARE, 1, 1, 1);
+                            this.locationHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 1);
                         }
 
                         if (astring[0].equals("showInventoryHUD") && astring.length >= 2) {
-                            this.inventoryHUDmain = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, 1, 51, 0);
-                            this.inventoryHUDitems = new HUDSetting(Boolean.valueOf(astring[1]), 78, 19, 0);
+                            this.inventoryHUDmain = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 1, 51, 0);
+                            this.inventoryHUDitems = new HUDSetting(Boolean.valueOf(astring[1]), -200, -19, 0);
                         }
 
                         if (astring[0].equals("showSystemHUD") && astring.length >= 2) {
-                            this.systemHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, 91, 1, 0);
+                            this.systemHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 91, 1, 0);
                         }
 
                         if (astring[0].equals("showCPSHUD") && astring.length >= 2) {
-                            this.cpsHUDleft = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, -125, 15, 0);
-                            this.cpsHUDright = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, 96, 15, 0);
+                            this.cpsHUDleft = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 215, -15, 0);
+                            this.cpsHUDright = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, -222, -15, 0);
                         }
 
                         if (astring[0].equals("showLookingHUD") && astring.length >= 2) {
-                            this.lookingHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, 1, 126, 0);
+                            this.lookingHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 1, 126, 0);
                         }
 
                         if (astring[0].equals("itemHUDitems") && astring.length >= 2) {
@@ -424,13 +424,13 @@ public class _99thClientSettings {
     }
 
     public void resetSettings() {
-        this.locationHUD = new HUDSetting(true, -1, -1, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
-        this.inventoryHUDmain = new HUDSetting(true, -1, -1, 1, 51, 0);
-        this.inventoryHUDitems = new HUDSetting(true, 78, 19, 0);
-        this.systemHUD = new HUDSetting(true, -1, -1, 91, 1, 0);
-        this.cpsHUDleft = new HUDSetting(true, -1, -1, -125, 15, 0);
-        this.cpsHUDright = new HUDSetting(true, -1, -1, 96, 15, 0);
-        this.lookingHUD = new HUDSetting(true, -1, -1, 1, 126, 0);
+        this.locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
+        this.inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
+        this.inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
+        this.systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+        this.cpsHUDleft = new HUDSetting(true, -1, -1, true, 215, -15, 0);
+        this.cpsHUDright = new HUDSetting(true, -1, -1, true, -222, -15, 0);
+        this.lookingHUD = new HUDSetting(true, -1, -1, true, 1, 126, 0);
         this.itemHUDitems = Lists.newArrayList(Items.ARROW, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.EMERALD);
         this.fullBrightness = false;
         this.infiniteChat = true;
@@ -483,6 +483,7 @@ public class _99thClientSettings {
         jLocationHUD.put("active", this.locationHUD.active);
         jLocationHUD.put("mainColor", this.locationHUD.mainColor);
         jLocationHUD.put("subColor", this.locationHUD.subColor);
+        jLocationHUD.put("dropShadow", this.locationHUD.dropShadow);
         jLocationHUD.put("bracketColor", this.locationHUD.bracketColor);
         jLocationHUD.put("bracketType", this.locationHUD.bracketType.getString());
         jLocationHUD.put("x", this.locationHUD.x);
@@ -494,6 +495,7 @@ public class _99thClientSettings {
         jInventoryHUDmain.put("active", this.inventoryHUDmain.active);
         jInventoryHUDmain.put("mainColor", this.inventoryHUDmain.mainColor);
         jInventoryHUDmain.put("subColor", this.inventoryHUDmain.subColor);
+        jInventoryHUDmain.put("dropShadow", this.inventoryHUDmain.dropShadow);
         jInventoryHUDmain.put("bracketColor", this.inventoryHUDmain.bracketColor);
         jInventoryHUDmain.put("bracketType", this.inventoryHUDmain.bracketType.getString());
         jInventoryHUDmain.put("x", this.inventoryHUDmain.x);
@@ -505,6 +507,7 @@ public class _99thClientSettings {
         jInventoryHUDitems.put("active", this.inventoryHUDitems.active);
         jInventoryHUDitems.put("mainColor", this.inventoryHUDitems.mainColor);
         jInventoryHUDitems.put("subColor", this.inventoryHUDitems.subColor);
+        jInventoryHUDitems.put("dropShadow", this.inventoryHUDitems.dropShadow);
         jInventoryHUDitems.put("bracketColor", this.inventoryHUDitems.bracketColor);
         jInventoryHUDitems.put("bracketType", this.inventoryHUDitems.bracketType.getString());
         jInventoryHUDitems.put("x", this.inventoryHUDitems.x);
@@ -516,6 +519,7 @@ public class _99thClientSettings {
         jSystemHUD.put("active", this.systemHUD.active);
         jSystemHUD.put("mainColor", this.systemHUD.mainColor);
         jSystemHUD.put("subColor", this.systemHUD.subColor);
+        jSystemHUD.put("dropShadow", this.systemHUD.dropShadow);
         jSystemHUD.put("bracketColor", this.systemHUD.bracketColor);
         jSystemHUD.put("bracketType", this.systemHUD.bracketType.getString());
         jSystemHUD.put("x", this.systemHUD.x);
@@ -527,6 +531,7 @@ public class _99thClientSettings {
         jCpsHUDleft.put("active", this.cpsHUDleft.active);
         jCpsHUDleft.put("mainColor", this.cpsHUDleft.mainColor);
         jCpsHUDleft.put("subColor", this.cpsHUDleft.subColor);
+        jCpsHUDleft.put("dropShadow", this.cpsHUDleft.dropShadow);
         jCpsHUDleft.put("bracketColor", this.cpsHUDleft.bracketColor);
         jCpsHUDleft.put("bracketType", this.cpsHUDleft.bracketType.getString());
         jCpsHUDleft.put("x", this.cpsHUDleft.x);
@@ -538,6 +543,7 @@ public class _99thClientSettings {
         jCpsHUDright.put("active", this.cpsHUDright.active);
         jCpsHUDright.put("mainColor", this.cpsHUDright.mainColor);
         jCpsHUDright.put("subColor", this.cpsHUDright.subColor);
+        jCpsHUDright.put("dropShadow", this.cpsHUDright.dropShadow);
         jCpsHUDright.put("bracketColor", this.cpsHUDright.bracketColor);
         jCpsHUDright.put("bracketType", this.cpsHUDright.bracketType.getString());
         jCpsHUDright.put("x", this.cpsHUDright.x);
@@ -549,6 +555,7 @@ public class _99thClientSettings {
         jLookingHUD.put("active", this.lookingHUD.active);
         jLookingHUD.put("mainColor", this.lookingHUD.mainColor);
         jLookingHUD.put("subColor", this.lookingHUD.subColor);
+        jLookingHUD.put("dropShadow", this.lookingHUD.dropShadow);
         jLookingHUD.put("bracketColor", this.lookingHUD.bracketColor);
         jLookingHUD.put("bracketType", this.lookingHUD.bracketType.getString());
         jLookingHUD.put("x", this.lookingHUD.x);
@@ -652,6 +659,7 @@ public class _99thClientSettings {
                         (boolean) jLocationHUD.get("active"),
                         ((Long) jLocationHUD.get("mainColor")).intValue(),
                         ((Long) jLocationHUD.get("subColor")).intValue(),
+                        (boolean) jLocationHUD.get("dropShadow"),
                         ((Long) jLocationHUD.get("bracketColor")).intValue(),
                         HUDSetting.Bracket.fromString((String) jLocationHUD.get("bracketType")),
                         ((Long) jLocationHUD.get("x")).intValue(),
@@ -665,6 +673,7 @@ public class _99thClientSettings {
                         (boolean) jInventoryHUDmain.get("active"),
                         ((Long) jInventoryHUDmain.get("mainColor")).intValue(),
                         ((Long) jInventoryHUDmain.get("subColor")).intValue(),
+                        (boolean) jInventoryHUDmain.get("dropShadow"),
                         ((Long) jInventoryHUDmain.get("x")).intValue(),
                         ((Long) jInventoryHUDmain.get("y")).intValue(),
                         ((Long) jInventoryHUDmain.get("z")).intValue());
@@ -685,6 +694,7 @@ public class _99thClientSettings {
                         (boolean) jSystemHUD.get("active"),
                         ((Long) jSystemHUD.get("mainColor")).intValue(),
                         ((Long) jSystemHUD.get("subColor")).intValue(),
+                        (boolean) jSystemHUD.get("dropShadow"),
                         ((Long) jSystemHUD.get("x")).intValue(),
                         ((Long) jSystemHUD.get("y")).intValue(),
                         ((Long) jSystemHUD.get("z")).intValue());
@@ -696,6 +706,7 @@ public class _99thClientSettings {
                         (boolean) jCpsHUDleft.get("active"),
                         ((Long) jCpsHUDleft.get("mainColor")).intValue(),
                         ((Long) jCpsHUDleft.get("subColor")).intValue(),
+                        (boolean) jCpsHUDleft.get("dropShadow"),
                         ((Long) jCpsHUDleft.get("x")).intValue(),
                         ((Long) jCpsHUDleft.get("y")).intValue(),
                         ((Long) jCpsHUDleft.get("z")).intValue());
@@ -707,6 +718,7 @@ public class _99thClientSettings {
                         (boolean) jCpsHUDright.get("active"),
                         ((Long) jCpsHUDright.get("mainColor")).intValue(),
                         ((Long) jCpsHUDright.get("subColor")).intValue(),
+                        (boolean) jCpsHUDright.get("dropShadow"),
                         ((Long) jCpsHUDright.get("x")).intValue(),
                         ((Long) jCpsHUDright.get("y")).intValue(),
                         ((Long) jCpsHUDright.get("z")).intValue());
@@ -718,6 +730,7 @@ public class _99thClientSettings {
                         (boolean) jLookingHUD.get("active"),
                         ((Long) jLookingHUD.get("mainColor")).intValue(),
                         ((Long) jLookingHUD.get("subColor")).intValue(),
+                        (boolean) jLookingHUD.get("dropShadow"),
                         ((Long) jLookingHUD.get("x")).intValue(),
                         ((Long) jLookingHUD.get("y")).intValue(),
                         ((Long) jLookingHUD.get("z")).intValue());

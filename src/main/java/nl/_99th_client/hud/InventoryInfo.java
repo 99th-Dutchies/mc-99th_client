@@ -5,6 +5,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.*;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
 import nl._99th_client.settings.HUDSetting;
 import nl._99th_client.util.ColorGradient;
 import java.awt.Color;
@@ -31,13 +34,29 @@ public class InventoryInfo
     private static void renderMainhand(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         String itemString = ItemToString(mc.player.getHeldItemMainhand());
         int itemColor = ItemToColor(mc.player.getHeldItemMainhand());
-        mc.fontRenderer.drawStringWithShadow(ms, itemString, hudSetting.x, hudSetting.y, itemColor);
+
+        itemColor = itemColor < 0 ? hudSetting.mainColor : itemColor;
+        IFormattableTextComponent s = new StringTextComponent(itemString).setStyle(Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+        }
     }
 
     private static void renderOffhand(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
         String itemString = ItemToString(mc.player.getHeldItemOffhand());
         int itemColor = ItemToColor(mc.player.getHeldItemOffhand());
-        mc.fontRenderer.drawStringWithShadow(ms, itemString, hudSetting.x, hudSetting.y + 10, itemColor);
+
+        itemColor = itemColor < 0 ? hudSetting.mainColor : itemColor;
+        IFormattableTextComponent s = new StringTextComponent(itemString).setStyle(Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+        }
     }
 
     private static void renderArmor(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
@@ -50,7 +69,15 @@ public class InventoryInfo
             if(!i.isEmpty()){
                 itemString = ItemToString(i);
                 itemColor = ItemToColor(i);
-                mc.fontRenderer.drawStringWithShadow(ms, itemString, hudSetting.x, hudSetting.y + 55 - (j * 10), itemColor);
+
+                itemColor = itemColor < 0 ? hudSetting.mainColor : itemColor;
+                IFormattableTextComponent s = new StringTextComponent(itemString).setStyle(Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor)));
+
+                if(hudSetting.dropShadow) {
+                    mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 55 - (j * 10), -1);
+                } else {
+                    mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 55 - (j * 10), -1);
+                }
             }
             j++;
         }
@@ -66,8 +93,8 @@ public class InventoryInfo
         PlayerInventory inv = mc.player.inventory;
 
         for(Item item : mc.gameSettings._99thClientSettings.itemHUDitems) {
-            int j1 = mc.getMainWindow().getScaledWidth() / 2 - hudSetting.x + (i + 10) * 20;
-            int k1 = mc.getMainWindow().getScaledHeight() - hudSetting.y;
+            int j1 = hudSetting.posX() + i * 20;
+            int k1 = hudSetting.posY();
 
             ItemStack invStack;
             ItemStack dispStack = new ItemStack(item);

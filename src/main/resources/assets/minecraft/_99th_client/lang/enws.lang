@@ -12,6 +12,7 @@ more=More...
 99thclient.options.HUDsetting.active=Activate
 99thclient.options.HUDsetting.mainColor=Text Color
 99thclient.options.HUDsetting.subColor=Indicator Color
+99thclient.options.HUDsetting.dropShadow=Drop Shadow
 99thclient.options.HUDsetting.bracketColor=Bracket Color
 99thclient.options.HUDsetting.bracketType=Bracket Shape
 99thclient.options.HUDsetting.xPos=Horizontal Position

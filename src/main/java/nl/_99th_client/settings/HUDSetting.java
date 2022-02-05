@@ -1,10 +1,13 @@
 package nl._99th_client.settings;
 
+import net.minecraft.client.Minecraft;
+
 public class HUDSetting {
     public Type type;
     public boolean active;
     public int mainColor;
     public int subColor;
+    public boolean dropShadow;
     public int bracketColor;
     public Bracket bracketType;
     public int x;
@@ -12,39 +15,56 @@ public class HUDSetting {
     public int z;
 
     public HUDSetting() {
-        this(Type.EMPTY, true, -1, -1, -1, Bracket.NONE, 0, 0, 0);
+        this(Type.EMPTY, true, -1, -1, false, -1, Bracket.NONE, 0, 0, 0);
     }
 
-    public HUDSetting(boolean active, int mainColor, int subColor) {
-        this(Type.COLOR, active, mainColor, subColor, -1, Bracket.NONE, 0, 0,0);
+    public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow) {
+        this(Type.COLOR, active, mainColor, subColor, dropShadow, -1, Bracket.NONE, 0, 0,0);
     }
 
-    public HUDSetting(boolean active, int mainColor, int subColor, int bracketColor, Bracket bracketType) {
-        this(Type.BRACKET, active, mainColor, subColor, bracketColor, bracketType, 0, 0,0);
+    public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType) {
+        this(Type.BRACKET, active, mainColor, subColor, dropShadow, bracketColor, bracketType, 0, 0,0);
     }
 
     public HUDSetting(boolean active, int x, int y, int z) {
-        this(Type.POSITION, active, -1, -1, -1, Bracket.NONE, x, y, z);
+        this(Type.POSITION, active, -1, -1 ,false, -1, Bracket.NONE, x, y, z);
     }
 
-    public HUDSetting(boolean active, int mainColor, int subColor, int x, int y, int z) {
-        this(Type.POSITION_COLOR, active, mainColor, subColor, -1, Bracket.NONE, x, y, z);
+    public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int x, int y, int z) {
+        this(Type.POSITION_COLOR, active, mainColor, subColor, dropShadow, -1, Bracket.NONE, x, y, z);
     }
 
-    public HUDSetting(boolean active, int mainColor, int subColor, int bracketColor, Bracket bracketType, int x, int y, int z) {
-        this(Type.FULL, active, mainColor, subColor, bracketColor, bracketType, x, y, z);
+    public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType, int x, int y, int z) {
+        this(Type.FULL, active, mainColor, subColor, dropShadow, bracketColor, bracketType, x, y, z);
     }
 
-    public HUDSetting(Type type, boolean active, int mainColor, int subColor, int bracketColor, Bracket bracketType, int x, int y, int z) {
+    public HUDSetting(Type type, boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType, int x, int y, int z) {
         this.type = type;
         this.active = active;
         this.mainColor = mainColor;
         this.subColor = subColor;
+        this.dropShadow = dropShadow;
         this.bracketColor = bracketColor;
         this.bracketType = bracketType;
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public int posX() {
+        if (this.x > 0) {
+            return this.x;
+        } else {
+            return Minecraft.getInstance().getMainWindow().getScaledWidth() + this.x;
+        }
+    }
+
+    public int posY() {
+        if (this.y > 0) {
+            return this.y;
+        } else {
+            return Minecraft.getInstance().getMainWindow().getScaledHeight() + this.y;
+        }
     }
 
     public enum Type {

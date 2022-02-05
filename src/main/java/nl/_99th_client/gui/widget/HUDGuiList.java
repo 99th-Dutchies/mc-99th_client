@@ -32,59 +32,59 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
     }
 
     public void loadHUDGui() {
-        ITextComponent itLocationHUD = new TranslationTextComponent("99thclient.options.LOCATION_HUD");
+        TranslationTextComponent itLocationHUD = new TranslationTextComponent("99thclient.options.LOCATION_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itLocationHUD));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itLocationHUD, this.minecraft.gameSettings._99thClientSettings.locationHUD));
 
-        ITextComponent itArmourHUD = new TranslationTextComponent("99thclient.options.ARMOR_HUD");
+        TranslationTextComponent itArmourHUD = new TranslationTextComponent("99thclient.options.ARMOR_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itArmourHUD));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itArmourHUD, this.minecraft.gameSettings._99thClientSettings.inventoryHUDmain));
 
-        ITextComponent itInventoryHUD = new TranslationTextComponent("99thclient.options.INVENTORY_COUNT_HUD");
+        TranslationTextComponent itInventoryHUD = new TranslationTextComponent("99thclient.options.INVENTORY_COUNT_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itInventoryHUD));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itInventoryHUD, this.minecraft.gameSettings._99thClientSettings.inventoryHUDitems));
 
-        ITextComponent itLookingHUD = new TranslationTextComponent("99thclient.options.LOOKING_HUD");
+        TranslationTextComponent itLookingHUD = new TranslationTextComponent("99thclient.options.LOOKING_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itLookingHUD));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itLookingHUD, this.minecraft.gameSettings._99thClientSettings.lookingHUD));
 
-        ITextComponent itSystemHUD = new TranslationTextComponent("99thclient.options.SYSTEM_HUD");
+        TranslationTextComponent itSystemHUD = new TranslationTextComponent("99thclient.options.SYSTEM_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itSystemHUD));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itSystemHUD, this.minecraft.gameSettings._99thClientSettings.systemHUD));
 
-        ITextComponent itCPSHud = new TranslationTextComponent("99thclient.options.CPS_HUD");
+        TranslationTextComponent itCPSHud = new TranslationTextComponent("99thclient.options.CPS_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itCPSHud));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itCPSHud, this.minecraft.gameSettings._99thClientSettings.cpsHUDleft, this.minecraft.gameSettings._99thClientSettings.cpsHUDright));
 
-        ITextComponent itTablistPing = new TranslationTextComponent("99thclient.options.TABLIST_PING");
+        TranslationTextComponent itTablistPing = new TranslationTextComponent("99thclient.options.TABLIST_PING");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itTablistPing));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itTablistPing, "tablistPing"));
 
-        ITextComponent itFullbrightness = new TranslationTextComponent("99thclient.options.FULL_BRIGHTNESS");
+        TranslationTextComponent itFullbrightness = new TranslationTextComponent("99thclient.options.FULL_BRIGHTNESS");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itFullbrightness));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itFullbrightness, "fullBrightness"));
 
-        ITextComponent itBlockhighlight = new TranslationTextComponent("99thclient.options.BLOCK_HIGHLIGHT");
+        TranslationTextComponent itBlockhighlight = new TranslationTextComponent("99thclient.options.BLOCK_HIGHLIGHT");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itBlockhighlight));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itBlockhighlight, "blockHighlight"));
 
-        ITextComponent itTNTtimers = new TranslationTextComponent("99thclient.options.TNT_TIMER");
+        TranslationTextComponent itTNTtimers = new TranslationTextComponent("99thclient.options.TNT_TIMER");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itTNTtimers));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itTNTtimers, "tntTimer"));
 
-        ITextComponent itArmorBreakWarning = new TranslationTextComponent("99thclient.options.ARMOR_BREAK_WARNING");
+        TranslationTextComponent itArmorBreakWarning = new TranslationTextComponent("99thclient.options.ARMOR_BREAK_WARNING");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itArmorBreakWarning));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itArmorBreakWarning, "armorBreakWarning"));
 
-        ITextComponent itOutOfBlocksWarning = new TranslationTextComponent("99thclient.options.OUT_OF_BLOCKS_WARNING");
+        TranslationTextComponent itOutOfBlocksWarning = new TranslationTextComponent("99thclient.options.OUT_OF_BLOCKS_WARNING");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itOutOfBlocksWarning));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itOutOfBlocksWarning, "outOfBlocksWarning"));
 
-        ITextComponent itPotiontimers = new TranslationTextComponent("99thclient.options.POTION_TIMER");
+        TranslationTextComponent itPotiontimers = new TranslationTextComponent("99thclient.options.POTION_TIMER");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itPotiontimers));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itPotiontimers, "potionTimer"));
 
-        ITextComponent itPotionIcons = new TranslationTextComponent("99thclient.options.POTION_ICONS");
+        TranslationTextComponent itPotionIcons = new TranslationTextComponent("99thclient.options.POTION_ICONS");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itPotionIcons));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itPotionIcons, new Button(0, 0, 145, 20, new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.potionIcons.func_238164_b_()), (button) -> {
             switch (this.minecraft.gameSettings._99thClientSettings.potionIcons)
@@ -104,7 +104,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             button.setMessage(new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.potionIcons.func_238164_b_()));
         })));
 
-        ITextComponent itShowToasts = new TranslationTextComponent("99thclient.options.SHOW_TOASTS");
+        TranslationTextComponent itShowToasts = new TranslationTextComponent("99thclient.options.SHOW_TOASTS");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itShowToasts));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itShowToasts, new Button(0, 0, 145, 20, new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.showToasts.func_238164_b_()), (button) -> {
             switch (this.minecraft.gameSettings._99thClientSettings.showToasts)
@@ -124,7 +124,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             button.setMessage(new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.showToasts.func_238164_b_()));
         })));
 
-        ITextComponent itHealthIndicator = new TranslationTextComponent("99thclient.options.HEALTH_INDICATOR");
+        TranslationTextComponent itHealthIndicator = new TranslationTextComponent("99thclient.options.HEALTH_INDICATOR");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itHealthIndicator));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itHealthIndicator, new Button(0, 0, 145, 20, new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.healthIndicator.func_238164_b_()), (button) -> {
             switch (this.minecraft.gameSettings._99thClientSettings.healthIndicator)
@@ -161,7 +161,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
 
     public class HUDGuiEntry extends HUDGuiList.Entry
     {
-        private final ITextComponent title;
+        private final TranslationTextComponent title;
         private Button btnToggleActive;
         private Button btnMore;
         private HUDSetting hudSetting;
@@ -170,7 +170,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
         private String settingName;
         private boolean isActive;
 
-        private HUDGuiEntry(final ITextComponent p_i232281_3_, final HUDSetting hudSetting)
+        private HUDGuiEntry(final TranslationTextComponent p_i232281_3_, final HUDSetting hudSetting)
         {
             this.hudSetting = hudSetting;
             this.isActive = this.hudSetting.active;
@@ -194,7 +194,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);
         }
 
-        private HUDGuiEntry(final ITextComponent p_i232281_3_, final HUDSetting hudSetting, final HUDSetting hudSettingSecondary)
+        private HUDGuiEntry(final TranslationTextComponent p_i232281_3_, final HUDSetting hudSetting, final HUDSetting hudSettingSecondary)
         {
             this.hudSetting = hudSetting;
             this.hudSettingSecondary = hudSettingSecondary;
@@ -220,7 +220,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);
         }
 
-        private HUDGuiEntry(final ITextComponent p_i232281_3_, final String settingName)
+        private HUDGuiEntry(final TranslationTextComponent p_i232281_3_, final String settingName)
         {
             this.settingName = settingName;
             this.title = p_i232281_3_;
@@ -243,7 +243,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             }
         }
 
-        private HUDGuiEntry(final ITextComponent p_i232281_3_, final Button iterableButton)
+        private HUDGuiEntry(final TranslationTextComponent p_i232281_3_, final Button iterableButton)
         {
             this.iterableButton = iterableButton;
             this.title = p_i232281_3_;

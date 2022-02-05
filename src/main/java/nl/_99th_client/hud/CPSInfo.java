@@ -2,12 +2,7 @@ package nl._99th_client.hud;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.HandSide;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextComponent;
-import net.optifine.Config;
+import net.minecraft.util.text.*;
 import nl._99th_client.settings.HUDSetting;
 
 import java.util.ArrayList;
@@ -28,7 +23,7 @@ public class CPSInfo
         }
 
         if(mc.lastLeftClicks.size() > 0) {
-            drawCPS(mc.lastLeftClicks.size() + "", hudSetting.x, hudSetting.y, mc, ms);
+            drawCPS(mc.lastLeftClicks.size() + "", hudSetting, mc, ms);
         }
     }
 
@@ -45,16 +40,17 @@ public class CPSInfo
         }
 
         if(mc.lastRightClicks.size() > 0) {
-            drawCPS(mc.lastRightClicks.size() + "", hudSetting.x, hudSetting.y, mc, ms);
+            drawCPS(mc.lastRightClicks.size() + "", hudSetting, mc, ms);
         }
     }
 
-    private static void drawCPS(String cps, int x, int y, Minecraft mc, MatrixStack ms) {
-        mc.fontRenderer.drawStringWithShadow(
-                ms,
-                cps,
-                mc.getMainWindow().getScaledWidth() / 2 + x,
-                mc.getMainWindow().getScaledHeight() - y,
-                -1);
+    private static void drawCPS(String cps, HUDSetting hudSetting, Minecraft mc, MatrixStack ms) {
+        IFormattableTextComponent s = new StringTextComponent(cps).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+
+        if(hudSetting.dropShadow) {
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+        } else {
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+        }
     }
 }

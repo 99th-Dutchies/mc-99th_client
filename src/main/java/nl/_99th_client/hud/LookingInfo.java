@@ -8,6 +8,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.projectile.ProjectileHelper;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.text.IFormattableTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
 import nl._99th_client.settings.HUDSetting;
 
 public class LookingInfo
@@ -38,8 +42,16 @@ public class LookingInfo
 
         if (entityraytraceresult != null && mc.renderViewEntity != null) {
             Entity ent = entityraytraceresult.getEntity();
-            String reach = ent.getDisplayName().getString() + " (" + (Math.round(ent.getDistance(mc.renderViewEntity) * 10.0F) / 10.0F) + " blocks away)";
-            mc.fontRenderer.drawStringWithShadow(ms, reach, hudSetting.x, hudSetting.y, -1);
+            String reach = " (" + (Math.round(ent.getDistance(mc.renderViewEntity) * 10.0F) / 10.0F) + " blocks away)";
+
+            IFormattableTextComponent s = new StringTextComponent(ent.getDisplayName().getString()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+            s.append(new StringTextComponent(reach).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
+
+            if(hudSetting.dropShadow) {
+                mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+            } else {
+                mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
+            }
         }
     }
 
@@ -57,17 +69,21 @@ public class LookingInfo
 
             float damage = (ds / hardness) / (canHarvest ? 30 : 100);
 
-            if(damage > 1) {
-                mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), hudSetting.x, hudSetting.y + 10, -1);
-            } else {
+            IFormattableTextComponent s = new StringTextComponent(block.getTranslatedName().getString()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+
+            if(damage <= 1) {
                 double ticks = Math.ceil(1.0F / damage);
                 double seconds = ticks / 20;
 
-                if(seconds < 0) {
-                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString(), hudSetting.x, hudSetting.y + 10, -1);
-                } else {
-                    mc.fontRenderer.drawStringWithShadow(ms, block.getTranslatedName().getString() + " (" + seconds + "s)", hudSetting.x, hudSetting.y + 10, -1);
+                if(seconds >= 0) {
+                    s.append(new StringTextComponent(" (" + seconds + "s)").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
                 }
+            }
+
+            if(hudSetting.dropShadow) {
+                mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+            } else {
+                mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
             }
         }
     }
