@@ -10,4 +10,6 @@ public class Config {
     public static String resourceBasePath = "_99th_client";
 
     public static String apiBase = "https://api.99th-client.nl/";
+
+    public static String sentryDsn = "https://3bae1e8dcf114d6db7d3818a6d227f6b@o484020.ingest.sentry.io/6188083";
 }

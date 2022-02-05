@@ -15,6 +15,8 @@ import java.net.Proxy.Type;
 import java.util.List;
 import java.util.OptionalInt;
 import javax.annotation.Nullable;
+
+import io.sentry.Sentry;
 import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -33,6 +35,7 @@ import net.minecraft.util.JSONUtils;
 import net.minecraft.util.Session;
 import net.minecraft.util.Util;
 import net.minecraft.util.registry.Bootstrap;
+import nl._99th_client.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,6 +45,12 @@ public class Main
 
     public static void main(String[] p_main_0_)
     {
+        Sentry.init(options -> {
+            options.setDsn(Config.sentryDsn);
+            options.setDebug(true);
+            options.setRelease("Installer " + Config.clientVersion);
+        });
+
         OptionParser optionparser = new OptionParser();
         optionparser.allowsUnrecognizedOptions();
         optionparser.accepts("demo");
