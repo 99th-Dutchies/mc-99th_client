@@ -46,6 +46,7 @@ more=Meer...
 99thclient.options.chatfilters.activeChat=Bij iedereen
 
 99thclient.options.LOCATION_HUD=Locatie HUD
+99thclient.options.DIRECTION_HUD=Direction HUD
 99thclient.options.INVENTORY_COUNT_HUD=Inventory Tel HUD
 99thclient.options.ARMOR_HUD=Kleding HUD
 99thclient.options.SYSTEM_HUD=Systeem HUD

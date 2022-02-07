@@ -40,6 +40,7 @@ public class _99thClientSettings {
     public KeyBinding keyBindCommand;
     public KeyBinding[] keyBindings;
     public HUDSetting locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
+    public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 1, 1, 0);
     public HUDSetting inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
     public HUDSetting inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
     public HUDSetting systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
@@ -123,6 +124,7 @@ public class _99thClientSettings {
 
                         if (astring[0].equals("showLocationHUD") && astring.length >= 2) {
                             this.locationHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 1);
+                            this.directionHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 1, 1, 0);
                         }
 
                         if (astring[0].equals("showInventoryHUD") && astring.length >= 2) {
@@ -425,6 +427,7 @@ public class _99thClientSettings {
 
     public void resetSettings() {
         this.locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
+        this.directionHUD = new HUDSetting(true, -1, -1, true, 1, 1, 0);
         this.inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
         this.inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
         this.systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
@@ -490,6 +493,18 @@ public class _99thClientSettings {
         jLocationHUD.put("y", this.locationHUD.y);
         jLocationHUD.put("z", this.locationHUD.z);
         root.put("locationHUD", jLocationHUD);
+
+        JSONObject jDirectionHUD = new JSONObject();
+        jDirectionHUD.put("active", this.directionHUD.active);
+        jDirectionHUD.put("mainColor", this.directionHUD.mainColor);
+        jDirectionHUD.put("subColor", this.directionHUD.subColor);
+        jDirectionHUD.put("dropShadow", this.directionHUD.dropShadow);
+        jDirectionHUD.put("bracketColor", this.directionHUD.bracketColor);
+        jDirectionHUD.put("bracketType", this.directionHUD.bracketType.getString());
+        jDirectionHUD.put("x", this.directionHUD.x);
+        jDirectionHUD.put("y", this.directionHUD.y);
+        jDirectionHUD.put("z", this.directionHUD.z);
+        root.put("directionHUD", jDirectionHUD);
 
         JSONObject jInventoryHUDmain = new JSONObject();
         jInventoryHUDmain.put("active", this.inventoryHUDmain.active);
@@ -665,6 +680,18 @@ public class _99thClientSettings {
                         ((Long) jLocationHUD.get("x")).intValue(),
                         ((Long) jLocationHUD.get("y")).intValue(),
                         ((Long) jLocationHUD.get("z")).intValue());
+            }
+            if(root.containsKey("directionHUD")) {
+                JSONObject jDirectionHUD = (JSONObject) root.get("directionHUD");
+
+                this.directionHUD = new HUDSetting(
+                        (boolean) jDirectionHUD.get("active"),
+                        ((Long) jDirectionHUD.get("mainColor")).intValue(),
+                        ((Long) jDirectionHUD.get("subColor")).intValue(),
+                        (boolean) jDirectionHUD.get("dropShadow"),
+                        ((Long) jDirectionHUD.get("x")).intValue(),
+                        ((Long) jDirectionHUD.get("y")).intValue(),
+                        ((Long) jDirectionHUD.get("z")).intValue());
             }
             if(root.containsKey("inventoryHUDmain")) {
                 JSONObject jInventoryHUDmain = (JSONObject) root.get("inventoryHUDmain");
