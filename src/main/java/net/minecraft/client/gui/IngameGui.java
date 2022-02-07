@@ -210,13 +210,13 @@ public class IngameGui extends AbstractGui
             LocationInfo.renderDirection(this.mc, this.mc.gameSettings._99thClientSettings.directionHUD, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings._99thClientSettings.inHandsHUD.active && !this.mc.gameSettings.showDebugInfo) {
-            InventoryInfo.renderMain(this.mc, this.mc.gameSettings._99thClientSettings.inHandsHUD, matrixStack, partialTicks);
+            InventoryInfo.renderInHands(this.mc, this.mc.gameSettings._99thClientSettings.inHandsHUD, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings._99thClientSettings.armourHUD.active && !this.mc.gameSettings.showDebugInfo) {
-            InventoryInfo.renderMain(this.mc, this.mc.gameSettings._99thClientSettings.armourHUD, matrixStack, partialTicks);
+            InventoryInfo.renderArmour(this.mc, this.mc.gameSettings._99thClientSettings.armourHUD, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings._99thClientSettings.inventoryHUDitems.active) {
-            InventoryInfo.renderItems(this.mc, this.mc.gameSettings._99thClientSettings.inventoryHUDitems, matrixStack, partialTicks);
+            InventoryInfo.renderInventory(this.mc, this.mc.gameSettings._99thClientSettings.inventoryHUDitems, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings._99thClientSettings.systemHUD.active && !this.mc.gameSettings.showDebugInfo) {
             SystemInfo.render(this.mc, this.mc.gameSettings._99thClientSettings.systemHUD, matrixStack, partialTicks);

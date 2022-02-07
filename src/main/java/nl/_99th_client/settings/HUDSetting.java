@@ -6,8 +6,10 @@ import org.json.simple.JSONObject;
 public class HUDSetting {
     public Type type;
     public boolean active;
+    public ItemShow itemShow;
     public int mainColor;
     public int subColor;
+    public boolean useDamageColor;
     public boolean dropShadow;
     public int bracketColor;
     public Bracket bracketType;
@@ -16,38 +18,36 @@ public class HUDSetting {
     public int z;
 
     public HUDSetting() {
-        this(Type.EMPTY, true, -1, -1, false, -1, Bracket.NONE, 0, 0, 0);
-    }
-
-    public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow) {
-        this(Type.COLOR, active, mainColor, subColor, dropShadow, -1, Bracket.NONE, 0, 0,0);
-    }
-
-    public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType) {
-        this(Type.BRACKET, active, mainColor, subColor, dropShadow, bracketColor, bracketType, 0, 0,0);
+        this(Type.EMPTY, true, -1, -1, true, ItemShow.TEXT, false, -1, Bracket.NONE, 0, 0, 0);
     }
 
     public HUDSetting(boolean active, int x, int y, int z) {
-        this(Type.POSITION, active, -1, -1 ,false, -1, Bracket.NONE, x, y, z);
+        this(Type.POSITION, active, -1, -1, true, ItemShow.TEXT, false, -1, Bracket.NONE, x, y, z);
     }
 
     public HUDSetting(boolean active, int mainColor, boolean dropShadow, int x, int y, int z) {
-        this(Type.POSITION_COLOR, active, mainColor, -1, dropShadow, -1, Bracket.NONE, x, y, z);
+        this(Type.POSITION_COLOR, active, mainColor, -1, true, ItemShow.TEXT, dropShadow, -1, Bracket.NONE, x, y, z);
+    }
+
+    public HUDSetting(boolean active, int mainColor, boolean useDamageColor, ItemShow itemShow, boolean dropShadow, int x, int y, int z) {
+        this(Type.POSITION_COLOR_ITEMS, active, mainColor, -1, useDamageColor, itemShow, dropShadow, -1, Bracket.NONE, x, y, z);
     }
 
     public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int x, int y, int z) {
-        this(Type.POSITION_TWOCOLOR, active, mainColor, subColor, dropShadow, -1, Bracket.NONE, x, y, z);
+        this(Type.POSITION_TWOCOLOR, active, mainColor, subColor, true, ItemShow.TEXT, dropShadow, -1, Bracket.NONE, x, y, z);
     }
 
     public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType, int x, int y, int z) {
-        this(Type.FULL, active, mainColor, subColor, dropShadow, bracketColor, bracketType, x, y, z);
+        this(Type.FULL, active, mainColor, subColor, true, ItemShow.TEXT, dropShadow, bracketColor, bracketType, x, y, z);
     }
 
-    public HUDSetting(Type type, boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType, int x, int y, int z) {
+    public HUDSetting(Type type, boolean active, int mainColor, int subColor, boolean useDamageColor, ItemShow itemShow, boolean dropShadow, int bracketColor, Bracket bracketType, int x, int y, int z) {
         this.type = type;
         this.active = active;
+        this.itemShow = itemShow;
         this.mainColor = mainColor;
         this.subColor = subColor;
+        this.useDamageColor = useDamageColor;
         this.dropShadow = dropShadow;
         this.bracketColor = bracketColor;
         this.bracketType = bracketType;
@@ -75,8 +75,10 @@ public class HUDSetting {
     public JSONObject toJson() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("active", this.active);
+        jsonObject.put("itemShow", this.itemShow.getString());
         jsonObject.put("mainColor", this.mainColor);
         jsonObject.put("subColor", this.subColor);
+        jsonObject.put("useDamageColor", this.useDamageColor);
         jsonObject.put("dropShadow", this.dropShadow);
         jsonObject.put("bracketColor", this.bracketColor);
         jsonObject.put("bracketType", this.bracketType.getString());
@@ -88,11 +90,10 @@ public class HUDSetting {
 
     public enum Type {
         EMPTY("empty"),
-        COLOR("color"),
-        BRACKET("bracket"),
         POSITION("position"),
         POSITION_COLOR("position_color"),
         POSITION_TWOCOLOR("position_twocolor"),
+        POSITION_COLOR_ITEMS("position_color_items"),
         FULL("full");
 
         private final String name;
@@ -116,31 +117,69 @@ public class HUDSetting {
             return !(this.name.equals("empty") || this.name.equals("position"));
         }
 
+        public boolean hasSubColor() {
+            return this.name.equals("position_twocolor") || this.name.equals("full");
+        }
+
         public boolean hasBracket() {
-            return this.name.equals("bracket") || this.name.equals("full");
+            return this.name.equals("full");
         }
 
         public boolean hasPosition() {
-            return !(this.name.equals("empty") || this.name.equals("color") || this.name.equals("bracket"));
+            return !(this.name.equals("empty"));
+        }
+
+        public boolean hasItems() {
+            return this.name.equals("position_color_items");
         }
 
         public static HUDSetting.Type fromString(String in) {
             switch(in) {
                 case "empty":
                     return Type.EMPTY;
-                case "color":
-                    return Type.COLOR;
-                case "bracket":
-                    return Type.BRACKET;
                 case "position":
                     return Type.POSITION;
                 case "position_color":
                     return Type.POSITION_COLOR;
                 case "position_twocolor":
                     return Type.POSITION_TWOCOLOR;
+                case "position_color_items":
+                    return Type.POSITION_COLOR_ITEMS;
                 default:
                 case "full":
                     return Type.FULL;
+            }
+        }
+    }
+
+    public enum ItemShow {
+        TEXT("text"),
+        ICON("icon");
+
+        private final String name;
+
+        ItemShow(String name)
+        {
+            this.name = name;
+        }
+
+        public String toString()
+        {
+            return this.getString();
+        }
+
+        public String getString()
+        {
+            return this.name;
+        }
+
+        public static HUDSetting.ItemShow fromString(String in) {
+            switch(in) {
+                case "icon":
+                    return ItemShow.ICON;
+                default:
+                case "text":
+                    return ItemShow.TEXT;
             }
         }
     }

@@ -20,6 +20,10 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
     private final HUDSetting hudSetting;
     private HUDSetting hudSettingSecondary;
 
+    private TextFieldWidget mainColorTFW;
+    private Button dropShadowButton;
+    private Button useDamageColorButton;
+
     public OptionsHUD_HUDSettingScreen(Screen parentScreenIn, GameSettings gameSettingsIn, TranslationTextComponent title, HUDSetting hudSetting)
     {
         super(parentScreenIn, gameSettingsIn, title);
@@ -57,11 +61,30 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
         }));
 
         int curY = 1;
+        if(setting.type.hasItems()) {
+            this.addButton(new Button(this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, new TranslationTextComponent("99thclient.options.HUDsetting.itemShow." + setting.itemShow.getString()), (button) -> {
+                switch(setting.itemShow) {
+                    case TEXT:
+                        setting.itemShow = HUDSetting.ItemShow.ICON;
+                        break;
+                    default:
+                    case ICON:
+                        setting.itemShow = HUDSetting.ItemShow.TEXT;
+                }
+                button.setMessage(new TranslationTextComponent("99thclient.options.HUDsetting.itemShow." + setting.itemShow.getString()));
+                this.mainColorTFW.setVisible(setting.itemShow == HUDSetting.ItemShow.TEXT);
+                this.dropShadowButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
+                this.useDamageColorButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
+            }));
+            curY++;
+        }
+
         if(setting.type.hasColor()) {
-            TextFieldWidget mainColorTFW = new TextFieldWidget(this.font, this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, new TranslationTextComponent("99thclient.options.HUDsetting.mainColor"));
-            mainColorTFW.setMaxStringLength(7);
-            mainColorTFW.setText(Color.fromInt(setting.mainColor).getHex());
-            mainColorTFW.setResponder((p_214319_1_) -> {
+            this.mainColorTFW = new TextFieldWidget(this.font, this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, new TranslationTextComponent("99thclient.options.HUDsetting.mainColor"));
+            this.mainColorTFW.setMaxStringLength(7);
+            this.mainColorTFW.setText(Color.fromInt(setting.mainColor).getHex());
+            this.mainColorTFW.setVisible(setting.itemShow == HUDSetting.ItemShow.TEXT);
+            this.mainColorTFW.setResponder((p_214319_1_) -> {
                 Color c = Color.fromHex(p_214319_1_);
                 if (c == null) {
                     setting.mainColor = -1;
@@ -69,9 +92,11 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                     setting.mainColor = c.getColor();
                 }
             });
-            this.addButton(mainColorTFW);
+            this.addButton(this.mainColorTFW);
             curY++;
+        }
 
+        if(setting.type.hasSubColor()) {
             TextFieldWidget subColorTFW = new TextFieldWidget(this.font, this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, new TranslationTextComponent("99thclient.options.HUDsetting.subColor"));
             subColorTFW.setMaxStringLength(7);
             subColorTFW.setText(Color.fromInt(setting.subColor).getHex());
@@ -85,11 +110,25 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
             });
             this.addButton(subColorTFW);
             curY++;
+        }
 
-            this.addButton(new Button(this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, setting.dropShadow ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"), (button) -> {
+        if(setting.type.hasColor()) {
+            this.dropShadowButton = new Button(this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, setting.dropShadow ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"), (button) -> {
                 setting.dropShadow = !setting.dropShadow;
                 button.setMessage(setting.dropShadow ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"));
-            }));
+            });
+            this.dropShadowButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
+            this.addButton(this.dropShadowButton);
+            curY++;
+        }
+
+        if(setting.type.hasItems()) {
+            this.useDamageColorButton = new Button(this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, setting.useDamageColor ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"), (button) -> {
+                setting.useDamageColor = !setting.useDamageColor;
+                button.setMessage(setting.useDamageColor ? new TranslationTextComponent("Yes") : new TranslationTextComponent("No"));
+            });
+            this.useDamageColorButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
+            this.addButton(this.useDamageColorButton);
             curY++;
         }
 
@@ -176,14 +215,30 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
 
         drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.active"), this.width / 2 - 149, this.height / 6 + 6, -1);
         int curY = 1;
-        if(this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor())) {
-            drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.mainColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems())) {
+            drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.itemShow"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
-
+        }
+        if (this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor())) {
+            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT)) {
+                drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.mainColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+            }
+            curY++;
+        }
+        if(this.hudSetting.type.hasSubColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasSubColor())) {
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.subColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
-
-            drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.dropShadow"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+        }
+        if (this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor())) {
+            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT)) {
+                drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.dropShadow"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+            }
+            curY++;
+        }
+        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems())) {
+            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT)) {
+                drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.useDamageColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
+            }
             curY++;
         }
         if(this.hudSetting.type.hasBracket() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasBracket())) {
