@@ -31,7 +31,8 @@ public class SystemInfo
         {
             String fps = Config.getFpsString().split("/")[0];
 
-            IFormattableTextComponent s = new StringTextComponent(fps + " FPS").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+            IFormattableTextComponent s = new StringTextComponent(fps).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+            s.append(new StringTextComponent( " FPS").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
 
             if(hudSetting.dropShadow) {
                 mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
@@ -47,12 +48,13 @@ public class SystemInfo
         String ping = "";
 
         if(playerInfo != null) {
-            ping = playerInfo.getResponseTime() + " ms";
+            ping = playerInfo.getResponseTime() + "";
         } else if(currentServer != null) {
-            ping = currentServer.pingToServer + " ms";
+            ping = currentServer.pingToServer + "";
         }
 
         IFormattableTextComponent s = new StringTextComponent(ping).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+        s.append(new StringTextComponent(" ms").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
 
         if(hudSetting.dropShadow) {
             mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
@@ -67,7 +69,8 @@ public class SystemInfo
         long k = Runtime.getRuntime().freeMemory();
         long l = j - k;
 
-        IFormattableTextComponent s = new StringTextComponent(bytesToMb(l) + " MB").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+        IFormattableTextComponent s = new StringTextComponent(bytesToMb(l) + "").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+        s.append(new StringTextComponent(" MB").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
 
         if(hudSetting.dropShadow) {
             mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
