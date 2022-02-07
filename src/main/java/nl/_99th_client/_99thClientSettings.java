@@ -43,7 +43,7 @@ public class _99thClientSettings {
     public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
     public HUDSetting inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
     public HUDSetting inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
-    public HUDSetting systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+    public HUDSetting systemHUD = new HUDSetting(true, -1, true, 91, 1, 0);
     public HUDSetting cpsHUDleft = new HUDSetting(true, -1, -1, true, 215, -15, 0);
     public HUDSetting cpsHUDright = new HUDSetting(true, -1, -1, true, -222, -15, 0);
     public HUDSetting lookingHUD = new HUDSetting(true, -1, -1, true, 1, 126, 0);
@@ -133,7 +133,7 @@ public class _99thClientSettings {
                         }
 
                         if (astring[0].equals("showSystemHUD") && astring.length >= 2) {
-                            this.systemHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 91, 1, 0);
+                            this.systemHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, true, 91, 1, 0);
                         }
 
                         if (astring[0].equals("showCPSHUD") && astring.length >= 2) {
@@ -430,7 +430,7 @@ public class _99thClientSettings {
         this.directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
         this.inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
         this.inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
-        this.systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+        this.systemHUD = new HUDSetting(true, -1, true, 91, 1, 0);
         this.cpsHUDleft = new HUDSetting(true, -1, -1, true, 215, -15, 0);
         this.cpsHUDright = new HUDSetting(true, -1, -1, true, -222, -15, 0);
         this.lookingHUD = new HUDSetting(true, -1, -1, true, 1, 126, 0);
@@ -720,7 +720,6 @@ public class _99thClientSettings {
                 this.systemHUD = new HUDSetting(
                         (boolean) jSystemHUD.get("active"),
                         ((Long) jSystemHUD.get("mainColor")).intValue(),
-                        ((Long) jSystemHUD.get("subColor")).intValue(),
                         (boolean) jSystemHUD.get("dropShadow"),
                         ((Long) jSystemHUD.get("x")).intValue(),
                         ((Long) jSystemHUD.get("y")).intValue(),
