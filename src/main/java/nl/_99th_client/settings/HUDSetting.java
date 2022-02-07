@@ -30,8 +30,12 @@ public class HUDSetting {
         this(Type.POSITION, active, -1, -1 ,false, -1, Bracket.NONE, x, y, z);
     }
 
+    public HUDSetting(boolean active, int mainColor, boolean dropShadow, int x, int y, int z) {
+        this(Type.POSITION_COLOR, active, mainColor, -1, dropShadow, -1, Bracket.NONE, x, y, z);
+    }
+
     public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int x, int y, int z) {
-        this(Type.POSITION_COLOR, active, mainColor, subColor, dropShadow, -1, Bracket.NONE, x, y, z);
+        this(Type.POSITION_TWOCOLOR, active, mainColor, subColor, dropShadow, -1, Bracket.NONE, x, y, z);
     }
 
     public HUDSetting(boolean active, int mainColor, int subColor, boolean dropShadow, int bracketColor, Bracket bracketType, int x, int y, int z) {
@@ -73,6 +77,7 @@ public class HUDSetting {
         BRACKET("bracket"),
         POSITION("position"),
         POSITION_COLOR("position_color"),
+        POSITION_TWOCOLOR("position_twocolor"),
         FULL("full");
 
         private final String name;
@@ -116,6 +121,8 @@ public class HUDSetting {
                     return Type.POSITION;
                 case "position_color":
                     return Type.POSITION_COLOR;
+                case "position_twocolor":
+                    return Type.POSITION_TWOCOLOR;
                 default:
                 case "full":
                     return Type.FULL;
