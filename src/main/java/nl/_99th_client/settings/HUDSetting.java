@@ -1,6 +1,7 @@
 package nl._99th_client.settings;
 
 import net.minecraft.client.Minecraft;
+import org.json.simple.JSONObject;
 
 public class HUDSetting {
     public Type type;
@@ -69,6 +70,20 @@ public class HUDSetting {
         } else {
             return Minecraft.getInstance().getMainWindow().getScaledHeight() + this.y;
         }
+    }
+
+    public JSONObject toJson() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("active", this.active);
+        jsonObject.put("mainColor", this.mainColor);
+        jsonObject.put("subColor", this.subColor);
+        jsonObject.put("dropShadow", this.dropShadow);
+        jsonObject.put("bracketColor", this.bracketColor);
+        jsonObject.put("bracketType", this.bracketType.getString());
+        jsonObject.put("x", this.x);
+        jsonObject.put("y", this.y);
+        jsonObject.put("z", this.z);
+        return jsonObject;
     }
 
     public enum Type {
