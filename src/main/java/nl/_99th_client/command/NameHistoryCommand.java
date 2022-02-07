@@ -2,7 +2,7 @@ package nl._99th_client.command;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.*;
-import nl._99th_client.util.JSONUtil;
+import nl._99th_client.util.json.JSONUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

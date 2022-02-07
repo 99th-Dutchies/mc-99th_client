@@ -1,4 +1,4 @@
-package nl._99th_client.util;
+package nl._99th_client.util.json;
 
 import net.minecraft.client.util.JSONException;
 import org.json.simple.JSONArray;
