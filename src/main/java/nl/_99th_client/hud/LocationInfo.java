@@ -10,17 +10,19 @@ import nl._99th_client.settings.HUDSetting;
 
 public class LocationInfo
 {
-    public static void render(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
+    public static void renderLocation(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
         // Draw X, Y and Z coordinates
         renderX(mc, hudSetting, ms);
         renderY(mc, hudSetting, ms);
         renderZ(mc, hudSetting, ms);
 
-        // Draw direction/orientation
-        renderDir(mc, hudSetting, ms);
-
         // Draw biome
         renderBiome(mc, hudSetting, ms);
+    }
+
+    public static void renderDirection(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
+        // Draw direction/orientation
+        renderDir(mc, hudSetting, ms);
     }
 
     private static void renderX(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
@@ -71,18 +73,18 @@ public class LocationInfo
         String deltaY = rotationToDeltaZ(rot);
 
         // Draw orientation/direction
-        IFormattableTextComponent dX = new StringTextComponent(deltaX).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor)));
-        IFormattableTextComponent dDir = new StringTextComponent(dir).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
-        IFormattableTextComponent dY = new StringTextComponent(deltaY).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor)));
+        IFormattableTextComponent dX = new StringTextComponent(deltaX).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+        IFormattableTextComponent dDir = new StringTextComponent(dir).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor)));
+        IFormattableTextComponent dY = new StringTextComponent(deltaY).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
 
         if(hudSetting.dropShadow) {
-            mc.fontRenderer.func_243246_a(ms, dX, hudSetting.posX() + 60, hudSetting.posY(), -1);
-            mc.fontRenderer.func_243246_a(ms, dDir, hudSetting.posX() + 60, hudSetting.posY() + 10, -1);
-            mc.fontRenderer.func_243246_a(ms, dY, hudSetting.posX() + 60, hudSetting.posY() + 20, -1);
+            mc.fontRenderer.func_243246_a(ms, dX, hudSetting.posX(), hudSetting.posY(), -1);
+            mc.fontRenderer.func_243246_a(ms, dDir, hudSetting.posX(), hudSetting.posY() + 10, -1);
+            mc.fontRenderer.func_243246_a(ms, dY, hudSetting.posX(), hudSetting.posY() + 20, -1);
         } else {
-            mc.fontRenderer.func_243248_b(ms, dX, hudSetting.posX() + 60, hudSetting.posY(), -1);
-            mc.fontRenderer.func_243248_b(ms, dDir, hudSetting.posX() + 60, hudSetting.posY() + 10, -1);
-            mc.fontRenderer.func_243248_b(ms, dY, hudSetting.posX() + 60, hudSetting.posY() + 20, -1);
+            mc.fontRenderer.func_243248_b(ms, dX, hudSetting.posX(), hudSetting.posY(), -1);
+            mc.fontRenderer.func_243248_b(ms, dDir, hudSetting.posX(), hudSetting.posY() + 10, -1);
+            mc.fontRenderer.func_243248_b(ms, dY, hudSetting.posX(), hudSetting.posY() + 20, -1);
         }
     }
 

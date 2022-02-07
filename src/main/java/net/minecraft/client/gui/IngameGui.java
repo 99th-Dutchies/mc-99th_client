@@ -204,7 +204,10 @@ public class IngameGui extends AbstractGui
         }
 
         if(this.mc.gameSettings._99thClientSettings.locationHUD.active && !this.mc.gameSettings.showDebugInfo) {
-            LocationInfo.render(this.mc, this.mc.gameSettings._99thClientSettings.locationHUD, matrixStack, partialTicks);
+            LocationInfo.renderLocation(this.mc, this.mc.gameSettings._99thClientSettings.locationHUD, matrixStack, partialTicks);
+        }
+        if(this.mc.gameSettings._99thClientSettings.directionHUD.active && !this.mc.gameSettings.showDebugInfo) {
+            LocationInfo.renderDirection(this.mc, this.mc.gameSettings._99thClientSettings.directionHUD, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings._99thClientSettings.inventoryHUDmain.active && !this.mc.gameSettings.showDebugInfo) {
             InventoryInfo.renderMain(this.mc, this.mc.gameSettings._99thClientSettings.inventoryHUDmain, matrixStack, partialTicks);

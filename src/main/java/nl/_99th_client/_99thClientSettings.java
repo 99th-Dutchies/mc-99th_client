@@ -40,7 +40,7 @@ public class _99thClientSettings {
     public KeyBinding keyBindCommand;
     public KeyBinding[] keyBindings;
     public HUDSetting locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
-    public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 1, 1, 0);
+    public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
     public HUDSetting inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
     public HUDSetting inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
     public HUDSetting systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
@@ -124,7 +124,7 @@ public class _99thClientSettings {
 
                         if (astring[0].equals("showLocationHUD") && astring.length >= 2) {
                             this.locationHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 1);
-                            this.directionHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 1, 1, 0);
+                            this.directionHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 61, 1, 0);
                         }
 
                         if (astring[0].equals("showInventoryHUD") && astring.length >= 2) {
@@ -427,7 +427,7 @@ public class _99thClientSettings {
 
     public void resetSettings() {
         this.locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
-        this.directionHUD = new HUDSetting(true, -1, -1, true, 1, 1, 0);
+        this.directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
         this.inventoryHUDmain = new HUDSetting(true, -1, -1, true, 1, 51, 0);
         this.inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
         this.systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
