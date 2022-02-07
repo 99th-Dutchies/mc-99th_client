@@ -47,8 +47,9 @@ more=Meer...
 
 99thclient.options.LOCATION_HUD=Locatie HUD
 99thclient.options.DIRECTION_HUD=Direction HUD
+99thclient.options.INHANDS_HUD=In-Hands HUD
+99thclient.options.ARMOUR_HUD=Kleding HUD
 99thclient.options.INVENTORY_COUNT_HUD=Inventory Tel HUD
-99thclient.options.ARMOR_HUD=Kleding HUD
 99thclient.options.SYSTEM_HUD=Systeem HUD
 99thclient.options.CPS_HUD=CPS
 99thclient.options.LOOKING_HUD=Kijkend-Naar HUD

@@ -40,9 +40,13 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itDirectionHUD));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itDirectionHUD, this.minecraft.gameSettings._99thClientSettings.directionHUD));
 
-        TranslationTextComponent itArmourHUD = new TranslationTextComponent("99thclient.options.ARMOR_HUD");
+        TranslationTextComponent itInHandsHUD = new TranslationTextComponent("99thclient.options.INHANDS_HUD");
+        this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itInHandsHUD));
+        this.addEntry(new HUDGuiList.HUDGuiEntry(itInHandsHUD, this.minecraft.gameSettings._99thClientSettings.inHandsHUD));
+
+        TranslationTextComponent itArmourHUD = new TranslationTextComponent("99thclient.options.ARMOUR_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itArmourHUD));
-        this.addEntry(new HUDGuiList.HUDGuiEntry(itArmourHUD, this.minecraft.gameSettings._99thClientSettings.inventoryHUDmain));
+        this.addEntry(new HUDGuiList.HUDGuiEntry(itArmourHUD, this.minecraft.gameSettings._99thClientSettings.armourHUD));
 
         TranslationTextComponent itInventoryHUD = new TranslationTextComponent("99thclient.options.INVENTORY_COUNT_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itInventoryHUD));

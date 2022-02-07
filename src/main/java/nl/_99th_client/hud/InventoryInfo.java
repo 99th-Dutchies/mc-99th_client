@@ -32,11 +32,12 @@ public class InventoryInfo
     }
 
     private static void renderMainhand(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        String itemString = ItemToString(mc.player.getHeldItemMainhand());
-        int itemColor = ItemToColor(mc.player.getHeldItemMainhand());
+        ItemStack itemStack = mc.player.getHeldItemMainhand();
+        StringTextComponent itemString = ItemToString(itemStack);
+        Integer itemColor = ItemToColor(itemStack);
 
-        itemColor = itemColor < 0 ? hudSetting.mainColor : itemColor;
-        IFormattableTextComponent s = new StringTextComponent(itemString).setStyle(Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor)));
+        Style iss = itemStack.getDisplayName().getStyle();
+        IFormattableTextComponent s = itemString.setStyle(itemColor == null && iss != Style.EMPTY ? iss : Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor == null ? hudSetting.mainColor : itemColor)));
 
         if(hudSetting.dropShadow) {
             mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
@@ -46,11 +47,12 @@ public class InventoryInfo
     }
 
     private static void renderOffhand(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        String itemString = ItemToString(mc.player.getHeldItemOffhand());
-        int itemColor = ItemToColor(mc.player.getHeldItemOffhand());
+        ItemStack itemStack = mc.player.getHeldItemOffhand();
+        StringTextComponent itemString = ItemToString(itemStack);
+        Integer itemColor = ItemToColor(itemStack);
 
-        itemColor = itemColor < 0 ? hudSetting.mainColor : itemColor;
-        IFormattableTextComponent s = new StringTextComponent(itemString).setStyle(Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor)));
+        Style iss = itemStack.getDisplayName().getStyle();
+        IFormattableTextComponent s = itemString.setStyle(itemColor == null && iss != Style.EMPTY ? iss : Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor == null ? hudSetting.mainColor : itemColor)));
 
         if(hudSetting.dropShadow) {
             mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
@@ -60,8 +62,8 @@ public class InventoryInfo
     }
 
     private static void renderArmor(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
-        String itemString;
-        int itemColor;
+        StringTextComponent itemString;
+        Integer itemColor;
         int j = 0;
 
         Iterable<ItemStack> armor = mc.player.getArmorInventoryList();
@@ -70,13 +72,13 @@ public class InventoryInfo
                 itemString = ItemToString(i);
                 itemColor = ItemToColor(i);
 
-                itemColor = itemColor < 0 ? hudSetting.mainColor : itemColor;
-                IFormattableTextComponent s = new StringTextComponent(itemString).setStyle(Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor)));
+                Style iss = i.getDisplayName().getStyle();
+                IFormattableTextComponent s = itemString.setStyle(itemColor == null && iss != Style.EMPTY ? iss : Style.EMPTY.setColor(net.minecraft.util.text.Color.fromInt(itemColor == null ? hudSetting.mainColor : itemColor)));
 
                 if(hudSetting.dropShadow) {
-                    mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 55 - (j * 10), -1);
+                    mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 30 - (j * 10), -1);
                 } else {
-                    mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 55 - (j * 10), -1);
+                    mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 30 - (j * 10), -1);
                 }
             }
             j++;
@@ -139,39 +141,39 @@ public class InventoryInfo
         RenderSystem.disableBlend();
     }
 
-    private static String ItemToString(ItemStack itemStack) {
-        String s = "";
+    private static StringTextComponent ItemToString(ItemStack itemStack) {
+        StringTextComponent s = new StringTextComponent("");
         Item item = itemStack.getItem();
 
-        if(item == Items.AIR) return "";
+        if(item == Items.AIR) return s;
 
         if(itemStack.isStackable()) {
-            s = s + itemStack.getCount() + " ";
+            s.append(new StringTextComponent(itemStack.getCount() + " "));
         }
 
-        s = s + itemStack.getDisplayName().getString();
+        s.append(itemStack.getDisplayName());
 
         if(itemStack.isDamageable()) {
-            s = s + " (" + (itemStack.getMaxDamage() - itemStack.getDamage()) + "/" + itemStack.getMaxDamage() + ")";
+            s.append(new StringTextComponent(" (" + (itemStack.getMaxDamage() - itemStack.getDamage()) + "/" + itemStack.getMaxDamage() + ")"));
         }
 
         return s;
     }
 
-    private static int ItemToColor(ItemStack itemStack) {
+    private static Integer ItemToColor(ItemStack itemStack) {
         if(!itemStack.isDamageable()) {
             if(itemStack.getItem() instanceof ArmorItem) {
                 return new Color(64, 192, 64).getRGB();
             } else {
-                return -1;
+                return null;
             }
         }
 
         float dur = itemStack.getMaxDamage() - itemStack.getDamage();
         float per = (dur / itemStack.getMaxDamage()) * 100;
 
-        if(per < 0) return -1;
-        if(per > 100) return -1;
+        if(per < 0) return null;
+        if(per > 100) return null;
         if(per == 100) return new Color(64, 192, 64).getRGB();
 
         ColorGradient[] ranges = new ColorGradient[] {

@@ -41,7 +41,8 @@ public class _99thClientSettings {
     public KeyBinding[] keyBindings;
     public HUDSetting locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
     public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
-    public HUDSetting inventoryHUDmain = new HUDSetting(true, -1, true, 1, 51, 0);
+    public HUDSetting inHandsHUD = new HUDSetting(true, -1, true, 1, 51, 0);
+    public HUDSetting armourHUD = new HUDSetting(true, -1, true, 1, 76, 0);
     public HUDSetting inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
     public HUDSetting systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
     public HUDSetting cpsHUDleft = new HUDSetting(true, -1, true, 215, -15, 0);
@@ -128,7 +129,8 @@ public class _99thClientSettings {
                         }
 
                         if (astring[0].equals("showInventoryHUD") && astring.length >= 2) {
-                            this.inventoryHUDmain = new HUDSetting(Boolean.valueOf(astring[1]), -1, true, 1, 51, 0);
+                            this.inHandsHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, true, 1, 51, 0);
+                            this.armourHUD = new HUDSetting(true, -1, true, 1, 76, 0);
                             this.inventoryHUDitems = new HUDSetting(Boolean.valueOf(astring[1]), -200, -19, 0);
                         }
 
@@ -428,7 +430,8 @@ public class _99thClientSettings {
     public void resetSettings() {
         this.locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
         this.directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
-        this.inventoryHUDmain = new HUDSetting(true, -1, true, 1, 51, 0);
+        this.inHandsHUD = new HUDSetting(true, -1, true, 1, 51, 0);
+        this.armourHUD = new HUDSetting(true, -1, true, 1, 76, 0);
         this.inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
         this.systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
         this.cpsHUDleft = new HUDSetting(true, -1, true, 215, -15, 0);
@@ -484,7 +487,8 @@ public class _99thClientSettings {
 
         root.put("locationHUD", this.locationHUD.toJson());
         root.put("directionHUD", this.directionHUD.toJson());
-        root.put("inventoryHUDmain", this.inventoryHUDmain.toJson());
+        root.put("inHandsHUD", this.inHandsHUD.toJson());
+        root.put("armourHUD", this.armourHUD.toJson());
         root.put("inventoryHUDitems", this.inventoryHUDitems.toJson());
         root.put("systemHUD", this.systemHUD.toJson());
         root.put("cpsHUDleft", this.cpsHUDleft.toJson());
@@ -606,16 +610,27 @@ public class _99thClientSettings {
                         ((Long) jDirectionHUD.get("y")).intValue(),
                         ((Long) jDirectionHUD.get("z")).intValue());
             }
-            if(root.containsKey("inventoryHUDmain")) {
-                JSONObject jInventoryHUDmain = (JSONObject) root.get("inventoryHUDmain");
+            if(root.containsKey("inHandsHUD")) {
+                JSONObject jInHandsHUD = (JSONObject) root.get("inHandsHUD");
 
-                this.inventoryHUDmain = new HUDSetting(
-                        (boolean) jInventoryHUDmain.get("active"),
-                        ((Long) jInventoryHUDmain.get("mainColor")).intValue(),
-                        (boolean) jInventoryHUDmain.get("dropShadow"),
-                        ((Long) jInventoryHUDmain.get("x")).intValue(),
-                        ((Long) jInventoryHUDmain.get("y")).intValue(),
-                        ((Long) jInventoryHUDmain.get("z")).intValue());
+                this.inHandsHUD = new HUDSetting(
+                        (boolean) jInHandsHUD.get("active"),
+                        ((Long) jInHandsHUD.get("mainColor")).intValue(),
+                        (boolean) jInHandsHUD.get("dropShadow"),
+                        ((Long) jInHandsHUD.get("x")).intValue(),
+                        ((Long) jInHandsHUD.get("y")).intValue(),
+                        ((Long) jInHandsHUD.get("z")).intValue());
+            }
+            if(root.containsKey("armourHUD")) {
+                JSONObject jArmourHUD = (JSONObject) root.get("armourHUD");
+
+                this.armourHUD = new HUDSetting(
+                        (boolean) jArmourHUD.get("active"),
+                        ((Long) jArmourHUD.get("mainColor")).intValue(),
+                        (boolean) jArmourHUD.get("dropShadow"),
+                        ((Long) jArmourHUD.get("x")).intValue(),
+                        ((Long) jArmourHUD.get("y")).intValue(),
+                        ((Long) jArmourHUD.get("z")).intValue());
             }
             if(root.containsKey("inventoryHUDitems")) {
                 JSONObject jInventoryHUDitems = (JSONObject) root.get("inventoryHUDitems");

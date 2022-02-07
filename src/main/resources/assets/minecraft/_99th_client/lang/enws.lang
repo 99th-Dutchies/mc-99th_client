@@ -47,8 +47,9 @@ more=More...
 
 99thclient.options.LOCATION_HUD=Local Point HUD
 99thclient.options.DIRECTION_HUD=Direction HUD
+99thclient.options.INHANDS_HUD=In-Hands HUD
+99thclient.options.ARMOUR_HUD=Armour HUD
 99thclient.options.INVENTORY_COUNT_HUD=Count Thy Inventory HUD
-99thclient.options.ARMOR_HUD=Armour HUD
 99thclient.options.SYSTEM_HUD=Machine HUD
 99thclient.options.CPS_HUD=Clicking Speed
 99thclient.options.LOOKING_HUD=Show Gaze-At HUD

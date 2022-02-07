@@ -43,8 +43,9 @@ public class LookingInfo
         if (entityraytraceresult != null && mc.renderViewEntity != null) {
             Entity ent = entityraytraceresult.getEntity();
             String reach = " (" + (Math.round(ent.getDistance(mc.renderViewEntity) * 10.0F) / 10.0F) + " blocks away)";
+            Style es = ent.getDisplayName().getStyle();
 
-            IFormattableTextComponent s = new StringTextComponent(ent.getDisplayName().getString()).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
+            IFormattableTextComponent s = new StringTextComponent(ent.getDisplayName().getString()).setStyle(es == Style.EMPTY ? Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)) : es);
             s.append(new StringTextComponent(reach).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
 
             if(hudSetting.dropShadow) {

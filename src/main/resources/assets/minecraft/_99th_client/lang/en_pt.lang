@@ -47,7 +47,8 @@ more=More...
 
 99thclient.options.LOCATION_HUD=Yer Position HUD
 99thclient.options.DIRECTION_HUD=Direction HUD
-99thclient.options.ARMOR_HUD=Armor HUD
+99thclient.options.INHANDS_HUD=In-Hands HUD
+99thclient.options.ARMOUR_HUD=Armor HUD
 99thclient.options.INVENTORY_COUNT_HUD=Loot Bag HUD
 99thclient.options.SYSTEM_HUD=Boat Status HUD
 99thclient.options.CPS_HUD=Cannon Speed
