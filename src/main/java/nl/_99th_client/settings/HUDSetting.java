@@ -72,6 +72,58 @@ public class HUDSetting {
         }
     }
 
+    public static HUDSetting fromJson(Type type, JSONObject jsonObject) {
+        switch(type) {
+            default:
+            case EMPTY:
+                return new HUDSetting();
+            case POSITION:
+                return new HUDSetting(
+                        (boolean) jsonObject.get("active"),
+                        ((Long) jsonObject.get("x")).intValue(),
+                        ((Long) jsonObject.get("y")).intValue(),
+                        ((Long) jsonObject.get("z")).intValue());
+            case POSITION_COLOR:
+                return new HUDSetting(
+                        (boolean) jsonObject.get("active"),
+                        ((Long) jsonObject.get("mainColor")).intValue(),
+                        (boolean) jsonObject.get("dropShadow"),
+                        ((Long) jsonObject.get("x")).intValue(),
+                        ((Long) jsonObject.get("y")).intValue(),
+                        ((Long) jsonObject.get("z")).intValue());
+            case POSITION_TWOCOLOR:
+                return new HUDSetting(
+                        (boolean) jsonObject.get("active"),
+                        ((Long) jsonObject.get("mainColor")).intValue(),
+                        ((Long) jsonObject.get("subColor")).intValue(),
+                        (boolean) jsonObject.get("dropShadow"),
+                        ((Long) jsonObject.get("x")).intValue(),
+                        ((Long) jsonObject.get("y")).intValue(),
+                        ((Long) jsonObject.get("z")).intValue());
+            case POSITION_COLOR_ITEMS:
+                return new HUDSetting(
+                        (boolean) jsonObject.get("active"),
+                        ((Long) jsonObject.get("mainColor")).intValue(),
+                        (boolean) jsonObject.get("useDamageColor"),
+                        HUDSetting.ItemShow.fromString((String) jsonObject.get("itemShow")),
+                        (boolean) jsonObject.get("dropShadow"),
+                        ((Long) jsonObject.get("x")).intValue(),
+                        ((Long) jsonObject.get("y")).intValue(),
+                        ((Long) jsonObject.get("z")).intValue());
+            case FULL:
+                return new HUDSetting(
+                        (boolean) jsonObject.get("active"),
+                        ((Long) jsonObject.get("mainColor")).intValue(),
+                        ((Long) jsonObject.get("subColor")).intValue(),
+                        (boolean) jsonObject.get("dropShadow"),
+                        ((Long) jsonObject.get("bracketColor")).intValue(),
+                        HUDSetting.Bracket.fromString((String) jsonObject.get("bracketType")),
+                        ((Long) jsonObject.get("x")).intValue(),
+                        ((Long) jsonObject.get("y")).intValue(),
+                        ((Long) jsonObject.get("z")).intValue());
+        }
+    }
+
     public JSONObject toJson() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("active", this.active);

@@ -593,135 +593,48 @@ public class _99thClientSettings {
     public void fromJSON(JSONObject root, GameSettings gameSettings) {
         try {
             if(root.containsKey("locationHUD")) {
-                JSONObject jLocationHUD = (JSONObject) root.get("locationHUD");
-
-                this.locationHUD = new HUDSetting(
-                        (boolean) jLocationHUD.get("active"),
-                        ((Long) jLocationHUD.get("mainColor")).intValue(),
-                        ((Long) jLocationHUD.get("subColor")).intValue(),
-                        (boolean) jLocationHUD.get("dropShadow"),
-                        ((Long) jLocationHUD.get("bracketColor")).intValue(),
-                        HUDSetting.Bracket.fromString((String) jLocationHUD.get("bracketType")),
-                        ((Long) jLocationHUD.get("x")).intValue(),
-                        ((Long) jLocationHUD.get("y")).intValue(),
-                        ((Long) jLocationHUD.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("locationHUD");
+                this.locationHUD = HUDSetting.fromJson(HUDSetting.Type.FULL, jsonObjectSub);
             }
             if(root.containsKey("directionHUD")) {
-                JSONObject jDirectionHUD = (JSONObject) root.get("directionHUD");
-
-                this.directionHUD = new HUDSetting(
-                        (boolean) jDirectionHUD.get("active"),
-                        ((Long) jDirectionHUD.get("mainColor")).intValue(),
-                        ((Long) jDirectionHUD.get("subColor")).intValue(),
-                        (boolean) jDirectionHUD.get("dropShadow"),
-                        ((Long) jDirectionHUD.get("x")).intValue(),
-                        ((Long) jDirectionHUD.get("y")).intValue(),
-                        ((Long) jDirectionHUD.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("directionHUD");
+                this.directionHUD = HUDSetting.fromJson(HUDSetting.Type.POSITION_TWOCOLOR, jsonObjectSub);
             }
             if(root.containsKey("inHandsHUD")) {
-                JSONObject jInHandsHUD = (JSONObject) root.get("inHandsHUD");
-
-                this.inHandsHUD = new HUDSetting(
-                        (boolean) jInHandsHUD.get("active"),
-                        ((Long) jInHandsHUD.get("mainColor")).intValue(),
-                        (boolean) jInHandsHUD.get("useDamageColor"),
-                        HUDSetting.ItemShow.fromString((String) jInHandsHUD.get("itemShow")),
-                        (boolean) jInHandsHUD.get("dropShadow"),
-                        ((Long) jInHandsHUD.get("x")).intValue(),
-                        ((Long) jInHandsHUD.get("y")).intValue(),
-                        ((Long) jInHandsHUD.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("inHandsHUD");
+                this.inHandsHUD = HUDSetting.fromJson(HUDSetting.Type.POSITION_COLOR_ITEMS, jsonObjectSub);
             }
             if(root.containsKey("armourHUD")) {
-                JSONObject jArmourHUD = (JSONObject) root.get("armourHUD");
-
-                this.armourHUD = new HUDSetting(
-                        (boolean) jArmourHUD.get("active"),
-                        ((Long) jArmourHUD.get("mainColor")).intValue(),
-                        (boolean) jArmourHUD.get("useDamageColor"),
-                        HUDSetting.ItemShow.fromString((String) jArmourHUD.get("itemShow")),
-                        (boolean) jArmourHUD.get("dropShadow"),
-                        ((Long) jArmourHUD.get("x")).intValue(),
-                        ((Long) jArmourHUD.get("y")).intValue(),
-                        ((Long) jArmourHUD.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("armourHUD");
+                this.armourHUD = HUDSetting.fromJson(HUDSetting.Type.POSITION_COLOR_ITEMS, jsonObjectSub);
             }
             if(root.containsKey("inventoryHUDitems")) {
-                JSONObject jInventoryHUDitems = (JSONObject) root.get("inventoryHUDitems");
-
-                this.inventoryHUDitems = new HUDSetting(
-                        (boolean) jInventoryHUDitems.get("active"),
-                        ((Long) jInventoryHUDitems.get("x")).intValue(),
-                        ((Long) jInventoryHUDitems.get("y")).intValue(),
-                        ((Long) jInventoryHUDitems.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("inventoryHUDitems");
+                this.inventoryHUDitems = HUDSetting.fromJson(HUDSetting.Type.POSITION, jsonObjectSub);
             }
             if(root.containsKey("systemHUDfps")) {
-                JSONObject jSystemHUDfps = (JSONObject) root.get("systemHUDfps");
-
-                this.systemHUDfps = new HUDSetting(
-                        (boolean) jSystemHUDfps.get("active"),
-                        ((Long) jSystemHUDfps.get("mainColor")).intValue(),
-                        ((Long) jSystemHUDfps.get("subColor")).intValue(),
-                        (boolean) jSystemHUDfps.get("dropShadow"),
-                        ((Long) jSystemHUDfps.get("x")).intValue(),
-                        ((Long) jSystemHUDfps.get("y")).intValue(),
-                        ((Long) jSystemHUDfps.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("systemHUDfps");
+                this.systemHUDfps = HUDSetting.fromJson(HUDSetting.Type.POSITION_TWOCOLOR, jsonObjectSub);
             }
             if(root.containsKey("systemHUDmemory")) {
-                JSONObject jSystemHUDmemory = (JSONObject) root.get("systemHUDmemory");
-
-                this.systemHUDmemory = new HUDSetting(
-                        (boolean) jSystemHUDmemory.get("active"),
-                        ((Long) jSystemHUDmemory.get("mainColor")).intValue(),
-                        ((Long) jSystemHUDmemory.get("subColor")).intValue(),
-                        (boolean) jSystemHUDmemory.get("dropShadow"),
-                        ((Long) jSystemHUDmemory.get("x")).intValue(),
-                        ((Long) jSystemHUDmemory.get("y")).intValue(),
-                        ((Long) jSystemHUDmemory.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("systemHUDmemory");
+                this.systemHUDmemory = HUDSetting.fromJson(HUDSetting.Type.POSITION_TWOCOLOR, jsonObjectSub);
             }
             if(root.containsKey("systemHUDping")) {
-                JSONObject jSystemHUDping = (JSONObject) root.get("systemHUDping");
-
-                this.systemHUDping = new HUDSetting(
-                        (boolean) jSystemHUDping.get("active"),
-                        ((Long) jSystemHUDping.get("mainColor")).intValue(),
-                        ((Long) jSystemHUDping.get("subColor")).intValue(),
-                        (boolean) jSystemHUDping.get("dropShadow"),
-                        ((Long) jSystemHUDping.get("x")).intValue(),
-                        ((Long) jSystemHUDping.get("y")).intValue(),
-                        ((Long) jSystemHUDping.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("systemHUDping");
+                this.systemHUDping = HUDSetting.fromJson(HUDSetting.Type.POSITION_TWOCOLOR, jsonObjectSub);
             }
             if(root.containsKey("cpsHUDleft")) {
-                JSONObject jCpsHUDleft = (JSONObject) root.get("cpsHUDleft");
-
-                this.cpsHUDleft = new HUDSetting(
-                        (boolean) jCpsHUDleft.get("active"),
-                        ((Long) jCpsHUDleft.get("mainColor")).intValue(),
-                        (boolean) jCpsHUDleft.get("dropShadow"),
-                        ((Long) jCpsHUDleft.get("x")).intValue(),
-                        ((Long) jCpsHUDleft.get("y")).intValue(),
-                        ((Long) jCpsHUDleft.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("cpsHUDleft");
+                this.cpsHUDleft = HUDSetting.fromJson(HUDSetting.Type.POSITION_COLOR, jsonObjectSub);
             }
             if(root.containsKey("cpsHUDright")) {
-                JSONObject jCpsHUDright = (JSONObject) root.get("cpsHUDright");
-
-                this.cpsHUDright = new HUDSetting(
-                        (boolean) jCpsHUDright.get("active"),
-                        ((Long) jCpsHUDright.get("mainColor")).intValue(),
-                        (boolean) jCpsHUDright.get("dropShadow"),
-                        ((Long) jCpsHUDright.get("x")).intValue(),
-                        ((Long) jCpsHUDright.get("y")).intValue(),
-                        ((Long) jCpsHUDright.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("cpsHUDright");
+                this.cpsHUDright = HUDSetting.fromJson(HUDSetting.Type.POSITION_COLOR, jsonObjectSub);
             }
             if(root.containsKey("lookingHUD")) {
-                JSONObject jLookingHUD = (JSONObject) root.get("lookingHUD");
-
-                this.lookingHUD = new HUDSetting(
-                        (boolean) jLookingHUD.get("active"),
-                        ((Long) jLookingHUD.get("mainColor")).intValue(),
-                        ((Long) jLookingHUD.get("subColor")).intValue(),
-                        (boolean) jLookingHUD.get("dropShadow"),
-                        ((Long) jLookingHUD.get("x")).intValue(),
-                        ((Long) jLookingHUD.get("y")).intValue(),
-                        ((Long) jLookingHUD.get("z")).intValue());
+                JSONObject jsonObjectSub = (JSONObject) root.get("lookingHUD");
+                this.lookingHUD = HUDSetting.fromJson(HUDSetting.Type.POSITION_TWOCOLOR, jsonObjectSub);
             }
             if(root.containsKey("fullBrightness")) {
                 this.fullBrightness = (boolean) root.get("fullBrightness");
