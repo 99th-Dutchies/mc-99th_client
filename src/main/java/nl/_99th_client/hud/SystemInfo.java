@@ -13,18 +13,7 @@ import nl._99th_client.settings.HUDSetting;
 
 public class SystemInfo
 {
-    public static void render(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
-        // Draw FPS
-        renderFPS(mc, hudSetting, ms);
-
-        // Draw memory usage
-        renderMemory(mc, hudSetting, ms);
-
-        // Draw ping
-        renderPing(mc, hudSetting, ms);
-    }
-
-    private static void renderFPS(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
+    public static void renderFPS(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
         int l = mc.debug.indexOf(" fps ");
 
         if (l >= 0)
@@ -42,7 +31,7 @@ public class SystemInfo
         }
     }
 
-    private static void renderPing(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
+    public static void renderPing(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
         NetworkPlayerInfo playerInfo = mc.getConnection().getPlayerInfo(mc.player.getUniqueID());
         ServerData currentServer = mc.getCurrentServerData();
         String ping = "";
@@ -57,13 +46,13 @@ public class SystemInfo
         s.append(new StringTextComponent(" ms").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
 
         if(hudSetting.dropShadow) {
-            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
         } else {
-            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
         }
     }
 
-    private static void renderMemory(Minecraft mc, HUDSetting hudSetting, MatrixStack ms){
+    public static void renderMemory(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt){
         long i = Runtime.getRuntime().maxMemory();
         long j = Runtime.getRuntime().totalMemory();
         long k = Runtime.getRuntime().freeMemory();
@@ -73,9 +62,9 @@ public class SystemInfo
         s.append(new StringTextComponent(" MB").setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.subColor))));
 
         if(hudSetting.dropShadow) {
-            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
         } else {
-            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 10, -1);
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
         }
     }
 

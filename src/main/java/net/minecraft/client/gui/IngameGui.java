@@ -218,8 +218,14 @@ public class IngameGui extends AbstractGui
         if(this.mc.gameSettings._99thClientSettings.inventoryHUDitems.active) {
             InventoryInfo.renderInventory(this.mc, this.mc.gameSettings._99thClientSettings.inventoryHUDitems, matrixStack, partialTicks);
         }
-        if(this.mc.gameSettings._99thClientSettings.systemHUD.active && !this.mc.gameSettings.showDebugInfo) {
-            SystemInfo.render(this.mc, this.mc.gameSettings._99thClientSettings.systemHUD, matrixStack, partialTicks);
+        if(this.mc.gameSettings._99thClientSettings.systemHUDfps.active && !this.mc.gameSettings.showDebugInfo) {
+            SystemInfo.renderFPS(this.mc, this.mc.gameSettings._99thClientSettings.systemHUDfps, matrixStack, partialTicks);
+        }
+        if(this.mc.gameSettings._99thClientSettings.systemHUDmemory.active && !this.mc.gameSettings.showDebugInfo) {
+            SystemInfo.renderMemory(this.mc, this.mc.gameSettings._99thClientSettings.systemHUDmemory, matrixStack, partialTicks);
+        }
+        if(this.mc.gameSettings._99thClientSettings.systemHUDping.active && !this.mc.gameSettings.showDebugInfo) {
+            SystemInfo.renderPing(this.mc, this.mc.gameSettings._99thClientSettings.systemHUDping, matrixStack, partialTicks);
         }
         if(this.mc.gameSettings._99thClientSettings.cpsHUDleft.active) {
             CPSInfo.renderLeft(this.mc, this.mc.gameSettings._99thClientSettings.cpsHUDleft, matrixStack);

@@ -58,7 +58,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
 
         TranslationTextComponent itSystemHUD = new TranslationTextComponent("99thclient.options.SYSTEM_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itSystemHUD));
-        this.addEntry(new HUDGuiList.HUDGuiEntry(itSystemHUD, this.minecraft.gameSettings._99thClientSettings.systemHUD));
+        this.addEntry(new HUDGuiList.HUDGuiEntry(itSystemHUD, this.minecraft.gameSettings._99thClientSettings.systemHUDfps, this.minecraft.gameSettings._99thClientSettings.systemHUDmemory, this.minecraft.gameSettings._99thClientSettings.systemHUDping));
 
         TranslationTextComponent itCPSHud = new TranslationTextComponent("99thclient.options.CPS_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itCPSHud));
@@ -174,6 +174,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
         private Button btnMore;
         private HUDSetting hudSetting;
         private HUDSetting hudSettingSecondary;
+        private HUDSetting hudSettingTertiary;
         private Button iterableButton;
         private String settingName;
         private boolean isActive;
@@ -195,8 +196,6 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             {
                 if(this.hudSettingSecondary == null) {
                     HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting));
-                } else {
-                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting, this.hudSettingSecondary));
                 }
             });
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);
@@ -223,6 +222,36 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
                     HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting));
                 } else {
                     HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting, this.hudSettingSecondary));
+                }
+            });
+            HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);
+        }
+
+        private HUDGuiEntry(final TranslationTextComponent p_i232281_3_, final HUDSetting hudSetting, final HUDSetting hudSettingSecondary, final HUDSetting hudSettingTertiary)
+        {
+            this.hudSetting = hudSetting;
+            this.hudSettingSecondary = hudSettingSecondary;
+            this.hudSettingTertiary = hudSettingTertiary;
+            this.isActive = this.hudSetting.active || this.hudSettingSecondary.active || this.hudSettingTertiary.active;
+            this.title = p_i232281_3_;
+
+            this.btnToggleActive = new Button(0, 0, 70, 20, this.hudSetting.active ? (this.hudSetting.active && this.hudSettingSecondary.active && this.hudSettingTertiary.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Partial")) : new TranslationTextComponent("Off"), (button) -> {
+                this.isActive = !this.isActive;
+                this.hudSetting.active = this.isActive;
+                this.hudSettingSecondary.active = this.isActive;
+                this.hudSettingTertiary.active = this.isActive;
+                button.setMessage(this.isActive ? new TranslationTextComponent("On") : new TranslationTextComponent("Off"));
+            });
+            HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnToggleActive);
+
+            this.btnMore = new Button(0, 0, 70, 20, new TranslationTextComponent("more"), (p_214387_2_) ->
+            {
+                if(this.hudSettingSecondary == null) {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting));
+                } else if (this.hudSettingTertiary == null) {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting, this.hudSettingSecondary));
+                } else {
+                    HUDGuiList.this.minecraft.displayGuiScreen(new OptionsHUD_HUDSettingScreen(HUDGuiList.this.optionsHUDGuiScreen, HUDGuiList.this.minecraft.gameSettings, this.title, this.hudSetting, this.hudSettingSecondary, this.hudSettingTertiary));
                 }
             });
             HUDGuiList.this.optionsHUDGuiScreen.children.add(this.btnMore);

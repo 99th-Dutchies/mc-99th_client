@@ -44,7 +44,9 @@ public class _99thClientSettings {
     public HUDSetting inHandsHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 51, 0);
     public HUDSetting armourHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 76, 0);
     public HUDSetting inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
-    public HUDSetting systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+    public HUDSetting systemHUDfps = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+    public HUDSetting systemHUDmemory = new HUDSetting(true, -1, -1, true, 91, 11, 0);
+    public HUDSetting systemHUDping = new HUDSetting(true, -1, -1, true, 91, 31, 0);
     public HUDSetting cpsHUDleft = new HUDSetting(true, -1, true, 215, -15, 0);
     public HUDSetting cpsHUDright = new HUDSetting(true, -1, true, -222, -15, 0);
     public HUDSetting lookingHUD = new HUDSetting(true, -1, -1, true, 1, 126, 0);
@@ -135,7 +137,9 @@ public class _99thClientSettings {
                         }
 
                         if (astring[0].equals("showSystemHUD") && astring.length >= 2) {
-                            this.systemHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 91, 1, 0);
+                            this.systemHUDfps = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 91, 1, 0);
+                            this.systemHUDmemory = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 91, 11, 0);
+                            this.systemHUDping = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 91, 31, 0);
                         }
 
                         if (astring[0].equals("showCPSHUD") && astring.length >= 2) {
@@ -433,7 +437,9 @@ public class _99thClientSettings {
         this.inHandsHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 51, 0);
         this.armourHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 76, 0);
         this.inventoryHUDitems = new HUDSetting(true, -200, -19, 0);
-        this.systemHUD = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+        this.systemHUDfps = new HUDSetting(true, -1, -1, true, 91, 1, 0);
+        this.systemHUDmemory = new HUDSetting(true, -1, -1, true, 91, 11, 0);
+        this.systemHUDping = new HUDSetting(true, -1, -1, true, 91, 31, 0);
         this.cpsHUDleft = new HUDSetting(true, -1, true, 215, -15, 0);
         this.cpsHUDright = new HUDSetting(true, -1, true, -222, -15, 0);
         this.lookingHUD = new HUDSetting(true, -1, -1, true, 1, 126, 0);
@@ -490,7 +496,9 @@ public class _99thClientSettings {
         root.put("inHandsHUD", this.inHandsHUD.toJson());
         root.put("armourHUD", this.armourHUD.toJson());
         root.put("inventoryHUDitems", this.inventoryHUDitems.toJson());
-        root.put("systemHUD", this.systemHUD.toJson());
+        root.put("systemHUDfps", this.systemHUDfps.toJson());
+        root.put("systemHUDmemory", this.systemHUDmemory.toJson());
+        root.put("systemHUDping", this.systemHUDping.toJson());
         root.put("cpsHUDleft", this.cpsHUDleft.toJson());
         root.put("cpsHUDright", this.cpsHUDright.toJson());
         root.put("lookingHUD", this.lookingHUD.toJson());
@@ -645,17 +653,41 @@ public class _99thClientSettings {
                         ((Long) jInventoryHUDitems.get("y")).intValue(),
                         ((Long) jInventoryHUDitems.get("z")).intValue());
             }
-            if(root.containsKey("systemHUD")) {
-                JSONObject jSystemHUD = (JSONObject) root.get("systemHUD");
+            if(root.containsKey("systemHUDfps")) {
+                JSONObject jSystemHUDfps = (JSONObject) root.get("systemHUDfps");
 
-                this.systemHUD = new HUDSetting(
-                        (boolean) jSystemHUD.get("active"),
-                        ((Long) jSystemHUD.get("mainColor")).intValue(),
-                        ((Long) jSystemHUD.get("subColor")).intValue(),
-                        (boolean) jSystemHUD.get("dropShadow"),
-                        ((Long) jSystemHUD.get("x")).intValue(),
-                        ((Long) jSystemHUD.get("y")).intValue(),
-                        ((Long) jSystemHUD.get("z")).intValue());
+                this.systemHUDfps = new HUDSetting(
+                        (boolean) jSystemHUDfps.get("active"),
+                        ((Long) jSystemHUDfps.get("mainColor")).intValue(),
+                        ((Long) jSystemHUDfps.get("subColor")).intValue(),
+                        (boolean) jSystemHUDfps.get("dropShadow"),
+                        ((Long) jSystemHUDfps.get("x")).intValue(),
+                        ((Long) jSystemHUDfps.get("y")).intValue(),
+                        ((Long) jSystemHUDfps.get("z")).intValue());
+            }
+            if(root.containsKey("systemHUDmemory")) {
+                JSONObject jSystemHUDmemory = (JSONObject) root.get("systemHUDmemory");
+
+                this.systemHUDmemory = new HUDSetting(
+                        (boolean) jSystemHUDmemory.get("active"),
+                        ((Long) jSystemHUDmemory.get("mainColor")).intValue(),
+                        ((Long) jSystemHUDmemory.get("subColor")).intValue(),
+                        (boolean) jSystemHUDmemory.get("dropShadow"),
+                        ((Long) jSystemHUDmemory.get("x")).intValue(),
+                        ((Long) jSystemHUDmemory.get("y")).intValue(),
+                        ((Long) jSystemHUDmemory.get("z")).intValue());
+            }
+            if(root.containsKey("systemHUDping")) {
+                JSONObject jSystemHUDping = (JSONObject) root.get("systemHUDping");
+
+                this.systemHUDping = new HUDSetting(
+                        (boolean) jSystemHUDping.get("active"),
+                        ((Long) jSystemHUDping.get("mainColor")).intValue(),
+                        ((Long) jSystemHUDping.get("subColor")).intValue(),
+                        (boolean) jSystemHUDping.get("dropShadow"),
+                        ((Long) jSystemHUDping.get("x")).intValue(),
+                        ((Long) jSystemHUDping.get("y")).intValue(),
+                        ((Long) jSystemHUDping.get("z")).intValue());
             }
             if(root.containsKey("cpsHUDleft")) {
                 JSONObject jCpsHUDleft = (JSONObject) root.get("cpsHUDleft");

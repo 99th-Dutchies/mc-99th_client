@@ -19,6 +19,7 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
     private TranslationTextComponent title;
     private final HUDSetting hudSetting;
     private HUDSetting hudSettingSecondary;
+    private HUDSetting hudSettingTertiary;
 
     private TextFieldWidget mainColorTFW;
     private Button dropShadowButton;
@@ -41,11 +42,24 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
         this.hudSettingSecondary = hudSettingSecondary;
     }
 
+    public OptionsHUD_HUDSettingScreen(Screen parentScreenIn, GameSettings gameSettingsIn, TranslationTextComponent title, HUDSetting hudSetting, HUDSetting hudSettingSecondary, HUDSetting hudSettingTertiary)
+    {
+        super(parentScreenIn, gameSettingsIn, title);
+
+        this.title = title;
+        this.hudSetting = hudSetting;
+        this.hudSettingSecondary = hudSettingSecondary;
+        this.hudSettingTertiary = hudSettingTertiary;
+    }
+
     protected void init()
     {
-        this.initInput(this.hudSetting, this.hudSettingSecondary == null ? 120 : 70, 0);
+        this.initInput(this.hudSetting, this.hudSettingSecondary == null && this.hudSettingTertiary == null ? 120 : 70, 0);
         if(this.hudSettingSecondary != null) {
             this.initInput(this.hudSettingSecondary, 70, 75);
+        }
+        if(this.hudSettingTertiary != null) {
+            this.initInput(this.hudSettingTertiary, 70, 150);
         }
 
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->
@@ -208,7 +222,11 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
         this.renderBackground(matrixStack);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 8, 16777215);
 
-        if(this.hudSettingSecondary != null) {
+        if(this.hudSettingTertiary != null) {
+            drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.SYSTEM_HUD.fps"), this.width / 2 + 35, this.height / 6 - 18, 16777215);
+            drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.SYSTEM_HUD.memory"), this.width / 2 + 110, this.height / 6 - 18, 16777215);
+            drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.SYSTEM_HUD.ping"), this.width / 2 + 185, this.height / 6 - 18, 16777215);
+        } else if(this.hudSettingSecondary != null) {
             drawCenteredString(matrixStack, this.font, new TranslationTextComponent("key.mouse.left"), this.width / 2 + 35, this.height / 6 - 18, 16777215);
             drawCenteredString(matrixStack, this.font, new TranslationTextComponent("key.mouse.right"), this.width / 2 + 110, this.height / 6 - 18, 16777215);
         }
