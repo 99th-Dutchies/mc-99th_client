@@ -45,9 +45,9 @@ public class ChatTriggerListener extends AbstractChatListener
                 }
             }
 
-            if(trigger.checkCooldown(resp)) continue;
-
             if(matches > 0) {
+                if(trigger.checkCooldown(resp)) continue;
+
                 this.schedule(this.mc, resp, trigger.delay);
             }
         }
