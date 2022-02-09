@@ -2,8 +2,11 @@ package nl._99th_client.util;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.arguments.ItemParser;
 import net.minecraft.item.Item;
+import net.minecraft.util.IReorderingProcessor;
+import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,5 +70,15 @@ public class MCStringUtils
         }
 
         return String.join(",", ls);
+    }
+
+    public static List<IReorderingProcessor> multilineTooltip(String baseKey, int start, int end, int maxWidth) {
+        List<IReorderingProcessor> tooltip = new ArrayList<>();
+
+        for(int i = start; i <= end; i++) {
+            tooltip.addAll(Minecraft.getInstance().fontRenderer.trimStringToWidth(new TranslationTextComponent(baseKey + "." + i), maxWidth));
+        }
+
+        return tooltip;
     }
 }

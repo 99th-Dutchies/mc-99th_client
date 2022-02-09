@@ -9,10 +9,8 @@ import net.minecraft.util.text.*;
 import nl._99th_client._99thClientSettings;
 import nl._99th_client.gui.screen.OptionsHUDGuiScreen;
 import nl._99th_client.gui.screen.OptionsHUD_HUDSettingScreen;
-import nl._99th_client.settings.HUDSetting;
-import nl._99th_client.settings.HealthIndicator;
-import nl._99th_client.settings.PotionIcons;
-import nl._99th_client.settings.ShowToasts;
+import nl._99th_client.settings.*;
+import nl._99th_client.util.MCStringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,10 +70,6 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itFullbrightness));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itFullbrightness, "fullBrightness"));
 
-        TranslationTextComponent itBlockhighlight = new TranslationTextComponent("99thclient.options.BLOCK_HIGHLIGHT");
-        this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itBlockhighlight));
-        this.addEntry(new HUDGuiList.HUDGuiEntry(itBlockhighlight, "blockHighlight"));
-
         TranslationTextComponent itTNTtimers = new TranslationTextComponent("99thclient.options.TNT_TIMER");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itTNTtimers));
         this.addEntry(new HUDGuiList.HUDGuiEntry(itTNTtimers, "tntTimer"));
@@ -110,6 +104,32 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
                     break;
             }
             button.setMessage(new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.potionIcons.func_238164_b_()));
+        })));
+
+        TranslationTextComponent itBlockhighlight = new TranslationTextComponent("99thclient.options.BLOCK_HIGHLIGHT");
+        this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itBlockhighlight));
+        this.addEntry(new HUDGuiList.HUDGuiEntry(itBlockhighlight, new Button(0, 0, 145, 20, new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.blockHighlight.getTranslationKey()), (button) -> {
+            switch (this.minecraft.gameSettings._99thClientSettings.blockHighlight)
+            {
+                case OFF:
+                    this.minecraft.gameSettings._99thClientSettings.blockHighlight = BlockHighlight.DEFAULT;
+                    break;
+
+                case DEFAULT:
+                    this.minecraft.gameSettings._99thClientSettings.blockHighlight = BlockHighlight.BASIC;
+                    break;
+
+                case BASIC:
+                    this.minecraft.gameSettings._99thClientSettings.blockHighlight = BlockHighlight.OFF;
+                    break;
+            }
+            button.setMessage(new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.blockHighlight.getTranslationKey()));
+        }, (button, matrixStack, mouseX, mouseY) -> {
+            this.optionsHUDGuiScreen.renderTooltip(
+                    matrixStack,
+                    MCStringUtils.multilineTooltip("99thclient.options.BLOCK_HIGHLIGHT.tooltip", 1, 3, this.width / 3),
+                    mouseX,
+                    mouseY);
         })));
 
         TranslationTextComponent itShowToasts = new TranslationTextComponent("99thclient.options.SHOW_TOASTS");

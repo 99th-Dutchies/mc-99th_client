@@ -64,7 +64,7 @@ public class _99thClientSettings {
     public boolean outOfBlocksWarning = false;
     public boolean tablistPing = false;
     public boolean decodeChatMagic = false;
-    public boolean blockHighlight = false;
+    public BlockHighlight blockHighlight = BlockHighlight.OFF;
     public boolean resourcepackOptimization = false;
     public boolean dataCollection = true;
     public int timeTillAFK = 0;
@@ -261,7 +261,7 @@ public class _99thClientSettings {
                         }
 
                         if (astring[0].equals("blockHighlight") && astring.length >= 2) {
-                            this.blockHighlight = Boolean.valueOf(astring[1]);
+                            this.blockHighlight = Boolean.valueOf(astring[1]) ? BlockHighlight.DEFAULT : BlockHighlight.OFF;
                         }
 
                         if (astring[0].equals("resourcepackOptimization") && astring.length >= 2) {
@@ -458,7 +458,7 @@ public class _99thClientSettings {
         this.tablistPing = false;
         this.decodeChatMagic = false;
         this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
-        this.blockHighlight = false;
+        this.blockHighlight = BlockHighlight.OFF;
         this.resourcepackOptimization = false;
         this.dataCollection = true;
         this.timeTillAFK = 0;
@@ -516,7 +516,7 @@ public class _99thClientSettings {
         root.put("outOfBlocksWarning", this.outOfBlocksWarning);
         root.put("tablistPing", this.tablistPing);
         root.put("decodeChatMagic", this.decodeChatMagic);
-        root.put("blockHighlight", this.blockHighlight);
+        root.put("blockHighlight", this.blockHighlight.getString());
         root.put("resourcepackOptimization", this.resourcepackOptimization);
         root.put("dataCollection", this.dataCollection);
         root.put("timeTillAFK", this.timeTillAFK);
@@ -676,7 +676,11 @@ public class _99thClientSettings {
                 this.decodeChatMagic = (boolean) root.get("decodeChatMagic");
             }
             if(root.containsKey("blockHighlight")) {
-                this.blockHighlight = (boolean) root.get("blockHighlight");
+                try {
+                    this.blockHighlight = BlockHighlight.fromString((String) root.get("blockHighlight"));
+                } catch(ClassCastException e) {
+                    this.blockHighlight = ((boolean) root.get("blockHighlight")) ? BlockHighlight.DEFAULT : BlockHighlight.OFF;
+                }
             }
             if(root.containsKey("resourcepackOptimization")) {
                 this.resourcepackOptimization = (boolean) root.get("resourcepackOptimization");

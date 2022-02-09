@@ -51,6 +51,12 @@ more=More...
 99thclient.options.chatfilters.add=Add Postal Filter
 99thclient.options.chatfilters.activePlayer=Me postal
 99thclient.options.chatfilters.activeChat=Thems postal
+99thclient.options.BLOCK_HIGHLIGHT.off=Off
+99thclient.options.BLOCK_HIGHLIGHT.default=Default
+99thclient.options.BLOCK_HIGHLIGHT.basic=Basic
+99thclient.options.BLOCK_HIGHLIGHT.tooltip.1=Off
+99thclient.options.BLOCK_HIGHLIGHT.tooltip.2=Default - Not compatible with shaders and antialiasing.
+99thclient.options.BLOCK_HIGHLIGHT.tooltip.3=Basic - Compatible with shaders and antialiasing but does not work on translucent blocks.
 
 99thclient.options.LOCATION_HUD=Yer Position HUD
 99thclient.options.DIRECTION_HUD=Direction HUD

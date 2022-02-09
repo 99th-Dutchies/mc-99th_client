@@ -39,12 +39,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.Nullable;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.CampfireBlock;
-import net.minecraft.block.ComposterBlock;
-import net.minecraft.block.SoundType;
+
+import net.minecraft.block.*;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
@@ -150,6 +146,7 @@ import net.optifine.util.ChunkUtils;
 import net.optifine.util.MathUtils;
 import net.optifine.util.PairInt;
 import net.optifine.util.RenderChunkUtils;
+import nl._99th_client.settings.BlockHighlight;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
@@ -871,7 +868,7 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
     {
         if (this.world != null)
         {
-            if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+            if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
             {
                 this.func_239233_v_();
             }
@@ -3276,7 +3273,8 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
 
         if (!Config.isCustomEntityModels() || !CustomEntityModels.isCustomModel(blockStateIn))
         {
-            if(this.mc.gameSettings._99thClientSettings.blockHighlight) {
+            if(this.mc.gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT ||
+                    (this.mc.gameSettings._99thClientSettings.blockHighlight == BlockHighlight.BASIC && !(RenderTypeLookup.func_239221_b_(blockStateIn).equals(RenderType.getTranslucentMovingBlock())))) {
                 drawShapeBlockhighlight(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn);
             } else {
                 drawShape(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn, 0.0F, 0.0F, 0.0F, 0.4F);

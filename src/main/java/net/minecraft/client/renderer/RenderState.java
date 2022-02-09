@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.optifine.util.CompareUtils;
+import nl._99th_client.settings.BlockHighlight;
 
 public abstract class RenderState
 {
@@ -177,65 +178,65 @@ public abstract class RenderState
     });
     protected static final RenderState.TargetState field_239236_S_ = new RenderState.TargetState("translucent_target", () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().worldRenderer.func_239228_q_().bindFramebuffer(false);
         }
     }, () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().getFramebuffer().bindFramebuffer(false);
         }
     });
     protected static final RenderState.TargetState field_239237_T_ = new RenderState.TargetState("particles_target", () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().worldRenderer.func_239230_s_().bindFramebuffer(false);
         }
     }, () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().getFramebuffer().bindFramebuffer(false);
         }
     });
     protected static final RenderState.TargetState field_239238_U_ = new RenderState.TargetState("weather_target", () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().worldRenderer.func_239231_t_().bindFramebuffer(false);
         }
     }, () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().getFramebuffer().bindFramebuffer(false);
         }
     });
     protected static final RenderState.TargetState field_239239_V_ = new RenderState.TargetState("clouds_target", () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().worldRenderer.func_239232_u_().bindFramebuffer(false);
         }
     }, () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().getFramebuffer().bindFramebuffer(false);
         }
     });
     protected static final RenderState.TargetState field_241712_U_ = new RenderState.TargetState("item_entity_target", () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().worldRenderer.func_239229_r_().bindFramebuffer(false);
         }
     }, () ->
     {
-        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight)
+        if (Minecraft.isFabulousGraphicsEnabled() || Minecraft.getInstance().gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT)
         {
             Minecraft.getInstance().getFramebuffer().bindFramebuffer(false);
         }
