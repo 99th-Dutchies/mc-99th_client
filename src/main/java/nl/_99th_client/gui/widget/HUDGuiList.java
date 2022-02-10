@@ -128,7 +128,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             this.optionsHUDGuiScreen.renderTooltip(
                     matrixStack,
                     MCStringUtils.multilineTooltip("99thclient.options.BLOCK_HIGHLIGHT.tooltip", 1, 3, this.width / 3),
-                    mouseX,
+                    (mouseX + this.width/3 > this.getScrollbarPosition()) ? mouseX - this.width/3 : mouseX,
                     mouseY);
         })));
 
@@ -178,10 +178,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
         return super.getScrollbarPosition() + 15;
     }
 
-    public int getRowWidth()
-    {
-        return super.getRowWidth() + 32;
-    }
+    public int getRowWidth() { return super.getRowWidth() + 32; }
 
     public abstract static class Entry extends AbstractOptionList.Entry<HUDGuiList.Entry>
     {
