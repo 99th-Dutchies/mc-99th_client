@@ -3274,7 +3274,7 @@ public class WorldRenderer implements IResourceManagerReloadListener, AutoClosea
         if (!Config.isCustomEntityModels() || !CustomEntityModels.isCustomModel(blockStateIn))
         {
             if(this.mc.gameSettings._99thClientSettings.blockHighlight == BlockHighlight.DEFAULT ||
-                    (this.mc.gameSettings._99thClientSettings.blockHighlight == BlockHighlight.BASIC && !(RenderTypeLookup.func_239221_b_(blockStateIn).equals(RenderType.getTranslucentMovingBlock())))) {
+                    (this.mc.gameSettings._99thClientSettings.blockHighlight == BlockHighlight.BASIC && BlockHighlight.validBlock(blockStateIn))) {
                 drawShapeBlockhighlight(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn);
             } else {
                 drawShape(matrixStackIn, bufferIn, shape, (double) blockPosIn.getX() - xIn, (double) blockPosIn.getY() - yIn, (double) blockPosIn.getZ() - zIn, 0.0F, 0.0F, 0.0F, 0.4F);
