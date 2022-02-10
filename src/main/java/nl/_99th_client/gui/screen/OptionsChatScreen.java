@@ -19,7 +19,7 @@ public class OptionsChatScreen extends SettingsScreen
 
     public OptionsChatScreen(Screen parentScreenIn, GameSettings gameSettingsIn)
     {
-        super(parentScreenIn, gameSettingsIn, new TranslationTextComponent("99thclient.options.chat.title"));
+        super(parentScreenIn, gameSettingsIn, new TranslationTextComponent("99thclient.options.chatsettings.title"));
     }
 
     protected void init()
@@ -75,7 +75,7 @@ public class OptionsChatScreen extends SettingsScreen
             this.minecraft.displayGuiScreen(this.parentScreen);
         }));
 
-        this.chatPrefixField = new TextFieldWidget(this.font, this.width / 2 - 75, this.height / 6 + 48, 150, 20, new TranslationTextComponent("99thclient.options.chat.prefix"));
+        this.chatPrefixField = new TextFieldWidget(this.font, this.width / 2 - 75, this.height / 6 + 48, 150, 20, new TranslationTextComponent("99thclient.options.chatsettings.prefix"));
         this.chatPrefixField.setMaxStringLength(256);
         this.chatPrefixField.setText(Minecraft.getInstance().gameSettings._99thClientSettings.chatPrefix);
         this.chatPrefixField.setResponder((p_214319_1_) -> {
@@ -94,7 +94,7 @@ public class OptionsChatScreen extends SettingsScreen
     {
         this.renderBackground(matrixStack);
         drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 15, 16777215);
-        drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.chat.prefix"), this.width / 2 - 149, this.height / 6 + 54, -1);
+        drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.chatsettings.prefix"), this.width / 2 - 149, this.height / 6 + 54, -1);
         this.chatPrefixField.render(matrixStack, mouseX, mouseY, partialTicks);
         this.chatPrefixEnabledButton.render(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);

@@ -25,7 +25,7 @@ public class Options99th_ClientScreen extends SettingsScreen
             this.minecraft.displayGuiScreen(new OptionsHUDGuiScreen(this, this.gameSettings));
         }));
 
-        this.addButton(new Button(this.width / 2 + 5, this.height / 6, 150, 20, new TranslationTextComponent(Lang.get("99thclient.options.chat")), (p_213055_1_) ->
+        this.addButton(new Button(this.width / 2 + 5, this.height / 6, 150, 20, new TranslationTextComponent(Lang.get("99thclient.options.chatsettings")), (p_213055_1_) ->
         {
             this.minecraft.displayGuiScreen(new OptionsChatScreen(this, this.gameSettings));
         }));
