@@ -7,7 +7,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import net.optifine.util.KeyUtils;
 import nl._99th_client.chat.ChatFilter;
 import nl._99th_client.chat.ChatTrigger;
 import nl._99th_client.chat.EventTrigger;
@@ -34,11 +33,11 @@ public class _99thClientSettings {
     private static final Logger LOGGER = LogManager.getLogger();
     protected Minecraft mc;
     private File mcDataDir;
+    private GameSettings gameSettings;
     private File optionsFile99thclient;
 
     public KeyBinding keyBindFreelook;
     public KeyBinding keyBindCommand;
-    public KeyBinding[] keyBindings;
     public HUDSetting locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
     public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
     public HUDSetting inHandsHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 51, 0);
@@ -81,28 +80,29 @@ public class _99thClientSettings {
     );
     public List<CustomCommand> customCommands = Lists.newArrayList();
 
-    public _99thClientSettings(Minecraft mcIn, File mcDataDir)
+    public _99thClientSettings(Minecraft mcIn, File mcDataDir, GameSettings gameSettingsIn)
     {
         this.mc = mcIn;
+        this.gameSettings = gameSettingsIn;
         this.mcDataDir = mcDataDir;
         this.optionsFile99thclient = new File(mcDataDir, nl._99th_client.Config.configFile);
 
         this.keyBindFreelook = new KeyBinding("99thclient.key.freelook", 71, "key.categories.misc");
         this.keyBindCommand = new KeyBinding("99thclient.key.command", 92, "key.categories.multiplayer");
-        this.keyBindings = ArrayUtils.add(this.keyBindings, this.keyBindFreelook);
-        this.keyBindings = ArrayUtils.add(this.keyBindings, this.keyBindCommand);
+        this.gameSettings.createKeybind(this.keyBindFreelook);
+        this.gameSettings.createKeybind(this.keyBindCommand);
     }
 
-    public void load99thclientSettings(GameSettings gameSettings) {
+    public void load99thclientSettings() {
         if(!optionsFile99thclient.exists()) {
-            this.load99thclientSettingsFromTXT(this.mcDataDir, gameSettings);
+            this.load99thclientSettingsFromTXT(this.mcDataDir);
             this.saveSettings();
         } else {
-            this.load99thclientSettingsFromJSON(gameSettings);
+            this.load99thclientSettingsFromJSON();
         }
     }
 
-    public void load99thclientSettingsFromTXT(File mcDataDir, GameSettings gameSettings)
+    public void load99thclientSettingsFromTXT(File mcDataDir)
     {
         boolean didResetChatTriggers = false;
         boolean didResetChatFilters = false;
@@ -375,9 +375,11 @@ public class _99thClientSettings {
 
                         if (astring[0].equals("key_" + this.keyBindFreelook.getKeyDescription())) {
                             this.keyBindFreelook.bind(InputMappings.getInputByName(astring[1]));
+                            this.gameSettings.updateKeybind(this.keyBindFreelook);
                         }
                         if (astring[0].equals("key_" + this.keyBindCommand.getKeyDescription())) {
                             this.keyBindCommand.bind(InputMappings.getInputByName(astring[1]));
+                            this.gameSettings.updateKeybind(this.keyBindCommand);
                         }
                     } catch (Exception exception1) {
                         LOGGER.error("Skipping bad option: " + s);
@@ -385,8 +387,6 @@ public class _99thClientSettings {
                     }
                 }
 
-                KeyUtils.fixKeyConflicts(gameSettings.keyBindings, new KeyBinding[]{this.keyBindFreelook, this.keyBindCommand});
-                KeyBinding.resetKeyBindingArrayAndHash();
                 bufferedreader.close();
             }
         }
@@ -397,12 +397,12 @@ public class _99thClientSettings {
         }
     }
 
-    public void load99thclientSettingsFromJSON(GameSettings gameSettings) {
+    public void load99thclientSettingsFromJSON() {
         try {
             String json = Utils.readFile(this.optionsFile99thclient, "UTF-8");
             JSONParser jp = new JSONParser();
             JSONObject root = (JSONObject) jp.parse(json);
-            this.fromJSON(root, gameSettings);
+            this.fromJSON(root);
         }
         catch (Exception exception11)
         {
@@ -477,10 +477,8 @@ public class _99thClientSettings {
 
         this.keyBindFreelook = new KeyBinding("99thclient.key.freelook", 71, "key.categories.misc");
         this.keyBindCommand = new KeyBinding("99thclient.key.command", 92, "key.categories.multiplayer");
-        this.keyBindings = ArrayUtils.add(this.keyBindings, this.keyBindFreelook);
-        this.keyBindings = ArrayUtils.add(this.keyBindings, this.keyBindCommand);
-        KeyUtils.fixKeyConflicts(this.mc.gameSettings.keyBindings, new KeyBinding[] {this.keyBindFreelook, this.keyBindCommand});
-        KeyBinding.resetKeyBindingArrayAndHash();
+        this.gameSettings.updateKeybind(this.keyBindFreelook);
+        this.gameSettings.updateKeybind(this.keyBindCommand);
 
         this.saveSettings();
     }
@@ -590,7 +588,7 @@ public class _99thClientSettings {
         return root;
     }
 
-    public void fromJSON(JSONObject root, GameSettings gameSettings) {
+    public void fromJSON(JSONObject root) {
         try {
             if(root.containsKey("locationHUD")) {
                 JSONObject jsonObjectSub = (JSONObject) root.get("locationHUD");
@@ -779,18 +777,17 @@ public class _99thClientSettings {
                 JSONObject jKeyBinds = (JSONObject) root.get("keyBinds");
                 if(jKeyBinds.containsKey("freelook")) {
                     this.keyBindFreelook.bind(InputMappings.getInputByName((String) jKeyBinds.get("freelook")));
+                    this.gameSettings.updateKeybind((this.keyBindFreelook));
                 }
                 if(jKeyBinds.containsKey("command")) {
                     this.keyBindCommand.bind(InputMappings.getInputByName((String) jKeyBinds.get("command")));
+                    this.gameSettings.updateKeybind((this.keyBindCommand));
                 }
             }
 
             if(this.mc.fontRenderer != null) {
                 this.mc.fontRenderer.setDecodeChatMagic(this.decodeChatMagic);
             }
-
-            KeyUtils.fixKeyConflicts(gameSettings.keyBindings, new KeyBinding[] {this.keyBindFreelook, this.keyBindCommand});
-            KeyBinding.resetKeyBindingArrayAndHash();
         }
         catch (Exception exception11)
         {

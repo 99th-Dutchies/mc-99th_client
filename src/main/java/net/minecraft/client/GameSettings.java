@@ -276,7 +276,7 @@ public class GameSettings
     {
         this.setForgeKeybindProperties();
         this.mc = mcIn;
-        this._99thClientSettings = new _99thClientSettings(mcIn, mcDataDir);
+        this._99thClientSettings = new _99thClientSettings(mcIn, mcDataDir, this);
         this.optionsFile = new File(mcDataDir, "options.txt");
 
         if (mcIn.isJava64bit() && Runtime.getRuntime().maxMemory() >= 1000000000L)
@@ -308,7 +308,7 @@ public class GameSettings
         KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {this.ofKeyBindZoom});
          this.renderDistanceChunks = 8;
         this.loadOptions();
-        this._99thClientSettings.load99thclientSettings(this);
+        this._99thClientSettings.load99thclientSettings();
         Config.initGameSettings(this);
     }
 
@@ -2696,6 +2696,16 @@ public class GameSettings
             Config.warn("Failed to save options");
             exception1.printStackTrace();
         }
+    }
+
+    public void createKeybind(KeyBinding keyBinding) {
+        this.keyBindings = ArrayUtils.add(this.keyBindings, keyBinding);
+        KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {keyBinding});
+    }
+
+    public void updateKeybind(KeyBinding keyBinding) {
+        KeyUtils.fixKeyConflicts(this.keyBindings, new KeyBinding[] {keyBinding});
+        KeyBinding.resetKeyBindingArrayAndHash();
     }
 
     public void updateRenderClouds()
