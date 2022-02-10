@@ -116,6 +116,12 @@ public class _99thClientSettings {
 
                 if (!textFile.exists()) {
                     continue;
+                } else {
+                    didResetChatTriggers = false;
+                    didResetChatFilters = false;
+                    didResetEventTriggers = false;
+                    didResetHotkeys = false;
+                    didResetCustomCommands = false;
                 }
 
                 BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(new FileInputStream(textFile), StandardCharsets.UTF_8));
