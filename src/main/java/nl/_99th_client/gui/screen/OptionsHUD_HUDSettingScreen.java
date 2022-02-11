@@ -90,6 +90,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 this.dropShadowButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
                 this.useDamageColorButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
             }));
+        }
+        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasItems())) {
             curY++;
         }
 
@@ -107,6 +109,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 }
             });
             this.addButton(this.mainColorTFW);
+        }
+        if(this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasColor())) {
             curY++;
         }
 
@@ -123,6 +127,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 }
             });
             this.addButton(subColorTFW);
+        }
+        if(this.hudSetting.type.hasSubColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasSubColor()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasSubColor())) {
             curY++;
         }
 
@@ -133,6 +139,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
             });
             this.dropShadowButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
             this.addButton(this.dropShadowButton);
+        }
+        if(this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasColor())) {
             curY++;
         }
 
@@ -143,6 +151,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
             });
             this.useDamageColorButton.visible = setting.itemShow == HUDSetting.ItemShow.TEXT;
             this.addButton(this.useDamageColorButton);
+        }
+        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasItems())) {
             curY++;
         }
 
@@ -159,8 +169,11 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 }
             });
             this.addButton(bracketColorTFW);
+        }
+        if(this.hudSetting.type.hasBracket() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasBracket()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasBracket())) {
             curY++;
-
+        }
+        if(setting.type.hasBracket()) {
             this.addButton(new Button(this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, setting.bracketType == HUDSetting.Bracket.NONE ? new TranslationTextComponent("gui.none") : new StringTextComponent(setting.bracketType.open() + " " + setting.bracketType.close()), (button) -> {
                 switch(setting.bracketType) {
                     case SQUARE:
@@ -182,6 +195,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 }
                 button.setMessage(setting.bracketType == HUDSetting.Bracket.NONE ? new TranslationTextComponent("gui.none") : new StringTextComponent(setting.bracketType.open() + " " + setting.bracketType.close()));
             }));
+        }
+        if(this.hudSetting.type.hasBracket() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasBracket()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasBracket())) {
             curY++;
         }
 
@@ -193,8 +208,11 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 setting.x = MCStringUtils.tryParse(p_214319_1_);
             });
             this.addButton(xPosTFW);
+        }
+        if(this.hudSetting.type.hasPosition() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasPosition()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasPosition())) {
             curY++;
-
+        }
+        if(setting.type.hasPosition()) {
             TextFieldWidget yPosTFW = new TextFieldWidget(this.font, this.width / 2 + xOffset, this.height / 6 + curY * 24, inputWidth, 20, new TranslationTextComponent("99thclient.options.HUDsetting.yPos"));
             yPosTFW.setMaxStringLength(7);
             yPosTFW.setText(setting.y + "");
@@ -202,6 +220,8 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
                 setting.y = MCStringUtils.tryParse(p_214319_1_);
             });
             this.addButton(yPosTFW);
+        }
+        if(this.hudSetting.type.hasPosition() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasPosition()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasPosition())) {
             curY++;
         }
 
@@ -227,46 +247,51 @@ public class OptionsHUD_HUDSettingScreen extends SettingsScreen
             drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.SYSTEM_HUD.memory"), this.width / 2 + 110, this.height / 6 - 18, 16777215);
             drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.SYSTEM_HUD.ping"), this.width / 2 + 185, this.height / 6 - 18, 16777215);
         } else if(this.hudSettingSecondary != null) {
-            drawCenteredString(matrixStack, this.font, new TranslationTextComponent("key.mouse.left"), this.width / 2 + 35, this.height / 6 - 18, 16777215);
-            drawCenteredString(matrixStack, this.font, new TranslationTextComponent("key.mouse.right"), this.width / 2 + 110, this.height / 6 - 18, 16777215);
+            if(this.title.getKey().equals("99thclient.options.LOCATION_HUD")) {
+                drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.LOCATION_HUD.location"), this.width / 2 + 35, this.height / 6 - 18, 16777215);
+                drawCenteredString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.LOCATION_HUD.biome"), this.width / 2 + 110, this.height / 6 - 18, 16777215);
+            } else if(this.title.getKey().equals("99thclient.options.CPS_HUD")) {
+                drawCenteredString(matrixStack, this.font, new TranslationTextComponent("key.mouse.left"), this.width / 2 + 35, this.height / 6 - 18, 16777215);
+                drawCenteredString(matrixStack, this.font, new TranslationTextComponent("key.mouse.right"), this.width / 2 + 110, this.height / 6 - 18, 16777215);
+            }
         }
 
         drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.active"), this.width / 2 - 149, this.height / 6 + 6, -1);
         int curY = 1;
-        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems())) {
+        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasItems())) {
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.itemShow"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
         }
-        if (this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor())) {
-            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT)) {
+        if (this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasColor())) {
+            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT) || (this.hudSettingTertiary != null && this.hudSettingTertiary.itemShow == HUDSetting.ItemShow.TEXT)) {
                 drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.mainColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             }
             curY++;
         }
-        if(this.hudSetting.type.hasSubColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasSubColor())) {
+        if(this.hudSetting.type.hasSubColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasSubColor()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasSubColor())) {
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.subColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
         }
-        if (this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor())) {
-            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT)) {
+        if (this.hudSetting.type.hasColor() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasColor()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasColor())) {
+            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT) || (this.hudSettingTertiary != null && this.hudSettingTertiary.itemShow == HUDSetting.ItemShow.TEXT)) {
                 drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.dropShadow"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             }
             curY++;
         }
-        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems())) {
-            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT)) {
+        if(this.hudSetting.type.hasItems() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasItems()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasItems())) {
+            if(this.hudSetting.itemShow == HUDSetting.ItemShow.TEXT || (this.hudSettingSecondary != null && this.hudSettingSecondary.itemShow == HUDSetting.ItemShow.TEXT) || (this.hudSettingTertiary != null && this.hudSettingTertiary.itemShow == HUDSetting.ItemShow.TEXT)) {
                 drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.useDamageColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             }
             curY++;
         }
-        if(this.hudSetting.type.hasBracket() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasBracket())) {
+        if(this.hudSetting.type.hasBracket() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasBracket()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasBracket())) {
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.bracketColor"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
 
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.bracketType"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
         }
-        if(this.hudSetting.type.hasPosition() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasPosition())) {
+        if(this.hudSetting.type.hasPosition() || (this.hudSettingSecondary != null && this.hudSettingSecondary.type.hasPosition()) || (this.hudSettingTertiary != null && this.hudSettingTertiary.type.hasPosition())) {
             drawString(matrixStack, this.font, new TranslationTextComponent("99thclient.options.HUDsetting.xPos"), this.width / 2 - 149, this.height / 6 + 6 + curY * 24, -1);
             curY++;
 

@@ -59,6 +59,8 @@ more=More...
 99thclient.options.BLOCK_HIGHLIGHT.tooltip.3=Basic - Compatible with shaders and antialiasing but does not work on translucent blocks.
 
 99thclient.options.LOCATION_HUD=Location HUD
+99thclient.options.LOCATION_HUD.location=Location
+99thclient.options.LOCATION_HUD.biome=Biome
 99thclient.options.DIRECTION_HUD=Direction HUD
 99thclient.options.INHANDS_HUD=In-Hands HUD
 99thclient.options.ARMOUR_HUD=Armor HUD

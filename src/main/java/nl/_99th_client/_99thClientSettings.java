@@ -39,6 +39,7 @@ public class _99thClientSettings {
     public KeyBinding keyBindFreelook;
     public KeyBinding keyBindCommand;
     public HUDSetting locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
+    public HUDSetting biomeHUD = new HUDSetting(true, -1,  true, 1, 31, 0);
     public HUDSetting directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
     public HUDSetting inHandsHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 51, 0);
     public HUDSetting armourHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 76, 0);
@@ -133,6 +134,7 @@ public class _99thClientSettings {
 
                         if (astring[0].equals("showLocationHUD") && astring.length >= 2) {
                             this.locationHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 1);
+                            this.biomeHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, true, 1, 31, 1);
                             this.directionHUD = new HUDSetting(Boolean.valueOf(astring[1]), -1, -1, true, 61, 1, 0);
                         }
 
@@ -439,6 +441,7 @@ public class _99thClientSettings {
 
     public void resetSettings() {
         this.locationHUD = new HUDSetting(true, -1, -1, true, -1, HUDSetting.Bracket.SQUARE, 1, 1, 0);
+        this.biomeHUD = new HUDSetting(true, -1,  true, 1, 31, 0);
         this.directionHUD = new HUDSetting(true, -1, -1, true, 61, 1, 0);
         this.inHandsHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 51, 0);
         this.armourHUD = new HUDSetting(true, -1, true, HUDSetting.ItemShow.TEXT, true, 1, 76, 0);
@@ -496,6 +499,7 @@ public class _99thClientSettings {
         root.put("clientVersion", Config.clientVersion);
 
         root.put("locationHUD", this.locationHUD.toJson());
+        root.put("biomeHUD", this.biomeHUD.toJson());
         root.put("directionHUD", this.directionHUD.toJson());
         root.put("inHandsHUD", this.inHandsHUD.toJson());
         root.put("armourHUD", this.armourHUD.toJson());
@@ -599,6 +603,10 @@ public class _99thClientSettings {
             if(root.containsKey("locationHUD")) {
                 JSONObject jsonObjectSub = (JSONObject) root.get("locationHUD");
                 this.locationHUD = HUDSetting.fromJson(HUDSetting.Type.FULL, jsonObjectSub);
+            }
+            if(root.containsKey("biomeHUD")) {
+                JSONObject jsonObjectSub = (JSONObject) root.get("biomeHUD");
+                this.biomeHUD = HUDSetting.fromJson(HUDSetting.Type.POSITION_COLOR, jsonObjectSub);
             }
             if(root.containsKey("directionHUD")) {
                 JSONObject jsonObjectSub = (JSONObject) root.get("directionHUD");

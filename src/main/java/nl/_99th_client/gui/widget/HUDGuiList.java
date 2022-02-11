@@ -32,7 +32,7 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
     public void loadHUDGui() {
         TranslationTextComponent itLocationHUD = new TranslationTextComponent("99thclient.options.LOCATION_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itLocationHUD));
-        this.addEntry(new HUDGuiList.HUDGuiEntry(itLocationHUD, this.minecraft.gameSettings._99thClientSettings.locationHUD));
+        this.addEntry(new HUDGuiList.HUDGuiEntry(itLocationHUD, this.minecraft.gameSettings._99thClientSettings.locationHUD, this.minecraft.gameSettings._99thClientSettings.biomeHUD));
 
         TranslationTextComponent itDirectionHUD = new TranslationTextComponent("99thclient.options.DIRECTION_HUD");
         this.maxListLabelWidth = Math.max(this.maxListLabelWidth, this.minecraft.fontRenderer.getStringPropertyWidth(itDirectionHUD));

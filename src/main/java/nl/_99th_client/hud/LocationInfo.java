@@ -15,9 +15,6 @@ public class LocationInfo
         renderX(mc, hudSetting, ms);
         renderY(mc, hudSetting, ms);
         renderZ(mc, hudSetting, ms);
-
-        // Draw biome
-        renderBiome(mc, hudSetting, ms);
     }
 
     public static void renderDirection(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
@@ -88,16 +85,16 @@ public class LocationInfo
         }
     }
 
-    private static void renderBiome(Minecraft mc, HUDSetting hudSetting, MatrixStack ms) {
+    public static void renderBiome(Minecraft mc, HUDSetting hudSetting, MatrixStack ms, float pt) {
         String biomeName = mc.renderViewEntity.world.getBiome(mc.renderViewEntity.getPosition()).getCategory().getName().replaceAll("_", " ");
         biomeName = biomeName.substring(0, 1).toUpperCase() + biomeName.substring(1);
 
         IFormattableTextComponent s = new StringTextComponent(biomeName).setStyle(Style.EMPTY.setColor(Color.fromInt(hudSetting.mainColor)));
 
         if(hudSetting.dropShadow) {
-            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+            mc.fontRenderer.func_243246_a(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
         } else {
-            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY() + 30, -1);
+            mc.fontRenderer.func_243248_b(ms, s, hudSetting.posX(), hudSetting.posY(), -1);
         }
     }
 

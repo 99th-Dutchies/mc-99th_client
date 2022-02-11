@@ -206,6 +206,9 @@ public class IngameGui extends AbstractGui
         if(this.mc.gameSettings._99thClientSettings.locationHUD.active && !this.mc.gameSettings.showDebugInfo) {
             LocationInfo.renderLocation(this.mc, this.mc.gameSettings._99thClientSettings.locationHUD, matrixStack, partialTicks);
         }
+        if(this.mc.gameSettings._99thClientSettings.biomeHUD.active && !this.mc.gameSettings.showDebugInfo) {
+            LocationInfo.renderBiome(this.mc, this.mc.gameSettings._99thClientSettings.biomeHUD, matrixStack, partialTicks);
+        }
         if(this.mc.gameSettings._99thClientSettings.directionHUD.active && !this.mc.gameSettings.showDebugInfo) {
             LocationInfo.renderDirection(this.mc, this.mc.gameSettings._99thClientSettings.directionHUD, matrixStack, partialTicks);
         }
