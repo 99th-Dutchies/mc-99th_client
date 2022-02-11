@@ -113,14 +113,17 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             {
                 case OFF:
                     this.minecraft.gameSettings._99thClientSettings.blockHighlight = BlockHighlight.DEFAULT;
+                    Minecraft.getInstance().worldRenderer.loadRenderers();
                     break;
 
                 case DEFAULT:
                     this.minecraft.gameSettings._99thClientSettings.blockHighlight = BlockHighlight.BASIC;
+                    Minecraft.getInstance().worldRenderer.loadRenderers();
                     break;
 
                 case BASIC:
                     this.minecraft.gameSettings._99thClientSettings.blockHighlight = BlockHighlight.OFF;
+                    Minecraft.getInstance().worldRenderer.loadRenderers();
                     break;
             }
             button.setMessage(new TranslationTextComponent(this.minecraft.gameSettings._99thClientSettings.blockHighlight.getTranslationKey()));
