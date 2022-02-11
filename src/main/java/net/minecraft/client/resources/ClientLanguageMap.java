@@ -81,7 +81,7 @@ public class ClientLanguageMap extends LanguageMap
     public String func_230503_a_(String p_230503_1_)
     {
         if(Minecraft.getInstance() != null && Minecraft.getInstance().gameSettings._99thClientSettings.resourcepackOptimization && !p_230503_1_.startsWith("99thclient.")) {
-            String k = "99thclient." + p_230503_1_;
+            String k = "99thclient.rpo." + p_230503_1_;
             if(this.field_239495_c_.containsKey(k)) {
                 return this.field_239495_c_.getOrDefault(k, k);
             }

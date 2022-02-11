@@ -120,4 +120,4 @@ more=More...
 
 99thclient.commands.notFound=Thy command is not known. Try \help for a list of thy commands
 
-99thclient.item.minecraft.cookie=Marshmallow
+99thclient.rpo.item.minecraft.cookie=Marshmallow
