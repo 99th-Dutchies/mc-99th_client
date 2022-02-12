@@ -228,7 +228,17 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             this.isActive = this.hudSetting.active || this.hudSettingSecondary.active;
             this.title = p_i232281_3_;
 
-            this.btnToggleActive = new Button(0, 0, 70, 20, this.hudSetting.active ? (this.hudSetting.active && this.hudSettingSecondary.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Partial")) : new TranslationTextComponent("Off"), (button) -> {
+            this.btnToggleActive = new Button(
+                    0,
+                    0,
+                    70,
+                    20,
+                    this.isActive ?
+                            (this.hudSetting.active && this.hudSettingSecondary.active ?
+                                    new TranslationTextComponent("On") :
+                                    new TranslationTextComponent("Partial"))
+                            : new TranslationTextComponent("Off"),
+                    (button) -> {
                 this.isActive = !this.isActive;
                 this.hudSetting.active = this.isActive;
                 this.hudSettingSecondary.active = this.isActive;
@@ -255,7 +265,17 @@ public class HUDGuiList extends AbstractOptionList<HUDGuiList.Entry>
             this.isActive = this.hudSetting.active || this.hudSettingSecondary.active || this.hudSettingTertiary.active;
             this.title = p_i232281_3_;
 
-            this.btnToggleActive = new Button(0, 0, 70, 20, this.hudSetting.active ? (this.hudSetting.active && this.hudSettingSecondary.active && this.hudSettingTertiary.active ? new TranslationTextComponent("On") : new TranslationTextComponent("Partial")) : new TranslationTextComponent("Off"), (button) -> {
+            this.btnToggleActive = new Button(
+                    0,
+                    0,
+                    70,
+                    20,
+                    this.isActive ?
+                            (this.hudSetting.active && this.hudSettingSecondary.active && this.hudSettingTertiary.active ?
+                                    new TranslationTextComponent("On") :
+                                    new TranslationTextComponent("Partial"))
+                            : new TranslationTextComponent("Off"),
+                    (button) -> {
                 this.isActive = !this.isActive;
                 this.hudSetting.active = this.isActive;
                 this.hudSettingSecondary.active = this.isActive;
