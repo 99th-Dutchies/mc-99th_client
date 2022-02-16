@@ -7,16 +7,23 @@ import nl._99th_client.Config;
 import nl._99th_client.util.DeviceID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.*;
 
 public class ApiClient {
-    private static String session_id;
+    private String session_id;
     private static final String device_id = DeviceID.getDeviceID();
-    private static Minecraft mc;
-    private static Logger LOGGER;
+    private Minecraft mc;
+    private Logger LOGGER;
 
     public ApiClient(Minecraft mc) {
         this.mc = mc;
@@ -59,9 +66,54 @@ public class ApiClient {
         this.post("installed", new HashMap());
     }
 
+    public ArrayList<UUID> getOnlinePlayers() throws IOException, ParseException {
+        ArrayList<UUID> players = new ArrayList<>();
+        String playerString = this.get("online");
+
+        if(playerString.isEmpty()) return players;
+
+        JSONParser jp = new JSONParser();
+
+        for (Object o : (JSONArray)jp.parse(playerString)) {
+            String s = (String) o;
+            players.add(UUID.fromString(s));
+        }
+
+        return players;
+    }
+
+    private String get(String route) throws IOException {
+        URL url = new URL(Config.apiBase + route);
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setRequestProperty("User-Agent", Config.userAgent);
+        con.setRequestProperty("Content-Type", "application/json");
+
+        con.setRequestProperty("X-Client-version", Config.clientVersion);
+        con.setRequestProperty("X-Client-device", this.device_id);
+        if(this.session_id != null) {
+            con.setRequestProperty("X-Client-session", this.session_id);
+        }
+        int conRes = con.getResponseCode();
+        if(conRes > 299) {
+            con.disconnect();
+            return "";
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer content = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine);
+        }
+        in.close();
+
+        con.disconnect();
+        return content.toString();
+    }
+
     private String post(String route, HashMap<String,String> body) throws IOException {
         body.put("version", Config.clientVersion);
-        body.put("device_id", device_id);
+        body.put("device_id", this.device_id);
 
         MultipartUtil multipart = new MultipartUtil(Config.apiBase + route, "UTF-8");
 

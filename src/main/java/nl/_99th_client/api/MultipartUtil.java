@@ -1,5 +1,7 @@
 package nl._99th_client.api;
 
+import nl._99th_client.Config;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -32,7 +34,7 @@ public class MultipartUtil {
         httpConn.setDoOutput(true);
         httpConn.setRequestMethod("POST");
         httpConn.setDoInput(true);
-        httpConn.addRequestProperty("User-Agent", "99th_Client ApiClient");
+        httpConn.addRequestProperty("User-Agent", Config.userAgent);
         httpConn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
         outputStream = httpConn.getOutputStream();
         writer = new PrintWriter(new OutputStreamWriter(outputStream, charset), true);

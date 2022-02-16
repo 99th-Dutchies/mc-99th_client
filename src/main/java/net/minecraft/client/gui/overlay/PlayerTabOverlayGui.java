@@ -20,6 +20,7 @@ import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.IReorderingProcessor;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.IFormattableTextComponent;
@@ -97,7 +98,7 @@ public class PlayerTabOverlayGui extends AbstractGui
             int sw = this.mc.fontRenderer.getStringPropertyWidth(s);
             h = Math.max(h, sw);
         }
-
+        h += 9;
         if(this.mc.gameSettings._99thClientSettings.tablistPing) {
             i += h;
         }
@@ -212,7 +213,12 @@ public class PlayerTabOverlayGui extends AbstractGui
                     k2 += 9;
                 }
 
-                this.mc.fontRenderer.func_243246_a(p_238523_1_, this.getDisplayName(networkplayerinfo1), (float)k2, (float)l2, networkplayerinfo1.getGameType() == GameType.SPECTATOR ? -1862270977 : -1);
+                boolean isOnline = this.mc.onlinePlayers.isOnline(networkplayerinfo1.getGameProfile().getId()) || networkplayerinfo1.getGameProfile().getId().equals(this.mc.player.getGameProfile().getId());
+                if(isOnline) {
+                    this.mc.getTextureManager().bindTexture(new ResourceLocation(nl._99th_client.Config.resourceBasePath + "/iconx32.png"));
+                    AbstractGui.blit(p_238523_1_, i1 + k2 - (flag ? 9 : 0) - 9, l2, 8, 8, 0.0F, 0.0F, 286, 263, 286, 263);
+                }
+                this.mc.fontRenderer.func_243246_a(p_238523_1_, this.getDisplayName(networkplayerinfo1), (float) k2, (float) l2, networkplayerinfo1.getGameType() == GameType.SPECTATOR ? -1862270977 : -1);
 
                 if (p_238523_4_ != null && networkplayerinfo1.getGameType() != GameType.SPECTATOR)
                 {
@@ -225,7 +231,7 @@ public class PlayerTabOverlayGui extends AbstractGui
                     }
                 }
 
-                this.func_238522_a_(p_238523_1_, i1, k2 - (flag ? 9 : 0), l2, networkplayerinfo1);
+                this.func_238522_a_(p_238523_1_, i1, k2 - (flag ? 9 : 0) - 9, l2, networkplayerinfo1);
             }
         }
 

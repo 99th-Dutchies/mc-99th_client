@@ -351,6 +351,7 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements ISnooperI
     public CommandManager commandManager = new CommandManager(this);
     public DiscordStatus discord;
     public ApiClient apiClient = new ApiClient(this);
+    public OnlinePlayers onlinePlayers = new OnlinePlayers(this);
     public boolean serverJoinEventFlag = false;
     @Nullable
     public Screen currentScreen;
