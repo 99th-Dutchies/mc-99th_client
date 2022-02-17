@@ -8,11 +8,19 @@ public class ClickEvent
 {
     private final ClickEvent.Action action;
     private final String value;
+    private String secondaryValue;
 
     public ClickEvent(ClickEvent.Action theAction, String theValue)
     {
         this.action = theAction;
         this.value = theValue;
+    }
+
+    public ClickEvent(ClickEvent.Action theAction, String theValue, String secondaryValue)
+    {
+        this.action = theAction;
+        this.value = theValue;
+        this.secondaryValue = secondaryValue;
     }
 
     /**
@@ -31,6 +39,7 @@ public class ClickEvent
     {
         return this.value;
     }
+    public String getSecondaryValue() { return this.secondaryValue; }
 
     public boolean equals(Object p_equals_1_)
     {
@@ -54,6 +63,16 @@ public class ClickEvent
                     {
                         return false;
                     }
+                    if(this.secondaryValue != null)
+                    {
+                        if(!this.secondaryValue.equals(clickevent.secondaryValue))
+                        {
+                            return false;
+                        }
+                    } else if (clickevent.secondaryValue != null)
+                    {
+                        return false;
+                    }
                 }
                 else if (clickevent.value != null)
                 {
@@ -71,7 +90,7 @@ public class ClickEvent
 
     public String toString()
     {
-        return "ClickEvent{action=" + this.action + ", value='" + this.value + '\'' + '}';
+        return "ClickEvent{action=" + this.action + ", value='" + this.value + "'" + (this.secondaryValue != null ? ", secondaryValue='" + this.secondaryValue + "'" : "") + "}";
     }
 
     public int hashCode()
@@ -89,7 +108,8 @@ public class ClickEvent
         CHANGE_PAGE("change_page", true),
         COPY_TO_CLIPBOARD("copy_to_clipboard", true),
         COPY_IMAGE_TO_CLIPBOARD("copy_image_to_clipboard", true),
-        DELETE_FILE("delete_file", true);
+        DELETE_FILE("delete_file", true),
+        CONFIRM_LINK_DISCORD("confirm_link_discord", true);
 
         private static final Map<String, ClickEvent.Action> NAME_MAPPING = Arrays.stream(values()).collect(Collectors.toMap(ClickEvent.Action::getCanonicalName, (action) -> {
             return action;

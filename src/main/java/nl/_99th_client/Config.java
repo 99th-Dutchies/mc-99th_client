@@ -11,4 +11,7 @@ public class Config {
 
     public static String apiBase = "https://api.99th-client.nl/";
     public static String userAgent = "99th_Client ApiClient";
+
+    public static String discordBotApiBase = "https://gina.99th-client.nl/";
+    public static String discordInvite = "https://discord.gg/JyCTkQRYJs";
 }

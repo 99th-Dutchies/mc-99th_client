@@ -8,6 +8,7 @@ import nl._99th_client.util.DeviceID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -82,6 +83,31 @@ public class ApiClient {
         return players;
     }
 
+    public JSONObject resolveDiscordUser(String tag) throws IOException, ParseException {
+        String userString = this.getDiscord("user/" + tag);
+        JSONParser jp = new JSONParser();
+        return (JSONObject) jp.parse(userString);
+    }
+
+    public ApiResult<String> linkDiscord(String discord_id, String discord_tag) {
+        try {
+            HashMap<String, String> data = new HashMap<>();
+
+            data.put("session_id", this.session_id);
+            data.put("playerid", this.mc.getSession().getProfile().getId().toString());
+            data.put("discord_id", discord_id);
+            data.put("discord_tag", discord_tag);
+
+            this.post("link/discord", data);
+
+            return new ApiResult(true, "Discord account linked!");
+        } catch (IOException e) {
+            LOGGER.error("Failed linking Discord account: " + e);
+
+            return new ApiResult(false, "Unknown error occurred linking Discord account: " + e);
+        }
+    }
+
     private String get(String route) throws IOException {
         URL url = new URL(Config.apiBase + route);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -122,5 +148,29 @@ public class ApiClient {
         }
 
         return multipart.finish();
+    }
+
+    private String getDiscord(String route) throws IOException {
+        URL url = new URL(Config.discordBotApiBase + route);
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setRequestProperty("User-Agent", Config.userAgent);
+        con.setRequestProperty("Content-Type", "application/json");
+
+        int conRes = con.getResponseCode();
+        if(conRes > 299) {
+            con.disconnect();
+            return "";
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer content = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine);
+        }
+        in.close();
+
+        con.disconnect();
+        return content.toString();
     }
 }

@@ -35,11 +35,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
+import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
+import nl._99th_client.api.ApiResult;
 import nl._99th_client.chat.ChatFilter;
 import nl._99th_client.util.ImageClipboardHelper;
 import org.apache.logging.log4j.LogManager;
@@ -362,6 +361,16 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
                         this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent("Image deleted!"));
                     } else {
                         System.out.println("Failed to delete the file.");
+                    }
+                }
+                else if (clickevent.getAction() == ClickEvent.Action.CONFIRM_LINK_DISCORD)
+                {
+                    ApiResult result = this.minecraft.apiClient.linkDiscord(clickevent.getValue(), clickevent.getSecondaryValue());
+
+                    if(result.succeed()) {
+                        this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.GREEN + (String) result.getData()));
+                    } else {
+                        this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + (String) result.getData()));
                     }
                 }
                 else

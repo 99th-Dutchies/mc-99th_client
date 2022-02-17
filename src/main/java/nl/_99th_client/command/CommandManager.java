@@ -34,6 +34,7 @@ public class CommandManager {
         this.commands.add(new AFKCommand());
         this.commands.add(new ClickCommand());
         this.commands.add(new ColorCommand());
+        this.commands.add(new DiscordCommand());
         this.commands.add(new NameHistoryCommand());
     }
 
