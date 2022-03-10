@@ -7,6 +7,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.ChestContainer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
+import nl._99th_client.ccg.CcgUtils;
 
 public class ChestScreen extends ContainerScreen<ChestContainer> implements IHasContainer<ChestContainer>
 {
@@ -17,6 +18,8 @@ public class ChestScreen extends ContainerScreen<ChestContainer> implements IHas
      * Window height is calculated with these values; the more rows, the higher
      */
     private final int inventoryRows;
+
+    private boolean chestHandled = false;
 
     public ChestScreen(ChestContainer container, PlayerInventory playerInventory, ITextComponent title)
     {
@@ -34,6 +37,11 @@ public class ChestScreen extends ContainerScreen<ChestContainer> implements IHas
         this.renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
+
+        if (this.minecraft.gameSettings._99thClientSettings.dataCollection && !chestHandled) {
+            CcgUtils.handleChest(container, title);
+            chestHandled = true;
+        }
     }
 
     protected void drawGuiContainerBackgroundLayer(MatrixStack matrixStack, float partialTicks, int x, int y)

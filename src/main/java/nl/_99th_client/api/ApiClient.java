@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
 import nl._99th_client.Config;
+import nl._99th_client.ccg.Achievement;
 import nl._99th_client.util.DeviceID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,6 +106,22 @@ public class ApiClient {
             LOGGER.error("Failed linking Discord account: " + e);
 
             return new ApiResult(false, "Unknown error occurred linking Discord account: " + e);
+        }
+    }
+
+    public void submitAchievements(List<Achievement> achievements) {
+        try {
+            JSONArray jsonArray = new JSONArray();
+            for (Achievement ach : achievements) {
+                jsonArray.add(ach.toJSON());
+            }
+
+            HashMap<String, String> data = new HashMap<>();
+            data.put("session_id", this.session_id);
+            data.put("achievements", jsonArray.toJSONString());
+            LOGGER.info(this.post("ccg/achievements", data));
+        } catch (IOException e) {
+            LOGGER.error("Failed submitting achievements to API: " + e);
         }
     }
 
