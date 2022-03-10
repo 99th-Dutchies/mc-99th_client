@@ -365,13 +365,16 @@ public abstract class Screen extends FocusableGui implements IScreen, IRenderabl
                 }
                 else if (clickevent.getAction() == ClickEvent.Action.CONFIRM_LINK_DISCORD)
                 {
-                    ApiResult result = this.minecraft.apiClient.linkDiscord(clickevent.getValue(), clickevent.getSecondaryValue());
+                    Thread thread = new Thread(() -> {
+                        ApiResult result = this.minecraft.apiClient.linkDiscord(clickevent.getValue(), clickevent.getSecondaryValue());
 
-                    if(result.succeed()) {
-                        this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.GREEN + (String) result.getData()));
-                    } else {
-                        this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + (String) result.getData()));
-                    }
+                        if (result.succeed()) {
+                            this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.GREEN + (String) result.getData()));
+                        } else {
+                            this.minecraft.ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + (String) result.getData()));
+                        }
+                    });
+                    thread.start();
                 }
                 else
                 {
