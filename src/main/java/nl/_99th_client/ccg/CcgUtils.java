@@ -38,7 +38,7 @@ public class CcgUtils {
             for (Gamemode gamemode : Gamemode.values()) {
                 if(rawTitle.startsWith(gamemode.getDisplayName() + " - ")) {
                     handleAchievements(container, title, gamemode);
-                    break;
+                    return;
                 }
             }
         }
@@ -48,6 +48,7 @@ public class CcgUtils {
         Thread thread = new Thread(() -> {
             ArrayList<Achievement> achievements = new ArrayList<>();
             String category = title.getString().split(" - ")[1];
+            int order = 1;
             for(ItemStack is : container.getInventory()) {
                 if(is.getItem() == Items.EXPERIENCE_BOTTLE || is.getItem() == Items.GLASS_BOTTLE) {
                     List<ITextComponent> tooltip = is.getTooltip(null, ITooltipFlag.TooltipFlags.NORMAL);
@@ -55,6 +56,7 @@ public class CcgUtils {
                     achievements.add(new Achievement(
                             gamemode,
                             Achievement.Category.fromString(category),
+                            order,
                             Achievement.difficultyFromTooltip(tooltip),
                             tooltip.get(0).getString(),
                             Achievement.descriptionFromTooltip(tooltip),
@@ -62,6 +64,7 @@ public class CcgUtils {
                             Achievement.rewardFromTooltip(tooltip, "Point"),
                             Achievement.rewardFromTooltip(tooltip, "Cubelet"),
                             is.getItem() == Items.EXPERIENCE_BOTTLE));
+                    order++;
                 }
             }
             if(achievements.size() > 0) {

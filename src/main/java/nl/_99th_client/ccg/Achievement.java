@@ -9,6 +9,7 @@ import java.util.List;
 public class Achievement {
     private Gamemode gamemode;
     private Category category;
+    private int order;
     private Difficulty difficulty;
     private String name;
     private String description;
@@ -19,9 +20,10 @@ public class Achievement {
 
     private boolean completed;
 
-    public Achievement(Gamemode gamemode, Category category, Difficulty difficulty, String name, String description, int rewardXP, int rewardPoints, int rewardCubelets, boolean completed) {
+    public Achievement(Gamemode gamemode, Category category, int order, Difficulty difficulty, String name, String description, int rewardXP, int rewardPoints, int rewardCubelets, boolean completed) {
         this.gamemode = gamemode;
         this.category = category;
+        this.order = order;
         this.difficulty = difficulty;
         this.name = name;
         this.description = description;
@@ -36,6 +38,7 @@ public class Achievement {
 
         jsonObject.put("gamemode", gamemode.getString());
         jsonObject.put("category", category.getString().toLowerCase());
+        jsonObject.put("order", order);
         jsonObject.put("difficulty", difficulty.getString().toLowerCase());
         jsonObject.put("name", name);
         jsonObject.put("description", description);
