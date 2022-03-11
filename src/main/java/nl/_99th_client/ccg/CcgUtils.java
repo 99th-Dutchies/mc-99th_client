@@ -41,6 +41,16 @@ public class CcgUtils {
                     return;
                 }
             }
+
+            if(rawTitle.startsWith("Relic Journal")) {
+                handleLobbyGames(container, LobbyGameItem.LobbyGame.RELIC_HUNT);
+                return;
+            }
+
+            if(rawTitle.startsWith("Fishing Journal")) {
+                handleLobbyGames(container, LobbyGameItem.LobbyGame.LOBBY_FISHING);
+                return;
+            }
         }
     }
 
@@ -69,6 +79,46 @@ public class CcgUtils {
             }
             if(achievements.size() > 0) {
                 Minecraft.getInstance().apiClient.submitAchievements(achievements);
+            }
+        });
+
+        thread.start();
+    }
+
+    public static void handleLobbyGames(ChestContainer container, LobbyGameItem.LobbyGame lobbyGame) {
+        Thread thread = new Thread(() -> {
+            ArrayList<LobbyGameItem> lobbyGameItems = new ArrayList<>();
+
+            for(ItemStack is : container.getInventory()) {
+                if(is.getItem() == Items.AIR) { break; }
+                List<ITextComponent> tooltip = is.getTooltip(null, ITooltipFlag.TooltipFlags.NORMAL);
+
+                if(!tooltip.get(0).getString().equals("?????")) {
+                    if(lobbyGame == LobbyGameItem.LobbyGame.RELIC_HUNT) {
+                        lobbyGameItems.add(new LobbyGameItem(
+                                lobbyGame,
+                                tooltip.size() >= 9 ? LobbyGameItem.Holiday.fromString(tooltip.get(8).getString().substring(9)) : LobbyGameItem.Holiday.NONE,
+                                tooltip.get(0).getString(),
+                                tooltip.get(2).getString().length() - 8,
+                                MCStringUtils.tryParse(tooltip.get(3).getString().substring(13)),
+                                tooltip.get(6).getString().substring(26),
+                                MCStringUtils.tryParse(tooltip.get(5).getString().substring(22, tooltip.get(5).getString().length() - 7))
+                        ));
+                    } else if(lobbyGame == LobbyGameItem.LobbyGame.LOBBY_FISHING) {
+                        lobbyGameItems.add(new LobbyGameItem(
+                                lobbyGame,
+                                tooltip.size() >= 9 ? LobbyGameItem.Holiday.fromString(tooltip.get(8).getString().substring(9)) : LobbyGameItem.Holiday.NONE,
+                                tooltip.get(0).getString(),
+                                tooltip.get(2).getString().length() - 8,
+                                MCStringUtils.tryParse(tooltip.get(3).getString().substring(13)),
+                                tooltip.get(6).getString().substring(22),
+                                MCStringUtils.tryParse(tooltip.get(5).getString().substring(19, tooltip.get(5).getString().length() - 7))
+                        ));
+                    }
+                }
+            }
+            if(lobbyGameItems.size() > 0) {
+                Minecraft.getInstance().apiClient.submitLobbyGames(lobbyGameItems);
             }
         });
 

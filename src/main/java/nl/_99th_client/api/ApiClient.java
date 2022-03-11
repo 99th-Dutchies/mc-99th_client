@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
 import nl._99th_client.Config;
 import nl._99th_client.ccg.Achievement;
+import nl._99th_client.ccg.LobbyGameItem;
 import nl._99th_client.util.DeviceID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -122,6 +123,22 @@ public class ApiClient {
             LOGGER.info(this.post("ccg/achievements", data));
         } catch (IOException e) {
             LOGGER.error("Failed submitting achievements to API: " + e);
+        }
+    }
+
+    public void submitLobbyGames(List<LobbyGameItem> lobbyGameItems) {
+        try {
+            JSONArray jsonArray = new JSONArray();
+            for (LobbyGameItem lgi : lobbyGameItems) {
+                jsonArray.add(lgi.toJSON());
+            }
+
+            HashMap<String, String> data = new HashMap<>();
+            data.put("session_id", this.session_id);
+            data.put("lobbygame_items", jsonArray.toJSONString());
+            LOGGER.info(this.post("ccg/lobbygames", data));
+        } catch (IOException e) {
+            LOGGER.error("Failed submitting lobbygame_items to API: " + e);
         }
     }
 
