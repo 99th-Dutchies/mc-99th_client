@@ -45,6 +45,8 @@ public class Session
         return this.token;
     }
 
+    public Session.Type getSessionType() { return this.sessionType; }
+
     public GameProfile getProfile()
     {
         try

@@ -36,7 +36,7 @@ public class ApiClient {
     public ApiClient() {}
 
     public void startSession(Session session) {
-        if(this.mc.gameSettings._99thClientSettings.dataCollection) {
+        if(this.mc.gameSettings._99thClientSettings.getDataCollection()) {
             try {
                 HashMap<String, String> data = new HashMap<>();
                 GameProfile profile = session.getProfile();
@@ -52,7 +52,7 @@ public class ApiClient {
     }
 
     public void stopSession() {
-        if(this.mc.gameSettings._99thClientSettings.dataCollection) {
+        if(this.mc.gameSettings._99thClientSettings.getDataCollection()) {
             try {
                 HashMap<String, String> data = new HashMap<>();
 

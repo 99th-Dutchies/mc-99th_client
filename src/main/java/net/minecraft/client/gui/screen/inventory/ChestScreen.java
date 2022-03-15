@@ -38,7 +38,7 @@ public class ChestScreen extends ContainerScreen<ChestContainer> implements IHas
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         this.renderHoveredTooltip(matrixStack, mouseX, mouseY);
 
-        if (this.minecraft.gameSettings._99thClientSettings.dataCollection && !chestHandled) {
+        if (this.minecraft.gameSettings._99thClientSettings.getDataCollection() && !chestHandled) {
             CcgUtils.handleChest(container, title);
             chestHandled = true;
         }

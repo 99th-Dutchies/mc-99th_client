@@ -22,7 +22,7 @@ public class DiscordCommand extends Command {
             return;
         }
 
-        if(!Minecraft.getInstance().gameSettings._99thClientSettings.dataCollection) {
+        if(!Minecraft.getInstance().gameSettings._99thClientSettings.getDataCollection()) {
             Minecraft.getInstance().ingameGUI.getChatGUI().printChatMessage(new StringTextComponent(TextFormatting.RED + "You need allow Data Collection to link your Discord account. Enable this in your 99th_Client Settings!"));
             return;
         }

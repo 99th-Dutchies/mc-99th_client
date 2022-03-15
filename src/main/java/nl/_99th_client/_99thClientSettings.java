@@ -7,6 +7,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.util.Session;
 import nl._99th_client.chat.ChatFilter;
 import nl._99th_client.chat.ChatTrigger;
 import nl._99th_client.chat.EventTrigger;
@@ -863,6 +864,15 @@ public class _99thClientSettings {
         this.mc.commandManager.reloadCommands();
     }
 
+    public boolean getDataCollection() {
+        Session session = this.mc.getSession();
+
+        if(session == null || session.getSessionType() == Session.Type.LEGACY) {
+            return false;
+        }
+        return this.dataCollection;
+    }
+
     /*
      * EXTENDED UPDATERS
      */
@@ -878,7 +888,7 @@ public class _99thClientSettings {
 
     public void updateDataCollection() {
         if(this.mc.apiClient != null) {
-            if (this.dataCollection) {
+            if (this.getDataCollection()) {
                 this.mc.apiClient.startSession(this.mc.getSession());
             } else {
                 this.mc.apiClient.stopSession();
