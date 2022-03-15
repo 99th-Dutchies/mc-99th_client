@@ -51,6 +51,11 @@ public class CcgUtils {
                 handleLobbyGames(container, LobbyGameItem.LobbyGame.LOBBY_FISHING);
                 return;
             }
+        } else if(container.getNumRows() == 2) {
+            if(rawTitle.endsWith(" level selection!")) {
+                handleParkour(container, title);
+                return;
+            }
         }
     }
 
@@ -119,6 +124,45 @@ public class CcgUtils {
             }
             if(lobbyGameItems.size() > 0) {
                 Minecraft.getInstance().apiClient.submitLobbyGames(lobbyGameItems);
+            }
+        });
+
+        thread.start();
+    }
+
+    public static void handleParkour(ChestContainer container, ITextComponent title) {
+        Thread thread = new Thread(() -> {
+            ArrayList<Parkour> parkours = new ArrayList<>();
+
+            for(ItemStack is : container.getInventory()) {
+                if(is.getItem() == Items.AIR) { break; }
+                List<ITextComponent> tooltip = is.getTooltip(null, ITooltipFlag.TooltipFlags.NORMAL);
+
+                boolean[] mods = Parkour.modsFromTooltip(tooltip);
+                String[] playerMods = Parkour.playerModsFromTooltip(tooltip);
+
+                parkours.add(new Parkour(
+                        Parkour.Difficulty.fromString(title.getString().split(" ")[0]),
+                        tooltip.get(0).getString().split(" \\[Lvl ")[0],
+                        MCStringUtils.tryParse(tooltip.get(0).getString().substring(tooltip.get(0).getString().length() - 2, tooltip.get(0).getString().length()-1)),
+                        tooltip.get(3).getString().split(" ")[3],
+                        tooltip.get(4).getString().split(" ")[3],
+                        tooltip.get(5).getString().split(" ")[3],
+                        mods[0],
+                        mods[1],
+                        mods[2],
+                        mods[3],
+                        mods[4],
+                        tooltip.get(1).getString().substring(16).equals("N/A") ? null : tooltip.get(1).getString().substring(16),
+                        playerMods[0],
+                        playerMods[1],
+                        playerMods[2],
+                        playerMods[3],
+                        playerMods[4]
+                ));
+            }
+            if(parkours.size() > 0) {
+                Minecraft.getInstance().apiClient.submitParkours(parkours);
             }
         });
 

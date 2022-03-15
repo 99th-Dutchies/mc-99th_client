@@ -6,6 +6,7 @@ import net.minecraft.util.Session;
 import nl._99th_client.Config;
 import nl._99th_client.ccg.Achievement;
 import nl._99th_client.ccg.LobbyGameItem;
+import nl._99th_client.ccg.Parkour;
 import nl._99th_client.util.DeviceID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -139,6 +140,22 @@ public class ApiClient {
             LOGGER.info(this.post("ccg/lobbygames", data));
         } catch (IOException e) {
             LOGGER.error("Failed submitting lobbygame_items to API: " + e);
+        }
+    }
+
+    public void submitParkours(List<Parkour> parkours) {
+        try {
+            JSONArray jsonArray = new JSONArray();
+            for (Parkour parkour : parkours) {
+                jsonArray.add(parkour.toJSON());
+            }
+
+            HashMap<String, String> data = new HashMap<>();
+            data.put("session_id", this.session_id);
+            data.put("parkours", jsonArray.toJSONString());
+            LOGGER.info(this.post("ccg/parkours", data));
+        } catch (IOException e) {
+            LOGGER.error("Failed submitting parkours to API: " + e);
         }
     }
 
