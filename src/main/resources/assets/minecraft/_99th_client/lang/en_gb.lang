@@ -7,6 +7,7 @@ more=More...
 
 # Settings
 99thclient.options.title=99th_Client Settings
+99thclient.options.createBackup=Create Backup
 99thclient.options.hudgui=HUD/GUI
 99thclient.options.hudgui.title=99th_Client Settings HUD/GUI
 99thclient.options.HUDsetting.active=Activate

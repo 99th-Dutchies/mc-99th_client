@@ -8,8 +8,12 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.OptionButton;
+import net.minecraft.util.Util;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl._99th_client.Lang;
+
+import java.io.File;
+import java.net.URI;
 
 public class Options99th_ClientScreen extends SettingsScreen
 {
@@ -46,6 +50,15 @@ public class Options99th_ClientScreen extends SettingsScreen
             AbstractOption.DATA_COLLECTION.nextValue(this.minecraft.gameSettings);
             p_213105_1_.setMessage(AbstractOption.DATA_COLLECTION.func_238152_c_(this.minecraft.gameSettings));
             this.minecraft.gameSettings.saveOptions();
+        }));
+
+        this.addButton(new Button(this.width / 2 - 100, this.height - 51, 200, 20, new TranslationTextComponent("99thclient.options.createBackup"), (p_223703_1_) ->
+        {
+            File backupFile = this.minecraft.gameSettings._99thClientSettings.createBackup();
+            if(backupFile != null) {
+                URI uri = (new File(backupFile.getParent())).toURI();
+                Util.getOSType().openURI(uri);
+            }
         }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height - 27, 200, 20, DialogTexts.GUI_DONE, (p_223703_1_) ->

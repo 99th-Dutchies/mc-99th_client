@@ -26,6 +26,7 @@ import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -438,6 +439,31 @@ public class _99thClientSettings {
         }
 
         this.updateDiscord();
+    }
+
+    public File createBackup() {
+        try
+        {
+            JSONObject root = this.buildJSON();
+            File fJson = new File("99th_Client" + File.pathSeparator + "backup", "options_" + (new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date()))+ ".json");
+            if (fJson.getParentFile().mkdirs() && fJson.createNewFile()) {
+                FileOutputStream fosJson = new FileOutputStream(fJson);
+                OutputStreamWriter oswJson = new OutputStreamWriter(fosJson, "UTF-8");
+                JSONWriter jw = new JSONWriter(oswJson);
+                jw.writeObject(root);
+                oswJson.flush();
+                oswJson.close();
+
+                return fJson;
+            }
+        }
+        catch (Exception exception1)
+        {
+            LOGGER.error("Failed to create backup of options");
+            exception1.printStackTrace();
+        }
+
+        return null;
     }
 
     public void resetSettings() {
